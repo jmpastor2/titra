@@ -72,7 +72,7 @@ export type CareLinkRow = {
 export type ProtocolRow = {
   id: string
   patient_id: string
-  created_by: string
+  created_by: string | null
   compound_id: string
   name: string
   route: string

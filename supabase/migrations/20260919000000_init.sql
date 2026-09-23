@@ -181,7 +181,8 @@ end $$;
 create table if not exists public.protocols (
   id            uuid primary key default gen_random_uuid(),
   patient_id    uuid not null references public.profiles(id) on delete cascade,
-  created_by    uuid not null references public.profiles(id) on delete set null,
+  -- Nullable so deleting a clinician's account keeps the patient's protocol history.
+  created_by    uuid references public.profiles(id) on delete set null,
   compound_id   text not null,
   name          text not null,
   route         text not null default 'sc',
@@ -364,9 +365,13 @@ drop policy if exists care_links_select on public.care_links;
 create policy care_links_select on public.care_links for select to authenticated
   using (clinician_id = auth.uid() or patient_id = auth.uid());
 drop policy if exists care_links_update on public.care_links;
+-- Either party may revoke a link, and that is the only update allowed. Without the
+-- status check (and the column grant at the end of this file) a clinician could
+-- rewrite patient_id on their own link and read any patient's records.
+-- Re-activating a link always goes through link_clinician(), which validates the code.
 create policy care_links_update on public.care_links for update to authenticated
   using (clinician_id = auth.uid() or patient_id = auth.uid())
-  with check (clinician_id = auth.uid() or patient_id = auth.uid());
+  with check ((clinician_id = auth.uid() or patient_id = auth.uid()) and status = 'revoked');
 
 -- Generic patient-owned tables: patient full access, linked clinician read-only.
 do $$
@@ -423,6 +428,9 @@ create policy push_own on public.push_subscriptions for all to authenticated
 -- Grants (Supabase default roles)
 grant usage on schema public to anon, authenticated;
 grant all on all tables in schema public to authenticated;
+-- care_links: rows are created only by link_clinician(); clients may only revoke.
+revoke insert, update on public.care_links from authenticated;
+grant update (status, revoked_at) on public.care_links to authenticated;
 grant execute on function public.link_clinician(text) to authenticated;
 grant execute on function public.is_my_patient(uuid) to authenticated;
 grant execute on function public.is_my_clinician(uuid) to authenticated;
