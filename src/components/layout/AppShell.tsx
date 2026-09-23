@@ -29,7 +29,7 @@ export function AppShell() {
     <PatientScopeProvider
       value={{ patientId: p.id, patient: p, isSelf: true, readOnly: false, canPrescribe: false }}
     >
-      <div className="min-h-dvh bg-bg">
+      <div className="min-h-dvh bg-canvas">
         {!online && (
           <div className="safe-top flex items-center justify-center gap-2 bg-warn-soft px-4 py-1.5 text-[12.5px] font-medium text-warn">
             <WifiOff className="size-3.5" /> {t('common.offline')}

@@ -42,7 +42,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     error: <XCircle className="size-4" />,
   }
   const tones: Record<ToastTone, string> = {
-    info: 'bg-ink text-bg',
+    info: 'bg-ink text-canvas',
     success: 'bg-ok text-white',
     warn: 'bg-warn text-white',
     error: 'bg-danger text-white',

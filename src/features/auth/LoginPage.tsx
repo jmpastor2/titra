@@ -85,7 +85,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-dvh place-items-center bg-bg px-5 py-10">
+    <div className="grid min-h-dvh place-items-center bg-canvas px-5 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <img

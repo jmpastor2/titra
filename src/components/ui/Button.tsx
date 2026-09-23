@@ -48,7 +48,7 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={clsx(
-        'inline-flex items-center justify-center font-semibold transition-[transform,background-color,color] duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center font-semibold transition-[transform,background-color,color] duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed',
         variants[variant],
         sizes[size],
         block && 'w-full',

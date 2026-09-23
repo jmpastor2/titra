@@ -87,7 +87,7 @@ function OnboardingForm({
   }
 
   return (
-    <div className="mx-auto min-h-dvh w-full max-w-md bg-bg px-5 py-10">
+    <div className="mx-auto min-h-dvh w-full max-w-md bg-canvas px-5 py-10">
       <h1 className="text-[28px] font-bold tracking-tight">{t('onboarding.welcome')}</h1>
       <p className="mt-1 text-[14px] text-muted">
         {isClinician ? t('onboarding.clinicianIntro') : t('onboarding.intro')}

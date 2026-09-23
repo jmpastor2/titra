@@ -94,7 +94,7 @@
 
 /* Expose tokens to Tailwind utilities: bg-surface, text-ink, border-line, text-brand... */
 @theme inline {
-  --color-bg: var(--bg);
+  --color-canvas: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
@@ -122,93 +122,94 @@
   --font-mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
 }
 
-/* ---------- Base ---------- */
-html,
-body,
-#root {
-  height: 100%;
-}
+/*
+ * Everything below lives in cascade layers. Unlayered rules beat every Tailwind
+ * utility regardless of specificity, so a bare `button { color: inherit }` would
+ * silently cancel `text-white`, `text-[13px]` and friends on every button.
+ */
 
-html {
-  -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: transparent;
-}
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-feature-settings:
-    'tnum' 1,
-    'cv11' 1;
-  line-height: 1.45;
-  overscroll-behavior-y: none;
-  -webkit-font-smoothing: antialiased;
-}
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-/* iOS standalone: respect notch and home indicator */
-.safe-top {
-  padding-top: max(env(safe-area-inset-top), 12px);
-}
-.safe-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom), 8px);
-}
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-feature-settings:
+      'tnum' 1,
+      'cv11' 1;
+    line-height: 1.45;
+    overscroll-behavior-y: none;
+    -webkit-font-smoothing: antialiased;
+  }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
-}
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 
-input[type='number'] {
-  -moz-appearance: textfield;
-}
-input[type='number']::-webkit-outer-spin-button,
-input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+  ::selection {
+    background: var(--brand-soft);
+  }
 
-::selection {
-  background: var(--brand-soft);
-}
-
-/* Scrollbars, subtle */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-}
-
-/* Reduce motion */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
   }
 }
 
-/* Utilities */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
+@layer components {
+  /* iOS standalone: respect notch and home indicator */
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 12px);
+  }
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 8px);
+  }
 
-.tabular {
-  font-variant-numeric: tabular-nums;
-}
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
 
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.hide-scrollbar {
-  scrollbar-width: none;
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hide-scrollbar {
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .fade-up {
+    animation: fade-up 0.25s ease-out both;
+  }
+  .sheet-in {
+    animation: sheet-in 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+  .skeleton {
+    background: var(--surface-2);
+    border-radius: 8px;
+    animation: pulse-soft 1.4s ease-in-out infinite;
+  }
 }
 
 @keyframes fade-up {
@@ -221,9 +222,6 @@ input[type='number']::-webkit-inner-spin-button {
     transform: none;
   }
 }
-.fade-up {
-  animation: fade-up 0.25s ease-out both;
-}
 
 @keyframes sheet-in {
   from {
@@ -232,9 +230,6 @@ input[type='number']::-webkit-inner-spin-button {
   to {
     transform: none;
   }
-}
-.sheet-in {
-  animation: sheet-in 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 @keyframes pulse-soft {
@@ -246,8 +241,13 @@ input[type='number']::-webkit-inner-spin-button {
     opacity: 0.55;
   }
 }
-.skeleton {
-  background: var(--surface-2);
-  border-radius: 8px;
-  animation: pulse-soft 1.4s ease-in-out infinite;
+
+/* Reduced motion wins over any layer on purpose. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

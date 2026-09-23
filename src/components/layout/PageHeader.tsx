@@ -20,7 +20,7 @@ export function PageHeader({
   const nav = useNavigate()
   const { t } = useTranslation()
   return (
-    <header className="safe-top sticky top-0 z-30 -mx-4 mb-3 bg-bg/85 px-4 pb-2 backdrop-blur-xl">
+    <header className="safe-top sticky top-0 z-30 -mx-4 mb-3 bg-canvas/85 px-4 pb-2 backdrop-blur-xl">
       <div className="flex items-center gap-2">
         {back && (
           <button

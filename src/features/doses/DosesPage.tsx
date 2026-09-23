@@ -72,7 +72,7 @@ export function DosesPage() {
               onClick={() => setFilter(c)}
               className={
                 filter === c
-                  ? 'shrink-0 rounded-full bg-ink px-3 py-1.5 text-[13px] font-semibold text-bg'
+                  ? 'shrink-0 rounded-full bg-ink px-3 py-1.5 text-[13px] font-semibold text-canvas'
                   : 'shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-[13px] text-ink-2'
               }
             >
