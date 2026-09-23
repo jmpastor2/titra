@@ -1,0 +1,51 @@
+import { ChevronLeft } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+
+export function PageHeader({
+  title,
+  subtitle,
+  back,
+  action,
+  large = false,
+}: {
+  title: ReactNode
+  subtitle?: ReactNode
+  /** true → history back; string → navigate to path. */
+  back?: boolean | string
+  action?: ReactNode
+  large?: boolean
+}) {
+  const nav = useNavigate()
+  const { t } = useTranslation()
+  return (
+    <header className="safe-top sticky top-0 z-30 -mx-4 mb-3 bg-bg/85 px-4 pb-2 backdrop-blur-xl">
+      <div className="flex items-center gap-2">
+        {back && (
+          <button
+            type="button"
+            aria-label={t('common.back')}
+            onClick={() => (typeof back === 'string' ? nav(back) : nav(-1))}
+            className="-ml-2 grid size-9 place-items-center rounded-full text-brand-strong hover:bg-surface-2"
+          >
+            <ChevronLeft className="size-6" />
+          </button>
+        )}
+        <div className="min-w-0 flex-1">
+          <h1
+            className={
+              large
+                ? 'truncate text-[28px] font-bold tracking-tight'
+                : 'truncate text-[20px] font-bold tracking-tight'
+            }
+          >
+            {title}
+          </h1>
+          {subtitle && <p className="truncate text-[13px] text-muted">{subtitle}</p>}
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
+      </div>
+    </header>
+  )
+}
