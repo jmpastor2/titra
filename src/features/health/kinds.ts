@@ -16,6 +16,13 @@ export const KIND_UNIT: Record<MeasurementKind, string> = {
   protein_g: 'g',
   resistance_session: 'session',
   sleep_hours: 'h',
+  energy: 'score',
+  sleep_quality: 'score',
+  mood: 'score',
+  recovery: 'score',
+  libido: 'score',
+  appetite: 'score',
+  focus: 'score',
 }
 
 /** Fraction digits used when displaying each kind. */
@@ -34,6 +41,13 @@ export const KIND_DIGITS: Record<MeasurementKind, number> = {
   protein_g: 0,
   resistance_session: 0,
   sleep_hours: 1,
+  energy: 0,
+  sleep_quality: 0,
+  mood: 0,
+  recovery: 0,
+  libido: 0,
+  appetite: 0,
+  focus: 0,
 }
 
 /** Kinds offered in the "log measurement" picker (diastolic is captured with systolic). */

@@ -1,110 +1,140 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/jetbrains-mono';
 
-/* ---------- Design tokens ---------- */
+/*
+ * Titra · Biolab. Dark lab is the identity; light is the "clean bench" variant.
+ * See DESIGN.md for the reasoning behind every token.
+ */
+
+/* ---------- Tokens: clean bench (light) ---------- */
 :root {
-  --bg: #f4f6fa;
-  --surface: #ffffff;
-  --surface-2: #eef2f7;
-  --surface-3: #e3e9f1;
-  --ink: #0f172a;
-  --ink-2: #334155;
-  --muted: #64748b;
-  --line: #dfe5ee;
-  --brand: #0f9b98;
-  --brand-strong: #0b7c7a;
-  --brand-soft: #d9f2f1;
-  --accent: #7c6cf3;
-  --accent-soft: #e9e5ff;
-  --warn: #d97706;
-  --warn-soft: #fef3c7;
-  --danger: #dc2626;
-  --danger-soft: #fee2e2;
-  --ok: #16a34a;
-  --ok-soft: #dcfce7;
-  --chart-1: #0f9b98;
-  --chart-2: #7c6cf3;
-  --chart-3: #d97706;
-  --chart-4: #db2777;
-  --chart-5: #64748b;
-  --shadow: 0 1px 2px rgb(15 23 42 / 0.05), 0 8px 24px -12px rgb(15 23 42 / 0.15);
-  --radius: 16px;
-  --radius-sm: 12px;
+  --bg: #eef4f2;
+  --grid: rgb(6 80 66 / 0.06);
+  --halo-a: rgb(10 143 108 / 0.1);
+  --halo-b: rgb(134 114 240 / 0.08);
+  --panel: #ffffff;
+  --panel-2: #f1f6f4;
+  --panel-3: #e4ece9;
+  --line: rgb(6 32 27 / 0.1);
+  --line-strong: rgb(6 32 27 / 0.2);
+  --ink: #06201b;
+  --ink-2: #2d4a44;
+  --muted: #5f7a74;
+  --signal: #0a8f6c;
+  --signal-ink: #ffffff;
+  --signal-soft: rgb(10 143 108 / 0.1);
+  --signal-glow: 0 0 0 transparent;
+  --accent: #6a55e0;
+  --accent-soft: rgb(106 85 224 / 0.1);
+  --warn: #b46a00;
+  --warn-soft: rgb(180 106 0 / 0.12);
+  --danger: #c93a62;
+  --danger-soft: rgb(201 58 98 / 0.1);
+  --ok: #0a8f6c;
+  --ok-soft: rgb(10 143 108 / 0.1);
+  --shadow: 0 1px 2px rgb(6 32 27 / 0.06), 0 12px 32px -18px rgb(6 32 27 / 0.25);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --radius: 20px;
+  --radius-sm: 14px;
+
+  /* Substance identity (validated; see DESIGN.md) */
+  --sub-mint: #12a980;
+  --sub-violet: #8672f0;
+  --sub-orange: #d85c35;
+  --sub-sky: #2789c9;
+  --sub-amber: #c07e16;
+  --sub-pink: #d14f8a;
+  --sub-lime: #68a52b;
+  --sub-gray: #7f8f93;
+
+  --chart-1: var(--signal);
+  --chart-2: var(--sub-violet);
+  --chart-3: var(--sub-amber);
+  --chart-4: var(--sub-pink);
+  --chart-5: var(--muted);
   color-scheme: light;
+}
+
+/* ---------- Tokens: night lab (dark, default) ---------- */
+:root[data-theme='dark'] {
+  --bg: #050b0d;
+  --grid: rgb(92 242 196 / 0.055);
+  --halo-a: rgb(18 169 128 / 0.26);
+  --halo-b: rgb(134 114 240 / 0.18);
+  --panel: #0b1619;
+  --panel-2: #10201f;
+  --panel-3: #16292a;
+  --line: rgb(120 255 222 / 0.1);
+  --line-strong: rgb(120 255 222 / 0.2);
+  --ink: #e6fbf4;
+  --ink-2: #b3cdc6;
+  --muted: #6d8a84;
+  --signal: #5cf2c4;
+  --signal-ink: #03211a;
+  --signal-soft: rgb(92 242 196 / 0.12);
+  --signal-glow: 0 0 24px rgb(92 242 196 / 0.35);
+  --accent: #a99bff;
+  --accent-soft: rgb(169 155 255 / 0.14);
+  --warn: #ffb347;
+  --warn-soft: rgb(255 179 71 / 0.14);
+  --danger: #ff6b93;
+  --danger-soft: rgb(255 107 147 / 0.14);
+  --ok: #5cf2c4;
+  --ok-soft: rgb(92 242 196 / 0.12);
+  --shadow: 0 1px 0 rgb(0 0 0 / 0.4), 0 18px 40px -24px rgb(0 0 0 / 0.9);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  --chart-1: #12a980;
+  color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0b1220;
-    --surface: #111a2e;
-    --surface-2: #18233b;
-    --surface-3: #1f2c47;
-    --ink: #e6edf7;
-    --ink-2: #c3cddd;
-    --muted: #8b9ab5;
-    --line: #223050;
-    --brand: #22c4be;
-    --brand-strong: #6ee7e2;
-    --brand-soft: #123a3a;
-    --accent: #a596ff;
-    --accent-soft: #2a2550;
-    --warn: #fbbf24;
-    --warn-soft: #3a2f10;
-    --danger: #f87171;
-    --danger-soft: #3f1d1d;
-    --ok: #4ade80;
-    --ok-soft: #12351f;
-    --chart-1: #149e99;
-    --chart-2: #8578e6;
-    --chart-3: #b5820f;
-    --chart-4: #d6528f;
-    --chart-5: #8b9ab5;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.5);
+    --bg: #050b0d;
+    --grid: rgb(92 242 196 / 0.055);
+    --halo-a: rgb(18 169 128 / 0.26);
+    --halo-b: rgb(134 114 240 / 0.18);
+    --panel: #0b1619;
+    --panel-2: #10201f;
+    --panel-3: #16292a;
+    --line: rgb(120 255 222 / 0.1);
+    --line-strong: rgb(120 255 222 / 0.2);
+    --ink: #e6fbf4;
+    --ink-2: #b3cdc6;
+    --muted: #6d8a84;
+    --signal: #5cf2c4;
+    --signal-ink: #03211a;
+    --signal-soft: rgb(92 242 196 / 0.12);
+    --signal-glow: 0 0 24px rgb(92 242 196 / 0.35);
+    --accent: #a99bff;
+    --accent-soft: rgb(169 155 255 / 0.14);
+    --warn: #ffb347;
+    --warn-soft: rgb(255 179 71 / 0.14);
+    --danger: #ff6b93;
+    --danger-soft: rgb(255 107 147 / 0.14);
+    --ok: #5cf2c4;
+    --ok-soft: rgb(92 242 196 / 0.12);
+    --shadow: 0 1px 0 rgb(0 0 0 / 0.4), 0 18px 40px -24px rgb(0 0 0 / 0.9);
+    --highlight: inset 0 1px 0 rgb(255 255 255 / 0.04);
+    --chart-1: #12a980;
     color-scheme: dark;
   }
 }
 
-:root[data-theme='dark'] {
-  --bg: #0b1220;
-  --surface: #111a2e;
-  --surface-2: #18233b;
-  --surface-3: #1f2c47;
-  --ink: #e6edf7;
-  --ink-2: #c3cddd;
-  --muted: #8b9ab5;
-  --line: #223050;
-  --brand: #22c4be;
-  --brand-strong: #6ee7e2;
-  --brand-soft: #123a3a;
-  --accent: #a596ff;
-  --accent-soft: #2a2550;
-  --warn: #fbbf24;
-  --warn-soft: #3a2f10;
-  --danger: #f87171;
-  --danger-soft: #3f1d1d;
-  --ok: #4ade80;
-  --ok-soft: #12351f;
-  --chart-1: #149e99;
-  --chart-2: #8578e6;
-  --chart-3: #b5820f;
-  --chart-4: #d6528f;
-  --chart-5: #8b9ab5;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.5);
-  color-scheme: dark;
-}
-
-/* Expose tokens to Tailwind utilities: bg-surface, text-ink, border-line, text-brand... */
+/* Expose tokens to Tailwind utilities: bg-panel, text-ink, border-line, text-signal… */
 @theme inline {
   --color-canvas: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-surface-3: var(--surface-3);
+  --color-panel: var(--panel);
+  --color-panel-2: var(--panel-2);
+  --color-panel-3: var(--panel-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
-  --color-line: var(--line);
-  --color-brand: var(--brand);
-  --color-brand-strong: var(--brand-strong);
-  --color-brand-soft: var(--brand-soft);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-signal-soft: var(--signal-soft);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-warn: var(--warn);
@@ -115,29 +145,28 @@
   --color-ok-soft: var(--ok-soft);
   --radius-card: var(--radius);
   --radius-control: var(--radius-sm);
-  --shadow-card: var(--shadow);
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, 'Segoe UI', Roboto, system-ui,
     sans-serif;
-  --font-mono: 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+  --font-display: 'Space Grotesk Variable', -apple-system, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
 }
 
 /*
  * Everything below lives in cascade layers. Unlayered rules beat every Tailwind
- * utility regardless of specificity, so a bare `button { color: inherit }` would
- * silently cancel `text-white`, `text-[13px]` and friends on every button.
+ * utility regardless of specificity.
  */
-
 @layer base {
   html,
   body,
   #root {
-    height: 100%;
+    min-height: 100%;
   }
 
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+    background: var(--bg);
   }
 
   body {
@@ -145,12 +174,31 @@
     background: var(--bg);
     color: var(--ink);
     font-family: var(--font-sans);
-    font-feature-settings:
-      'tnum' 1,
-      'cv11' 1;
     line-height: 1.45;
     overscroll-behavior-y: none;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Lab backdrop: graph paper + two bioluminescent halos. Fixed layer, no repaint on scroll. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 36rem at -10% -10%, var(--halo-a), transparent 60%),
+      radial-gradient(44rem 30rem at 110% -5%, var(--halo-b), transparent 60%),
+      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
+      var(--bg);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 
   input[type='number'] {
@@ -163,17 +211,16 @@
   }
 
   ::selection {
-    background: var(--brand-soft);
+    background: var(--signal-soft);
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--line) transparent;
+    scrollbar-color: var(--line-strong) transparent;
   }
 }
 
 @layer components {
-  /* iOS standalone: respect notch and home indicator */
   .safe-top {
     padding-top: max(env(safe-area-inset-top), 12px);
   }
@@ -181,15 +228,64 @@
     padding-bottom: max(env(safe-area-inset-bottom), 8px);
   }
 
+  /* Instrument panel */
   .card {
-    background: var(--surface);
+    position: relative;
+    background: var(--panel);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
+    box-shadow: var(--highlight), var(--shadow);
+  }
+
+  /* Registration marks on the corners of hero instruments */
+  .instrument::before,
+  .instrument::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: var(--line-strong);
+    border-style: solid;
+    pointer-events: none;
+  }
+  .instrument::before {
+    top: 8px;
+    left: 8px;
+    border-width: 1px 0 0 1px;
+    border-top-left-radius: 4px;
+  }
+  .instrument::after {
+    right: 8px;
+    bottom: 8px;
+    border-width: 0 1px 1px 0;
+    border-bottom-right-radius: 4px;
+  }
+
+  /* Silkscreen label: mono, uppercase, wide tracking */
+  .spec {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .readout {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
   }
 
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  .glow {
+    box-shadow: var(--signal-glow);
+  }
+  .text-glow {
+    text-shadow: 0 0 18px color-mix(in oklab, var(--signal) 45%, transparent);
   }
 
   .hide-scrollbar {
@@ -200,14 +296,17 @@
   }
 
   .fade-up {
-    animation: fade-up 0.25s ease-out both;
+    animation: fade-up 0.22s ease-out both;
   }
   .sheet-in {
-    animation: sheet-in 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
+    animation: sheet-in 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
+  }
+  .pulse-ring {
+    animation: pulse-ring 1.8s ease-out infinite;
   }
   .skeleton {
-    background: var(--surface-2);
-    border-radius: 8px;
+    background: var(--panel-2);
+    border-radius: 10px;
     animation: pulse-soft 1.4s ease-in-out infinite;
   }
 }
@@ -232,6 +331,16 @@
   }
 }
 
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--warn) 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
 @keyframes pulse-soft {
   0%,
   100% {
@@ -248,6 +357,7 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }

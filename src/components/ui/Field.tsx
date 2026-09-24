@@ -27,7 +27,7 @@ export function Field({ label, hint, error, trailing, className, children }: Fie
       {(label || trailing) && (
         <div className="flex items-center justify-between">
           {label && (
-            <label htmlFor={id} className="text-[13px] font-medium text-ink-2">
+            <label htmlFor={id} className="spec">
               {label}
             </label>
           )}
@@ -49,7 +49,7 @@ export function Field({ label, hint, error, trailing, className, children }: Fie
 }
 
 export const controlClass =
-  'h-11 w-full rounded-control border border-line bg-surface px-3.5 text-[15px] text-ink placeholder:text-muted/70 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:bg-surface-2 disabled:text-muted'
+  'h-12 w-full rounded-control border border-line bg-panel-2 px-4 text-[15px] text-ink placeholder:text-muted/70 outline-none transition focus:border-signal/60 focus:bg-panel focus:ring-4 focus:ring-signal/10 disabled:opacity-60'
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   suffix?: ReactNode
@@ -71,14 +71,14 @@ export function Input({ suffix, invalid, className, ...rest }: InputProps) {
       <input
         className={clsx(
           controlClass,
-          'pr-14',
+          'pr-16',
           invalid && 'border-danger focus:ring-danger/30',
           className,
         )}
         aria-invalid={invalid || undefined}
         {...rest}
       />
-      <span className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-[13px] font-medium text-muted">
+      <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center font-mono text-[12px] font-semibold text-muted">
         {suffix}
       </span>
     </div>

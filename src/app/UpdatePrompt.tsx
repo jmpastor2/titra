@@ -18,7 +18,7 @@ export function UpdatePrompt() {
 
   return (
     <div className="safe-bottom fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-20">
-      <div className="fade-up flex items-center gap-3 rounded-full border border-line bg-surface px-4 py-2 shadow-card">
+      <div className="fade-up flex items-center gap-3 rounded-full border border-line bg-panel px-4 py-2 shadow-lg">
         <span className="text-[13.5px]">{t('common.updateAvailable')}</span>
         <Button size="sm" onClick={() => void updateServiceWorker(true)}>
           {t('common.update')}

@@ -16,7 +16,7 @@ import {
 const WEGOVY: ProtocolLike = {
   compoundId: 'semaglutide',
   startDate: '2026-01-05',
-  timeOfDay: '08:00',
+  times: ['08:00'],
   steps: [
     { doseMg: 0.25, intervalDays: 7, durationWeeks: 4 },
     { doseMg: 0.5, intervalDays: 7, durationWeeks: 4 },

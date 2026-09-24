@@ -58,3 +58,11 @@ redacción se interrumpió antes del informe. Revísalas completas.
 - Secuencias de los péptidos de Khavinson y su venta como suplemento en Rusia.
 - Rango comunitario de dihexa y dosis comunitaria de epitalón.
 - Referencias menos seguras: Zozulia 2008, Kazim 2014, Khavinson 2011 y Khavinson 2021.
+
+## CJC-1295 con DAC y Mod GRF 1-29
+
+- Referencia Jetté et al., Endocrinology 2005: comprobar el título.
+- Las cuatro sustituciones de Mod GRF 1-29 (D-Ala2, Gln8, Ala15, Leu27) y su función, sin fuente verificada.
+- La sinergia GHRH con GHRP está descrita para las clases en general, no para Mod GRF con ipamorelina.
+- Si Mod GRF 1-29 figura por separado en la categoría 2 de la FDA.
+- Pautas de la comunidad sin datos del fabricante: momento respecto a comidas y estabilidad reconstituido.

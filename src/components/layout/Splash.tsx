@@ -4,12 +4,12 @@ import { Button } from '../ui/Button'
 export function Splash({ error }: { error?: string }) {
   const { t } = useTranslation()
   return (
-    <div className="grid min-h-dvh place-items-center bg-canvas px-6">
+    <div className="grid min-h-dvh place-items-center px-6">
       <div className="flex flex-col items-center gap-4 text-center">
         <img
           src={`${import.meta.env.BASE_URL}icons/icon-192.png`}
           alt=""
-          className="size-16 rounded-2xl shadow-card"
+          className="glow size-16 rounded-2xl border border-line-strong"
         />
         <div>
           <div className="text-[22px] font-bold tracking-tight">{t('app.name')}</div>
@@ -23,7 +23,7 @@ export function Splash({ error }: { error?: string }) {
             </Button>
           </>
         ) : (
-          <div className="mt-2 size-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+          <div className="mt-2 size-5 animate-spin rounded-full border-2 border-signal border-t-transparent" />
         )}
       </div>
     </div>

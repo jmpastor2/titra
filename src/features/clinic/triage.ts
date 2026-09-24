@@ -60,18 +60,39 @@ export function summarisePatients({
 }: TriageInput): PatientSummary[] {
   return patients
     .map((patient) => {
-      const protocol =
-        protocols.find((p) => p.patient_id === patient.id && p.status === 'active') ?? null
+      const active = protocols.filter((p) => p.patient_id === patient.id && p.status === 'active')
       const pDoses = doses
         .filter((d) => d.patient_id === patient.id)
         .toSorted((a, b) => a.administered_at.localeCompare(b.administered_at))
-      const history = pDoses.map(toDoseEvent)
-      const lastDoseAt = history.length ? history[history.length - 1]!.at : null
+      const lastDoseAt = pDoses.length ? new Date(pDoses[pDoses.length - 1]!.administered_at) : null
 
-      const pl = protocol ? toProtocolLike(protocol) : null
-      const next = pl ? nextDose(pl, history, now) : null
-      const adh = pl ? adherence(pl, history, now) : null
-      const tit = pl ? titrationStatus(pl, now) : null
+      // Evaluate every active protocol against its own compound's history, then keep the
+      // most urgent signal of each kind: one overdue peptide is enough to raise the flag.
+      const perProtocol = active.map((p) => {
+        const pl = toProtocolLike(p)
+        const history = pDoses.filter((d) => d.compound_id === p.compound_id).map(toDoseEvent)
+        return {
+          protocol: p,
+          next: nextDose(pl, history, now),
+          adh: adherence(pl, history, now),
+          tit: titrationStatus(pl, now),
+        }
+      })
+      const overdue = perProtocol
+        .filter((x) => x.next?.status === 'overdue')
+        .toSorted((a, b) => (b.next?.overdueH ?? 0) - (a.next?.overdueH ?? 0))[0]
+      const soonest = perProtocol
+        .filter((x) => x.next)
+        .toSorted((a, b) => a.next!.at.getTime() - b.next!.at.getTime())[0]
+      const lowest = perProtocol
+        .filter((x) => x.adh.expected >= 3)
+        .toSorted((a, b) => a.adh.ratio - b.adh.ratio)[0]
+      const escalationDue = perProtocol.some(
+        ({ tit }) =>
+          tit && !tit.isMaintenance && tit.daysToNextStep !== null && tit.daysToNextStep <= 0,
+      )
+      const protocol = overdue?.protocol ?? soonest?.protocol ?? active[0] ?? null
+      const next = overdue?.next ?? soonest?.next ?? null
 
       const pSymptoms = symptoms.filter((s) => s.patient_id === patient.id)
       const maxSeverity = pSymptoms.reduce((m, s) => Math.max(m, s.severity), 0)
@@ -82,13 +103,12 @@ export function summarisePatients({
       const trend = compositionTrend(pWeights, 30)
 
       const flags: PatientFlag[] = []
-      if (next?.status === 'overdue') flags.push('overdue')
+      if (overdue) flags.push('overdue')
       if (maxSeverity >= 7) flags.push('severe')
-      if (tit && !tit.isMaintenance && tit.daysToNextStep !== null && tit.daysToNextStep <= 0)
-        flags.push('titration')
+      if (escalationDue) flags.push('titration')
       if (trend && pWeights[0] && trend.kgPerWeek < 0 && -trend.kgPerWeek / pWeights[0].kg > 0.01)
         flags.push('fastLoss')
-      if (adh && adh.expected >= 3 && adh.ratio < 0.7) flags.push('lowAdherence')
+      if (lowest && lowest.adh.ratio < 0.7) flags.push('lowAdherence')
       if (!lastDoseAt || now.getTime() - lastDoseAt.getTime() > 21 * 86_400_000)
         flags.push('noData')
 
@@ -99,7 +119,7 @@ export function summarisePatients({
         protocol,
         compoundId: protocol?.compound_id ?? pDoses.at(-1)?.compound_id ?? null,
         lastDoseAt,
-        adherenceRatio: adh?.ratio ?? null,
+        adherenceRatio: lowest?.adh.ratio ?? perProtocol[0]?.adh.ratio ?? null,
         nextDoseAt: next?.at ?? null,
         overdueH: next?.overdueH ?? 0,
         maxSeverity,

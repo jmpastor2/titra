@@ -1,32 +1,25 @@
 import { clsx } from 'clsx'
-import { Activity, BookOpen, Home, MoreHorizontal, Syringe, Users } from 'lucide-react'
+import { BookOpen, FlaskConical, LineChart, ListChecks, MoreHorizontal } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
-import type { UserRole } from '@/data/database.types'
 
-export function TabBar({ role }: { role: UserRole }) {
+/** Floating dock. The active tab is the only luminous element in it. */
+export function TabBar() {
   const { t } = useTranslation()
-  const items =
-    role === 'clinician'
-      ? [
-          { to: '/', label: t('nav.patients'), icon: Users, end: true },
-          { to: '/wiki', label: t('nav.wiki'), icon: BookOpen },
-          { to: '/more', label: t('nav.more'), icon: MoreHorizontal },
-        ]
-      : [
-          { to: '/', label: t('nav.home'), icon: Home, end: true },
-          { to: '/log', label: t('nav.log'), icon: Syringe },
-          { to: '/health', label: t('nav.health'), icon: Activity },
-          { to: '/wiki', label: t('nav.wiki'), icon: BookOpen },
-          { to: '/more', label: t('nav.more'), icon: MoreHorizontal },
-        ]
+  const items = [
+    { to: '/', label: t('nav.today'), icon: FlaskConical, end: true },
+    { to: '/log', label: t('nav.log'), icon: ListChecks },
+    { to: '/progress', label: t('nav.progress'), icon: LineChart },
+    { to: '/wiki', label: t('nav.wiki'), icon: BookOpen },
+    { to: '/more', label: t('nav.more'), icon: MoreHorizontal },
+  ]
 
   return (
     <nav
-      aria-label="Principal"
-      className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/90 backdrop-blur-xl"
+      aria-label={t('nav.main')}
+      className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),10px)]"
     >
-      <ul className="mx-auto flex max-w-2xl items-stretch justify-around px-2">
+      <ul className="mx-auto flex max-w-md items-stretch justify-around rounded-[26px] border border-line-strong bg-panel/85 px-1.5 py-1.5 shadow-2xl backdrop-blur-xl">
         {items.map(({ to, label, icon: Icon, end }) => (
           <li key={to} className="flex-1">
             <NavLink
@@ -34,21 +27,20 @@ export function TabBar({ role }: { role: UserRole }) {
               end={end}
               className={({ isActive }) =>
                 clsx(
-                  'flex flex-col items-center gap-0.5 pb-1 pt-2 text-[10.5px] font-medium transition-colors',
-                  isActive ? 'text-brand-strong' : 'text-muted hover:text-ink-2',
+                  'flex flex-col items-center gap-1 rounded-[20px] py-2 font-mono text-[9.5px] font-semibold uppercase tracking-[0.1em] transition-colors',
+                  isActive ? 'bg-signal-soft text-signal' : 'text-muted hover:text-ink-2',
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  <span
+                  <Icon
                     className={clsx(
-                      'grid h-7 w-12 place-items-center rounded-full transition-colors',
-                      isActive && 'bg-brand-soft',
+                      'size-[20px]',
+                      isActive && 'drop-shadow-[0_0_6px_var(--signal)]',
                     )}
-                  >
-                    <Icon className="size-[21px]" strokeWidth={isActive ? 2.4 : 2} />
-                  </span>
+                    strokeWidth={isActive ? 2.3 : 1.9}
+                  />
                   {label}
                 </>
               )}

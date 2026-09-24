@@ -136,8 +136,8 @@ export function SettingsPage() {
         </Card>
 
         <Card title={t('settings.about')}>
-          <div className="flex items-start gap-2.5 rounded-control bg-surface-2 p-3">
-            <Share className="mt-0.5 size-4 shrink-0 text-brand-strong" />
+          <div className="flex items-start gap-2.5 rounded-control bg-panel-2 p-3">
+            <Share className="mt-0.5 size-4 shrink-0 text-signal" />
             <p className="text-[13px] leading-relaxed">{t('settings.installHint')}</p>
           </div>
           <p className="mt-3 text-[12.5px] text-muted">

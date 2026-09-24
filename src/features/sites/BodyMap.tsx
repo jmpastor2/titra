@@ -39,7 +39,7 @@ export function BodyMap({
         aria-label={t('sites.title')}
       >
         {/* silhouette */}
-        <g fill="var(--surface-2)" stroke="var(--line)" strokeWidth="1.5">
+        <g fill="var(--panel-2)" stroke="var(--line)" strokeWidth="1.5">
           <circle cx="100" cy="26" r="16" />
           <path d="M76 46 h48 q14 0 16 12 l6 42 q1 8 -7 8 h-6 l-4 -30 v90 q0 6 -6 6 h-8 l-6 -66 -6 66 h-8 q-6 0 -6 -6 v-90 l-4 30 h-6 q-8 0 -7 -8 l6 -42 q2 -12 16 -12 z" />
           <path d="M84 158 h32 l8 92 q1 8 -7 8 h-10 q-6 0 -6 -7 l-1 -60 -1 60 q0 7 -6 7 h-10 q-8 0 -7 -8 z" />
@@ -57,7 +57,7 @@ export function BodyMap({
                   cy={s.cy}
                   r={13}
                   fill="none"
-                  stroke="var(--brand)"
+                  stroke="var(--signal)"
                   strokeWidth={2}
                   strokeDasharray="3 3"
                 />
@@ -66,9 +66,9 @@ export function BodyMap({
                 cx={s.cx}
                 cy={s.cy}
                 r={9}
-                fill={count === 0 ? 'var(--surface)' : 'var(--chart-3)'}
+                fill={count === 0 ? 'var(--panel)' : 'var(--chart-3)'}
                 fillOpacity={count === 0 ? 1 : 0.25 + intensity * 0.75}
-                stroke={suggested ? 'var(--brand)' : 'var(--line)'}
+                stroke={suggested ? 'var(--signal)' : 'var(--line)'}
                 strokeWidth={suggested ? 2 : 1.5}
               />
               <text
@@ -88,7 +88,7 @@ export function BodyMap({
       </svg>
       <figcaption className="mt-1 flex items-center justify-center gap-4 text-[11.5px] text-muted">
         <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block size-2.5 rounded-full border border-line bg-surface" />{' '}
+          <span className="inline-block size-2.5 rounded-full border border-line bg-panel" />{' '}
           {t('sites.neverUsed')}
         </span>
         <span className="inline-flex items-center gap-1.5">

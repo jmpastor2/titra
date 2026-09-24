@@ -6,9 +6,10 @@ const KEY = 'titra.theme'
 function readPref(): ThemePref {
   try {
     const v = localStorage.getItem(KEY)
-    return v === 'light' || v === 'dark' ? v : 'system'
+    // The night lab is Titra's identity: dark unless the user chose otherwise.
+    return v === 'light' || v === 'system' ? v : 'dark'
   } catch {
-    return 'system'
+    return 'dark'
   }
 }
 
@@ -20,7 +21,7 @@ export function applyTheme(pref: ThemePref): void {
     pref === 'dark' ||
     (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])')
-  if (meta) meta.content = dark ? '#0b1220' : '#f4f6fa'
+  if (meta) meta.content = dark ? '#050b0d' : '#eef4f2'
 }
 
 export function useTheme(): [ThemePref, (p: ThemePref) => void] {

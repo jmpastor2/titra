@@ -31,8 +31,9 @@ import { useLocale } from '@/lib/useLocale'
 import { AddLabSheet } from './AddLabSheet'
 import { KIND_DIGITS, KIND_UNIT } from './kinds'
 import { LogMeasurementSheet } from './LogMeasurementSheet'
+import { WellbeingTab } from './WellbeingTab'
 
-type Tab = 'measurements' | 'lean' | 'symptoms' | 'labs'
+type Tab = 'wellbeing' | 'body' | 'symptoms' | 'labs'
 
 const CHARTABLE: MeasurementKind[] = [
   'weight',
@@ -45,38 +46,42 @@ const CHARTABLE: MeasurementKind[] = [
   'heart_rate',
 ]
 
-export function HealthPage() {
+/** `embedded` renders the page inside a shared, read-only view without its header. */
+export function HealthPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation()
   const [params, setParams] = useSearchParams()
-  const initial = (params.get('tab') as Tab | null) ?? 'measurements'
+  const initial = (params.get('tab') as Tab | null) ?? 'wellbeing'
   const [tab, setTab] = useState<Tab>(initial)
   const [sheet, setSheet] = useState<'measure' | 'symptom' | 'lab' | null>(null)
   const { readOnly } = usePatientScope()
 
   function changeTab(next: Tab) {
     setTab(next)
-    setParams(next === 'measurements' ? {} : { tab: next }, { replace: true })
+    setParams(next === 'wellbeing' ? {} : { tab: next }, { replace: true })
   }
 
   return (
     <div>
-      <PageHeader
-        title={t('health.title')}
-        large
-        action={
-          !readOnly && (
-            <Button
-              size="sm"
-              leading={<Plus className="size-4" />}
-              onClick={() =>
-                setSheet(tab === 'symptoms' ? 'symptom' : tab === 'labs' ? 'lab' : 'measure')
-              }
-            >
-              {t('common.add')}
-            </Button>
-          )
-        }
-      />
+      {!embedded && (
+        <PageHeader
+          eyebrow={t('progress.eyebrow')}
+          title={t('progress.title')}
+          large
+          action={
+            !readOnly && (
+              <Button
+                size="sm"
+                leading={<Plus className="size-4" />}
+                onClick={() =>
+                  setSheet(tab === 'symptoms' ? 'symptom' : tab === 'labs' ? 'lab' : 'measure')
+                }
+              >
+                {t('common.add')}
+              </Button>
+            )
+          }
+        />
+      )}
 
       <Segmented<Tab>
         value={tab}
@@ -84,15 +89,20 @@ export function HealthPage() {
         size="sm"
         className="mb-3"
         options={[
-          { value: 'measurements', label: t('health.measurements') },
-          { value: 'lean', label: t('health.lean') },
+          { value: 'wellbeing', label: t('progress.wellbeing') },
+          { value: 'body', label: t('progress.body') },
           { value: 'symptoms', label: t('symptoms.title') },
           { value: 'labs', label: t('health.labs') },
         ]}
       />
 
-      {tab === 'measurements' && <MeasurementsTab />}
-      {tab === 'lean' && <LeanTab />}
+      {tab === 'wellbeing' && <WellbeingTab />}
+      {tab === 'body' && (
+        <div className="flex flex-col gap-6">
+          <MeasurementsTab />
+          <LeanTab />
+        </div>
+      )}
       {tab === 'symptoms' && <SymptomsTab />}
       {tab === 'labs' && <LabsTab />}
 
@@ -164,7 +174,7 @@ function MeasurementsTab() {
             className={
               active === k
                 ? 'shrink-0 rounded-full bg-ink px-3 py-1.5 text-[13px] font-semibold text-canvas'
-                : 'shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-[13px] text-ink-2'
+                : 'shrink-0 rounded-full border border-line bg-panel px-3 py-1.5 text-[13px] text-ink-2'
             }
           >
             {t(`health.kinds.${k}`)}
@@ -275,7 +285,7 @@ function LeanTab() {
 
   return (
     <div className="flex flex-col gap-3">
-      <Card tone="brand">
+      <Card tone="signal">
         <p className="text-[13.5px] leading-relaxed text-ink-2">{t('lean.intro')}</p>
       </Card>
 

@@ -71,7 +71,7 @@ export function SimulatorPage() {
       compoundId: switchTo,
       startDate: toDateInputValue(now),
       steps: switchTemplate.steps,
-      timeOfDay: '09:00',
+      times: ['09:00'],
     }
     const [from, to] = projectSwitch({
       from: { compoundId: current.compoundId, pk, history: current.history },

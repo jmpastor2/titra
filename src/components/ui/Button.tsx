@@ -14,19 +14,22 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
+  // The one luminous action colour: signal fill, dark ink, soft glow in the dark lab.
   primary:
-    'bg-brand text-white hover:bg-brand-strong active:scale-[0.98] disabled:bg-surface-3 disabled:text-muted shadow-sm',
+    'bg-signal text-signal-ink glow hover:brightness-110 active:scale-[0.98] disabled:bg-panel-3 disabled:text-muted disabled:shadow-none',
   secondary:
-    'bg-surface text-ink border border-line hover:bg-surface-2 active:scale-[0.98] disabled:text-muted',
-  soft: 'bg-brand-soft text-brand-strong hover:brightness-95 active:scale-[0.98] disabled:opacity-60',
-  ghost: 'bg-transparent text-ink-2 hover:bg-surface-2 active:scale-[0.98] disabled:text-muted',
-  danger: 'bg-danger text-white hover:brightness-95 active:scale-[0.98] disabled:opacity-60',
+    'bg-panel-2 text-ink border border-line-strong hover:border-signal/40 active:scale-[0.98] disabled:text-muted',
+  soft: 'bg-signal-soft text-signal border border-signal/20 hover:bg-signal/15 active:scale-[0.98] disabled:opacity-60',
+  ghost:
+    'bg-transparent text-ink-2 hover:bg-panel-2 hover:text-ink active:scale-[0.98] disabled:text-muted',
+  danger:
+    'bg-danger-soft text-danger border border-danger/30 active:scale-[0.98] disabled:opacity-60',
 }
 
 const sizes: Record<Size, string> = {
-  sm: 'h-9 px-3 text-sm gap-1.5 rounded-[10px]',
-  md: 'h-11 px-4 text-[15px] gap-2 rounded-control',
-  lg: 'h-13 px-5 text-base gap-2 rounded-control',
+  sm: 'h-9 px-3.5 text-[13px] gap-1.5 rounded-full',
+  md: 'h-11 px-5 text-[15px] gap-2 rounded-full',
+  lg: 'h-14 px-6 text-[16px] gap-2 rounded-full',
 }
 
 export function Button({
@@ -48,7 +51,7 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={clsx(
-        'inline-flex items-center justify-center font-semibold transition-[transform,background-color,color] duration-150 select-none outline-none focus-visible:ring-2 focus-visible:ring-brand/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed',
+        'inline-flex select-none items-center justify-center font-semibold tracking-[-0.01em] outline-none transition-[transform,background-color,color,filter,border-color] duration-150 focus-visible:ring-2 focus-visible:ring-signal/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed',
         variants[variant],
         sizes[size],
         block && 'w-full',

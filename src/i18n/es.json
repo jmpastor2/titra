@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Titra",
-    "tagline": "Control clínico de GLP-1 y péptidos",
+    "tagline": "Tu laboratorio personal de péptidos",
     "disclaimer": "Titra es una herramienta de registro y referencia. No sustituye el criterio de tu médico ni recomienda dosis. Las curvas son estimaciones basadas en modelos farmacocinéticos poblacionales."
   },
   "common": {
@@ -66,7 +66,10 @@
     "wiki": "Wiki",
     "more": "Más",
     "patients": "Pacientes",
-    "clinic": "Consulta"
+    "clinic": "Consulta",
+    "main": "Principal",
+    "today": "Hoy",
+    "progress": "Progreso"
   },
   "setup": {
     "title": "Configura Supabase",
@@ -120,7 +123,8 @@
     "clinicCode": "Código de consulta",
     "skip": "Ahora no",
     "clinicianIntro": "Como médico tendrás un código de consulta que tus pacientes introducen para compartir sus datos contigo.",
-    "finish": "Empezar"
+    "finish": "Empezar",
+    "setup": "Configuración"
   },
   "dashboard": {
     "greeting": "Hola, {{name}}",
@@ -183,7 +187,16 @@
     "taken": "Administrada",
     "history": "Historial",
     "filterAll": "Todos",
-    "deleteDose": "Eliminar dosis"
+    "deleteDose": "Eliminar dosis",
+    "confirm": "Registrar toma",
+    "otherTime": "Otra hora",
+    "sameSyringe": "Misma jeringa",
+    "substance": "Sustancia",
+    "addToSyringe": "Añadir a la jeringa",
+    "noVial": "Sin vial registrado",
+    "eyebrow": "Historial",
+    "count_one": "{{count}} toma",
+    "count_other": "{{count}} tomas"
   },
   "protocols": {
     "title": "Protocolos",
@@ -233,7 +246,34 @@
     "ssTime": "90 % en {{time}}",
     "notes": "Notas",
     "onlyOneActive": "Solo puede haber un protocolo activo por compuesto.",
-    "openEndedLastOnly": "Solo el último escalón puede ser de mantenimiento sin fin. Pon una duración en los anteriores."
+    "openEndedLastOnly": "Solo el último escalón puede ser de mantenimiento sin fin. Pon una duración en los anteriores.",
+    "eyebrow": "Laboratorio",
+    "startFrom": "Empezar desde",
+    "fromScratch": "Desde cero",
+    "mySaved": "Mis pautas guardadas",
+    "sharedSaved": "Compartidas conmigo",
+    "labelTemplates": "Fichas técnicas",
+    "substances": "Sustancias",
+    "pickSubstance": "Elige la sustancia",
+    "addToSyringe": "Añadir otra a la misma jeringa",
+    "schedule": "Horario",
+    "everyN": "Cada N días",
+    "onWeekdays": "Días de la semana",
+    "every": "Cada",
+    "days": "días",
+    "times": "Horas de toma",
+    "addTime": "Hora",
+    "typicalWeek": "Semana tipo",
+    "stepsHint": "Sube la dosis por escalones o añade pausas para ciclar.",
+    "addPause": "Añadir pausa",
+    "weeksShort": "sem",
+    "details": "Detalles",
+    "saveAsTemplate": "Guardar como pauta reutilizable",
+    "saveAsTemplateHint": "La tendrás a mano para repetirla o compartirla.",
+    "pickDays": "Elige al menos un día",
+    "history": "Historial",
+    "savedTitle": "Pautas guardadas",
+    "shared": "compartida"
   },
   "symptoms": {
     "title": "Síntomas",
@@ -290,7 +330,14 @@
       "steps": "Pasos",
       "protein_g": "Proteína",
       "resistance_session": "Sesión de fuerza",
-      "sleep_hours": "Sueño"
+      "sleep_hours": "Sueño",
+      "energy": "Energía",
+      "sleep_quality": "Calidad del sueño",
+      "mood": "Ánimo",
+      "recovery": "Recuperación",
+      "libido": "Libido",
+      "appetite": "Apetito",
+      "focus": "Concentración"
     },
     "empty": "Sin medidas",
     "emptyHint": "Registra peso, glucosa o composición corporal para ver tendencias.",
@@ -350,7 +397,13 @@
     "dosesLeft_other": "{{count}} dosis restantes",
     "archive": "Archivar",
     "inUse": "En uso desde hace {{days}} d",
-    "inUseWarning": "Supera los {{days}} d recomendados tras abrir"
+    "inUseWarning": "Supera los {{days}} d recomendados tras abrir",
+    "eyebrow": "Laboratorio",
+    "diluent": "Agua bacteriostática",
+    "diluentHint": "Con el contenido del vial, Titra calcula la concentración y las unidades.",
+    "remainingHint": "Déjalo vacío si el vial está entero.",
+    "openedShort": "En uso",
+    "expiresShort": "Caduca"
   },
   "calculator": {
     "title": "Calculadora de reconstitución",
@@ -482,7 +535,9 @@
       "iv": "Intravenosa",
       "topical": "Tópica",
       "sl": "Sublingual"
-    }
+    },
+    "eyebrow": "Aprende",
+    "mine": "Tus sustancias"
   },
   "simulator": {
     "title": "Simulador",
@@ -589,7 +644,20 @@
     "simulator": "Simulador",
     "clinician": "Mi médico",
     "settings": "Ajustes",
-    "export": "Exportar"
+    "export": "Exportar",
+    "eyebrow": "Titra",
+    "lab": "Laboratorio",
+    "tools": "Herramientas",
+    "account": "Cuenta",
+    "protocolsHint": "Sustancias, dosis, días y ciclos",
+    "inventoryHint": "Restos, concentración y caducidad",
+    "sitesHint": "Rotación y mapa de uso",
+    "calculatorHint": "Reconstitución y unidades U-100",
+    "simulatorHint": "¿Y si me salto una dosis o cambio de fármaco?",
+    "share": "Compartir",
+    "shareHint": "Enseña tu control a tu médico",
+    "exportHint": "CSV y copia de seguridad",
+    "settingsHint": "Perfil, tema e idioma"
   },
   "export": {
     "title": "Exportar",
@@ -627,5 +695,84 @@
     "invalidNumber": "Número no válido",
     "network": "Sin conexión. Los cambios se sincronizarán cuando vuelva.",
     "notFound": "No encontrado"
+  },
+  "today": {
+    "title": "Hoy",
+    "dayN": "día {{n}}",
+    "doses": "tomas",
+    "next": "Siguiente",
+    "dueNow": "Toca ahora",
+    "inTime": "En {{time}}",
+    "overdueBy": "Retrasada {{time}}",
+    "missed": "Perdida",
+    "takenAt": "Hecha {{time}}",
+    "taken": "Hecha",
+    "logNow": "Registrar ahora",
+    "allDone": "Todo hecho por hoy. Buen trabajo.",
+    "nothingToday": "Hoy no toca ninguna toma.",
+    "agenda": "Agenda",
+    "levels": "Niveles",
+    "manage": "Gestionar",
+    "quick": "Registro rápido",
+    "freeDose": "Dosis libre",
+    "checkin": "Check-in",
+    "learn": "Aprende",
+    "readMore": "Leer ficha",
+    "onBoard": "A bordo",
+    "lastDose": "Última toma",
+    "strip": "Tomas de hoy a lo largo del día"
+  },
+  "setupLab": {
+    "title": "Monta tu laboratorio",
+    "intro": "Tres pasos y Titra empieza a trabajar para ti.",
+    "protocol": "Crea tu primera pauta",
+    "protocolHint": "Sustancia, dosis, días y horas. Mezclas en la misma jeringa incluidas.",
+    "vial": "Registra tu vial",
+    "vialHint": "Contenido y agua bacteriostática: Titra calcula las unidades de jeringa.",
+    "learn": "Aprende qué te pones",
+    "learnHint": "Fichas de 99 compuestos con mecanismo, vida media y evidencia.",
+    "freeDose": "Registrar una dosis suelta"
+  },
+  "picker": {
+    "title": "Elige sustancia",
+    "mine": "En uso"
+  },
+  "checkin": {
+    "title": "Check-in",
+    "intro": "Puntúa solo lo que quieras. En unas semanas verás cómo cambia.",
+    "nothing": "Mueve al menos un control",
+    "emptyTitle": "Aún sin check-ins",
+    "emptyHint": "Energía, sueño, ánimo, recuperación… Un minuto al día y verás el efecto de cada pauta.",
+    "deltaHint": "La flecha compara con tu primera semana de registros."
+  },
+  "progress": {
+    "eyebrow": "Mis mejoras",
+    "title": "Progreso",
+    "wellbeing": "Bienestar",
+    "body": "Cuerpo"
+  },
+  "share": {
+    "eyebrow": "Ecosistema",
+    "title": "Compartir",
+    "myCode": "Tu código",
+    "myCodeHint": "Dáselo a quien quiera compartir su control contigo. Tu código no da acceso a tus datos.",
+    "shareMine": "Compartir mi control",
+    "shareMineHint": "Escribe el código de quien lo va a ver, por ejemplo tu médico. Lo verá en solo lectura y puedes retirarlo cuando quieras.",
+    "share": "Compartir",
+    "linked": "Control compartido",
+    "viewers": "Ven mi control",
+    "noViewers": "Nadie ve tu control todavía.",
+    "sharedWithMe": "Me comparten su control",
+    "noneSharedWithMe": "Nadie te ha compartido su control.",
+    "readOnly": "Solo lectura",
+    "propose": "Proponer pauta"
+  },
+  "substance": {
+    "noCurve": "Sin datos farmacocinéticos en humanos para dibujar su curva. Titra registra tomas, zonas y restos igualmente.",
+    "protocols": "Pautas",
+    "noProtocol": "No está en ninguna pauta.",
+    "vials": "Viales",
+    "noVial": "Sin viales registrados.",
+    "recent": "Últimas tomas"
   }
 }

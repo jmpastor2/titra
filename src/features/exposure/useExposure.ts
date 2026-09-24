@@ -1,13 +1,14 @@
 /**
- * Joins protocols + doses with the PK engine. One entry per compound the
- * patient is (or was recently) taking. Pure derivation, memoised.
+ * Joins protocols + doses with the PK engine. One entry per compound the user is
+ * (or was recently) taking. A compound drawn into a stack inherits the stack's
+ * schedule with its own dose. Pure derivation, memoised.
  */
 import { useMemo } from 'react'
 import { compoundById } from '@/content/compounds'
 import type { CompoundEntry } from '@/content/schema'
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
 import { useDoses, useProtocols } from '@/data/hooks'
-import { toDoseEvent, toProtocolLike } from '@/data/mappers'
+import { protocolCompoundIds, toDoseEvent, toProtocolLike } from '@/data/mappers'
 import {
   adherence,
   nextDose,
@@ -30,6 +31,7 @@ export interface CompoundExposure {
   compound: CompoundEntry | undefined
   pk: PkParams | undefined
   protocol: ProtocolRow | null
+  /** The protocol seen from this compound: its own dose on the protocol's schedule. */
   protocolLike: ProtocolLike | null
   doses: DoseRow[]
   history: DoseEvent[]
@@ -42,22 +44,35 @@ export interface CompoundExposure {
   adherence: Adherence | null
 }
 
+/** Re-express a protocol for one of its compounds (a stack component keeps its fixed dose). */
+export function protocolFor(protocol: ProtocolLike, compoundId: string): ProtocolLike {
+  if (protocol.compoundId === compoundId) return protocol
+  const component = protocol.components?.find((c) => c.compoundId === compoundId)
+  if (!component) return protocol
+  return {
+    ...protocol,
+    compoundId,
+    components: [],
+    steps: protocol.steps.map((s) => ({ ...s, doseMg: s.pause ? 0 : component.doseMg })),
+  }
+}
+
 export function deriveExposure(
-  protocols: ProtocolRow[],
-  doses: DoseRow[],
+  protocols: readonly ProtocolRow[],
+  doses: readonly DoseRow[],
   now: Date,
 ): CompoundExposure[] {
   const active = protocols.filter((p) => p.status === 'active')
   const ids = new Set<string>([
-    ...active.map((p) => p.compound_id),
+    ...active.flatMap(protocolCompoundIds),
     ...doses.map((d) => d.compound_id),
   ])
   const out: CompoundExposure[] = []
   for (const compoundId of ids) {
     const compound = compoundById(compoundId)
     const pk = compound?.pk
-    const protocol = active.find((p) => p.compound_id === compoundId) ?? null
-    const protocolLike = protocol ? toProtocolLike(protocol) : null
+    const protocol = active.find((p) => protocolCompoundIds(p).includes(compoundId)) ?? null
+    const protocolLike = protocol ? protocolFor(toProtocolLike(protocol), compoundId) : null
     const cDoses = doses
       .filter((d) => d.compound_id === compoundId)
       .toSorted((a, b) => a.administered_at.localeCompare(b.administered_at))
@@ -67,7 +82,7 @@ export function deriveExposure(
 
     let nowMg: number | null = null
     let progress: SteadyStateProgress | null = null
-    if (pk && compound && compound.routes.includes('sc')) {
+    if (pk && compound?.routes.some((r) => r === 'sc' || r === 'im')) {
       nowMg = amountAt(history, now, rateConstants(pk))
       if (reference && reference.doseMg > 0) {
         progress = steadyStateProgress(history, reference.doseMg, reference.intervalH, now, pk)

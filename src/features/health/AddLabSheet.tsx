@@ -102,8 +102,8 @@ function AddLabForm({ onClose }: { onClose: () => void }) {
               onClick={() => applyPreset(p)}
               className={
                 analyte === p.analyte
-                  ? 'rounded-full border border-brand bg-brand-soft px-2.5 py-1 text-[12.5px] font-semibold text-brand-strong'
-                  : 'rounded-full border border-line bg-surface px-2.5 py-1 text-[12.5px] text-ink-2'
+                  ? 'rounded-full border border-signal bg-signal-soft px-2.5 py-1 text-[12.5px] font-semibold text-signal'
+                  : 'rounded-full border border-line bg-panel px-2.5 py-1 text-[12.5px] text-ink-2'
               }
             >
               {p.analyte}

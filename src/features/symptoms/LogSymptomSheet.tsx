@@ -78,8 +78,8 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
                   onClick={() => setKind(k)}
                   className={
                     kind === k
-                      ? 'rounded-full border border-brand bg-brand-soft px-3 py-1.5 text-[13px] font-semibold text-brand-strong'
-                      : 'rounded-full border border-line bg-surface px-3 py-1.5 text-[13px] text-ink-2'
+                      ? 'rounded-full border border-signal bg-signal-soft px-3 py-1.5 text-[13px] font-semibold text-signal'
+                      : 'rounded-full border border-line bg-panel px-3 py-1.5 text-[13px] text-ink-2'
                   }
                 >
                   {t(`symptoms.kinds.${k}`)}
@@ -100,7 +100,7 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
                 step={1}
                 value={severity}
                 onChange={(e) => setSeverity(Number(e.target.value))}
-                className="h-2 flex-1 accent-[var(--brand)]"
+                className="h-2 flex-1 accent-[var(--signal)]"
               />
               <span className={`tabular w-8 text-right text-[22px] font-bold ${sevTone}`}>
                 {severity}

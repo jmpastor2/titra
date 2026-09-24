@@ -7,7 +7,7 @@ import { Field, Input, Select } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import type { ProfileRow } from '@/data/database.types'
-import { useLinkClinician, useProfile, useUpdateProfile } from '@/data/hooks'
+import { useProfile, useUpdateProfile } from '@/data/hooks'
 import { setLocale, type AppLocale } from '@/i18n'
 import { useSession } from './SessionProvider'
 
@@ -42,7 +42,6 @@ function OnboardingForm({
   const { t } = useTranslation()
   const { toast } = useToast()
   const update = useUpdateProfile(userId)
-  const link = useLinkClinician(userId)
   const [name, setName] = useState(initial.display_name)
   const [locale, setLoc] = useState<AppLocale>(initial.locale)
   const [units, setUnits] = useState<'metric' | 'imperial'>(initial.unit_system)
@@ -50,8 +49,6 @@ function OnboardingForm({
   const [sex, setSex] = useState<'M' | 'F' | 'O' | ''>(initial.sex ?? '')
   const [height, setHeight] = useState(initial.height_cm?.toString() ?? '')
   const [goal, setGoal] = useState(initial.goal_weight_kg?.toString() ?? '')
-  const [code, setCode] = useState('')
-  const isClinician = initial.role === 'clinician'
 
   async function finish() {
     try {
@@ -66,20 +63,6 @@ function OnboardingForm({
         onboarded: true,
       })
       setLocale(locale)
-      if (!isClinician && code.trim()) {
-        try {
-          await link.mutateAsync(code)
-          toast(t('clinic.linked'), 'success')
-        } catch (e) {
-          const m = (e as Error).message
-          toast(
-            m.includes('invalid_code')
-              ? t('clinic.linkErrors.invalid_code')
-              : t('clinic.linkErrors.generic'),
-            'warn',
-          )
-        }
-      }
       onDone()
     } catch {
       toast(t('common.error'), 'error')
@@ -87,11 +70,10 @@ function OnboardingForm({
   }
 
   return (
-    <div className="mx-auto min-h-dvh w-full max-w-md bg-canvas px-5 py-10">
-      <h1 className="text-[28px] font-bold tracking-tight">{t('onboarding.welcome')}</h1>
-      <p className="mt-1 text-[14px] text-muted">
-        {isClinician ? t('onboarding.clinicianIntro') : t('onboarding.intro')}
-      </p>
+    <div className="mx-auto min-h-dvh w-full max-w-md px-5 py-10">
+      <div className="spec">TITRA · {t('onboarding.setup')}</div>
+      <h1 className="mt-1 font-display text-[30px] font-bold">{t('onboarding.welcome')}</h1>
+      <p className="mt-1 text-[14px] text-muted">{t('onboarding.intro')}</p>
 
       <div className="card mt-6 flex flex-col gap-4 p-5">
         <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted">
@@ -124,7 +106,7 @@ function OnboardingForm({
             />
           )}
         </Field>
-        {!isClinician && (
+        {
           <>
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('onboarding.birthYear')}>
@@ -178,29 +160,8 @@ function OnboardingForm({
               </Field>
             </div>
           </>
-        )}
+        }
       </div>
-
-      {!isClinician && (
-        <div className="card mt-4 flex flex-col gap-3 p-5">
-          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted">
-            {t('onboarding.linkClinician')}
-          </h2>
-          <p className="text-[13px] text-muted">{t('onboarding.linkClinicianHint')}</p>
-          <Field label={t('onboarding.clinicCode')}>
-            {(id) => (
-              <Input
-                id={id}
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="ABC234"
-                maxLength={6}
-                className="font-mono uppercase tracking-[0.3em]"
-              />
-            )}
-          </Field>
-        </div>
-      )}
 
       <Button size="lg" block className="mt-6" loading={update.isPending} onClick={finish}>
         {t('onboarding.finish')}

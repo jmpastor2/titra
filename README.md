@@ -1,50 +1,40 @@
 # Titra
 
-Seguimiento clínico de GLP-1 y péptidos para una consulta de endocrinología y sus pacientes.
-PWA instalable en iPhone, datos en Supabase, interfaz en español e inglés.
+Tu laboratorio personal de péptidos: pautas, tomas, zonas, viales, niveles estimados, mejoras y una
+wiki de 99 compuestos. PWA instalable en iPhone, datos en Supabase, en español e inglés. Tu control
+se puede compartir en solo lectura con quien tú decidas, por ejemplo tu médico.
 
-> Titra es una herramienta de registro y referencia. No recomienda dosis: las pautas las
-> introduce el prescriptor y las curvas son estimaciones de modelos farmacocinéticos poblacionales.
+> Titra es una herramienta de registro y referencia. No recomienda dosis y las curvas son
+> estimaciones de modelos farmacocinéticos poblacionales.
 
 ## Qué hace
 
-**Paciente**
-
-- **Curva de exposición en tiempo real.** Cada dosis alimenta un modelo farmacocinético de un
-  compartimento con absorción de primer orden. La app muestra el fármaco activo estimado, el
-  porcentaje de estado estacionario alcanzado y la proyección de las próximas semanas.
-- **Titulación por protocolos.** Plantillas de ficha técnica (Wegovy, Ozempic, Rybelsus,
-  Zepbound/Mounjaro, Saxenda, Victoza, Trulicity) y brazos de ensayo (retatrutida, CagriSema).
-  Próxima dosis, escalón actual, días hasta la siguiente escalada y adherencia a 28 días.
-- **Simulador.** Qué pasa si te saltas la próxima dosis, si suspendes, o si cambias de
-  semaglutida a tirzepatida, sobre tu curva real.
-- **Síntomas sobre la curva**, para ver si la náusea coincide con el pico plasmático.
-- **Guardián de masa magra.** Objetivo de proteína, sesiones de fuerza, ritmo de pérdida y
-  proporción de masa magra perdida.
-- Medidas, analíticas con rangos de referencia, inventario con caducidades, rotación de puntos
-  de inyección con mapa corporal, calculadora de reconstitución con jeringa U-100 y exportación
-  CSV/JSON.
-
-**Médico**
-
-- Código de consulta que el paciente introduce para compartir sus datos.
-- Panel de pacientes ordenado por prioridad: síntomas graves, dosis retrasada, escalada
-  pendiente, pérdida rápida, adherencia baja, sin datos recientes.
-- Ficha de cada paciente en solo lectura, pautas nuevas, notas clínicas visibles u ocultas
-  para el paciente y notas propias en cada ficha de la wiki.
-
-**Wiki** de 98 compuestos: incretinas, insulinas, hormonas, eje GH, péptidos de
-reparación, metabólicos, sexuales, cognitivos, longevidad e inmunes. Cada ficha incluye mecanismo,
-farmacocinética con fuente, dosificación separada en ficha técnica, ensayos y uso no aprobado,
-efectos adversos, contraindicaciones, interacciones, monitorización, ensayos clave y referencias.
+- **Hoy.** Agenda del día con todas las tomas de todas tus pautas, un toque para registrar cada una,
+  tira de 24 horas y el estado de cada sustancia.
+- **Pautas completas.** Cada N días o por días de la semana (de lunes a viernes para CJC con
+  ipamorelina), varias tomas al día, escalones de dosis, pausas para ciclar y mezclas en la misma
+  jeringa. Se guardan como pautas reutilizables y se pueden compartir.
+- **Registro en unidades de jeringa.** Con el vial y su agua bacteriostática, Titra convierte las
+  unidades U-100 a mcg o mg, descuenta del vial y sugiere la zona menos usada.
+- **Niveles.** Modelo farmacocinético de un compartimento con fármaco a bordo, estado estacionario,
+  proyección y simulador de "¿y si me salto una dosis?" o cambio de fármaco. Solo para sustancias con
+  datos farmacocinéticos en humanos.
+- **Progreso.** Check-in de bienestar (energía, sueño, ánimo, recuperación, concentración, apetito,
+  libido), cuerpo y masa magra, síntomas y analíticas con rangos.
+- **Aprende.** Wiki bilingüe con mecanismo, farmacocinética con fuente, dosificación separada en ficha
+  técnica, ensayos y uso no aprobado, efectos adversos, interacciones y referencias. Integrada en cada
+  sustancia que usas.
+- **Compartir.** Cada cuenta tiene un código. Para enseñar tu control, introduces el código de quien lo
+  verá. Esa persona lo ve en solo lectura, puede dejar notas y proponer pautas, y tú puedes retirarlo.
 
 ## Puesta en marcha
 
 ### 1. Supabase
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).
-2. **SQL Editor → New query**: pega `supabase/migrations/20260919000000_init.sql` y pulsa **Run**.
-   Crea las tablas, los disparadores y la Row Level Security de todas ellas.
+2. **SQL Editor → New query**: pega y ejecuta, en orden, los ficheros de `supabase/migrations/`:
+   `20260919000000_init.sql` y `20260925000000_personal_tracking.sql`. Crean las tablas, los
+   disparadores y la Row Level Security de todas ellas.
 3. **Authentication → URL Configuration**:
    - Site URL: `https://jmpastor2.github.io/titra/`
    - Redirect URLs: `https://jmpastor2.github.io/titra/` y `http://localhost:5173/`
@@ -71,10 +61,8 @@ Safari → `https://jmpastor2.github.io/titra/` → Compartir → **Añadir a pa
 
 ### 5. Primer uso
 
-1. El médico se registra eligiendo **Médico / clínico**. Su código de consulta aparece en la
-   pantalla de Pacientes.
-2. Cada paciente se registra como **Paciente** e introduce ese código al terminar el perfil,
-   o más tarde en **Más → Mi médico**.
+Cada persona se registra y monta su laboratorio desde **Hoy**: primera pauta, primer vial y wiki.
+Para compartir, **Más → Compartir**.
 
 ## Arquitectura
 

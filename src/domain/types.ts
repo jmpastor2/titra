@@ -64,22 +64,38 @@ export interface DoseEvent {
 }
 
 export interface ScheduleStep {
-  /** Dose per administration, in mg. */
+  /** Dose of the primary compound per administration, in mg. */
   doseMg: number
-  /** Interval between administrations, in days (0.5 = twice daily). */
+  /**
+   * Interval between administration days, in days (7 = weekly, 3.5 = twice a week).
+   * Ignored when `weekdays` is set.
+   */
   intervalDays: number
+  /** Administer only on these weekdays (0 = Sunday … 6 = Saturday), e.g. [1,2,3,4,5] for 5 on / 2 off. */
+  weekdays?: number[]
+  /** Off-cycle step: no administrations for its duration. */
+  pause?: boolean
   /** Duration of the step in weeks; null means open-ended maintenance. */
   durationWeeks: number | null
   /** Optional label like "Escalón 1" or "Mantenimiento". */
   label?: string
 }
 
+/** A compound given in the same administration as the protocol's primary compound. */
+export interface StackComponent {
+  compoundId: string
+  /** Fixed dose per administration, in mg. */
+  doseMg: number
+}
+
 export interface ProtocolLike {
   compoundId: string
   startDate: string // ISO yyyy-MM-dd
   steps: ScheduleStep[]
-  /** Preferred administration time of day, "HH:mm" local. */
-  timeOfDay?: string
+  /** Administration times on each dosing day, "HH:mm" local. At least one. */
+  times: string[]
+  /** Extra compounds drawn into the same syringe (e.g. Mod GRF 1-29 with ipamorelin). */
+  components?: StackComponent[]
 }
 
 export interface InjectionSite {

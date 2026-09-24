@@ -9,8 +9,8 @@ import { Splash } from './Splash'
 import { TabBar } from './TabBar'
 
 /**
- * Authenticated frame: gates on session + onboarding, provides the patient
- * scope (self) and renders the bottom tab bar.
+ * Authenticated frame: gates on session + onboarding, scopes every screen to the
+ * signed-in user's own control and renders the floating dock.
  */
 export function AppShell() {
   const { status, user } = useSession()
@@ -29,16 +29,16 @@ export function AppShell() {
     <PatientScopeProvider
       value={{ patientId: p.id, patient: p, isSelf: true, readOnly: false, canPrescribe: false }}
     >
-      <div className="min-h-dvh bg-canvas">
+      <div className="min-h-dvh">
         {!online && (
           <div className="safe-top flex items-center justify-center gap-2 bg-warn-soft px-4 py-1.5 text-[12.5px] font-medium text-warn">
             <WifiOff className="size-3.5" /> {t('common.offline')}
           </div>
         )}
-        <main className="mx-auto w-full max-w-2xl px-4 pb-28">
+        <main className="mx-auto w-full max-w-2xl px-4 pb-32">
           <Outlet />
         </main>
-        <TabBar role={p.role} />
+        <TabBar />
       </div>
     </PatientScopeProvider>
   )

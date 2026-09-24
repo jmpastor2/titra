@@ -22,6 +22,13 @@ export type MeasurementKind =
   | 'protein_g'
   | 'resistance_session'
   | 'sleep_hours'
+  | 'energy'
+  | 'sleep_quality'
+  | 'mood'
+  | 'recovery'
+  | 'libido'
+  | 'appetite'
+  | 'focus'
 export type SymptomKind =
   | 'nausea'
   | 'vomiting'
@@ -78,8 +85,12 @@ export type ProtocolRow = {
   route: string
   unit: string
   start_date: string
+  /** Deprecated: superseded by `times`, kept for rows created before migration 2. */
   time_of_day: string
+  times: string[]
   steps: Json
+  /** StackComponent[]: extra compounds given in the same administration. */
+  components: Json
   status: ProtocolStatus
   template_id: string | null
   notes: string | null
@@ -96,6 +107,8 @@ export type InventoryRow = {
   total_mg: number
   remaining_mg: number
   concentration_mg_per_ml: number | null
+  /** Bacteriostatic water used to reconstitute, in mL. */
+  diluent_ml: number | null
   opened_at: string | null
   expires_at: string | null
   lot: string | null
@@ -114,6 +127,8 @@ export type DoseRow = {
   administered_at: string
   site_id: string | null
   inventory_id: string | null
+  /** Groups the rows of one administration (e.g. a Mod GRF + ipamorelin syringe). */
+  batch_id: string | null
   notes: string | null
   created_at: string
 }
@@ -172,6 +187,20 @@ export type CompoundNoteRow = {
   updated_at: string
 }
 
+export type SavedProtocolRow = {
+  id: string
+  owner_id: string
+  name: string
+  compound_id: string
+  unit: string
+  components: Json
+  steps: Json
+  times: string[]
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type PushSubscriptionRow = {
   id: string
   user_id: string
@@ -217,6 +246,8 @@ export type Database = {
         | 'route'
         | 'unit'
         | 'time_of_day'
+        | 'times'
+        | 'components'
         | 'status'
         | 'template_id'
         | 'notes'
@@ -228,6 +259,7 @@ export type Database = {
         | 'id'
         | 'form'
         | 'concentration_mg_per_ml'
+        | 'diluent_ml'
         | 'opened_at'
         | 'expires_at'
         | 'lot'
@@ -238,7 +270,7 @@ export type Database = {
       >
       doses: Table<
         DoseRow,
-        'id' | 'protocol_id' | 'site_id' | 'inventory_id' | 'notes' | 'created_at'
+        'id' | 'protocol_id' | 'site_id' | 'inventory_id' | 'batch_id' | 'notes' | 'created_at'
       >
       symptoms: Table<SymptomRow, 'id' | 'notes' | 'created_at'>
       measurements: Table<MeasurementRow, 'id' | 'notes' | 'source' | 'created_at'>
@@ -248,6 +280,10 @@ export type Database = {
         'id' | 'visible_to_patient' | 'created_at' | 'updated_at'
       >
       compound_notes: Table<CompoundNoteRow, 'id' | 'created_at' | 'updated_at'>
+      saved_protocols: Table<
+        SavedProtocolRow,
+        'id' | 'unit' | 'components' | 'times' | 'notes' | 'created_at' | 'updated_at'
+      >
       push_subscriptions: Table<PushSubscriptionRow, 'id' | 'user_agent' | 'created_at'>
     }
     Views: { [_ in never]: never }

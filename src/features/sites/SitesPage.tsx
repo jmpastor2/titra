@@ -45,15 +45,15 @@ export function SitesPage() {
     <div className="pb-6">
       <PageHeader title={t('sites.title')} back="/more" />
 
-      <Card tone="brand" className="mb-3">
+      <Card tone="signal" className="mb-3">
         <p className="text-[13.5px] leading-relaxed text-ink-2">{t('sites.intro')}</p>
         {suggestion && (
-          <div className="mt-3 flex items-center justify-between rounded-control bg-surface px-3 py-2.5">
+          <div className="mt-3 flex items-center justify-between rounded-control bg-panel px-3 py-2.5">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">
                 {t('sites.suggested')}
               </div>
-              <div className="text-[16px] font-bold text-brand-strong">
+              <div className="text-[16px] font-bold text-signal">
                 {t(`sites.labels.${suggestion.siteId}`)}
               </div>
             </div>

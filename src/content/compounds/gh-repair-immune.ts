@@ -15,29 +15,22 @@ import { t, type CompoundEntry } from '../schema'
 const cjc1295: CompoundEntry = {
   id: 'cjc-1295',
   names: {
-    generic: 'CJC-1295',
+    generic: 'CJC-1295 con DAC',
     brands: [],
-    aliases: [
-      'CJC-1295 DAC',
-      'DAC:GRF',
-      'Modified GRF 1-29',
-      'Mod GRF 1-29',
-      'CJC-1295 sin DAC',
-      'GRF(1-29) tetrasustituido',
-    ],
+    aliases: ['CJC-1295 DAC', 'DAC:GRF', 'CJC-1295 with DAC', 'CJC-1295 + DAC'],
   },
   category: 'gh_axis',
   pharmClass: t(
-    'Análogo de GHRH (GRF 1-29 tetrasustituido), con o sin complejo de afinidad por albúmina (DAC)',
-    'GHRH analogue (tetrasubstituted GRF 1-29), with or without Drug Affinity Complex (DAC)',
+    'Análogo de GHRH de acción prolongada (GRF 1-29 tetrasustituido unido a un complejo de afinidad por albúmina, DAC)',
+    'Long-acting GHRH analogue (tetrasubstituted GRF 1-29 bound to a Drug Affinity Complex, DAC)',
   ),
   summary: t(
-    'Análogo sintético de GHRH(1-29) con cuatro sustituciones (D-Ala2, Gln8, Ala15, Leu27) que lo protegen de la DPP-4. La forma con DAC (ácido maleimidopropiónico) se une covalentemente a la albúmina y alcanza una semivida de ~6–8 días; la forma sin DAC (Modified GRF 1-29) tiene una semivida de ~30 min y se usa en pulsos junto a un GHRP. El desarrollo clínico (ConjuChem) se detuvo en 2006; hoy solo circula como producto de investigación.',
-    'Synthetic GHRH(1-29) analogue with four substitutions (D-Ala2, Gln8, Ala15, Leu27) protecting it from DPP-4. The DAC form (maleimidopropionic acid) binds albumin covalently and reaches a ~6–8-day half-life; the DAC-free form (Modified GRF 1-29) has a ~30-min half-life and is pulsed with a GHRP. Clinical development (ConjuChem) stopped in 2006; today it circulates only as a research chemical.',
+    'Análogo sintético de GHRH(1-29) con cuatro sustituciones que lo protegen de la DPP-4, al que se añade en el extremo C-terminal una lisina con un grupo maleimidopropionamida (DAC) que se une covalentemente a la albúmina circulante; así alcanza una semivida de ~6–8 días y permite dosis semanales. El desarrollo clínico (ConjuChem) se detuvo en 2006; hoy solo circula como producto de investigación. Si usas “CJC” de acción corta en la misma jeringa que la ipamorelina, consulta la ficha separada «Mod GRF 1-29 (CJC-1295 sin DAC)»: es otra molécula, con una semivida de minutos.',
+    'Synthetic GHRH(1-29) analogue with four substitutions protecting it from DPP-4, extended at the C-terminus with a lysine carrying a maleimidopropionamide group (DAC) that binds circulating albumin covalently; this yields a ~6–8-day half-life and allows weekly dosing. Clinical development (ConjuChem) stopped in 2006; today it circulates only as a research chemical. If you use short-acting “CJC” in the same syringe as ipamorelin, see the separate “Mod GRF 1-29 (CJC-1295 sin DAC)” entry: it is a different molecule with a half-life of minutes.',
   ),
   mechanism: t(
-    'Agonista del receptor de GHRH en las somatotropas: aumenta la amplitud de los pulsos fisiológicos de GH sin abolir su ritmo y eleva IGF-1 de forma sostenida (×1,5–3 durante 9–11 días con la forma DAC). Conserva la retroalimentación negativa por somatostatina e IGF-1, por lo que el riesgo de exceso masivo de GH es menor que con GH exógena, aunque la forma DAC aplana la pulsatilidad.',
-    'GHRH receptor agonist on somatotrophs: increases the amplitude of physiological GH pulses without abolishing their rhythm and raises IGF-1 sustainedly (×1.5–3 for 9–11 days with the DAC form). Negative feedback by somatostatin and IGF-1 is preserved, so massive GH excess is less likely than with exogenous GH, although the DAC form flattens pulsatility.',
+    'Agonista del receptor de GHRH en las somatotropas. Al quedar unido a la albúmina actúa como un estímulo continuo durante días: eleva la GH basal y la amplitud de los pulsos sin cambiar su frecuencia, y aumenta IGF-1 de forma sostenida (×1,5–3 durante 9–11 días tras una sola dosis). Conserva la retroalimentación negativa por somatostatina e IGF-1, por lo que el riesgo de exceso masivo de GH es menor que con GH exógena, aunque el nivel basal elevado entre pulsos (“GH bleed”) se aleja del patrón fisiológico.',
+    'GHRH receptor agonist on somatotrophs. Once bound to albumin it acts as a continuous stimulus for days: it raises trough GH and pulse amplitude without changing pulse frequency, and increases IGF-1 sustainedly (×1.5–3 for 9–11 days after a single dose). Negative feedback by somatostatin and IGF-1 is preserved, so massive GH excess is less likely than with exogenous GH, although the elevated inter-pulse baseline (“GH bleed”) departs from the physiological pattern.',
   ),
   indications: [
     t(
@@ -66,7 +59,7 @@ const cjc1295: CompoundEntry = {
     source:
       'Teichman SL et al., JCEM 2006;91:799 (fase 1, dosis única y repetida SC en adultos sanos: t½ 5,8–8,1 días)',
     notes:
-      'Parámetros de la forma con DAC. Modified GRF 1-29 (sin DAC) tiene t½ ≈ 30 min y pico de GH a 15–30 min; no se modela aquí. tmax plasmático no publicado con precisión; el motor asume bolo.',
+      'Parámetros exclusivos de la forma con DAC; no aplicar a Mod GRF 1-29 (sin DAC), que tiene su propia ficha. tmax plasmático no publicado con precisión; el motor asume bolo.',
   },
   dosing: {
     investigational: t(
@@ -74,14 +67,14 @@ const cjc1295: CompoundEntry = {
       'Phase 1 (Teichman 2006): single SC dose of 30–60 µg/kg or repeated 30–60 µg/kg every 7–14 days; mean GH ×2–10 for ≥6 days and IGF-1 ×1.5–3 for 9–11 days after a single dose.',
     ),
     anecdotal: t(
-      'Uso no aprobado — CJC-1295 DAC: 1–2 mg SC 1×/semana (o 0,5–1 mg 2×/semana). Modified GRF 1-29 (sin DAC): 100 µg SC 1–3×/día en ayunas, a menudo junto a ipamorelina 100–300 µg (“blend”). Rangos comunitarios sin ensayos que los respalden.',
-      'Unapproved use — CJC-1295 DAC: 1–2 mg SC once weekly (or 0.5–1 mg twice weekly). Modified GRF 1-29 (no DAC): 100 µg SC 1–3×/day fasted, often with ipamorelin 100–300 µg (“blend”). Community ranges with no supporting trials.',
+      'Uso no aprobado — 1–2 mg SC 1×/semana (o 0,5–1 mg 2×/semana). Rangos comunitarios sin ensayos que los respalden.',
+      'Unapproved use — 1–2 mg SC once weekly (or 0.5–1 mg twice weekly). Community ranges with no supporting trials.',
     ),
-    frequency: t('DAC: 1×/semana · sin DAC: 1–3×/día', 'DAC: once weekly · no DAC: 1–3×/day'),
+    frequency: t('1×/semana (o 2×/semana)', 'Once weekly (or twice weekly)'),
   },
   reconstitution: t(
-    'Viales liofilizados de 2 mg (DAC) o 2–5 mg (Mod GRF). 2 mg + 1 mL de agua bacteriostática = 2 mg/mL → 1 mg = 0,5 mL = 50 U en jeringa U-100; 100 µg = 5 U. Mod GRF 5 mg + 2,5 mL = 2 mg/mL → 100 µg = 5 U. Reconstituido: nevera 2–8 °C, 3–4 semanas, protegido de la luz; no agitar.',
-    'Lyophilised vials of 2 mg (DAC) or 2–5 mg (Mod GRF). 2 mg + 1 mL bacteriostatic water = 2 mg/mL → 1 mg = 0.5 mL = 50 U on a U-100 syringe; 100 µg = 5 U. Mod GRF 5 mg + 2.5 mL = 2 mg/mL → 100 µg = 5 U. Reconstituted: refrigerate 2–8 °C, 3–4 weeks, protect from light; do not shake.',
+    'Viales liofilizados de 2 mg. 2 mg + 1 mL de agua bacteriostática = 2 mg/mL → 1 mg = 0,5 mL = 50 U en jeringa U-100; 0,5 mg = 25 U. Con 2 mL (1 mg/mL): 1 mg = 1 mL = 100 U. Reconstituido: nevera 2–8 °C, 3–4 semanas, protegido de la luz; no agitar.',
+    'Lyophilised 2 mg vials. 2 mg + 1 mL bacteriostatic water = 2 mg/mL → 1 mg = 0.5 mL = 50 U on a U-100 syringe; 0.5 mg = 25 U. With 2 mL (1 mg/mL): 1 mg = 1 mL = 100 U. Reconstituted: refrigerate 2–8 °C, 3–4 weeks, protect from light; do not shake.',
   ),
   storage: t(
     'Liofilizado: nevera 2–8 °C (o −20 °C a largo plazo), protegido de la luz; tolera días a temperatura ambiente durante el transporte. Reconstituido: nevera, no congelar.',
@@ -113,8 +106,8 @@ const cjc1295: CompoundEntry = {
         'IGF-1-mediated growth of occult neoplasms (theoretical)',
       ),
       t(
-        'Pérdida de pulsatilidad de GH con la forma DAC (“GH bleed”): efecto a largo plazo desconocido',
-        'Loss of GH pulsatility with the DAC form (“GH bleed”): long-term effect unknown',
+        'Elevación continua de la GH basal (“GH bleed”): efecto a largo plazo desconocido',
+        'Continuously elevated trough GH (“GH bleed”): long-term effect unknown',
       ),
       t(
         'Hipersensibilidad; una muerte en el programa de fase 2 (no atribuida al fármaco) motivó su interrupción',
@@ -190,8 +183,8 @@ const cjc1295: CompoundEntry = {
     },
     { label: 'WADA Prohibited List — S2 peptide hormones, growth factors and related substances' },
   ],
-  tags: ['ghrh', 'gh', 'igf-1', 'semanal', 'dac', 'investigación'],
-  lastReviewed: '2026-09-19',
+  tags: ['ghrh', 'gh', 'igf-1', 'semanal', 'dac', 'albúmina', 'investigación'],
+  lastReviewed: '2026-09-25',
 }
 
 const ipamorelin: CompoundEntry = {

@@ -173,7 +173,7 @@ export function ExposureCard({
       )}
 
       <div className="mt-3 grid grid-cols-2 gap-px border-t border-line bg-line">
-        <div className="bg-surface px-4 py-3">
+        <div className="bg-panel px-4 py-3">
           <div className="text-[11.5px] font-semibold uppercase tracking-wider text-muted">
             {t('dashboard.titration')}
           </div>
@@ -201,7 +201,7 @@ export function ExposureCard({
             <div className="mt-0.5 text-[13.5px] text-muted">—</div>
           )}
         </div>
-        <div className="bg-surface px-4 py-3">
+        <div className="bg-panel px-4 py-3">
           <div className="text-[11.5px] font-semibold uppercase tracking-wider text-muted">
             {t('dashboard.adherence')}
           </div>

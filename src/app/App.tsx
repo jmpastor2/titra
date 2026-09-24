@@ -1,66 +1,48 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { Splash } from '@/components/layout/Splash'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { OnboardingPage } from '@/features/auth/OnboardingPage'
 import { SetupPage } from '@/features/auth/SetupPage'
-import { HomeRoute } from '@/features/clinic/HomeRoute'
-import { DosesPage } from '@/features/doses/DosesPage'
+import { TodayPage } from '@/features/today/TodayPage'
 import { env } from '@/lib/env'
 import { Providers } from './providers'
 import { UpdatePrompt } from './UpdatePrompt'
 
-// Route-level code splitting: the home screen and dose log ship in the main bundle
-// (they are the daily path); everything else loads on demand.
-const HealthPage = lazy(() =>
-  import('@/features/health/HealthPage').then((m) => ({ default: m.HealthPage })),
+// Route-level code splitting: "Hoy" is the daily path and ships in the main bundle;
+// everything else loads on demand.
+const named = <K extends string>(load: () => Promise<Record<K, React.ComponentType>>, name: K) =>
+  lazy(() => load().then((m) => ({ default: m[name] })))
+
+const DosesPage = named(() => import('@/features/doses/DosesPage'), 'DosesPage')
+const HealthPage = named(() => import('@/features/health/HealthPage'), 'HealthPage')
+const WikiPage = named(() => import('@/features/wiki/WikiPage'), 'WikiPage')
+const CompoundPage = named(() => import('@/features/wiki/CompoundPage'), 'CompoundPage')
+const SubstancePage = named(() => import('@/features/substance/SubstancePage'), 'SubstancePage')
+const MorePage = named(() => import('@/features/more/MorePage'), 'MorePage')
+const ProtocolsPage = named(() => import('@/features/protocols/ProtocolsPage'), 'ProtocolsPage')
+const ProtocolEditorPage = named(
+  () => import('@/features/protocols/ProtocolEditorPage'),
+  'ProtocolEditorPage',
 )
-const WikiPage = lazy(() =>
-  import('@/features/wiki/WikiPage').then((m) => ({ default: m.WikiPage })),
-)
-const CompoundPage = lazy(() =>
-  import('@/features/wiki/CompoundPage').then((m) => ({ default: m.CompoundPage })),
-)
-const MorePage = lazy(() =>
-  import('@/features/more/MorePage').then((m) => ({ default: m.MorePage })),
-)
-const ProtocolsPage = lazy(() =>
-  import('@/features/protocols/ProtocolsPage').then((m) => ({ default: m.ProtocolsPage })),
-)
-const ProtocolEditorPage = lazy(() =>
-  import('@/features/protocols/ProtocolEditorPage').then((m) => ({
-    default: m.ProtocolEditorPage,
-  })),
-)
-const InventoryPage = lazy(() =>
-  import('@/features/inventory/InventoryPage').then((m) => ({ default: m.InventoryPage })),
-)
-const CalculatorPage = lazy(() =>
-  import('@/features/calculator/CalculatorPage').then((m) => ({ default: m.CalculatorPage })),
-)
-const SitesPage = lazy(() =>
-  import('@/features/sites/SitesPage').then((m) => ({ default: m.SitesPage })),
-)
-const SimulatorPage = lazy(() =>
-  import('@/features/simulator/SimulatorPage').then((m) => ({ default: m.SimulatorPage })),
-)
-const SettingsPage = lazy(() =>
-  import('@/features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })),
-)
-const ExportPage = lazy(() =>
-  import('@/features/settings/ExportPage').then((m) => ({ default: m.ExportPage })),
-)
-const ClinicianLinkPage = lazy(() =>
-  import('@/features/clinic/ClinicianLinkPage').then((m) => ({ default: m.ClinicianLinkPage })),
-)
-const PatientDetailPage = lazy(() =>
-  import('@/features/clinic/PatientDetailPage').then((m) => ({ default: m.PatientDetailPage })),
+const InventoryPage = named(() => import('@/features/inventory/InventoryPage'), 'InventoryPage')
+const CalculatorPage = named(() => import('@/features/calculator/CalculatorPage'), 'CalculatorPage')
+const SitesPage = named(() => import('@/features/sites/SitesPage'), 'SitesPage')
+const SimulatorPage = named(() => import('@/features/simulator/SimulatorPage'), 'SimulatorPage')
+const SettingsPage = named(() => import('@/features/settings/SettingsPage'), 'SettingsPage')
+const ExportPage = named(() => import('@/features/settings/ExportPage'), 'ExportPage')
+const SharePage = named(() => import('@/features/share/SharePage'), 'SharePage')
+const PatientDetailPage = named(
+  () => import('@/features/clinic/PatientDetailPage'),
+  'PatientDetailPage',
 )
 
-function Lazy({ children }: { children: React.ReactNode }) {
+function Lazy({ children }: { children: ReactNode }) {
   return <Suspense fallback={<Splash />}>{children}</Suspense>
 }
+
+const page = (el: ReactNode) => <Lazy>{el}</Lazy>
 
 // HashRouter: GitHub Pages has no server-side rewrite, and a hash route also
 // survives being installed to the iOS home screen from any deep link.
@@ -71,136 +53,25 @@ const router = createHashRouter([
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <HomeRoute /> },
-      { path: 'log', element: <DosesPage /> },
-      {
-        path: 'health',
-        element: (
-          <Lazy>
-            <HealthPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'wiki',
-        element: (
-          <Lazy>
-            <WikiPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'wiki/:compoundId',
-        element: (
-          <Lazy>
-            <CompoundPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'more',
-        element: (
-          <Lazy>
-            <MorePage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'protocols',
-        element: (
-          <Lazy>
-            <ProtocolsPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'protocols/new',
-        element: (
-          <Lazy>
-            <ProtocolEditorPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'protocols/:protocolId',
-        element: (
-          <Lazy>
-            <ProtocolEditorPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'inventory',
-        element: (
-          <Lazy>
-            <InventoryPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'calculator',
-        element: (
-          <Lazy>
-            <CalculatorPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'sites',
-        element: (
-          <Lazy>
-            <SitesPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'simulator',
-        element: (
-          <Lazy>
-            <SimulatorPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'settings',
-        element: (
-          <Lazy>
-            <SettingsPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'export',
-        element: (
-          <Lazy>
-            <ExportPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'clinician',
-        element: (
-          <Lazy>
-            <ClinicianLinkPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'patients/:patientId',
-        element: (
-          <Lazy>
-            <PatientDetailPage />
-          </Lazy>
-        ),
-      },
-      {
-        path: 'patients/:patientId/:tab',
-        element: (
-          <Lazy>
-            <PatientDetailPage />
-          </Lazy>
-        ),
-      },
+      { index: true, element: <TodayPage /> },
+      { path: 'log', element: page(<DosesPage />) },
+      { path: 'progress', element: page(<HealthPage />) },
+      { path: 'health', element: <Navigate to="/progress" replace /> },
+      { path: 'wiki', element: page(<WikiPage />) },
+      { path: 'wiki/:compoundId', element: page(<CompoundPage />) },
+      { path: 'substance/:compoundId', element: page(<SubstancePage />) },
+      { path: 'more', element: page(<MorePage />) },
+      { path: 'protocols', element: page(<ProtocolsPage />) },
+      { path: 'protocols/new', element: page(<ProtocolEditorPage />) },
+      { path: 'protocols/:protocolId', element: page(<ProtocolEditorPage />) },
+      { path: 'inventory', element: page(<InventoryPage />) },
+      { path: 'calculator', element: page(<CalculatorPage />) },
+      { path: 'sites', element: page(<SitesPage />) },
+      { path: 'simulator', element: page(<SimulatorPage />) },
+      { path: 'settings', element: page(<SettingsPage />) },
+      { path: 'export', element: page(<ExportPage />) },
+      { path: 'share', element: page(<SharePage />) },
+      { path: 'shared/:patientId', element: page(<PatientDetailPage />) },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

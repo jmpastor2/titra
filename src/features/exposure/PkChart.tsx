@@ -174,7 +174,7 @@ export function PkChart({
             isAnimationActive={false}
             connectNulls={false}
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--surface)' }}
+            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--panel)' }}
           />
           <Line
             dataKey="proj"
@@ -185,7 +185,7 @@ export function PkChart({
             dot={false}
             isAnimationActive={false}
             connectNulls={false}
-            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--surface)' }}
+            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--panel)' }}
           />
           {alt && (
             <Line
@@ -212,7 +212,7 @@ export function PkChart({
               y={0}
               r={4}
               fill="var(--chart-1)"
-              stroke="var(--surface)"
+              stroke="var(--panel)"
               strokeWidth={2}
               ifOverflow="visible"
             />
@@ -224,7 +224,7 @@ export function PkChart({
               y={yMax * 0.96}
               r={3 + Math.min(4, s.severity / 2.5)}
               fill="var(--chart-3)"
-              stroke="var(--surface)"
+              stroke="var(--panel)"
               strokeWidth={2}
               ifOverflow="visible"
             />
@@ -256,7 +256,7 @@ function PkTooltip({
   if (!row) return null
   const v = row.hist ?? row.proj
   return (
-    <div className="rounded-control border border-line bg-surface px-3 py-2 text-[12px] shadow-card">
+    <div className="rounded-control border border-line bg-panel px-3 py-2 text-[12px] shadow-lg">
       <div className="text-muted">
         {format(new Date(label as number), 'EEE d MMM, HH:mm', {
           locale: locale === 'es' ? es : enUS,

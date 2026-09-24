@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Titra",
-    "tagline": "Clinical tracking for GLP-1 and peptides",
+    "tagline": "Your personal peptide lab",
     "disclaimer": "Titra is a logging and reference tool. It does not replace your clinician's judgement or recommend doses. Curves are estimates from population pharmacokinetic models."
   },
   "common": {
@@ -66,7 +66,10 @@
     "wiki": "Wiki",
     "more": "More",
     "patients": "Patients",
-    "clinic": "Clinic"
+    "clinic": "Clinic",
+    "main": "Main",
+    "today": "Today",
+    "progress": "Progress"
   },
   "setup": {
     "title": "Configure Supabase",
@@ -120,7 +123,8 @@
     "clinicCode": "Clinic code",
     "skip": "Not now",
     "clinicianIntro": "As a clinician you get a clinic code your patients enter to share their data with you.",
-    "finish": "Get started"
+    "finish": "Get started",
+    "setup": "Setup"
   },
   "dashboard": {
     "greeting": "Hi, {{name}}",
@@ -183,7 +187,16 @@
     "taken": "Taken",
     "history": "History",
     "filterAll": "All",
-    "deleteDose": "Delete dose"
+    "deleteDose": "Delete dose",
+    "confirm": "Log dose",
+    "otherTime": "Other time",
+    "sameSyringe": "Same syringe",
+    "substance": "Substance",
+    "addToSyringe": "Add to syringe",
+    "noVial": "No vial registered",
+    "eyebrow": "History",
+    "count_one": "{{count}} dose",
+    "count_other": "{{count}} doses"
   },
   "protocols": {
     "title": "Protocols",
@@ -233,7 +246,34 @@
     "ssTime": "90% in {{time}}",
     "notes": "Notes",
     "onlyOneActive": "Only one active protocol per compound is allowed.",
-    "openEndedLastOnly": "Only the last step can be open-ended maintenance. Give the earlier steps a duration."
+    "openEndedLastOnly": "Only the last step can be open-ended maintenance. Give the earlier steps a duration.",
+    "eyebrow": "Lab",
+    "startFrom": "Start from",
+    "fromScratch": "From scratch",
+    "mySaved": "My saved protocols",
+    "sharedSaved": "Shared with me",
+    "labelTemplates": "Drug labels",
+    "substances": "Substances",
+    "pickSubstance": "Choose the substance",
+    "addToSyringe": "Add another to the same syringe",
+    "schedule": "Schedule",
+    "everyN": "Every N days",
+    "onWeekdays": "Weekdays",
+    "every": "Every",
+    "days": "days",
+    "times": "Dosing times",
+    "addTime": "Time",
+    "typicalWeek": "Typical week",
+    "stepsHint": "Step the dose up or add pauses to cycle.",
+    "addPause": "Add pause",
+    "weeksShort": "wk",
+    "details": "Details",
+    "saveAsTemplate": "Save as reusable protocol",
+    "saveAsTemplateHint": "Keep it at hand to repeat or share.",
+    "pickDays": "Pick at least one day",
+    "history": "History",
+    "savedTitle": "Saved protocols",
+    "shared": "shared"
   },
   "symptoms": {
     "title": "Symptoms",
@@ -290,7 +330,14 @@
       "steps": "Steps",
       "protein_g": "Protein",
       "resistance_session": "Resistance session",
-      "sleep_hours": "Sleep"
+      "sleep_hours": "Sleep",
+      "energy": "Energy",
+      "sleep_quality": "Sleep quality",
+      "mood": "Mood",
+      "recovery": "Recovery",
+      "libido": "Libido",
+      "appetite": "Appetite",
+      "focus": "Focus"
     },
     "empty": "No measurements",
     "emptyHint": "Log weight, glucose or body composition to see trends.",
@@ -350,7 +397,13 @@
     "dosesLeft_other": "{{count}} doses left",
     "archive": "Archive",
     "inUse": "In use for {{days}} d",
-    "inUseWarning": "Beyond the recommended {{days}} d after opening"
+    "inUseWarning": "Beyond the recommended {{days}} d after opening",
+    "eyebrow": "Lab",
+    "diluent": "Bacteriostatic water",
+    "diluentHint": "With the vial content, Titra works out concentration and units.",
+    "remainingHint": "Leave empty if the vial is full.",
+    "openedShort": "In use",
+    "expiresShort": "Expires"
   },
   "calculator": {
     "title": "Reconstitution calculator",
@@ -482,7 +535,9 @@
       "iv": "Intravenous",
       "topical": "Topical",
       "sl": "Sublingual"
-    }
+    },
+    "eyebrow": "Learn",
+    "mine": "Your substances"
   },
   "simulator": {
     "title": "Simulator",
@@ -589,7 +644,20 @@
     "simulator": "Simulator",
     "clinician": "My clinician",
     "settings": "Settings",
-    "export": "Export"
+    "export": "Export",
+    "eyebrow": "Titra",
+    "lab": "Lab",
+    "tools": "Tools",
+    "account": "Account",
+    "protocolsHint": "Substances, doses, days and cycles",
+    "inventoryHint": "Remaining, concentration and expiry",
+    "sitesHint": "Rotation and usage map",
+    "calculatorHint": "Reconstitution and U-100 units",
+    "simulatorHint": "What if I skip a dose or switch drug?",
+    "share": "Share",
+    "shareHint": "Show your control to your clinician",
+    "exportHint": "CSV and backup",
+    "settingsHint": "Profile, theme and language"
   },
   "export": {
     "title": "Export",
@@ -627,5 +695,84 @@
     "invalidNumber": "Invalid number",
     "network": "Offline. Changes will sync when you are back online.",
     "notFound": "Not found"
+  },
+  "today": {
+    "title": "Today",
+    "dayN": "day {{n}}",
+    "doses": "doses",
+    "next": "Next",
+    "dueNow": "Due now",
+    "inTime": "In {{time}}",
+    "overdueBy": "Overdue by {{time}}",
+    "missed": "Missed",
+    "takenAt": "Taken {{time}}",
+    "taken": "Taken",
+    "logNow": "Log now",
+    "allDone": "All done for today. Nice work.",
+    "nothingToday": "Nothing scheduled today.",
+    "agenda": "Agenda",
+    "levels": "Levels",
+    "manage": "Manage",
+    "quick": "Quick log",
+    "freeDose": "One-off dose",
+    "checkin": "Check-in",
+    "learn": "Learn",
+    "readMore": "Read entry",
+    "onBoard": "On board",
+    "lastDose": "Last dose",
+    "strip": "Today's doses across the day"
+  },
+  "setupLab": {
+    "title": "Set up your lab",
+    "intro": "Three steps and Titra starts working for you.",
+    "protocol": "Create your first protocol",
+    "protocolHint": "Substance, dose, days and times. Same-syringe stacks included.",
+    "vial": "Register your vial",
+    "vialHint": "Content and bacteriostatic water: Titra works out syringe units.",
+    "learn": "Learn what you take",
+    "learnHint": "Entries for 99 compounds with mechanism, half-life and evidence.",
+    "freeDose": "Log a one-off dose"
+  },
+  "picker": {
+    "title": "Choose substance",
+    "mine": "In use"
+  },
+  "checkin": {
+    "title": "Check-in",
+    "intro": "Rate only what you want. In a few weeks you will see it move.",
+    "nothing": "Move at least one slider",
+    "emptyTitle": "No check-ins yet",
+    "emptyHint": "Energy, sleep, mood, recovery… One minute a day shows you what each protocol does.",
+    "deltaHint": "The arrow compares against your first week of entries."
+  },
+  "progress": {
+    "eyebrow": "My improvements",
+    "title": "Progress",
+    "wellbeing": "Wellbeing",
+    "body": "Body"
+  },
+  "share": {
+    "eyebrow": "Ecosystem",
+    "title": "Share",
+    "myCode": "Your code",
+    "myCodeHint": "Give it to anyone who wants to share their control with you. Your code gives no access to your data.",
+    "shareMine": "Share my control",
+    "shareMineHint": "Enter the code of whoever will see it, for example your clinician. Read-only, and you can revoke it any time.",
+    "share": "Share",
+    "linked": "Control shared",
+    "viewers": "Who sees my control",
+    "noViewers": "Nobody sees your control yet.",
+    "sharedWithMe": "Shared with me",
+    "noneSharedWithMe": "Nobody has shared their control with you.",
+    "readOnly": "Read-only",
+    "propose": "Propose protocol"
+  },
+  "substance": {
+    "noCurve": "No human pharmacokinetic data to draw its curve. Titra still tracks doses, sites and what is left.",
+    "protocols": "Protocols",
+    "noProtocol": "Not in any protocol.",
+    "vials": "Vials",
+    "noVial": "No vials registered.",
+    "recent": "Recent doses"
   }
 }

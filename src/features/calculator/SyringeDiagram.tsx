@@ -41,15 +41,15 @@ export function SyringeDiagram({ units, max = 100 }: { units: number; max?: numb
           width={bw}
           height={bh}
           rx={4}
-          fill="var(--surface-2)"
+          fill="var(--panel-2)"
           stroke="var(--line)"
           strokeWidth={1.5}
         />
         {/* fill */}
-        <rect x={bx} y={by} width={fill} height={bh} rx={4} fill="var(--brand)" opacity={0.85} />
+        <rect x={bx} y={by} width={fill} height={bh} rx={4} fill="var(--signal)" opacity={0.85} />
         {/* plunger */}
         <rect x={bx + fill - 3} y={by - 4} width={4} height={bh + 8} rx={2} fill="var(--ink-2)" />
-        <rect x={bx - 22} y={by + 2} width={20} height={bh - 4} rx={3} fill="var(--surface-3)" />
+        <rect x={bx - 22} y={by + 2} width={20} height={bh - 4} rx={3} fill="var(--panel-3)" />
         {/* ticks */}
         {Array.from({ length: max / 2 + 1 }, (_, i) => {
           const u = i * 2
@@ -91,7 +91,7 @@ export function SyringeDiagram({ units, max = 100 }: { units: number; max?: numb
           textAnchor={clamped > max * 0.85 ? 'end' : 'middle'}
           fontSize={12}
           fontWeight={700}
-          fill="var(--brand-strong)"
+          fill="var(--signal)"
           fontFamily="var(--font-mono)"
         >
           {clamped} U

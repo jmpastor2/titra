@@ -117,7 +117,7 @@ export function CalculatorPage() {
 
           {result && (
             <>
-              <Card tone="brand">
+              <Card tone="signal">
                 <div className="grid grid-cols-2 gap-4">
                   <Result
                     label={t('calculator.concentration')}
@@ -189,7 +189,7 @@ export function CalculatorPage() {
             </div>
           </Card>
           {pen && (
-            <Card tone="brand">
+            <Card tone="signal">
               <div className="grid grid-cols-2 gap-4">
                 <Result label={t('calculator.clicks')} value={String(pen.clicks)} unit="" big />
                 <Result

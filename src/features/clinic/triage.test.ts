@@ -37,6 +37,8 @@ const protocol = (patientId: string): ProtocolRow => ({
   unit: 'mg',
   start_date: '2026-01-05',
   time_of_day: '08:00',
+  times: ['08:00'],
+  components: [],
   steps: [
     { doseMg: 0.25, intervalDays: 7, durationWeeks: 4 },
     { doseMg: 0.5, intervalDays: 7, durationWeeks: null },
@@ -57,6 +59,7 @@ const dose = (patientId: string, iso: string): DoseRow => ({
   administered_at: iso,
   site_id: 'abd_ul',
   inventory_id: null,
+  batch_id: null,
   notes: null,
   created_at: iso,
 })
@@ -143,5 +146,36 @@ describe('summarisePatients', () => {
     })
     expect(out[0]!.flags).toContain('lowAdherence')
     expect(out[0]!.adherenceRatio).toBeLessThan(0.7)
+  })
+})
+
+describe('summarisePatients with several peptides', () => {
+  it('flags an overdue second protocol even when the first is on time', () => {
+    const a = profile('a', 'Ana')
+    const weekly = protocol('a')
+    const second: ProtocolRow = {
+      ...protocol('a'),
+      id: 'p-a-2',
+      compound_id: 'tirzepatide',
+      created_at: '2026-01-06T00:00:00Z',
+    }
+    const out = summarisePatients({
+      patients: [a],
+      protocols: [weekly, second],
+      doses: [
+        dose('a', '2026-02-28T08:00:00'),
+        {
+          ...dose('a', '2026-02-01T08:00:00'),
+          id: 'tz',
+          compound_id: 'tirzepatide',
+          protocol_id: 'p-a-2',
+        },
+      ],
+      symptoms: [],
+      weights: [],
+      now: NOW,
+    })
+    expect(out[0]!.flags).toContain('overdue')
+    expect(out[0]!.protocol?.id).toBe('p-a-2')
   })
 })

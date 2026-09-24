@@ -1,6 +1,7 @@
 import type { CompoundCategory } from '@/domain/types'
 import type { CompoundEntry } from '../schema'
 import { COGNITIVE_LONGEVITY } from './cognitive-longevity'
+import { GH_AXIS_EXTRA } from './gh-axis-extra'
 import { GH_REPAIR_IMMUNE } from './gh-repair-immune'
 import { GH_REPAIR_IMMUNE_2 } from './gh-repair-immune-2'
 import { HORMONAL } from './hormonal'
@@ -25,6 +26,7 @@ export const COMPOUNDS: readonly CompoundEntry[] = [
   ...HORMONAL,
   ...GH_REPAIR_IMMUNE,
   ...GH_REPAIR_IMMUNE_2,
+  ...GH_AXIS_EXTRA,
   ...METABOLIC_SEXUAL_COGNITIVE_LONGEVITY,
   ...COGNITIVE_LONGEVITY,
   ...METABOLIC_SEXUAL_OTHER,

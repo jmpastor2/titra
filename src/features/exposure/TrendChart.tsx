@@ -26,6 +26,7 @@ export function TrendChart({
   refRange,
   color = 'var(--chart-1)',
   digits = 1,
+  range,
 }: {
   points: TrendPoint[]
   unit: string
@@ -34,6 +35,8 @@ export function TrendChart({
   refRange?: { low?: number | null; high?: number | null }
   color?: string
   digits?: number
+  /** Fixed y domain, e.g. [0, 10] for scores, so small multiples share a scale. */
+  range?: [number, number]
 }) {
   const { i18n } = useTranslation()
   const locale: Locale = i18n.language.startsWith('en') ? 'en' : 'es'
@@ -67,7 +70,7 @@ export function TrendChart({
             minTickGap={32}
           />
           <YAxis
-            domain={[lo - pad, hi + pad]}
+            domain={range ?? [lo - pad, hi + pad]}
             tick={{ fill: 'var(--muted)', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
@@ -102,12 +105,15 @@ export function TrendChart({
             type="monotone"
             stroke={color}
             strokeWidth={2}
+            style={{
+              filter: `drop-shadow(0 0 4px color-mix(in oklab, ${color} 60%, transparent))`,
+            }}
             dot={
               data.length <= 40
-                ? { r: 3, strokeWidth: 2, stroke: 'var(--surface)', fill: color }
+                ? { r: 3, strokeWidth: 2, stroke: 'var(--panel)', fill: color }
                 : false
             }
-            activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--surface)' }}
+            activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--panel)' }}
             isAnimationActive={false}
           />
         </LineChart>
@@ -136,7 +142,7 @@ function TrendTooltip({
   const v = payload[0]?.value
   if (typeof v !== 'number') return null
   return (
-    <div className="rounded-control border border-line bg-surface px-3 py-2 text-[12px] shadow-card">
+    <div className="rounded-control border border-line bg-panel px-3 py-2 text-[12px] shadow-lg">
       <div className="text-muted">
         {format(new Date(label as number), 'd MMM yyyy', { locale: locale === 'es' ? es : enUS })}
       </div>

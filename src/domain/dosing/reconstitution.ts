@@ -88,3 +88,28 @@ export function penClicks(
 function assertPositive(v: number, name: string): void {
   if (!(Number.isFinite(v) && v > 0)) throw new RangeError(`${name} must be a positive number`)
 }
+
+/* ------------------------------------------------------------------ syringe units */
+
+/** mg in a draw of `units` on a U-100 syringe from a vial at `concentrationMgPerMl`. */
+export function unitsToMg(units: number, concentrationMgPerMl: number): number {
+  assertPositive(concentrationMgPerMl, 'concentrationMgPerMl')
+  if (!(units >= 0)) throw new RangeError('units must be >= 0')
+  return (units / UNITS_PER_ML_U100) * concentrationMgPerMl
+}
+
+/** U-100 units needed to draw `mg` from a vial at `concentrationMgPerMl`. */
+export function mgToUnits(mg: number, concentrationMgPerMl: number): number {
+  assertPositive(concentrationMgPerMl, 'concentrationMgPerMl')
+  if (!(mg >= 0)) throw new RangeError('mg must be >= 0')
+  return (mg / concentrationMgPerMl) * UNITS_PER_ML_U100
+}
+
+/** Concentration of a reconstituted vial, or null when either input is missing. */
+export function vialConcentration(
+  vialMg: number | null | undefined,
+  diluentMl: number | null | undefined,
+): number | null {
+  if (!vialMg || !diluentMl || !(vialMg > 0) || !(diluentMl > 0)) return null
+  return vialMg / diluentMl
+}

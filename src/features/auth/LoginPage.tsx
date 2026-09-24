@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
-import type { UserRole } from '@/data/database.types'
 import { currentLocale } from '@/i18n'
 import { requireSupabase } from '@/lib/supabase'
 import { useSession } from './SessionProvider'
@@ -20,7 +19,6 @@ export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
-  const [role, setRole] = useState<UserRole>('patient')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -46,7 +44,7 @@ export function LoginPage() {
           password,
           options: {
             emailRedirectTo: redirectTo,
-            data: { display_name: name.trim(), role, locale: currentLocale() },
+            data: { display_name: name.trim(), locale: currentLocale() },
           },
         })
         if (res.error) throw res.error
@@ -85,16 +83,18 @@ export function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-dvh place-items-center bg-canvas px-5 py-10">
+    <div className="grid min-h-dvh place-items-center px-5 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <img
             src={`${import.meta.env.BASE_URL}icons/icon-192.png`}
             alt=""
-            className="size-20 rounded-[22px] shadow-card"
+            className="glow size-20 rounded-[22px] border border-line-strong"
           />
-          <h1 className="mt-4 text-[30px] font-bold tracking-tight">{t('app.name')}</h1>
-          <p className="text-[14px] text-muted">{t('app.tagline')}</p>
+          <h1 className="mt-5 font-display text-[40px] font-bold leading-none tracking-[0.06em] text-glow">
+            TITRA
+          </h1>
+          <p className="spec mt-2">{t('app.tagline')}</p>
         </div>
 
         <form onSubmit={submit} className="card flex flex-col gap-4 p-5">
@@ -124,18 +124,6 @@ export function LoginPage() {
                   />
                 )}
               </Field>
-              <Field label={t('auth.iAm')} hint={t('auth.roleHint')}>
-                {() => (
-                  <Segmented<UserRole>
-                    value={role}
-                    onChange={setRole}
-                    options={[
-                      { value: 'patient', label: t('auth.rolePatient') },
-                      { value: 'clinician', label: t('auth.roleClinician') },
-                    ]}
-                  />
-                )}
-              </Field>
             </>
           )}
 
@@ -161,7 +149,7 @@ export function LoginPage() {
                 mode === 'signin' && (
                   <button
                     type="button"
-                    className="text-[12.5px] font-medium text-brand-strong"
+                    className="text-[12.5px] font-medium text-signal"
                     onClick={() => setMode('reset')}
                   >
                     {t('auth.forgot')}

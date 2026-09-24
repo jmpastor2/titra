@@ -5,101 +5,133 @@ import {
   FlaskConical,
   Package,
   Settings,
+  Share2,
   Sparkles,
-  Stethoscope,
   Target,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
+import { SectionTitle } from '@/components/ui/primitives'
 import { env } from '@/lib/env'
+
+interface Item {
+  icon: ReactNode
+  label: string
+  hint: string
+  to: string
+}
 
 export function MorePage() {
   const { t } = useTranslation()
   const nav = useNavigate()
-  const { patient } = usePatientScope()
-  const isClinician = patient?.role === 'clinician'
 
-  const groups: { items: { icon: React.ReactNode; label: string; to: string }[] }[] = [
+  const groups: { title: string; index: string; items: Item[] }[] = [
     {
+      title: t('more.lab'),
+      index: '01',
       items: [
         {
           icon: <FlaskConical className="size-[18px]" />,
           label: t('more.protocols'),
+          hint: t('more.protocolsHint'),
           to: '/protocols',
         },
-        ...(isClinician
-          ? []
-          : [
-              {
-                icon: <Package className="size-[18px]" />,
-                label: t('more.inventory'),
-                to: '/inventory',
-              },
-              { icon: <Target className="size-[18px]" />, label: t('more.sites'), to: '/sites' },
-            ]),
+        {
+          icon: <Package className="size-[18px]" />,
+          label: t('more.inventory'),
+          hint: t('more.inventoryHint'),
+          to: '/inventory',
+        },
+        {
+          icon: <Target className="size-[18px]" />,
+          label: t('more.sites'),
+          hint: t('more.sitesHint'),
+          to: '/sites',
+        },
+      ],
+    },
+    {
+      title: t('more.tools'),
+      index: '02',
+      items: [
         {
           icon: <Calculator className="size-[18px]" />,
           label: t('more.calculator'),
+          hint: t('more.calculatorHint'),
           to: '/calculator',
         },
         {
           icon: <Sparkles className="size-[18px]" />,
           label: t('more.simulator'),
+          hint: t('more.simulatorHint'),
           to: '/simulator',
         },
       ],
     },
     {
+      title: t('more.account'),
+      index: '03',
       items: [
-        ...(isClinician
-          ? []
-          : [
-              {
-                icon: <Stethoscope className="size-[18px]" />,
-                label: t('more.clinician'),
-                to: '/clinician',
-              },
-            ]),
-        { icon: <Download className="size-[18px]" />, label: t('more.export'), to: '/export' },
-        { icon: <Settings className="size-[18px]" />, label: t('more.settings'), to: '/settings' },
+        {
+          icon: <Share2 className="size-[18px]" />,
+          label: t('more.share'),
+          hint: t('more.shareHint'),
+          to: '/share',
+        },
+        {
+          icon: <Download className="size-[18px]" />,
+          label: t('more.export'),
+          hint: t('more.exportHint'),
+          to: '/export',
+        },
+        {
+          icon: <Settings className="size-[18px]" />,
+          label: t('more.settings'),
+          hint: t('more.settingsHint'),
+          to: '/settings',
+        },
       ],
     },
   ]
 
   return (
     <div>
-      <PageHeader title={t('more.title')} large />
+      <PageHeader eyebrow={t('more.eyebrow')} title={t('more.title')} large />
 
       <div className="flex flex-col gap-4">
         {groups.map((g) => (
-          <Card key={g.items[0]?.to ?? 'group'} padded={false} className="px-4">
-            <ul className="divide-y divide-line">
-              {g.items.map((item) => (
-                <li key={item.to}>
-                  <button
-                    type="button"
-                    onClick={() => nav(item.to)}
-                    className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3.5 text-left transition active:bg-surface-2"
-                  >
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-brand-strong">
-                      {item.icon}
-                    </span>
-                    <span className="flex-1 text-[15px] font-medium">{item.label}</span>
-                    <ChevronRight className="size-4 shrink-0 text-muted" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </Card>
+          <section key={g.index}>
+            <SectionTitle index={g.index}>{g.title}</SectionTitle>
+            <Card padded={false} className="px-4">
+              <ul className="divide-y divide-line">
+                {g.items.map((item) => (
+                  <li key={item.to}>
+                    <button
+                      type="button"
+                      onClick={() => nav(item.to)}
+                      className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition active:bg-panel-2"
+                    >
+                      <span className="grid size-10 shrink-0 place-items-center rounded-[14px] border border-signal/20 bg-signal-soft text-signal">
+                        {item.icon}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[15px] font-semibold">{item.label}</span>
+                        <span className="block truncate text-[12.5px] text-muted">{item.hint}</span>
+                      </span>
+                      <ChevronRight className="size-4 shrink-0 text-muted" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </section>
         ))}
       </div>
 
-      <p className="mt-6 text-center text-[11.5px] text-muted">
-        {t('settings.version', { v: env.appVersion })}
-      </p>
+      <p className="spec mt-8 text-center">TITRA · {env.appVersion}</p>
       <p className="mt-2 px-2 text-center text-[11px] leading-relaxed text-muted">
         {t('app.disclaimer')}
       </p>

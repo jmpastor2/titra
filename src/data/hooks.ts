@@ -19,6 +19,7 @@ import type {
   ProfileRow,
   ProtocolRow,
   ProtocolStatus,
+  SavedProtocolRow,
   SymptomRow,
 } from './database.types'
 
@@ -39,6 +40,7 @@ export const qk = {
   clinicalNotes: (pid: string) => ['clinical_notes', pid] as const,
   compoundNotes: (cid: string) => ['compound_notes', cid] as const,
   clinicBundle: (uid: string) => ['clinic_bundle', uid] as const,
+  savedProtocols: (uid: string) => ['saved_protocols', uid] as const,
 }
 
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -136,12 +138,21 @@ export function useDoses(patientId: string | undefined, days = 365) {
   })
 }
 
+/**
+ * Log one administration. A stack (several compounds in one syringe) is several rows
+ * written in a single request, tied together by `batch_id`.
+ */
 export function useAddDose(patientId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: Insert<'doses'>) => {
+    mutationFn: async (input: Insert<'doses'> | Insert<'doses'>[]) => {
       const sb = requireSupabase()
-      return unwrap(await sb.from('doses').insert(input).select('*').single())
+      const rows = Array.isArray(input) ? input : [input]
+      if (rows.length > 1) {
+        const batchId = crypto.randomUUID()
+        rows.forEach((r) => (r.batch_id ??= batchId))
+      }
+      return unwrap(await sb.from('doses').insert(rows).select('*'))
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['doses', patientId] })
@@ -540,5 +551,51 @@ export function useSaveCompoundNote(clinicianId: string, compoundId: string) {
       )
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.compoundNotes(compoundId) }),
+  })
+}
+
+/* ------------------------------ Saved protocols ------------------------------ */
+
+/**
+ * My saved regimens plus those saved by people I share my control with
+ * (RLS returns both), so a clinician's standard protocols are one tap away.
+ */
+export function useSavedProtocols(userId: string | undefined) {
+  return useQuery({
+    queryKey: qk.savedProtocols(userId ?? ''),
+    enabled: Boolean(userId),
+    queryFn: async (): Promise<SavedProtocolRow[]> => {
+      const sb = requireSupabase()
+      return unwrap(await sb.from('saved_protocols').select('*').order('name'))
+    },
+  })
+}
+
+export function useSaveSavedProtocol(userId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: Insert<'saved_protocols'> & { id?: string }) => {
+      const sb = requireSupabase()
+      if (input.id) {
+        const { id, ...patch } = input
+        return unwrap(
+          await sb.from('saved_protocols').update(patch).eq('id', id).select('*').single(),
+        )
+      }
+      return unwrap(await sb.from('saved_protocols').insert(input).select('*').single())
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.savedProtocols(userId) }),
+  })
+}
+
+export function useDeleteSavedProtocol(userId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const sb = requireSupabase()
+      const { error } = await sb.from('saved_protocols').delete().eq('id', id)
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.savedProtocols(userId) }),
   })
 }

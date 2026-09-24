@@ -189,7 +189,7 @@ export function CompoundPage() {
                         {pick(tpl.source)}
                       </span>
                     </span>
-                    <span className="flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-brand-strong">
+                    <span className="flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-signal">
                       <Plus className="size-4" /> {t('wiki.useTemplate')}
                     </span>
                   </button>
@@ -270,7 +270,7 @@ export function CompoundPage() {
                     href={r.url}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="inline-flex items-start gap-1.5 text-[13.5px] text-brand-strong underline underline-offset-2"
+                    className="inline-flex items-start gap-1.5 text-[13.5px] text-signal underline underline-offset-2"
                   >
                     {r.label}
                     <ExternalLink className="mt-0.5 size-3.5 shrink-0" />
@@ -304,7 +304,7 @@ function SteadyStatePreview({ compoundId }: { compoundId: string }) {
   if (!last) return null
   const ss = steadyState(last.doseMg, last.intervalDays * 24, compound.pk)
   return (
-    <div className="mt-3 rounded-control bg-surface-2 p-3">
+    <div className="mt-3 rounded-control bg-panel-2 p-3">
       <div className="text-[11.5px] font-semibold uppercase tracking-wide text-muted">
         {t('protocols.previewHint')} · {pick(tpl.name)}
       </div>
@@ -457,7 +457,7 @@ function BulletList({ items, pick }: { items: L10n[]; pick: (l: L10n) => string 
 
 function PkStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-control bg-surface-2 px-3 py-2">
+    <div className="rounded-control bg-panel-2 px-3 py-2">
       <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{label}</div>
       <div className="tabular mt-0.5 text-[16px] font-bold">{value}</div>
     </div>
