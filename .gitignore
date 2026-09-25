@@ -31,3 +31,6 @@ dist-ssr
 # pwa dev
 dev-dist
 coverage
+
+# Supabase CLI local state
+supabase/.temp/
