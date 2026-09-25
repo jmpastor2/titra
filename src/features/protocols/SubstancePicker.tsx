@@ -69,7 +69,7 @@ function Picker({
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
           <input
             type="search"
-            autoFocus
+            data-autofocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('wiki.search')}

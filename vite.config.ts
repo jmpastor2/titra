@@ -20,10 +20,10 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['icons/*.png', 'icons/*.svg'],
         manifest: {
           id: '/titra/',
-          name: 'Titra · GLP-1 & péptidos',
+          name: 'Titra · laboratorio de péptidos',
           short_name: 'Titra',
           description:
-            'Seguimiento clínico de GLP-1 y péptidos: farmacocinética, titulación, síntomas y wiki.',
+            'Tu laboratorio personal de péptidos: pautas, tomas, jeringa, viales, niveles, avisos y wiki.',
           lang: 'es',
           dir: 'ltr',
           start_url: base,
@@ -56,6 +56,8 @@ export default defineConfig(({ mode }) => {
               handler: 'NetworkOnly',
             },
           ],
+          // Push and notification-click handlers for dose reminders (public/push-sw.js).
+          importScripts: ['push-sw.js'],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
         },

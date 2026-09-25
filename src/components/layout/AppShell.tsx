@@ -1,9 +1,11 @@
 import { WifiOff } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { PatientScopeProvider } from '@/app/scope'
 import { useProfile } from '@/data/hooks'
 import { useSession } from '@/features/auth/SessionProvider'
+import { ReminderAgent } from '@/features/reminders/useReminders'
 import { useOnline } from '@/lib/useOnline'
 import { Splash } from './Splash'
 import { TabBar } from './TabBar'
@@ -13,6 +15,7 @@ import { TabBar } from './TabBar'
  * signed-in user's own control and renders the floating dock.
  */
 export function AppShell() {
+  useScrollMemory()
   const { status, user } = useSession()
   const profile = useProfile(user?.id)
   const online = useOnline()
@@ -39,7 +42,27 @@ export function AppShell() {
           <Outlet />
         </main>
         <TabBar />
+        <ReminderAgent />
       </div>
     </PatientScopeProvider>
   )
+}
+
+/**
+ * New screens start at the top; going back returns to where you were. HashRouter has no
+ * data-router ScrollRestoration, so positions are kept per history entry here.
+ */
+function useScrollMemory() {
+  const location = useLocation()
+  const navType = useNavigationType()
+  const positions = useRef(new Map<string, number>())
+
+  useEffect(() => {
+    const key = location.key
+    const saved = positions.current.get(key)
+    window.scrollTo(0, navType === 'POP' && saved !== undefined ? saved : 0)
+    const onScroll = () => positions.current.set(key, window.scrollY)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [location.key, navType])
 }

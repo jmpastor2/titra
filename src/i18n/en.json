@@ -162,15 +162,15 @@
     "whatIf": "Simulator",
     "noDosesYet": "No doses logged yet",
     "pkNotAvailable": "This compound has no pharmacokinetic parameters for the curve.",
-    "clinicianNotes": "Notes from your clinician"
+    "clinicianNotes": "Shared notes"
   },
   "doses": {
     "title": "Dose log",
     "log": "Log dose",
-    "logTitle": "New dose",
+    "logTitle": "Log administration",
     "compound": "Compound",
     "protocol": "Protocol",
-    "noProtocolOption": "No protocol (one-off dose)",
+    "noProtocolOption": "No protocol (one-off)",
     "dose": "Dose",
     "site": "Injection site",
     "suggestedSite": "Suggested",
@@ -196,7 +196,8 @@
     "noVial": "No vial registered",
     "eyebrow": "History",
     "count_one": "{{count}} dose",
-    "count_other": "{{count}} doses"
+    "count_other": "{{count}} doses",
+    "vialShort": "Only {{left}} left in this vial: prepare a new one."
   },
   "protocols": {
     "title": "Protocols",
@@ -205,7 +206,7 @@
     "fromTemplate": "From template",
     "custom": "Custom",
     "template": "Template",
-    "templateHint": "Templates mirror labels and trial arms. Your clinician decides the regimen; Titra does not recommend doses.",
+    "templateHint": "Templates reproduce published labels and trial arms. They are a reference: Titra does not recommend doses.",
     "name": "Name",
     "compound": "Compound",
     "route": "Route",
@@ -227,9 +228,9 @@
       "archived": "Archived"
     },
     "empty": "No protocols",
-    "emptyHint": "A protocol defines compound, dose, interval and titration steps.",
+    "emptyHint": "A protocol sets the substance, dose, days, times and steps.",
     "createdBy": "Created by {{name}}",
-    "byClinician": "Regimen from your clinician",
+    "byClinician": "Shared proposal",
     "activate": "Activate",
     "pause": "Pause",
     "complete": "Mark completed",
@@ -245,7 +246,7 @@
     "ssAvg": "Average",
     "ssTime": "90% in {{time}}",
     "notes": "Notes",
-    "onlyOneActive": "Only one active protocol per compound is allowed.",
+    "onlyOneActive": "Only one active protocol per substance.",
     "openEndedLastOnly": "Only the last step can be open-ended maintenance. Give the earlier steps a duration.",
     "eyebrow": "Lab",
     "startFrom": "Start from",
@@ -422,7 +423,7 @@
     "penClicks": "Pen clicks",
     "mgPerClick": "mg per click",
     "clicks": "clicks",
-    "warning": "Always check the label and your clinician's regimen before drawing a syringe."
+    "warning": "Always check the vial label and your protocol before drawing up."
   },
   "sites": {
     "title": "Injection sites",
@@ -492,7 +493,7 @@
     "us": "US",
     "eu": "EU",
     "lastReviewed": "Reviewed {{date}}",
-    "clinicianNote": "Note from your clinician",
+    "clinicianNote": "Shared note",
     "myNote": "My note for patients",
     "myNoteHint": "Visible to your linked patients on this page.",
     "useTemplate": "Use this regimen",
@@ -618,7 +619,7 @@
     "themeDark": "Dark",
     "language": "Language",
     "units": "Units",
-    "proteinGPerKg": "Protein target (g/kg)",
+    "proteinGPerKg": "Protein",
     "notifications": "Reminders",
     "notificationsHint": "Reminders require installing Titra on the home screen (iOS 16.4+).",
     "enablePush": "Enable reminders",
@@ -774,5 +775,69 @@
     "vials": "Vials",
     "noVial": "No vials registered.",
     "recent": "Recent doses"
+  },
+  "draw": {
+    "title": "Prepare the syringe",
+    "firstLoad": "{{units}} U",
+    "nextLoad": "+{{units}} → {{to}} U",
+    "mixHint": "Draw each vial in this order on top of what is already in the syringe, without emptying it.",
+    "notFits": "It does not fit in a 1 mL syringe: split it into two injections.",
+    "imprecise": "{{names}}: under 2 U is hard to measure. More bacteriostatic water makes the draw more precise.",
+    "unknown": "No concentration for {{names}}: add its vial with the bacteriostatic water to see units.",
+    "aria": "{{capacity}}-unit syringe drawn to {{units}} U"
+  },
+  "reminders": {
+    "eyebrow": "Reminders",
+    "title": "Dose reminders",
+    "subtitle": "A notification when each protocol is due, with the dose and the units to draw.",
+    "toggle": "Remind me when it is due",
+    "lead": "Lead time",
+    "onTime": "On time",
+    "minutesBefore": "{{n}} min",
+    "test": "Send a test",
+    "deviceOn": "Turn on for this device",
+    "deviceOff": "Turn off here",
+    "enabled": "Reminders on",
+    "disabled": "Reminders off",
+    "next": "Next reminders",
+    "serverOk_one": "{{count}} reminder scheduled on the server for the next 14 days.",
+    "serverOk_other": "{{count}} reminders scheduled on the server for the next 14 days.",
+    "serverMissing": "The reminder server is not set up yet (docs/notificaciones.md). Meanwhile you get reminders while the app is open.",
+    "serverError": "Could not schedule reminders: {{message}}",
+    "serverPending": "Scheduling reminders…",
+    "pushTitle": "Time for {{names}}",
+    "pushTitleSoon": "In {{min}} min: {{names}}",
+    "pushBodyStack": "{{dose}} · draw {{total}} U ({{loads}}) · {{time}}",
+    "pushBodyUnits": "{{dose}} · draw {{total}} U · {{time}}",
+    "pushBody": "{{dose}} · {{time}}",
+    "testTitle": "Titra",
+    "testBody": "This is how your reminders will look.",
+    "errors": {
+      "no-key": "The public reminder key is missing (VITE_VAPID_PUBLIC_KEY).",
+      "no-sw": "Reminders need the published or installed app: there is no service worker here.",
+      "denied": "Notifications are blocked for Titra.",
+      "server": "Could not save this device on the server."
+    },
+    "device": {
+      "checking": "Checking this device…",
+      "on": "This device gets reminders",
+      "off": "This device is not subscribed",
+      "denied": "Notifications blocked",
+      "no-sw": "No service worker here",
+      "ios-install": "Install Titra to get reminders",
+      "unsupported": "This browser does not support reminders",
+      "local": "Reminders while the app is open"
+    },
+    "deviceHint": {
+      "checking": "One moment.",
+      "on": "They arrive even when the app is closed.",
+      "off": "Turn it on to get reminders here.",
+      "denied": "Allow notifications for Titra in the browser or system settings and come back.",
+      "no-sw": "The dev server does not install it. The published app does.",
+      "ios-install": "On iPhone: Safari → Share → Add to Home Screen. Open Titra from the icon and turn reminders on here (iOS 16.4 or later).",
+      "unsupported": "Use Safari with the installed app on iPhone, or Chrome or Edge.",
+      "local": "Once the reminder server is set up (migration 3) they also arrive with the app closed."
+    },
+    "hourBefore": "1 h"
   }
 }

@@ -10,6 +10,7 @@ import { Segmented } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { useUpdateProfile } from '@/data/hooks'
 import { setLocale, type AppLocale } from '@/i18n'
+import { RemindersCard } from '@/features/reminders/RemindersCard'
 import { env } from '@/lib/env'
 import { getSupabase } from '@/lib/supabase'
 import { useTheme, type ThemePref } from '@/lib/theme'
@@ -54,6 +55,8 @@ export function SettingsPage() {
       <PageHeader title={t('settings.title')} back="/more" />
 
       <div className="flex flex-col gap-3">
+        <RemindersCard />
+
         <Card title={t('settings.profile')}>
           <div className="flex flex-col gap-4">
             <Field label={t('auth.displayName')}>

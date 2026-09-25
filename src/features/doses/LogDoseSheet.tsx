@@ -12,14 +12,22 @@ import { compoundColor } from '@/content/substanceColor'
 import type { DoseRow, InventoryRow, ProtocolRow } from '@/data/database.types'
 import { useAddDose, useDoses, useInventory, useProtocols } from '@/data/hooks'
 import { toProtocolLike } from '@/data/mappers'
+import { planDraw } from '@/domain/dosing/draw'
 import { mgToUnits, unitsToMg } from '@/domain/dosing/reconstitution'
 import { currentStep } from '@/domain/dosing/schedule'
 import { INJECTION_SITES, suggestNextSite } from '@/domain/sites/injectionSites'
 import type { DoseUnit } from '@/domain/types'
-import { concentrationOf } from '@/features/inventory/vials'
+import { activeVial, concentrationOf } from '@/features/inventory/vials'
 import { SubstancePicker } from '@/features/protocols/SubstancePicker'
-import { fmtNumber, fromDateTimeInputs, toDateInputValue, toTimeInputValue } from '@/lib/format'
+import {
+  fmtDose,
+  fmtNumber,
+  fromDateTimeInputs,
+  toDateInputValue,
+  toTimeInputValue,
+} from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { DrawGuide } from './DrawGuide'
 
 export interface LogDoseSheetProps {
   open: boolean
@@ -66,7 +74,7 @@ function makeLine(
   mg: number | undefined,
   vials: readonly InventoryRow[],
 ): Line {
-  const vial = vials.find((v) => v.compound_id === compoundId && Number(v.remaining_mg) > 0)
+  const vial = activeVial(vials, compoundId)
   const conc = vial ? concentrationOf(vial) : null
   // Prefer syringe units whenever the vial's concentration is known: it is what the user draws.
   const mode: EntryMode = conc ? 'units' : 'dose'
@@ -90,9 +98,21 @@ function linesForProtocol(
   ]
 }
 
-/** Mounted only while open, so each opening starts from fresh, data-derived defaults. */
+/**
+ * Mounted only while open, and only once protocols, vials and history are loaded, so each
+ * opening starts from fresh, data-derived defaults (also when opened from a notification).
+ */
 export function LogDoseSheet(props: LogDoseSheetProps) {
-  return props.open ? <LogDoseForm {...props} /> : null
+  return props.open ? <LogDoseLoader {...props} /> : null
+}
+
+function LogDoseLoader(props: LogDoseSheetProps) {
+  const { patientId } = usePatientScope()
+  const protocols = useProtocols(patientId)
+  const doses = useDoses(patientId, 120)
+  const inventory = useInventory(patientId)
+  if (protocols.isPending || doses.isPending || inventory.isPending) return null
+  return <LogDoseForm {...props} />
 }
 
 function LogDoseForm({
@@ -163,6 +183,19 @@ function LogDoseForm({
     }
     return toMg(v, unitOf(l.compoundId))
   }
+
+  const drawPlan = injectable
+    ? planDraw(
+        lines.map((l) => {
+          const vial = vials.find((v) => v.id === l.inventoryId)
+          return {
+            compoundId: l.compoundId,
+            doseMg: lineMg(l) ?? 0,
+            concMgPerMl: vial ? concentrationOf(vial) : null,
+          }
+        }),
+      )
+    : null
 
   async function submit() {
     if (lines.length === 0) {
@@ -255,6 +288,7 @@ function LogDoseForm({
                 onRemove={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
               />
             ))}
+            {drawPlan && <DrawGuide plan={drawPlan} />}
           </div>
 
           <Field label={t('doses.when')}>
@@ -357,6 +391,15 @@ function DoseLine({
   const value = parse(line.amount)
   const canUseUnits = vials.some((v) => concentrationOf(v))
 
+  const lineDoseMg =
+    value > 0
+      ? line.mode === 'units'
+        ? conc
+          ? unitsToMg(value, conc)
+          : null
+        : toMg(value, unit)
+      : null
+
   // Live conversion readout: units → dose, or dose → units when the vial allows it.
   let conversion: string | null = null
   if (value > 0 && conc) {
@@ -449,6 +492,13 @@ function DoseLine({
           <span className="readout text-[12.5px] font-semibold text-signal">{conversion}</span>
         )}
       </div>
+      {vial && lineDoseMg !== null && lineDoseMg > Number(vial.remaining_mg) + 1e-9 && (
+        <p className="mt-1.5 text-[12px] font-semibold text-warn">
+          {t('doses.vialShort', {
+            left: fmtDose(Number(vial.remaining_mg), unit, locale),
+          })}
+        </p>
+      )}
     </div>
   )
 }

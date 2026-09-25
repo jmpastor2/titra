@@ -204,6 +204,17 @@ export function plannedDoses(
 /* ------------------------------------------------------------------ matching */
 
 /** Grace window in hours before a dose counts as late, scaled by interval. */
+/**
+ * How early an administration starts reading as "due now". Matching stays symmetric,
+ * so an early dose still counts, but a 09:00 shot does not light up at 02:00.
+ */
+export const EARLY_WINDOW_H = 2
+
+function timingStatus(overdueH: number, lateH: number): 'due' | 'upcoming' | 'late' {
+  if (overdueH > lateH) return 'late'
+  return overdueH >= -Math.min(lateH, EARLY_WINDOW_H) ? 'due' : 'upcoming'
+}
+
 export function graceHours(intervalDays: number): number {
   if (intervalDays >= 6) return 24 // weekly: a day of tolerance
   if (intervalDays >= 1) return 4
@@ -275,8 +286,8 @@ export function nextDose(
     if (!next) return null
     const grace = graceHours(protocol.steps[next.stepIndex]?.intervalDays ?? 7)
     const overdueH = (now.getTime() - next.at.getTime()) / HOUR_MS
-    const status: NextDose['status'] =
-      overdueH > grace ? 'overdue' : overdueH >= -grace ? 'due' : 'upcoming'
+    const timing = timingStatus(overdueH, grace)
+    const status: NextDose['status'] = timing === 'late' ? 'overdue' : timing
     return { ...next, overdueH, status }
   }
 
@@ -292,7 +303,7 @@ export function nextDose(
     doseMg: next.doseMg,
     stepIndex: next.stepIndex,
     overdueH,
-    status: Math.abs(overdueH) <= tolH ? 'due' : 'upcoming',
+    status: timingStatus(overdueH, tolH) === 'due' ? 'due' : 'upcoming',
   }
 }
 
@@ -341,7 +352,8 @@ export function dayAgenda(
   return matchOccurrences(occurrences, history, tolH).map((o) => {
     if (o.takenAt) return { ...o, status: 'taken' as const }
     const deltaH = (now.getTime() - o.at.getTime()) / HOUR_MS
-    const status: AgendaStatus = deltaH > tolH ? 'missed' : deltaH >= -tolH ? 'due' : 'upcoming'
+    const timing = timingStatus(deltaH, tolH)
+    const status: AgendaStatus = timing === 'late' ? 'missed' : timing
     return { ...o, status }
   })
 }

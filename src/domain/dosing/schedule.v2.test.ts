@@ -177,6 +177,15 @@ describe('today agenda', () => {
     expect(dayAgenda(TIRZ, history, d('2026-03-09T07:00')).map((x) => x.status)).toEqual(['due'])
     expect(dayAgenda(TIRZ, history, d('2026-03-08T07:00'))).toEqual([])
   })
+
+  it('does not call a morning shot due in the middle of the night', () => {
+    const history: DoseEvent[] = [{ at: d('2026-03-02T09:00'), mg: 2.5 }]
+    expect(dayAgenda(TIRZ, history, d('2026-03-09T02:00')).map((x) => x.status)).toEqual([
+      'upcoming',
+    ])
+    expect(nextDose(TIRZ, history, d('2026-03-09T02:00'))!.status).toBe('upcoming')
+    expect(nextDose(CJC_IPA, [], d('2026-03-02T12:00'))!.status).toBe('upcoming')
+  })
 })
 
 describe('occurrence-based adherence', () => {

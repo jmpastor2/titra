@@ -22,6 +22,8 @@ const profile = (id: string, name: string): ProfileRow => ({
   height_cm: 180,
   goal_weight_kg: 85,
   protein_g_per_kg: 1.6,
+  reminders_enabled: false,
+  reminder_lead_minutes: 0,
   onboarded: true,
   created_at: '2026-01-01T00:00:00Z',
   updated_at: '2026-01-01T00:00:00Z',

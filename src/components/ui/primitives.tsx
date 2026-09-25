@@ -140,6 +140,41 @@ export function ProgressRing({
 }
 
 /* ---------- Segmented control ---------- */
+/** iOS-style on/off switch. */
+export function Switch({
+  checked,
+  onChange,
+  label,
+  disabled,
+}: {
+  checked: boolean
+  onChange: (next: boolean) => void
+  label: string
+  disabled?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={clsx(
+        'relative h-[30px] w-[50px] shrink-0 rounded-full border transition disabled:opacity-50',
+        checked ? 'glow border-signal/60 bg-signal' : 'border-line-strong bg-panel-3',
+      )}
+    >
+      <span
+        className={clsx(
+          'absolute top-[3px] size-[22px] rounded-full shadow transition-all',
+          checked ? 'left-[23px] bg-signal-ink' : 'left-[3px] bg-ink-2',
+        )}
+      />
+    </button>
+  )
+}
+
 export function Segmented<T extends string>({
   value,
   onChange,

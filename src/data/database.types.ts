@@ -63,6 +63,10 @@ export type ProfileRow = {
   goal_weight_kg: number | null
   protein_g_per_kg: number
   onboarded: boolean
+  /** Push reminders for due doses (migration 3). */
+  reminders_enabled: boolean
+  /** Minutes before each administration to send the reminder, 0–120. */
+  reminder_lead_minutes: number
   created_at: string
   updated_at: string
 }
@@ -211,6 +215,36 @@ export type PushSubscriptionRow = {
   created_at: string
 }
 
+/** One pending push reminder, computed by the client and sent by the Edge Function. */
+export type ReminderRow = {
+  id: string
+  user_id: string
+  protocol_id: string
+  occurrence_at: string
+  fire_at: string
+  compound_id: string
+  title: string
+  body: string
+  url: string
+  tolerance_minutes: number
+  sent_at: string | null
+  skipped_at: string | null
+  created_at: string
+}
+
+/** Payload element of replace_reminders(). */
+export type ReminderInput = Pick<
+  ReminderRow,
+  | 'protocol_id'
+  | 'occurrence_at'
+  | 'fire_at'
+  | 'compound_id'
+  | 'title'
+  | 'body'
+  | 'url'
+  | 'tolerance_minutes'
+>
+
 type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
 
 type Table<Row, InsertOptional extends keyof Row> = {
@@ -236,6 +270,8 @@ export type Database = {
         | 'goal_weight_kg'
         | 'protein_g_per_kg'
         | 'onboarded'
+        | 'reminders_enabled'
+        | 'reminder_lead_minutes'
         | 'created_at'
         | 'updated_at'
       >
@@ -285,12 +321,21 @@ export type Database = {
         'id' | 'unit' | 'components' | 'times' | 'notes' | 'created_at' | 'updated_at'
       >
       push_subscriptions: Table<PushSubscriptionRow, 'id' | 'user_agent' | 'created_at'>
+      reminders: Table<
+        ReminderRow,
+        'id' | 'url' | 'tolerance_minutes' | 'sent_at' | 'skipped_at' | 'created_at'
+      >
     }
     Views: { [_ in never]: never }
     Functions: {
       link_clinician: { Args: { p_code: string }; Returns: CareLinkRow }
       is_my_patient: { Args: { p_patient: string }; Returns: boolean }
       is_my_clinician: { Args: { p_clinician: string }; Returns: boolean }
+      replace_reminders: { Args: { p_rows: ReminderInput[] }; Returns: number }
+      save_push_subscription: {
+        Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string }
+        Returns: string
+      }
     }
     Enums: {
       user_role: UserRole

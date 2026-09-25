@@ -5,11 +5,12 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
+import { Syringe } from '@/components/dosing/Syringe'
 import { Segmented } from '@/components/ui/primitives'
+import { syringeFor } from '@/domain/dosing/draw'
 import { drawUp, penClicks, reconstitute, suggestDiluentMl } from '@/domain/dosing/reconstitution'
 import { fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { SyringeDiagram } from './SyringeDiagram'
 
 type Mode = 'vial' | 'pen'
 
@@ -154,8 +155,26 @@ export function CalculatorPage() {
                 </div>
               </Card>
 
-              <Card>
-                <SyringeDiagram units={result.draw.unitsRounded} />
+              <Card
+                eyebrow={`U-100 · ${fmtNumber(syringeFor(result.draw.unitsRounded) / 100, locale, 1)} mL`}
+              >
+                <div className="readout text-glow text-[30px] font-semibold leading-none text-signal">
+                  {fmtNumber(result.draw.unitsRounded, locale, 1)}
+                  <span className="ml-1 text-[14px]">U</span>
+                </div>
+                <Syringe
+                  capacity={syringeFor(result.draw.unitsRounded)}
+                  loads={[{ from: 0, to: result.draw.unitsRounded, color: 'var(--signal)' }]}
+                  label={t('draw.aria', {
+                    capacity: syringeFor(result.draw.unitsRounded),
+                    units: fmtNumber(result.draw.unitsRounded, locale, 1),
+                  })}
+                  className="mt-1 w-full"
+                />
+                <p className="mt-1 text-center text-[11.5px] text-muted">
+                  {t('calculator.unitsRounded')}
+                  {result.draw.unitsRounded > 100 ? ` · ${t('draw.notFits')}` : ''}
+                </p>
               </Card>
             </>
           )}

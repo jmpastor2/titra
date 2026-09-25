@@ -2,20 +2,24 @@ import { differenceInCalendarDays, getDayOfYear } from 'date-fns'
 import { Activity, BookOpen, FlaskConical, Gauge, Plus, Scale, Syringe } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { ProgressRing, SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
+import type { InventoryRow } from '@/data/database.types'
+import { planDraw } from '@/domain/dosing/draw'
+import type { StackComponent } from '@/domain/types'
 import { useInventory } from '@/data/hooks'
 import { CheckInSheet } from '@/features/checkin/CheckInSheet'
 import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
+import { activeVial, concentrationOf } from '@/features/inventory/vials'
 import { useExposure } from '@/features/exposure/useExposure'
 import { LogMeasurementSheet } from '@/features/health/LogMeasurementSheet'
 import { LogSymptomSheet } from '@/features/symptoms/LogSymptomSheet'
-import { fmtDate, fmtHours } from '@/lib/format'
+import { fmtDate, fmtHours, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
 import { AgendaRow } from './AgendaRow'
@@ -37,7 +41,23 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const now = useNow()
   const exposure = useExposure(patientId, now)
   const inventory = useInventory(patientId)
-  const [sheet, setSheet] = useState<SheetState>(null)
+  const [openSheet, setSheet] = useState<SheetState>(null)
+  const [params, setParams] = useSearchParams()
+  const logParam = params.get('log')
+  // A reminder links to /#/?log=<protocolId>: the log sheet for it opens straight away.
+  const sheet: SheetState =
+    openSheet ?? (logParam && !readOnly ? { kind: 'dose', protocolId: logParam } : null)
+  const closeSheet = () => {
+    setSheet(null)
+    if (logParam)
+      setParams(
+        (p) => {
+          p.delete('log')
+          return p
+        },
+        { replace: true },
+      )
+  }
 
   const items = useMemo(
     () => buildToday(exposure.protocols, exposure.doses, now),
@@ -56,6 +76,11 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const learn = tracked.length ? tracked[getDayOfYear(now) % tracked.length]!.compound : undefined
 
   const hasProtocols = exposure.protocols.some((p) => p.status === 'active')
+  const vials = inventory.data ?? []
+  const focusUnits = focus ? unitsToDraw(focus.doses, vials) : null
+  // Section numbers follow what is actually on screen.
+  let section = 0
+  const nextIndex = () => String(++section).padStart(2, '0')
 
   return (
     <div
@@ -132,14 +157,21 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
                         })}
                   </div>
                   {!readOnly && (
-                    <Button
-                      size="sm"
-                      className="mt-3"
-                      leading={<Syringe className="size-4" />}
-                      onClick={() => setSheet({ kind: 'dose', protocolId: focus.protocol.id })}
-                    >
-                      {t('today.logNow')}
-                    </Button>
+                    <div className="mt-3 flex items-center gap-3">
+                      <Button
+                        size="sm"
+                        leading={<Syringe className="size-4" />}
+                        onClick={() => setSheet({ kind: 'dose', protocolId: focus.protocol.id })}
+                      >
+                        {t('today.logNow')}
+                      </Button>
+                      {focusUnits !== null && (
+                        <span className="readout text-[15px] font-semibold text-signal">
+                          {fmtNumber(focusUnits, locale, 1)}
+                          <span className="ml-0.5 text-[11px]">U</span>
+                        </span>
+                      )}
+                    </div>
                   )}
                 </>
               ) : (
@@ -155,13 +187,14 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 
       {items.length > 0 && (
         <section>
-          <SectionTitle index="01">{t('today.agenda')}</SectionTitle>
+          <SectionTitle index={nextIndex()}>{t('today.agenda')}</SectionTitle>
           <ul className="flex flex-col gap-2">
             {items.map((i) => (
               <AgendaRow
                 key={i.key}
                 item={i}
                 now={now}
+                units={unitsToDraw(i.doses, vials)}
                 readOnly={readOnly}
                 onLog={() => setSheet({ kind: 'dose', protocolId: i.protocol.id })}
               />
@@ -173,7 +206,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
       {tracked.length > 0 && (
         <section>
           <SectionTitle
-            index="02"
+            index={nextIndex()}
             action={
               !readOnly && (
                 <Link to="/protocols" className="spec text-signal">
@@ -190,7 +223,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
                 key={x.compoundId}
                 x={x}
                 now={now}
-                vial={(inventory.data ?? []).find((v) => v.compound_id === x.compoundId)}
+                vial={activeVial(vials, x.compoundId)}
               />
             ))}
           </div>
@@ -199,7 +232,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 
       {!readOnly && (
         <section>
-          <SectionTitle index="03">{t('today.quick')}</SectionTitle>
+          <SectionTitle index={nextIndex()}>{t('today.quick')}</SectionTitle>
           <div className="grid grid-cols-4 gap-2">
             <Quick
               icon={<Plus className="size-5" />}
@@ -227,7 +260,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 
       {learn && (
         <section>
-          <SectionTitle index="04">{t('today.learn')}</SectionTitle>
+          <SectionTitle index={nextIndex()}>{t('today.learn')}</SectionTitle>
           <Card
             className="cursor-pointer"
             onClick={() => nav(`/wiki/${learn.id}`)}
@@ -266,19 +299,30 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 
       <LogDoseSheet
         open={sheet?.kind === 'dose'}
-        onClose={() => setSheet(null)}
+        onClose={closeSheet}
         protocolId={sheet?.kind === 'dose' ? sheet.protocolId : undefined}
         compoundId={sheet?.kind === 'dose' ? sheet.compoundId : undefined}
       />
-      <CheckInSheet open={sheet?.kind === 'checkin'} onClose={() => setSheet(null)} />
-      <LogSymptomSheet open={sheet?.kind === 'symptom'} onClose={() => setSheet(null)} />
+      <CheckInSheet open={sheet?.kind === 'checkin'} onClose={closeSheet} />
+      <LogSymptomSheet open={sheet?.kind === 'symptom'} onClose={closeSheet} />
       <LogMeasurementSheet
         open={sheet?.kind === 'weight'}
-        onClose={() => setSheet(null)}
+        onClose={closeSheet}
         defaultKind="weight"
       />
     </div>
   )
+}
+
+/** Units to draw for an administration, when every compound has a reconstituted vial. */
+function unitsToDraw(doses: readonly StackComponent[], vials: readonly InventoryRow[]) {
+  const plan = planDraw(
+    doses.map((d) => {
+      const vial = activeVial(vials, d.compoundId)
+      return { ...d, concMgPerMl: vial ? concentrationOf(vial) : null }
+    }),
+  )
+  return plan && plan.unknown.length === 0 ? plan.totalUnits : null
 }
 
 function Quick({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {

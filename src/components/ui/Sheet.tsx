@@ -26,7 +26,15 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    if (open && !el.open) el.showModal()
+    if (open && !el.open) {
+      el.showModal()
+      // showModal() focuses the first control (the close button). Prefer the field the
+      // sheet marks with data-autofocus, else the panel itself, so no stray focus ring.
+      const target =
+        el.querySelector<HTMLElement>('[data-autofocus]') ??
+        el.querySelector<HTMLElement>('[role="document"]')
+      target?.focus({ preventScroll: true })
+    }
     if (!open && el.open) el.close()
   }, [open])
 
@@ -62,7 +70,9 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
         <div className="flex h-full w-full items-end justify-center sm:items-center">
           <div
             role="document"
+            tabIndex={-1}
             className={clsx(
+              'outline-none',
               'sheet-in flex w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-line-strong bg-panel shadow-2xl sm:rounded-[28px]',
               tall ? 'h-[92dvh]' : 'max-h-[92dvh]',
             )}

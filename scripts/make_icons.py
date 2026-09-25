@@ -59,7 +59,17 @@ def draw_icon(size: int, maskable: bool = False, transparent_bg: bool = False) -
     return img.resize((size, size), Image.LANCZOS)
 
 
+def draw_badge(size: int) -> Image.Image:
+    """Monochrome silhouette for the Android status bar: white on transparent."""
+    img = draw_icon(size, maskable=True, transparent_bg=True)
+    alpha = img.getchannel("A")
+    white = Image.new("RGBA", img.size, (255, 255, 255, 0))
+    white.putalpha(alpha)
+    return white
+
+
 def main() -> None:
+    draw_badge(72).save(OUT / "badge-72.png")
     draw_icon(192).save(OUT / "icon-192.png")
     draw_icon(512).save(OUT / "icon-512.png")
     draw_icon(512, maskable=True).save(OUT / "icon-512-maskable.png")

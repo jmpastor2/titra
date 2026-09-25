@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import { fmtDose, fmtHours } from '@/lib/format'
+import { fmtDose, fmtHours, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import type { TodayItem } from './agenda'
 
@@ -15,11 +15,14 @@ export function AgendaRow({
   item,
   now,
   onLog,
+  units,
   readOnly,
 }: {
   item: TodayItem
   now: Date
   onLog: () => void
+  /** Syringe units to draw, when every vial in the administration is known. */
+  units?: number | null
   readOnly?: boolean
 }) {
   const { t } = useTranslation()
@@ -74,6 +77,11 @@ export function AgendaRow({
               )
               .join(' · ')}
           </span>
+          {units != null && !taken && (
+            <span className="readout shrink-0 font-semibold text-signal">
+              {fmtNumber(units, locale, 1)} U
+            </span>
+          )}
           <span aria-hidden>·</span>
           <span
             className={clsx(
