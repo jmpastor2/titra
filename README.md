@@ -14,8 +14,16 @@ se puede compartir en solo lectura con quien tú decidas, por ejemplo tu médico
 - **Pautas completas.** Cada N días o por días de la semana (de lunes a viernes para CJC con
   ipamorelina), varias tomas al día, escalones de dosis, pausas para ciclar y mezclas en la misma
   jeringa. Se guardan como pautas reutilizables y se pueden compartir.
-- **Registro en unidades de jeringa.** Con el vial y su agua bacteriostática, Titra convierte las
-  unidades U-100 a mcg o mg, descuenta del vial y sugiere la zona menos usada.
+- **Jeringa a escala.** Con el vial y su agua bacteriostática, Titra dibuja la jeringa U-100
+  (0,3, 0,5 o 1 mL según la carga) con las unidades exactas. En una mezcla (CJC con ipamorelina)
+  marca cada carga en orden: 10 U de Mod GRF y hasta 15 U con ipamorelina. Descuenta del vial y
+  sugiere la zona menos usada.
+- **Avisos cuando toca.** Notificación con la dosis y las unidades a cargar, a la hora o hasta 1 h
+  antes. Si ya registraste la toma, no avisa. En iPhone requiere la app instalada (iOS 16.4+).
+- **Dosis graduales.** Cada pauta muestra su escalera de dosis, el escalón actual, cuándo sube la
+  dosis y la adherencia de los últimos 28 días.
+- **Viales con autonomía.** Cuántas tomas cubre cada vial, contando las subidas de dosis, y cuándo
+  tener listo el siguiente o si caduca antes.
 - **Niveles.** Modelo farmacocinético de un compartimento con fármaco a bordo, estado estacionario,
   proyección y simulador de "¿y si me salto una dosis?" o cambio de fármaco. Solo para sustancias con
   datos farmacocinéticos en humanos.
@@ -33,25 +41,28 @@ se puede compartir en solo lectura con quien tú decidas, por ejemplo tu médico
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).
 2. **SQL Editor → New query**: pega y ejecuta, en orden, los ficheros de `supabase/migrations/`:
-   `20260919000000_init.sql` y `20260925000000_personal_tracking.sql`. Crean las tablas, los
-   disparadores y la Row Level Security de todas ellas.
-3. **Authentication → URL Configuration**:
+   `20260919000000_init.sql`, `20260925000000_personal_tracking.sql` y
+   `20260926000000_reminders.sql`. Crean las tablas, los disparadores, la Row Level Security y
+   la tarea programada de avisos.
+3. **Avisos push**: sigue [docs/notificaciones.md](docs/notificaciones.md) para subir la Edge
+   Function `send-reminders` y sus secretos. Sin este paso, Titra avisa solo con la app abierta.
+4. **Authentication → URL Configuration**:
    - Site URL: `https://jmpastor2.github.io/titra/`
    - Redirect URLs: `https://jmpastor2.github.io/titra/` y `http://localhost:5173/`
-4. **Project Settings → API**: copia la _Project URL_ y la _anon public key_.
+5. **Project Settings → API**: copia la _Project URL_ y la _anon public key_.
 
 ### 2. Local
 
 ```bash
-cp .env.example .env.local   # rellena VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY
+cp .env.example .env.local   # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY y VITE_VAPID_PUBLIC_KEY
 npm install
 npm run dev
 ```
 
 ### 3. GitHub Pages
 
-1. **Settings → Secrets and variables → Actions**: crea `VITE_SUPABASE_URL` y
-   `VITE_SUPABASE_ANON_KEY`.
+1. **Settings → Secrets and variables → Actions**: crea `VITE_SUPABASE_URL`,
+   `VITE_SUPABASE_ANON_KEY` y `VITE_VAPID_PUBLIC_KEY`.
 2. **Settings → Pages → Source**: _GitHub Actions_.
 3. Cada push a `main` pasa tipos, lint y tests, y publica en `https://jmpastor2.github.io/titra/`.
 
@@ -73,20 +84,24 @@ src/
   content/     Wiki y plantillas en TypeScript tipado, bilingüe. Viaja en el bundle
                para funcionar sin conexión.
   data/        Tipos de la base de datos, mapeadores y hooks de TanStack Query.
-  features/    Pantallas por dominio: dashboard, dosis, salud, wiki, protocolos,
-               consulta, simulador, calculadora, inventario, ajustes.
+  features/    Pantallas por dominio: hoy, tomas, progreso, wiki, pautas, inventario,
+               avisos, compartir, simulador, calculadora, ajustes.
   components/  Sistema de diseño: botones, hojas inferiores, campos, tarjetas.
   i18n/        es.json y en.json con las mismas claves (un test lo verifica).
-supabase/      Migraciones SQL con RLS.
+supabase/      Migraciones SQL con RLS y la Edge Function send-reminders.
+public/push-sw.js  Avisos push y clic en la notificación, importado por el service worker.
 ```
 
 - **Stack**: Vite 8, React 19, TypeScript 6 en modo estricto, Tailwind 4, TanStack Query,
   Recharts, i18next, vite-plugin-pwa, Supabase.
 - **Sin conexión**: la caché de consultas se guarda en IndexedDB y las mutaciones pendientes se
   reanudan al volver la conexión. El service worker precachea la app y la wiki.
-- **Seguridad**: cada tabla tiene RLS. El paciente es dueño de sus filas. El médico solo lee las
-  de pacientes vinculados y solo puede crear o editar sus pautas. La vinculación pasa por una
-  función `security definer` que valida el código.
+- **Seguridad**: cada tabla tiene RLS. Cada usuario es dueño de sus filas. Quien ve un control
+  compartido solo lo lee y puede proponer pautas. El dueño comparte introduciendo el código de
+  quien lo verá, mediante una función `security definer`.
+- **Avisos**: el dispositivo calcula las próximas tomas en su zona horaria y las guarda con
+  `replace_reminders()`. Cada 5 minutos pg_cron llama a `send-reminders`, que envía Web Push
+  (VAPID) y descarta los avisos cuya toma ya está registrada.
 
 ## Modelo farmacocinético
 

@@ -4,7 +4,11 @@ const schema = z.object({
   VITE_SUPABASE_URL: z.string().url().optional(),
   VITE_SUPABASE_ANON_KEY: z.string().min(20).optional(),
   /** Public VAPID key for Web Push reminders; the private half lives in the Edge Function. */
-  VITE_VAPID_PUBLIC_KEY: z.string().min(40).optional(),
+  // Optional feature: an empty or malformed value turns push off instead of breaking config.
+  VITE_VAPID_PUBLIC_KEY: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim().length >= 40 ? v.trim() : undefined)),
 })
 
 const parsed = schema.safeParse(import.meta.env)

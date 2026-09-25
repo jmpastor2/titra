@@ -409,6 +409,21 @@ function DoseLine({
         : `= ${fmtNumber(mgToUnits(toMg(value, unit), conc), locale, 1)} U`
   }
 
+  // Units only mean something against a vial: without one, fall back to the dose itself.
+  function changeVial(inventoryId: string) {
+    const next = vials.find((v) => v.id === inventoryId)
+    const nextConc = next ? concentrationOf(next) : null
+    if (line.mode === 'units' && !nextConc) {
+      const amount = value > 0 && conc ? plain(fromMg(unitsToMg(value, conc), unit)) : line.amount
+      onChange({ inventoryId, mode: 'dose', amount })
+    } else if (line.mode === 'units' && nextConc && conc && value > 0) {
+      // Same dose from a vial of another strength: keep the dose, recompute the units.
+      onChange({ inventoryId, amount: plain(mgToUnits(unitsToMg(value, conc), nextConc)) })
+    } else {
+      onChange({ inventoryId })
+    }
+  }
+
   function switchMode(mode: EntryMode) {
     if (mode === line.mode) return
     // Convert the typed amount so switching never silently changes the dose.
@@ -475,7 +490,7 @@ function DoseLine({
           <select
             aria-label={t('doses.inventory')}
             value={line.inventoryId}
-            onChange={(e) => onChange({ inventoryId: e.target.value })}
+            onChange={(e) => changeVial(e.target.value)}
             className="min-w-0 max-w-[65%] truncate bg-transparent font-mono text-[11.5px] text-muted outline-none"
           >
             <option value="">{t('doses.noInventory')}</option>

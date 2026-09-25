@@ -327,6 +327,8 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
       </p>
 
       <LogDoseSheet
+        // A reminder tapped while the sheet is open switches it to that protocol.
+        key={sheet?.kind === 'dose' ? (sheet.protocolId ?? sheet.compoundId ?? 'free') : 'closed'}
         open={sheet?.kind === 'dose'}
         onClose={closeSheet}
         protocolId={sheet?.kind === 'dose' ? sheet.protocolId : undefined}
