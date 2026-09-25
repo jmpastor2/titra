@@ -19,7 +19,8 @@ import { Card } from '@/components/ui/Card'
 import { ProgressRing, SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import type { InventoryRow } from '@/data/database.types'
+import type { InventoryRow, ProtocolRow } from '@/data/database.types'
+import { parseComponents } from '@/data/mappers'
 import { planDraw } from '@/domain/dosing/draw'
 import type { StackComponent } from '@/domain/types'
 import { useInventory } from '@/data/hooks'
@@ -79,7 +80,22 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   )
   const summary = summarise(items)
   const focus = focusItem(items)
-  const tracked = exposure.items.filter((x) => x.protocol || x.lastDose)
+  // Compounds that ride along in another protocol's syringe or blend vial are shown
+  // on that protocol's card, not on their own.
+  const partnerOf = new Map<string, ProtocolRow>()
+  for (const p of exposure.protocols)
+    if (p.status === 'active')
+      for (const c of parseComponents(p.components)) partnerOf.set(c.compoundId, p)
+  const tracked = exposure.items.filter(
+    (x) => (x.protocol || x.lastDose) && !partnerOf.has(x.compoundId),
+  )
+  const cardTitle = (compoundId: string) =>
+    exposure.protocols.find(
+      (p) =>
+        p.status === 'active' &&
+        p.compound_id === compoundId &&
+        parseComponents(p.components).length,
+    )?.name
   const firstStart = exposure.protocols
     .filter((p) => p.status === 'active')
     .map((p) => new Date(p.start_date))
@@ -264,6 +280,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
                 key={x.compoundId}
                 x={x}
                 now={now}
+                title={cardTitle(x.compoundId)}
                 vial={activeVial(vials, x.compoundId)}
               />
             ))}

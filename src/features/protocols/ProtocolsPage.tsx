@@ -26,7 +26,7 @@ import {
 } from '@/data/mappers'
 import { adherence, componentsAt, titrationStatus } from '@/domain/dosing/schedule'
 import { useSession } from '@/features/auth/SessionProvider'
-import { fmtDose } from '@/lib/format'
+import { fmtDoseList } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useScheduleLabel } from './scheduleLabel'
 import { TitrationLadder } from './TitrationLadder'
@@ -241,19 +241,30 @@ function ProtocolCard({
           <Badge tone={STATUS_TONE[p.status]}>{t(`protocols.statuses.${p.status}`)}</Badge>
         </div>
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-          {[
-            { compoundId: p.compound_id, doseMg: tit?.doseMg ?? pl.steps[0]?.doseMg ?? 0 },
-            ...componentsAt(pl, tit?.doseMg ?? pl.steps[0]?.doseMg ?? 0),
-          ].map((d) => (
-            <span key={d.compoundId} className="spec">
-              {compoundById(d.compoundId)?.names.generic}{' '}
-              <span className="readout text-ink">
-                {tit?.isPaused && d.compoundId === p.compound_id
-                  ? t('protocols.pause')
-                  : fmtDose(d.doseMg, compoundById(d.compoundId)?.defaultUnit ?? 'mg', locale)}
+          {(() => {
+            // One entry for the whole syringe: "CJC-1295 + Ipamorelina 100 + 100 mcg".
+            const primaryMg = tit?.doseMg ?? pl.steps[0]?.doseMg ?? 0
+            const parts = [
+              { compoundId: p.compound_id, doseMg: primaryMg },
+              ...componentsAt(pl, primaryMg),
+            ]
+            return (
+              <span className="spec">
+                {parts.map((d) => compoundById(d.compoundId)?.names.generic).join(' + ')}{' '}
+                <span className="readout text-ink">
+                  {tit?.isPaused
+                    ? t('protocols.pause')
+                    : fmtDoseList(
+                        parts.map((d) => ({
+                          valueMg: d.doseMg,
+                          unit: compoundById(d.compoundId)?.defaultUnit ?? 'mg',
+                        })),
+                        locale,
+                      )}
+                </span>
               </span>
-            </span>
-          ))}
+            )
+          })()}
           {tit && tit.totalSteps > 1 && (
             <span className="spec">
               {t('protocols.step')}{' '}

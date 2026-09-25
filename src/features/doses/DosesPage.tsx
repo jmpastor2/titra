@@ -14,7 +14,7 @@ import { useDeleteDose, useDoses, useInventory, useProtocols } from '@/data/hook
 import { roundUnits } from '@/domain/dosing/draw'
 import { mgToUnits } from '@/domain/dosing/reconstitution'
 import { concentrationOf, isBlend, vialHas } from '@/features/inventory/vials'
-import { fmtDose, fmtNumber, fmtRelativeDay } from '@/lib/format'
+import { fmtDoseList, fmtNumber, fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { LogDoseSheet } from './LogDoseSheet'
 import { WeekCard } from './WeekCard'
@@ -83,14 +83,19 @@ export function DosesPage() {
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState<string>('all')
 
-  const compounds = useMemo(
-    () => [...new Set((doses.data ?? []).map((d) => d.compound_id))],
-    [doses.data],
-  )
+  // One filter per thing you inject: a blend or stack is one chip, not one per compound.
+  const combos = useMemo(() => {
+    const seen = new Map<string, string[]>()
+    for (const a of groupAdministrations(doses.data ?? [])) {
+      const ids = a.rows.map((r) => r.compound_id)
+      seen.set(ids.join('+'), ids)
+    }
+    return [...seen.entries()]
+  }, [doses.data])
 
   const days = useMemo(() => {
     const admins = groupAdministrations(doses.data ?? []).filter(
-      (a) => filter === 'all' || a.rows.some((r) => r.compound_id === filter),
+      (a) => filter === 'all' || a.rows.map((r) => r.compound_id).join('+') === filter,
     )
     const m = new Map<string, Administration[]>()
     for (const a of admins) {
@@ -129,19 +134,19 @@ export function DosesPage() {
         <WeekCard protocols={protocols.data ?? []} doses={doses.data} />
       )}
 
-      {compounds.length > 1 && (
+      {combos.length > 1 && (
         <div className="hide-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4">
           <Chip active={filter === 'all'} onClick={() => setFilter('all')}>
             {t('doses.filterAll')}
           </Chip>
-          {compounds.map((c) => (
+          {combos.map(([key, ids]) => (
             <Chip
-              key={c}
-              active={filter === c}
-              color={compoundColor(c)}
-              onClick={() => setFilter(c)}
+              key={key}
+              active={filter === key}
+              color={compoundColor(ids[0]!)}
+              onClick={() => setFilter(key)}
             >
-              {compoundName(c)}
+              {ids.map(compoundName).join(' + ')}
             </Chip>
           ))}
         </div>
@@ -177,21 +182,24 @@ export function DosesPage() {
                         {hhmm(a.at)}
                       </span>
                       <div className="min-w-0 flex-1">
-                        {a.rows.map((r) => (
-                          <div key={r.id} className="flex items-center gap-2">
-                            <SubstanceDot color={compoundColor(r.compound_id)} />
-                            <span className="truncate text-[14.5px] font-semibold">
-                              {compoundName(r.compound_id)}
-                            </span>
-                            <span className="readout ml-auto shrink-0 text-[13.5px] text-ink-2">
-                              {fmtDose(
-                                Number(r.dose_mg),
-                                compoundById(r.compound_id)?.defaultUnit ?? 'mg',
-                                locale,
-                              )}
-                            </span>
-                          </div>
-                        ))}
+                        {/* One line per injection: a stack or blend reads "A + B · 100 + 100 mcg". */}
+                        <div className="flex items-center gap-2">
+                          {a.rows.map((r) => (
+                            <SubstanceDot key={r.id} color={compoundColor(r.compound_id)} />
+                          ))}
+                          <span className="min-w-0 truncate text-[14.5px] font-semibold">
+                            {a.rows.map((r) => compoundName(r.compound_id)).join(' + ')}
+                          </span>
+                          <span className="readout ml-auto shrink-0 text-[13.5px] text-ink-2">
+                            {fmtDoseList(
+                              a.rows.map((r) => ({
+                                valueMg: Number(r.dose_mg),
+                                unit: compoundById(r.compound_id)?.defaultUnit ?? 'mg',
+                              })),
+                              locale,
+                            )}
+                          </span>
+                        </div>
                         <AdminMeta
                           site={a.rows[0]!.site_id ? t(`sites.labels.${a.rows[0]!.site_id}`) : null}
                           notes={a.rows[0]!.notes}

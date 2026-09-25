@@ -17,6 +17,7 @@ import {
 } from '@/features/exposure/levelSummary'
 import type { CompoundExposure } from '@/features/exposure/useExposure'
 import { fmtDistance, fmtHours, fmtNumber, fmtPercent } from '@/lib/format'
+import { vialLook } from '@/features/inventory/vials'
 import { useLocale } from '@/lib/useLocale'
 
 const SPARK = { width: 140, height: 34, pad: 5 }
@@ -33,18 +34,17 @@ export function LevelCard({
   x,
   vial,
   now,
+  title,
 }: {
   x: CompoundExposure
   vial: InventoryRow | undefined
   now: Date
+  /** Overrides the compound name, e.g. a blend shown as one card. */
+  title?: string
 }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const color = compoundColor(x.compoundId)
-  const fill =
-    vial && Number(vial.total_mg) > 0
-      ? Number(vial.remaining_mg) / Number(vial.total_mg)
-      : undefined
   const pk = hasMeaningfulCurve(x.pk) && x.nowMg !== null ? x.pk : null
 
   const spark = useMemo(() => {
@@ -89,14 +89,13 @@ export function LevelCard({
     >
       <div className="flex items-start justify-between gap-2">
         <span className="line-clamp-2 text-[13.5px] font-semibold leading-tight">
-          {x.compound?.names.generic ?? x.compoundId}
+          {title ?? x.compound?.names.generic ?? x.compoundId}
         </span>
-        <Vial
-          color={color}
-          fill={fill ?? 0.001}
-          size={30}
-          className={fill === undefined ? 'opacity-40' : ''}
-        />
+        {vial ? (
+          <Vial {...vialLook(vial)} size={30} />
+        ) : (
+          <Vial color={color} fill={0.001} size={30} className="opacity-40" />
+        )}
       </div>
 
       {pk && amount ? (
