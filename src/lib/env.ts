@@ -18,7 +18,7 @@ if (!parsed.success) {
   console.error('Invalid environment configuration', parsed.error.flatten().fieldErrors)
 }
 
-const values = parsed.success ? parsed.data : {}
+const values: Partial<z.output<typeof schema>> = parsed.success ? parsed.data : {}
 
 export const env = {
   supabaseUrl: values.VITE_SUPABASE_URL,
