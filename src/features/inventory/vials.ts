@@ -117,6 +117,8 @@ export function remainingOf(item: InventoryRow, compoundId: string): number {
 
 export interface RestockLine {
   compoundId: string
+  /** The compound plus any blend partners sharing its vials, for the label. */
+  partners: string[]
   /** mg available across every vial that holds it, open or in reserve. */
   availableMg: number
   vials: number
@@ -136,8 +138,17 @@ export function restockPlan(
   return [...upcoming.entries()].map(([compoundId, doses]) => {
     const holding = vials.filter((v) => !v.archived && vialHas(v, compoundId))
     const availableMg = holding.reduce((s, v) => s + remainingOf(v, compoundId), 0)
+    const partners = [
+      compoundId,
+      ...new Set(
+        holding
+          .flatMap((v) => vialContents(v).map((c) => c.compoundId))
+          .filter((c) => c !== compoundId),
+      ),
+    ]
     return {
       compoundId,
+      partners,
       availableMg,
       vials: holding.filter((v) => Number(v.remaining_mg) > 0).length,
       reserve: holding.filter((v) => !concentrationOf(v) && Number(v.remaining_mg) > 0).length,

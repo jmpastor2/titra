@@ -23,8 +23,8 @@ const SPOTS: Spot[] = [
   { id: 'thigh_r', cx: FRONT + 15, cy: 200 },
   { id: 'arm_l', cx: BACK - 41.5, cy: 88 },
   { id: 'arm_r', cx: BACK + 41.5, cy: 88 },
-  { id: 'glute_l', cx: BACK - 14, cy: 166 },
-  { id: 'glute_r', cx: BACK + 14, cy: 166 },
+  { id: 'glute_l', cx: BACK - 13, cy: 156 },
+  { id: 'glute_r', cx: BACK + 13, cy: 156 },
 ]
 
 function Figure({ cx, back }: { cx: number; back?: boolean }) {

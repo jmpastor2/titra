@@ -27,6 +27,8 @@ import { CheckInSheet } from '@/features/checkin/CheckInSheet'
 import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
 import { activeVial, drawPartFor } from '@/features/inventory/vials'
 import { useExposure } from '@/features/exposure/useExposure'
+import { FastingCard } from '@/features/fasting/FastingCard'
+import { needsFasting } from '@/features/fasting/fasting'
 import { LogMeasurementSheet } from '@/features/health/LogMeasurementSheet'
 import { useReminderPrefs } from '@/features/reminders/useReminders'
 import { LogSymptomSheet } from '@/features/symptoms/LogSymptomSheet'
@@ -90,6 +92,14 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const hasProtocols = exposure.protocols.some((p) => p.status === 'active')
   const vials = inventory.data ?? []
   const focusUnits = focus ? unitsToDraw(focus.doses, vials) : null
+  // The next GH-secretagogue shot in the coming hours asks for a fasting window.
+  const fastFor = items.find(
+    (i) =>
+      (i.status === 'due' ||
+        i.status === 'overdue' ||
+        (i.status === 'upcoming' && i.at.getTime() - now.getTime() < 8 * 3_600_000)) &&
+      needsFasting(i.doses.map((d) => d.compoundId)),
+  )
   // Section numbers follow what is actually on screen.
   let section = 0
   const nextIndex = () => String(++section).padStart(2, '0')
@@ -197,6 +207,8 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
           <DayStrip items={items} now={now} />
         </Card>
       )}
+
+      {!readOnly && fastFor && <FastingCard name={fastFor.protocol.name} />}
 
       {items.length > 0 && (
         <section>

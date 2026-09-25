@@ -33,6 +33,8 @@ import {
   toTimeInputValue,
 } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { FastingCard } from '@/features/fasting/FastingCard'
+import { needsFasting } from '@/features/fasting/fasting'
 import { DrawGuide } from './DrawGuide'
 
 export interface LogDoseSheetProps {
@@ -354,6 +356,14 @@ function LogDoseForm({
               />
             ))}
             {drawPlan && <DrawGuide plan={drawPlan} />}
+            {needsFasting(lines.flatMap((l) => [l.compoundId, ...l.partners])) && (
+              <FastingCard
+                name={
+                  active.find((p) => p.id === protocolId)?.name ??
+                  lines.map((l) => compoundById(l.compoundId)?.names.generic).join(' + ')
+                }
+              />
+            )}
           </div>
 
           <Field label={t('doses.when')}>

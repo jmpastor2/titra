@@ -443,7 +443,8 @@
     "reserveCount_other": "{{count}} sin reconstituir",
     "until": "hasta el {{date}}",
     "orderNow": "Pide ya",
-    "plenty": "+8 meses"
+    "plenty": "+8 meses",
+    "reconstituteHint": "cuando lo reconstituyas, toca el vial y pon el agua que le añades."
   },
   "calculator": {
     "title": "Calculadora de reconstitución",
@@ -932,5 +933,32 @@
       "month": "Mes",
       "deltaHint": "El cambio compara tu primera y tu última semana de registros del periodo. Las líneas verticales marcan cambios de dosis."
     }
+  },
+  "week": {
+    "eyebrow": "Planificado vs puesto",
+    "thisWeek": "Esta semana",
+    "previous": "Semana anterior",
+    "next": "Semana siguiente",
+    "taken": "hechas",
+    "onTime": "a su hora",
+    "offTime": "fuera de hora",
+    "missed": "perdidas",
+    "rest": "Descanso",
+    "status": {
+      "missed": "Perdida",
+      "due": "Toca",
+      "upcoming": "Pendiente"
+    }
+  },
+  "fasting": {
+    "ask": "Ayuno para {{name}}: ¿cuándo comiste?",
+    "rule": "Pínchate 2 h después de comer y espera {{after}} min para volver a comer.",
+    "wait": "Espera hasta las {{at}} · faltan {{min}} min",
+    "ready": "En ayunas desde las {{since}}: puedes pincharte",
+    "lastMeal": "Última comida a las {{at}}. Después de pincharte, espera {{after}} min para comer.",
+    "justAte": "Acabo de comer",
+    "ateAt": "Comí a las…",
+    "mealTime": "Hora de la comida",
+    "clear": "Borrar"
   }
 }

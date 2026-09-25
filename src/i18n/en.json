@@ -443,7 +443,8 @@
     "reserveCount_other": "{{count}} not reconstituted",
     "until": "until {{date}}",
     "orderNow": "Order now",
-    "plenty": "8+ months"
+    "plenty": "8+ months",
+    "reconstituteHint": "when you reconstitute it, tap the vial and enter the water you add."
   },
   "calculator": {
     "title": "Reconstitution calculator",
@@ -932,5 +933,32 @@
       "month": "Month",
       "deltaHint": "The change compares your first and last week of entries in the range. Vertical lines mark dose changes."
     }
+  },
+  "week": {
+    "eyebrow": "Planned vs taken",
+    "thisWeek": "This week",
+    "previous": "Previous week",
+    "next": "Next week",
+    "taken": "taken",
+    "onTime": "on time",
+    "offTime": "off time",
+    "missed": "missed",
+    "rest": "Rest",
+    "status": {
+      "missed": "Missed",
+      "due": "Due",
+      "upcoming": "Pending"
+    }
+  },
+  "fasting": {
+    "ask": "Fasting for {{name}}: when did you eat?",
+    "rule": "Inject 2 h after eating and wait {{after}} min before eating again.",
+    "wait": "Wait until {{at}} · {{min}} min to go",
+    "ready": "Fasted since {{since}}: you can inject",
+    "lastMeal": "Last meal at {{at}}. After injecting, wait {{after}} min to eat.",
+    "justAte": "I just ate",
+    "ateAt": "I ate at…",
+    "mealTime": "Meal time",
+    "clear": "Clear"
   }
 }

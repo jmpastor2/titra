@@ -21,6 +21,7 @@ import {
   activeVial,
   concentrationOf,
   restockPlan,
+  vialHas,
   vialContents,
   vialLook,
   vialRunway,
@@ -68,7 +69,25 @@ export function InventoryPage() {
     return out
   }, [upcomingByCompound, list])
 
-  const restock = useMemo(() => restockPlan(list, upcomingByCompound), [list, upcomingByCompound])
+  const restock = useMemo(
+    () =>
+      restockPlan(list, upcomingByCompound).filter(
+        // A blend partner is covered by the line of the vial's own compound.
+        (l) =>
+          !list.some(
+            (v) =>
+              v.compound_id !== l.compoundId &&
+              vialHas(v, l.compoundId) &&
+              upcomingByCompound.has(v.compound_id),
+          ),
+      ),
+    [list, upcomingByCompound],
+  )
+  // In use first, then reserve vials, then empty ones.
+  const sortedVials = useMemo(() => {
+    const rank = (v: InventoryRow) => (Number(v.remaining_mg) <= 0 ? 2 : concentrationOf(v) ? 0 : 1)
+    return list.toSorted((a, b) => rank(a) - rank(b))
+  }, [list])
 
   const add = () => {
     setEditing(null)
@@ -108,7 +127,7 @@ export function InventoryPage() {
         <>
           {restock.length > 0 && <RestockCard lines={restock} />}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {list.map((item) => (
+            {sortedVials.map((item) => (
               <VialCard
                 key={item.id}
                 item={item}
@@ -205,41 +224,46 @@ function VialCard({
           </div>
         </div>
       </button>
-      <div className="grid grid-cols-3 gap-px border-t border-line bg-line text-center">
-        <Spec
-          label={t('calculator.concentration')}
-          value={conc ? `${fmtNumber(conc, locale, 2)} mg/mL` : '—'}
-        />
-        <Spec
-          label={
-            runway
-              ? t('inventory.yourDose', { dose: fmtDose(doseMg, unit, locale) })
-              : fmtDose(doseMg, unit, locale)
-          }
-          value={conc ? `${fmtNumber(roundUnits(mgToUnits(doseMg, conc)), locale, 1)} U` : '—'}
-          accent={Boolean(runway && conc)}
-        />
-        {runway ? (
+      {!conc ? (
+        <div className="border-t border-line px-4 py-2.5 text-[12.5px] text-muted">
+          <span className="font-semibold text-ink-2">{t('inventory.lyophilised')}</span> ·{' '}
+          {t('inventory.reconstituteHint')}
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-px border-t border-line bg-line text-center">
           <Spec
-            label={t('inventory.covers')}
-            value={t('inventory.dosesLeft', { count: runway.doses })}
-            warn={short}
+            label={t('calculator.concentration')}
+            value={conc ? `${fmtNumber(conc, locale, 2)} mg/mL` : '—'}
           />
-        ) : (
           <Spec
-            label={openDays !== null ? t('inventory.openedShort') : t('inventory.expiresShort')}
-            value={
-              openDays !== null
-                ? t('common.days', { count: openDays })
-                : item.expires_at
-                  ? fmtDate(new Date(item.expires_at), locale, 'd MMM')
-                  : conc
-                    ? '—'
-                    : t('inventory.lyophilised')
+            label={
+              runway
+                ? t('inventory.yourDose', { dose: fmtDose(doseMg, unit, locale) })
+                : fmtDose(doseMg, unit, locale)
             }
+            value={conc ? `${fmtNumber(roundUnits(mgToUnits(doseMg, conc)), locale, 1)} U` : '—'}
+            accent={Boolean(runway && conc)}
           />
-        )}
-      </div>
+          {runway ? (
+            <Spec
+              label={t('inventory.covers')}
+              value={t('inventory.dosesLeft', { count: runway.doses })}
+              warn={short}
+            />
+          ) : (
+            <Spec
+              label={openDays !== null ? t('inventory.openedShort') : t('inventory.expiresShort')}
+              value={
+                openDays !== null
+                  ? t('common.days', { count: openDays })
+                  : item.expires_at
+                    ? fmtDate(new Date(item.expires_at), locale, 'd MMM')
+                    : '—'
+              }
+            />
+          )}
+        </div>
+      )}
       {runway && needBy && (
         <div
           className={
@@ -315,7 +339,7 @@ function RestockCard({ lines }: { lines: RestockLine[] }) {
               <SubstanceDot color={compoundColor(l.compoundId)} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[14px] font-semibold">
-                  {compoundById(l.compoundId)?.names.generic ?? l.compoundId}
+                  {l.partners.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')}
                 </span>
                 <span className="readout block text-[11.5px] text-muted">
                   {fmtNumber(l.availableMg, locale, 2)} mg ·{' '}

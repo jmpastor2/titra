@@ -10,13 +10,14 @@ import { useToast } from '@/components/ui/Toast'
 import { compoundById, compoundName } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { DoseRow } from '@/data/database.types'
-import { useDeleteDose, useDoses, useInventory } from '@/data/hooks'
+import { useDeleteDose, useDoses, useInventory, useProtocols } from '@/data/hooks'
 import { roundUnits } from '@/domain/dosing/draw'
 import { mgToUnits } from '@/domain/dosing/reconstitution'
 import { concentrationOf, isBlend, vialHas } from '@/features/inventory/vials'
 import { fmtDose, fmtNumber, fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { LogDoseSheet } from './LogDoseSheet'
+import { WeekCard } from './WeekCard'
 
 /** One administration: a single row, or every row of a same-syringe stack. */
 interface Administration {
@@ -33,6 +34,9 @@ function groupAdministrations(rows: readonly DoseRow[]): Administration[] {
     if (a) a.rows.push(r)
     else map.set(key, { key, at: new Date(r.administered_at), rows: [r] })
   }
+  // In a stack or blend, the row that drew from the vial (the protocol's own compound) first.
+  for (const a of map.values())
+    a.rows.sort((x, y) => Number(Boolean(y.inventory_id)) - Number(Boolean(x.inventory_id)))
   return [...map.values()].toSorted((a, b) => b.at.getTime() - a.at.getTime())
 }
 
@@ -44,6 +48,7 @@ export function DosesPage() {
   const { locale } = useLocale()
   const { patientId, readOnly } = usePatientScope()
   const doses = useDoses(patientId, 365)
+  const protocols = useProtocols(patientId)
   const inventory = useInventory(patientId, true)
   // Units drawn, from the vial each dose came out of.
   const concById = useMemo(
@@ -119,6 +124,10 @@ export function DosesPage() {
           )
         }
       />
+
+      {(protocols.data ?? []).length > 0 && doses.data && (
+        <WeekCard protocols={protocols.data ?? []} doses={doses.data} />
+      )}
 
       {compounds.length > 1 && (
         <div className="hide-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4">
