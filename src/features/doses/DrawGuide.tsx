@@ -6,6 +6,7 @@ import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { DrawPlan } from '@/domain/dosing/draw'
 import { fmtDose, fmtNumber } from '@/lib/format'
+import { barrelFor, useSyringePref } from '@/lib/syringePref'
 import { useLocale } from '@/lib/useLocale'
 
 const nameOf = (id: string) => compoundById(id)?.names.generic ?? id
@@ -16,12 +17,14 @@ export function DrawGuide({ plan }: { plan: DrawPlan }) {
   const { locale } = useLocale()
   const u = (n: number) => fmtNumber(n, locale, 1)
   const stacked = plan.loads.length > 1
+  const pref = useSyringePref()
+  const { capacity, overflows } = barrelFor(pref, plan.totalUnits, plan.capacity)
 
   return (
     <div className="rounded-control border border-line bg-panel-2 p-3.5">
       <div className="flex items-baseline justify-between gap-2">
         <span className="spec">{t('draw.title')}</span>
-        <span className="spec">U-100 · {fmtNumber(plan.capacity / 100, locale, 1)} mL</span>
+        <span className="spec">U-100 · {fmtNumber(capacity / 100, locale, 1)} mL</span>
       </div>
       <div className="mt-1 flex items-baseline gap-1.5">
         <span className="readout text-glow text-[34px] font-semibold leading-none text-signal">
@@ -34,7 +37,7 @@ export function DrawGuide({ plan }: { plan: DrawPlan }) {
       </div>
 
       <Syringe
-        capacity={plan.capacity}
+        capacity={capacity}
         loads={plan.loads.map((l) => ({
           from: l.from,
           to: l.to,
@@ -55,7 +58,7 @@ export function DrawGuide({ plan }: { plan: DrawPlan }) {
                 </span>
                 <SubstanceDot color={compoundColor(l.compoundId)} />
                 <span className="min-w-0 flex-1 truncate font-semibold">
-                  {nameOf(l.compoundId)}
+                  {l.compoundIds.map(nameOf).join(' + ')}
                 </span>
                 <span className="readout shrink-0 text-[12px] text-muted">
                   {fmtDose(l.doseMg, unit, locale)}
@@ -71,8 +74,24 @@ export function DrawGuide({ plan }: { plan: DrawPlan }) {
         </ol>
       )}
       {stacked && <p className="mt-2 text-[12px] leading-snug text-muted">{t('draw.mixHint')}</p>}
+      {plan.loads.some((l) => l.compoundIds.length > 1) && (
+        <p className="mt-1.5 text-[12px] leading-snug text-muted">
+          {t('draw.blendHint', {
+            names: plan.loads
+              .find((l) => l.compoundIds.length > 1)!
+              .compoundIds.map(nameOf)
+              .join(' + '),
+          })}
+        </p>
+      )}
+      {plan.offRatio.length > 0 && (
+        <Warning>{t('draw.offRatio', { names: plan.offRatio.map(nameOf).join(', ') })}</Warning>
+      )}
 
       {!plan.fits && <Warning>{t('draw.notFits')}</Warning>}
+      {plan.fits && overflows && (
+        <Warning>{t('draw.overflowsYours', { units: pref === 'auto' ? '' : pref })}</Warning>
+      )}
       {plan.imprecise.length > 0 && (
         <Warning>{t('draw.imprecise', { names: plan.imprecise.map(nameOf).join(', ') })}</Warning>
       )}

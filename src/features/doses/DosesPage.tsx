@@ -13,7 +13,7 @@ import type { DoseRow } from '@/data/database.types'
 import { useDeleteDose, useDoses, useInventory } from '@/data/hooks'
 import { roundUnits } from '@/domain/dosing/draw'
 import { mgToUnits } from '@/domain/dosing/reconstitution'
-import { concentrationOf } from '@/features/inventory/vials'
+import { concentrationOf, isBlend, vialHas } from '@/features/inventory/vials'
 import { fmtDose, fmtNumber, fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { LogDoseSheet } from './LogDoseSheet'
@@ -51,7 +51,17 @@ export function DosesPage() {
     [inventory.data],
   )
   /** "10 + 5 = 15 U" for a stack, "50 U" for a single dose; null when a vial is unknown. */
+  const vialById = useMemo(
+    () => new Map((inventory.data ?? []).map((v) => [v.id, v])),
+    [inventory.data],
+  )
   const drawnUnits = (rows: readonly DoseRow[]) => {
+    // A blend vial is one draw for all its compounds: count the row that took from it.
+    const blendRow = rows.find((r) => {
+      const v = r.inventory_id ? vialById.get(r.inventory_id) : undefined
+      return v && isBlend(v) && rows.every((x) => vialHas(v, x.compound_id))
+    })
+    if (blendRow) rows = [blendRow]
     const units = rows.map((r) => {
       const conc = r.inventory_id ? concById.get(r.inventory_id) : null
       return conc ? roundUnits(mgToUnits(Number(r.dose_mg), conc)) : null

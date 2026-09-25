@@ -1,19 +1,25 @@
 import { subDays } from 'date-fns'
 import { Clock, Syringe } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Badge, ProgressRing, Stat } from '@/components/ui/primitives'
+import { compoundColor } from '@/content/substanceColor'
 import type { SymptomRow } from '@/data/database.types'
+import { plannedDoses } from '@/domain/dosing/schedule'
 import { exposureCurve, steadyState } from '@/domain/pk/engine'
 import { projectPlanned } from '@/domain/pk/scenarios'
 import { fmtDateTime, fmtDose, fmtHours, fmtNumber, fmtPercent } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { PkChart } from './PkChart'
+import { scaledAmount, stepChanges } from './chartScale'
+import { PkChart, type StepMarker } from './PkChart'
 import type { CompoundExposure } from './useExposure'
 
 const NO_SYMPTOMS: SymptomRow[] = []
+const DAY_MS = 86_400_000
+/** Stretch the projection to show the next titration step when it is this close. */
+const MAX_PROJECTION_DAYS = 35
 
 export function ExposureCard({
   x,
@@ -36,11 +42,19 @@ export function ExposureCard({
   const { locale } = useLocale()
   const unit = x.compound?.defaultUnit ?? 'mg'
 
+  const color = compoundColor(x.compoundId)
+  const toNextStep = x.titration?.daysToNextStep ?? null
+  const horizonDays =
+    toNextStep !== null && toNextStep >= projectionDays - 3
+      ? Math.min(MAX_PROJECTION_DAYS, Math.max(projectionDays, toNextStep + 7))
+      : projectionDays
+
   const curves = useMemo(() => {
     if (!x.pk) return null
     const first = x.history[0]?.at
     const from =
       first && first > subDays(now, historyDays) ? subDays(first, 1) : subDays(now, historyDays)
+    const to = new Date(now.getTime() + horizonDays * DAY_MS)
     const history = exposureCurve(x.history, x.pk, { from, to: now, stepH: 3, refineAtDoses: true })
     const projection = projectPlanned({
       compoundId: x.compoundId,
@@ -48,15 +62,34 @@ export function ExposureCard({
       history: x.history,
       protocol: x.protocolLike,
       now,
-      horizonDays: projectionDays,
+      horizonDays,
       stepH: 3,
     }).points
+    const planned = x.protocolLike
+      ? plannedDoses(x.protocolLike, x.history, now, to).map((p) => ({ at: p.at, mg: p.doseMg }))
+      : []
+    const changes = x.protocolLike ? stepChanges(x.protocolLike, from, to) : []
     const ss =
       x.reference && x.reference.doseMg > 0
         ? steadyState(x.reference.doseMg, x.reference.intervalH, x.pk)
         : null
-    return { history, projection, ss }
-  }, [x, now, historyDays, projectionDays])
+    return { history, projection, planned, changes, ss }
+  }, [x, now, historyDays, horizonDays])
+
+  const stepMarkers = useMemo<StepMarker[]>(
+    () =>
+      (curves?.changes ?? []).map((c) => ({
+        at: c.at,
+        label:
+          c.kind === 'pause'
+            ? t('charts.pause')
+            : `${c.kind === 'down' ? '↓' : c.kind === 'up' ? '↑' : '▸'} ${fmtDose(c.doseMg, unit, locale)}`,
+      })),
+    [curves, t, unit, locale],
+  )
+
+  const nowAmount =
+    x.nowMg !== null ? scaledAmount(x.nowMg, Math.max(x.nowMg, curves?.ss?.peakMg ?? 0)) : null
 
   const symptomMarkers = useMemo(
     () =>
@@ -103,7 +136,7 @@ export function ExposureCard({
         {x.next && <NextDoseChip next={x.next} unit={unit} now={now} />}
       </div>
 
-      {x.pk && x.nowMg !== null ? (
+      {x.pk && nowAmount ? (
         <>
           <div className="flex items-center gap-4 px-4 pt-4">
             <ProgressRing
@@ -123,8 +156,8 @@ export function ExposureCard({
             <div className="flex-1">
               <Stat
                 label={t('dashboard.onBoard')}
-                value={fmtNumber(x.nowMg, locale, x.nowMg < 1 ? 2 : 1)}
-                unit="mg"
+                value={fmtNumber(nowAmount.value, locale, nowAmount.digits)}
+                unit={nowAmount.unit}
                 hint={
                   x.progress && ref
                     ? x.progress.fraction >= 0.9
@@ -136,36 +169,76 @@ export function ExposureCard({
             </div>
           </div>
 
-          <div className="px-2 pt-3">
+          <div className="px-3 pt-3">
             {curves && (
               <PkChart
                 history={curves.history}
                 projection={curves.projection}
                 doses={x.history}
+                planned={curves.planned}
+                steps={stepMarkers}
                 symptoms={symptomMarkers}
                 now={now}
+                color={color}
                 height={210}
                 ssBand={
                   curves.ss ? { troughMg: curves.ss.troughMg, peakMg: curves.ss.peakMg } : undefined
                 }
               />
             )}
-            <div className="flex items-center gap-4 px-3 pb-1 pt-1 text-[11px] text-muted">
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-[2px] w-4 rounded bg-[var(--chart-1)]" />{' '}
+            <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1 pb-1 pt-2 text-[11px] text-muted">
+              <LegendItem
+                swatch={<span className="h-[2px] w-4 rounded" style={{ background: color }} />}
+              >
                 {t('dashboard.history')}
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="inline-block h-[2px] w-4 rounded border-t-2 border-dashed border-[var(--chart-1)]" />{' '}
+              </LegendItem>
+              <LegendItem
+                swatch={
+                  <span className="w-4 border-t-2 border-dashed" style={{ borderColor: color }} />
+                }
+              >
                 {t('dashboard.projection')}
-              </span>
-              {symptomMarkers.length > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <span className="inline-block size-2 rounded-full bg-[var(--chart-3)]" />{' '}
-                  {t('dashboard.symptomsOverlay')}
-                </span>
+              </LegendItem>
+              <LegendItem
+                swatch={
+                  <span className="flex items-center gap-0.5">
+                    <span className="size-[7px] rounded-full" style={{ background: color }} />
+                    <span
+                      className="size-[7px] rounded-full border-[1.5px] bg-panel"
+                      style={{ borderColor: color }}
+                    />
+                  </span>
+                }
+              >
+                {t('charts.legend.doses')}
+              </LegendItem>
+              {stepMarkers.length > 0 && (
+                <LegendItem
+                  swatch={
+                    <span className="h-3 border-l border-dashed" style={{ borderColor: color }} />
+                  }
+                >
+                  {t('charts.legend.step')}
+                </LegendItem>
               )}
-            </div>
+              {curves?.ss && (
+                <LegendItem
+                  swatch={
+                    <span
+                      className="h-2.5 w-4 rounded-[3px]"
+                      style={{ background: `color-mix(in oklab, ${color} 22%, transparent)` }}
+                    />
+                  }
+                >
+                  {t('charts.legend.stable')}
+                </LegendItem>
+              )}
+              {symptomMarkers.length > 0 && (
+                <LegendItem swatch={<span className="size-2 rounded-full bg-[var(--chart-3)]" />}>
+                  {t('dashboard.symptomsOverlay')}
+                </LegendItem>
+              )}
+            </ul>
           </div>
         </>
       ) : (
@@ -269,5 +342,16 @@ function NextDoseChip({
         {fmtDose(next.doseMg, unit, locale)}
       </div>
     </div>
+  )
+}
+
+function LegendItem({ swatch, children }: { swatch: ReactNode; children: ReactNode }) {
+  return (
+    <li className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-center" aria-hidden>
+        {swatch}
+      </span>
+      {children}
+    </li>
   )
 }

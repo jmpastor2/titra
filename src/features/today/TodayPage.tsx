@@ -25,7 +25,7 @@ import type { StackComponent } from '@/domain/types'
 import { useInventory } from '@/data/hooks'
 import { CheckInSheet } from '@/features/checkin/CheckInSheet'
 import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
-import { activeVial, concentrationOf } from '@/features/inventory/vials'
+import { activeVial, drawPartFor } from '@/features/inventory/vials'
 import { useExposure } from '@/features/exposure/useExposure'
 import { LogMeasurementSheet } from '@/features/health/LogMeasurementSheet'
 import { useReminderPrefs } from '@/features/reminders/useReminders'
@@ -347,12 +347,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 
 /** Units to draw for an administration, when every compound has a reconstituted vial. */
 function unitsToDraw(doses: readonly StackComponent[], vials: readonly InventoryRow[]) {
-  const plan = planDraw(
-    doses.map((d) => {
-      const vial = activeVial(vials, d.compoundId)
-      return { ...d, concMgPerMl: vial ? concentrationOf(vial) : null }
-    }),
-  )
+  const plan = planDraw(doses.map((d) => drawPartFor(vials, d.compoundId, d.doseMg)))
   return plan && plan.unknown.length === 0 ? plan.totalUnits : null
 }
 

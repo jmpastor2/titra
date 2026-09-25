@@ -7,6 +7,7 @@ import type { DoseRow, InventoryRow, ProtocolRow } from '@/data/database.types'
 import { toDoseEvent, toProtocolLike } from '@/data/mappers'
 import { planDraw } from '@/domain/dosing/draw'
 import {
+  componentsAt,
   currentStep,
   matchOccurrences,
   matchToleranceH,
@@ -14,7 +15,7 @@ import {
   plannedDoses,
 } from '@/domain/dosing/schedule'
 import type { StackComponent } from '@/domain/types'
-import { activeVial, concentrationOf } from '@/features/inventory/vials'
+import { drawPartFor } from '@/features/inventory/vials'
 
 const HOUR_MS = 3_600_000
 const DAY_MS = 24 * HOUR_MS
@@ -69,14 +70,9 @@ export function upcomingAdministrations(
       if (fireAt.getTime() <= now.getTime()) continue
       const parts: StackComponent[] = [
         { compoundId: protocol.compound_id, doseMg: o.doseMg },
-        ...(pl.components ?? []),
+        ...componentsAt(pl, o.doseMg),
       ]
-      const draw = planDraw(
-        parts.map((p) => {
-          const vial = activeVial(vials, p.compoundId)
-          return { ...p, concMgPerMl: vial ? concentrationOf(vial) : null }
-        }),
-      )
+      const draw = planDraw(parts.map((p) => drawPartFor(vials, p.compoundId, p.doseMg)))
       const complete = draw && draw.unknown.length === 0
       out.push({
         protocol,

@@ -1,4 +1,4 @@
-import { Plus, Syringe, X } from 'lucide-react'
+import { Info, Plus, Syringe, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
@@ -14,10 +14,16 @@ import { useAddDose, useDoses, useInventory, useProtocols } from '@/data/hooks'
 import { toProtocolLike } from '@/data/mappers'
 import { planDraw } from '@/domain/dosing/draw'
 import { mgToUnits, unitsToMg } from '@/domain/dosing/reconstitution'
-import { currentStep } from '@/domain/dosing/schedule'
+import { componentsAt, currentStep } from '@/domain/dosing/schedule'
 import { INJECTION_SITES, suggestNextSite } from '@/domain/sites/injectionSites'
 import type { DoseUnit } from '@/domain/types'
-import { activeVial, concentrationOf } from '@/features/inventory/vials'
+import {
+  activeVial,
+  concentrationFor,
+  drawPartFor,
+  isBlend,
+  vialHas,
+} from '@/features/inventory/vials'
 import { SubstancePicker } from '@/features/protocols/SubstancePicker'
 import {
   fmtDose,
@@ -46,6 +52,8 @@ interface Line {
   amount: string
   mode: EntryMode
   inventoryId: string
+  /** Other compounds drawn in the same units from the same blend vial. */
+  partners: string[]
 }
 
 /** mg ↔ the compound's display unit (mcg is shown as mcg; mg, IU and U as stored). */
@@ -75,13 +83,27 @@ function makeLine(
   vials: readonly InventoryRow[],
 ): Line {
   const vial = activeVial(vials, compoundId)
-  const conc = vial ? concentrationOf(vial) : null
+  const conc = vial ? concentrationFor(vial, compoundId) : null
   // Prefer syringe units whenever the vial's concentration is known: it is what the user draws.
   const mode: EntryMode = conc ? 'units' : 'dose'
   let amount = ''
   if (mg !== undefined)
     amount = conc ? plain(mgToUnits(mg, conc)) : plain(fromMg(mg, unitOf(compoundId)))
-  return { key: ++lineSeq, compoundId, amount, mode, inventoryId: vial?.id ?? '' }
+  return { key: ++lineSeq, compoundId, amount, mode, inventoryId: vial?.id ?? '', partners: [] }
+}
+
+/** Compounds of one blend vial become a single line: one draw, several doses. */
+function mergeBlends(lines: Line[], vials: readonly InventoryRow[]): Line[] {
+  const out: Line[] = []
+  for (const l of lines) {
+    const host = out.find((o) => {
+      const v = vials.find((x) => x.id === o.inventoryId)
+      return v && o.inventoryId === l.inventoryId && isBlend(v) && vialHas(v, l.compoundId)
+    })
+    if (host) host.partners.push(l.compoundId)
+    else out.push({ ...l, partners: [...l.partners] })
+  }
+  return out
 }
 
 function linesForProtocol(
@@ -92,10 +114,13 @@ function linesForProtocol(
   const pl = toProtocolLike(protocol)
   const step = currentStep(pl, new Date())?.step ?? pl.steps[pl.steps.length - 1]
   const primaryMg = step && !step.pause ? step.doseMg : undefined
-  return [
-    makeLine(protocol.compound_id, primaryMg, vials),
-    ...(pl.components ?? []).map((c) => makeLine(c.compoundId, c.doseMg, vials)),
-  ]
+  return mergeBlends(
+    [
+      makeLine(protocol.compound_id, primaryMg, vials),
+      ...componentsAt(pl, primaryMg ?? 0).map((c) => makeLine(c.compoundId, c.doseMg, vials)),
+    ],
+    vials,
+  )
 }
 
 /**
@@ -169,7 +194,21 @@ function LogDoseForm({
   }
 
   function patchLine(key: number, patch: Partial<Line>) {
-    setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)))
+    setLines((ls) =>
+      ls.flatMap((l) => {
+        if (l.key !== key) return [l]
+        const next = { ...l, ...patch }
+        const vial = vials.find((v) => v.id === next.inventoryId)
+        // A partner the new vial does not hold goes back to a line of its own.
+        const stay = next.partners.filter((c) => vial && vialHas(vial, c))
+        const leave = next.partners.filter((c) => !stay.includes(c))
+        const mg = lineMg(l)
+        return [
+          { ...next, partners: stay },
+          ...leave.map((c) => makeLine(c, mg ?? undefined, vials)),
+        ]
+      }),
+    )
   }
 
   /** mg represented by a line, or null when it is not a valid positive amount. */
@@ -178,21 +217,29 @@ function LogDoseForm({
     if (!(v > 0)) return null
     if (l.mode === 'units') {
       const vial = vials.find((x) => x.id === l.inventoryId)
-      const conc = vial ? concentrationOf(vial) : null
+      const conc = vial ? concentrationFor(vial, l.compoundId) : null
       return conc ? unitsToMg(v, conc) : null
     }
     return toMg(v, unitOf(l.compoundId))
   }
 
+  /** mg of a blend partner drawn with the line: same volume, its own concentration. */
+  function partnerMg(l: Line, partner: string): number | null {
+    const mg = lineMg(l)
+    const vial = vials.find((x) => x.id === l.inventoryId)
+    const own = vial ? concentrationFor(vial, l.compoundId) : null
+    const theirs = vial ? concentrationFor(vial, partner) : null
+    return mg !== null && own && theirs ? mg * (theirs / own) : null
+  }
+
   const drawPlan = injectable
     ? planDraw(
-        lines.map((l) => {
+        lines.flatMap((l) => {
           const vial = vials.find((v) => v.id === l.inventoryId)
-          return {
-            compoundId: l.compoundId,
-            doseMg: lineMg(l) ?? 0,
-            concMgPerMl: vial ? concentrationOf(vial) : null,
-          }
+          return [
+            drawPartFor(vials, l.compoundId, lineMg(l) ?? 0, vial),
+            ...l.partners.map((c) => drawPartFor(vials, c, partnerMg(l, c) ?? 0, vial)),
+          ]
         }),
       )
     : null
@@ -209,17 +256,28 @@ function LogDoseForm({
     }
     const at = (whenMode === 'now' ? new Date() : fromDateTimeInputs(date, time)).toISOString()
     try {
+      const base = {
+        patient_id: patientId,
+        protocol_id: protocolId || null,
+        administered_at: at,
+        site_id: injectable ? siteId || null : null,
+        notes: notes.trim() || null,
+      }
       await addDose.mutateAsync(
-        lines.map((l, i) => ({
-          patient_id: patientId,
-          protocol_id: protocolId || null,
-          compound_id: l.compoundId,
-          dose_mg: mgs[i]!,
-          administered_at: at,
-          site_id: injectable ? siteId || null : null,
-          inventory_id: l.inventoryId || null,
-          notes: notes.trim() || null,
-        })),
+        lines.flatMap((l, i) => {
+          const vial = vials.find((v) => v.id === l.inventoryId)
+          // Only the vial's own compound draws down its stock; blend partners ride along.
+          const owner = l.partners.length && vial ? vial.compound_id : l.compoundId
+          return [
+            { compoundId: l.compoundId, mg: mgs[i]! },
+            ...l.partners.map((c) => ({ compoundId: c, mg: partnerMg(l, c) ?? 0 })),
+          ].map((d) => ({
+            ...base,
+            compound_id: d.compoundId,
+            dose_mg: d.mg,
+            inventory_id: d.compoundId === owner ? l.inventoryId || null : null,
+          }))
+        }),
       )
       toast(t('doses.logged'), 'success')
       onClose()
@@ -261,6 +319,12 @@ function LogDoseForm({
               )}
             </Field>
           )}
+          {active.find((p) => p.id === protocolId)?.notes && (
+            <p className="-mt-2 flex items-start gap-1.5 rounded-control border border-warn/30 bg-warn-soft px-3 py-2 text-[12.5px] leading-snug text-ink-2">
+              <Info className="mt-0.5 size-3.5 shrink-0 text-warn" />
+              {active.find((p) => p.id === protocolId)!.notes}
+            </p>
+          )}
 
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
@@ -281,11 +345,12 @@ function LogDoseForm({
               <DoseLine
                 key={l.key}
                 line={l}
-                vials={vials.filter((v) => v.compound_id === l.compoundId)}
+                vials={vials.filter((v) => vialHas(v, l.compoundId))}
                 locale={locale}
                 removable={!protocolId}
                 onChange={(p) => patchLine(l.key, p)}
                 onRemove={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
+                partnerDoses={l.partners.map((c) => ({ compoundId: c, mg: partnerMg(l, c) }))}
               />
             ))}
             {drawPlan && <DrawGuide plan={drawPlan} />}
@@ -375,6 +440,7 @@ function DoseLine({
   removable,
   onChange,
   onRemove,
+  partnerDoses = [],
 }: {
   line: Line
   vials: readonly InventoryRow[]
@@ -382,14 +448,16 @@ function DoseLine({
   removable: boolean
   onChange: (p: Partial<Line>) => void
   onRemove: () => void
+  /** Blend partners drawn with this line and the mg each one gets. */
+  partnerDoses?: { compoundId: string; mg: number | null }[]
 }) {
   const { t } = useTranslation()
-  const compound = compoundById(line.compoundId)
   const unit = unitOf(line.compoundId)
   const vial = vials.find((v) => v.id === line.inventoryId)
-  const conc = vial ? concentrationOf(vial) : null
+  const concOf = (v: InventoryRow) => concentrationFor(v, line.compoundId)
+  const conc = vial ? concOf(vial) : null
   const value = parse(line.amount)
-  const canUseUnits = vials.some((v) => concentrationOf(v))
+  const canUseUnits = vials.some((v) => concOf(v))
 
   const lineDoseMg =
     value > 0
@@ -412,7 +480,7 @@ function DoseLine({
   // Units only mean something against a vial: without one, fall back to the dose itself.
   function changeVial(inventoryId: string) {
     const next = vials.find((v) => v.id === inventoryId)
-    const nextConc = next ? concentrationOf(next) : null
+    const nextConc = next ? concOf(next) : null
     if (line.mode === 'units' && !nextConc) {
       const amount = value > 0 && conc ? plain(fromMg(unitsToMg(value, conc), unit)) : line.amount
       onChange({ inventoryId, mode: 'dose', amount })
@@ -429,8 +497,8 @@ function DoseLine({
     // Convert the typed amount so switching never silently changes the dose.
     let amount = line.amount
     let inventoryId = line.inventoryId
-    const target = conc ? vial : vials.find((v) => concentrationOf(v))
-    const targetConc = target ? concentrationOf(target) : null
+    const target = conc ? vial : vials.find((v) => concOf(v))
+    const targetConc = target ? concOf(target) : null
     if (mode === 'units' && target) inventoryId = target.id
     if (value > 0 && targetConc) {
       amount =
@@ -445,9 +513,15 @@ function DoseLine({
     <div className="rounded-control border border-line bg-panel-2 p-3">
       <div className="mb-2 flex items-center gap-2">
         <SubstanceDot color={compoundColor(line.compoundId)} />
+        {partnerDoses.map((p) => (
+          <SubstanceDot key={p.compoundId} color={compoundColor(p.compoundId)} />
+        ))}
         <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold">
-          {compound?.names.generic ?? line.compoundId}
+          {[line.compoundId, ...partnerDoses.map((p) => p.compoundId)]
+            .map((id) => compoundById(id)?.names.generic ?? id)
+            .join(' + ')}
         </span>
+        {partnerDoses.length > 0 && <Badge tone="brand">{t('doses.blend')}</Badge>}
         {removable && (
           <button
             type="button"
@@ -507,6 +581,18 @@ function DoseLine({
           <span className="readout text-[12.5px] font-semibold text-signal">{conversion}</span>
         )}
       </div>
+      {partnerDoses.length > 0 && (
+        <div className="mt-1 flex flex-wrap justify-end gap-x-3 text-[12px] text-muted">
+          {partnerDoses.map((p) => (
+            <span key={p.compoundId} className="readout">
+              {compoundById(p.compoundId)?.names.generic}{' '}
+              <span className="font-semibold text-signal">
+                {p.mg !== null ? fmtDose(p.mg, unitOf(p.compoundId), locale) : '—'}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
       {vial && lineDoseMg !== null && lineDoseMg > Number(vial.remaining_mg) + 1e-9 && (
         <p className="mt-1.5 text-[12px] font-semibold text-warn">
           {t('doses.vialShort', {

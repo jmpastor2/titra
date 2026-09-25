@@ -13,6 +13,7 @@ import { setLocale, type AppLocale } from '@/i18n'
 import { RemindersCard } from '@/features/reminders/RemindersCard'
 import { env } from '@/lib/env'
 import { getSupabase } from '@/lib/supabase'
+import { setSyringePref, useSyringePref, type SyringePref } from '@/lib/syringePref'
 import { useTheme, type ThemePref } from '@/lib/theme'
 
 export function SettingsPage() {
@@ -21,6 +22,7 @@ export function SettingsPage() {
   const { toast } = useToast()
   const update = useUpdateProfile(patient?.id ?? '')
   const [theme, setTheme] = useTheme()
+  const syringe = useSyringePref()
   const [name, setName] = useState(patient?.display_name ?? '')
   const [protein, setProtein] = useState(String(patient?.protein_g_per_kg ?? 1.6))
   const [goal, setGoal] = useState(patient?.goal_weight_kg?.toString() ?? '')
@@ -105,6 +107,22 @@ export function SettingsPage() {
                     { value: 'system', label: t('settings.themeSystem') },
                     { value: 'light', label: t('settings.themeLight') },
                     { value: 'dark', label: t('settings.themeDark') },
+                  ]}
+                />
+              )}
+            </Field>
+            <Field label={t('settings.syringe')} hint={t('settings.syringeHint')}>
+              {() => (
+                <Segmented<string>
+                  value={String(syringe)}
+                  onChange={(v) =>
+                    setSyringePref(v === 'auto' ? 'auto' : (Number(v) as SyringePref))
+                  }
+                  options={[
+                    { value: 'auto', label: t('settings.syringeAuto') },
+                    { value: '30', label: '0,3 mL' },
+                    { value: '50', label: '0,5 mL' },
+                    { value: '100', label: '1 mL' },
                   ]}
                 />
               )}

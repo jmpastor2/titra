@@ -15,6 +15,7 @@ import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
 import { ExposureCard } from '@/features/exposure/ExposureCard'
 import { useExposure } from '@/features/exposure/useExposure'
 import { useScheduleLabel } from '@/features/protocols/scheduleLabel'
+import { vialHas, vialLook } from '@/features/inventory/vials'
 import { evidenceTone, regulatoryTone } from '@/features/wiki/tones'
 import { fmtDateTime, fmtDose, fmtHours, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
@@ -40,7 +41,7 @@ export function SubstancePage() {
     () => exposure.protocols.filter((p) => protocolCompoundIds(p).includes(compoundId)),
     [exposure.protocols, compoundId],
   )
-  const vials = (inventory.data ?? []).filter((v) => v.compound_id === compoundId)
+  const vials = (inventory.data ?? []).filter((v) => vialHas(v, compoundId))
   const recent = (x?.doses ?? []).toReversed().slice(0, 8)
 
   if (!compound) return <Navigate to="/" replace />
@@ -151,11 +152,9 @@ export function SubstancePage() {
           ) : (
             <div className="hide-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4">
               {vials.map((v) => {
-                const fill =
-                  Number(v.total_mg) > 0 ? Number(v.remaining_mg) / Number(v.total_mg) : 0
                 return (
                   <div key={v.id} className="card flex w-[200px] shrink-0 items-center gap-3 p-3.5">
-                    <Vial color={color} fill={fill} size={48} />
+                    <Vial {...vialLook(v)} size={48} />
                     <div className="min-w-0">
                       <div className="truncate text-[13.5px] font-semibold">{v.label}</div>
                       <div className="readout text-[16px] font-semibold" style={{ color }}>

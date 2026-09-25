@@ -6,7 +6,7 @@ import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Badge, EmptyState, Skeleton, Vial } from '@/components/ui/primitives'
+import { Badge, EmptyState, Skeleton, SubstanceDot, Vial } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
@@ -17,7 +17,16 @@ import { upcomingAdministrations } from '@/features/reminders/plan'
 import { fmtDate, fmtDose, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { InventorySheet } from './InventorySheet'
-import { activeVial, concentrationOf, vialRunway, type VialRunway } from './vials'
+import {
+  activeVial,
+  concentrationOf,
+  restockPlan,
+  vialContents,
+  vialLook,
+  vialRunway,
+  type RestockLine,
+  type VialRunway,
+} from './vials'
 
 export function InventoryPage() {
   const { t } = useTranslation()
@@ -29,30 +38,37 @@ export function InventoryPage() {
   const [open, setOpen] = useState(false)
   const list = useMemo(() => inventory.data ?? [], [inventory.data])
 
-  // For the vial each compound is drawn from: how many upcoming doses it still covers.
-  const runways = useMemo(() => {
+  // Upcoming doses per compound over the next months, soonest first.
+  const upcomingByCompound = useMemo(() => {
     const upcoming = upcomingAdministrations(
       protocols.data ?? [],
       doses.data ?? [],
       list,
       new Date(),
       {
-        horizonDays: 180,
+        horizonDays: 240,
       },
     )
+    const out = new Map<string, { at: Date; doseMg: number }[]>()
+    for (const u of upcoming)
+      for (const d of u.doses)
+        out.set(d.compoundId, [...(out.get(d.compoundId) ?? []), { at: u.at, doseMg: d.doseMg }])
+    return out
+  }, [protocols.data, doses.data, list])
+
+  // For the vial each compound is drawn from: how many upcoming doses it still covers.
+  const runways = useMemo(() => {
     const out = new Map<string, VialRunway>()
     for (const compoundId of new Set(list.map((v) => v.compound_id))) {
       const vial = activeVial(list, compoundId)
-      if (!vial) continue
-      const mine = upcoming.flatMap((u) =>
-        u.doses
-          .filter((d) => d.compoundId === compoundId)
-          .map((d) => ({ at: u.at, doseMg: d.doseMg })),
-      )
-      if (mine.length) out.set(vial.id, vialRunway(Number(vial.remaining_mg), mine))
+      const mine = upcomingByCompound.get(compoundId)
+      if (vial && vial.compound_id === compoundId && mine?.length)
+        out.set(vial.id, vialRunway(Number(vial.remaining_mg), mine))
     }
     return out
-  }, [protocols.data, doses.data, list])
+  }, [upcomingByCompound, list])
+
+  const restock = useMemo(() => restockPlan(list, upcomingByCompound), [list, upcomingByCompound])
 
   const add = () => {
     setEditing(null)
@@ -89,20 +105,23 @@ export function InventoryPage() {
           />
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {list.map((item) => (
-            <VialCard
-              key={item.id}
-              item={item}
-              runway={runways.get(item.id)}
-              readOnly={readOnly}
-              onEdit={() => {
-                setEditing(item)
-                setOpen(true)
-              }}
-            />
-          ))}
-        </div>
+        <>
+          {restock.length > 0 && <RestockCard lines={restock} />}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {list.map((item) => (
+              <VialCard
+                key={item.id}
+                item={item}
+                runway={runways.get(item.id)}
+                readOnly={readOnly}
+                onEdit={() => {
+                  setEditing(item)
+                  setOpen(true)
+                }}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       <InventorySheet open={open} onClose={() => setOpen(false)} editing={editing} />
@@ -163,9 +182,13 @@ function VialCard({
         onClick={onEdit}
         className="flex w-full gap-4 p-4 text-left"
       >
-        <Vial color={color} fill={fill} size={64} />
+        <Vial {...vialLook(item)} size={64} low={short} />
         <div className="min-w-0 flex-1">
-          <div className="spec truncate">{compound?.names.generic ?? item.compound_id}</div>
+          <div className="spec truncate">
+            {vialContents(item)
+              .map((c) => compoundById(c.compoundId)?.names.generic ?? c.compoundId)
+              .join(' + ')}
+          </div>
           <div className="mt-0.5 truncate text-[15px] font-semibold">{item.label}</div>
           <div className="readout mt-2 text-[22px] font-semibold leading-none" style={{ color }}>
             {fmtNumber(remaining, locale, 2)}
@@ -267,5 +290,63 @@ function Spec({
         {value}
       </div>
     </div>
+  )
+}
+
+/** Supply per substance in use, across every vial: when to order more. */
+function RestockCard({ lines }: { lines: RestockLine[] }) {
+  const { t } = useTranslation()
+  const { locale } = useLocale()
+  const now = new Date()
+  return (
+    <Card
+      instrument
+      eyebrow={t('inventory.restockEyebrow')}
+      title={t('inventory.restockTitle')}
+      className="mb-3"
+    >
+      <ul className="flex flex-col divide-y divide-line">
+        {lines.map((l) => {
+          const days = l.runway.runsOutAt ? differenceInCalendarDays(l.runway.runsOutAt, now) : null
+          const urgent = days !== null && days <= 14
+          const soon = days !== null && days <= 30
+          return (
+            <li key={l.compoundId} className="flex items-center gap-3 py-2.5">
+              <SubstanceDot color={compoundColor(l.compoundId)} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px] font-semibold">
+                  {compoundById(l.compoundId)?.names.generic ?? l.compoundId}
+                </span>
+                <span className="readout block text-[11.5px] text-muted">
+                  {fmtNumber(l.availableMg, locale, 2)} mg ·{' '}
+                  {t('inventory.vialsCount', { count: l.vials })}
+                  {l.reserve > 0 && ` · ${t('inventory.reserveCount', { count: l.reserve })}`}
+                </span>
+              </span>
+              <span className="shrink-0 text-right">
+                {l.runway.runsOutAt ? (
+                  <>
+                    <span
+                      className={`readout block text-[13px] font-semibold ${urgent ? 'text-danger' : soon ? 'text-warn' : 'text-ink'}`}
+                    >
+                      {t('inventory.until', { date: fmtDate(l.runway.runsOutAt, locale, 'd MMM') })}
+                    </span>
+                    <span className={`spec block text-[9.5px] ${urgent ? 'text-danger' : ''}`}>
+                      {urgent
+                        ? t('inventory.orderNow')
+                        : t('inventory.dosesLeft', { count: l.runway.doses })}
+                    </span>
+                  </>
+                ) : (
+                  <span className="readout block text-[13px] font-semibold text-signal">
+                    {t('inventory.plenty')}
+                  </span>
+                )}
+              </span>
+            </li>
+          )
+        })}
+      </ul>
+    </Card>
   )
 }

@@ -15,15 +15,18 @@ import {
   Skeleton,
   Stat,
 } from '@/components/ui/primitives'
+import { compoundColor } from '@/content/substanceColor'
 import type { LabResultRow, MeasurementKind } from '@/data/database.types'
 import {
   useDeleteMeasurement,
   useDeleteSymptom,
   useLabs,
   useMeasurements,
+  useProtocols,
   useSymptoms,
 } from '@/data/hooks'
 import { compositionTrend, proteinTarget, rateFlag } from '@/domain/lean/leanMass'
+import { TREND_INSET } from '@/features/exposure/chartScale'
 import { TrendChart } from '@/features/exposure/TrendChart'
 import { LogSymptomSheet } from '@/features/symptoms/LogSymptomSheet'
 import { fmtDate, fmtDateTime, fmtNumber, fmtRelativeDay } from '@/lib/format'
@@ -31,6 +34,17 @@ import { useLocale } from '@/lib/useLocale'
 import { AddLabSheet } from './AddLabSheet'
 import { KIND_DIGITS, KIND_UNIT } from './kinds'
 import { LogMeasurementSheet } from './LogMeasurementSheet'
+import {
+  changeSince,
+  inWindow,
+  laneMarks,
+  monthlyMeans,
+  progressScope,
+  sortPoints,
+  type ProgressRange,
+  type ProgressScope,
+} from './progress'
+import { ChangeValue, MonthTable, ProtocolStrip, RangePicker } from './ProgressCharts'
 import { WellbeingTab } from './WellbeingTab'
 
 type Tab = 'wellbeing' | 'body' | 'symptoms' | 'labs'
@@ -53,7 +67,16 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
   const initial = (params.get('tab') as Tab | null) ?? 'wellbeing'
   const [tab, setTab] = useState<Tab>(initial)
   const [sheet, setSheet] = useState<'measure' | 'symptom' | 'lab' | null>(null)
-  const { readOnly } = usePatientScope()
+  const { patientId, readOnly } = usePatientScope()
+  const protocols = useProtocols(patientId)
+  const [now] = useState(() => new Date())
+  const [pickedRange, setRange] = useState<ProgressRange | null>(null)
+  const scope = useMemo(() => {
+    const rows = protocols.data ?? []
+    const hasCycle = rows.some((p) => p.status === 'active')
+    const range = pickedRange ?? (hasCycle ? 'cycle' : '3m')
+    return progressScope(range === 'cycle' && !hasCycle ? '3m' : range, now, rows)
+  }, [protocols.data, pickedRange, now])
 
   function changeTab(next: Tab) {
     setTab(next)
@@ -96,10 +119,16 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
         ]}
       />
 
-      {tab === 'wellbeing' && <WellbeingTab />}
+      {(tab === 'wellbeing' || tab === 'body') && (
+        <div className="mb-3">
+          <RangePicker value={scope.range} onChange={setRange} hasCycle={scope.cycle !== null} />
+        </div>
+      )}
+
+      {tab === 'wellbeing' && <WellbeingTab scope={scope} />}
       {tab === 'body' && (
         <div className="flex flex-col gap-6">
-          <MeasurementsTab />
+          <MeasurementsTab scope={scope} />
           <LeanTab />
         </div>
       )}
@@ -113,13 +142,19 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
   )
 }
 
-function MeasurementsTab() {
+/** Kind-specific threshold under which a change reads as flat. */
+function changeThreshold(kind: MeasurementKind): number {
+  return KIND_DIGITS[kind] === 0 ? 1 : 0.2
+}
+
+function MeasurementsTab({ scope }: { scope: ProgressScope }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { patientId, patient, readOnly } = usePatientScope()
   const measurements = useMeasurements(patientId, 365)
   const del = useDeleteMeasurement(patientId)
   const [kind, setKind] = useState<MeasurementKind>('weight')
+  const { window: win, lanes, since } = scope
 
   const byKind = useMemo(() => {
     const m = new Map<MeasurementKind, { at: Date; value: number }[]>()
@@ -131,17 +166,33 @@ function MeasurementsTab() {
     return m
   }, [measurements.data])
 
-  const available = CHARTABLE.filter((k) => (byKind.get(k)?.length ?? 0) > 0)
-  const active = available.includes(kind) ? kind : available[0]
-  const points = active ? (byKind.get(active) ?? []) : []
-  const latest = points[0]
-  const trend =
-    active === 'weight'
-      ? compositionTrend(
-          points.map((p) => ({ at: p.at, kg: p.value })),
-          90,
-        )
-      : null
+  const available = useMemo(
+    () => CHARTABLE.filter((k) => (byKind.get(k)?.length ?? 0) > 0),
+    [byKind],
+  )
+  const active: MeasurementKind | undefined = available.includes(kind) ? kind : available[0]
+
+  const view = useMemo(() => {
+    if (!active) return null
+    const pts = sortPoints(inWindow(byKind.get(active) ?? [], win))
+    const days = Math.max(7, (win.to.getTime() - win.from.getTime()) / 86_400_000)
+    return {
+      pts,
+      latest: pts[pts.length - 1] ?? null,
+      change: changeSince(pts, since),
+      months: monthlyMeans(pts, win),
+      trend:
+        active === 'weight'
+          ? compositionTrend(
+              pts.map((p) => ({ at: p.at, kg: p.value })),
+              days,
+            )
+          : null,
+    }
+  }, [active, byKind, win, since])
+
+  const marks = useMemo(() => laneMarks(lanes, compoundColor), [lanes])
+  const xDomain = useMemo<[number, number]>(() => [win.from.getTime(), win.to.getTime()], [win])
 
   if (measurements.isPending) {
     return (
@@ -151,17 +202,29 @@ function MeasurementsTab() {
     )
   }
 
-  if (available.length === 0) {
+  if (!active || !view) {
     return (
-      <Card>
-        <EmptyState
-          icon={<Scale className="size-7" />}
-          title={t('health.empty')}
-          description={t('health.emptyHint')}
-        />
-      </Card>
+      <div className="flex flex-col gap-3">
+        {lanes.length > 0 && (
+          <Card padded={false} className="p-3.5">
+            <div className="spec mb-2">{t('charts.progress.timeline')}</div>
+            <ProtocolStrip lanes={lanes} span={win} inset={TREND_INSET} showDates />
+          </Card>
+        )}
+        <Card>
+          <EmptyState
+            icon={<Scale className="size-7" />}
+            title={t('health.empty')}
+            description={t('health.emptyHint')}
+          />
+        </Card>
+      </div>
     )
   }
+
+  const unit = KIND_UNIT[active]
+  const digits = KIND_DIGITS[active]
+  const hasMonths = view.months.filter((m) => m.mean !== null).length > 0
 
   return (
     <div className="flex flex-col gap-3">
@@ -171,6 +234,7 @@ function MeasurementsTab() {
             key={k}
             type="button"
             onClick={() => setKind(k)}
+            aria-pressed={active === k}
             className={
               active === k
                 ? 'shrink-0 rounded-full bg-ink px-3 py-1.5 text-[13px] font-semibold text-canvas'
@@ -182,30 +246,83 @@ function MeasurementsTab() {
         ))}
       </div>
 
-      {active && latest && (
-        <Card>
-          <div className="mb-2 flex gap-6">
-            <Stat
-              label={t(`health.kinds.${active}`)}
-              value={fmtNumber(latest.value, locale, KIND_DIGITS[active])}
-              unit={KIND_UNIT[active]}
-              hint={fmtRelativeDay(latest.at, locale)}
-            />
-            {trend && (
-              <Stat
-                label={t('health.trend')}
-                value={`${trend.deltaKg > 0 ? '+' : ''}${fmtNumber(trend.deltaKg, locale, 1)}`}
-                unit="kg"
-                tone={trend.deltaKg < 0 ? 'brand' : undefined}
-                hint={`${fmtNumber(trend.kgPerWeek, locale, 2)} kg/${t('common.week').toLowerCase()}`}
+      <Card padded={false} className="p-3.5">
+        <div className="mb-3 flex flex-wrap gap-x-6 gap-y-2">
+          <Stat
+            label={t(`health.kinds.${active}`)}
+            value={view.latest ? fmtNumber(view.latest.value, locale, digits) : '—'}
+            unit={unit}
+            hint={
+              view.latest
+                ? fmtRelativeDay(view.latest.at, locale)
+                : t('charts.progress.noneInRangeShort')
+            }
+          />
+          {view.change && (
+            <div className="flex flex-col">
+              <span className="spec">
+                {scope.range === 'cycle' && scope.cycle
+                  ? t('charts.progress.changeCycle')
+                  : t('charts.progress.changeRange')}
+              </span>
+              <ChangeValue
+                kind={active}
+                delta={view.change.delta}
+                digits={digits}
+                unit={unit}
+                threshold={changeThreshold(active)}
+                className="mt-1 text-[22px] leading-none"
               />
-            )}
+              {view.trend && (
+                <span className="mt-1.5 text-[12.5px] text-muted">
+                  {fmtNumber(view.trend.kgPerWeek, locale, 2)} kg/{t('common.week').toLowerCase()}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {lanes.length > 0 && (
+          <div className="mb-1">
+            <ProtocolStrip lanes={lanes} span={win} inset={TREND_INSET} />
           </div>
+        )}
+        {view.pts.length > 0 ? (
           <TrendChart
-            points={points}
-            unit={KIND_UNIT[active]}
-            digits={KIND_DIGITS[active]}
+            points={view.pts}
+            unit={unit}
+            digits={digits}
+            xDomain={xDomain}
+            guides={marks.guides}
+            shades={marks.shades}
             target={active === 'weight' ? (patient?.goal_weight_kg ?? undefined) : undefined}
+          />
+        ) : (
+          <p className="py-6 text-center text-[13px] text-muted">
+            {t('charts.progress.noneInRangeShort')}
+          </p>
+        )}
+      </Card>
+
+      {hasMonths && (
+        <Card
+          padded={false}
+          className="p-3.5"
+          title={t('charts.progress.monthly')}
+          subtitle={t('charts.progress.monthlyHintBody')}
+        >
+          <MonthTable
+            lanes={lanes}
+            rows={[
+              {
+                kind: active,
+                label: t(`health.kinds.${active}`),
+                months: view.months,
+                digits,
+                unit,
+                threshold: changeThreshold(active),
+              },
+            ]}
           />
         </Card>
       )}

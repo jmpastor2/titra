@@ -24,7 +24,7 @@ import {
   toDoseEvent,
   toProtocolLike,
 } from '@/data/mappers'
-import { adherence, titrationStatus } from '@/domain/dosing/schedule'
+import { adherence, componentsAt, titrationStatus } from '@/domain/dosing/schedule'
 import { useSession } from '@/features/auth/SessionProvider'
 import { fmtDose } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
@@ -243,7 +243,7 @@ function ProtocolCard({
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
           {[
             { compoundId: p.compound_id, doseMg: tit?.doseMg ?? pl.steps[0]?.doseMg ?? 0 },
-            ...(pl.components ?? []),
+            ...componentsAt(pl, tit?.doseMg ?? pl.steps[0]?.doseMg ?? 0),
           ].map((d) => (
             <span key={d.compoundId} className="spec">
               {compoundById(d.compoundId)?.names.generic}{' '}

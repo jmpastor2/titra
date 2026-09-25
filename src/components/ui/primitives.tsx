@@ -272,55 +272,291 @@ export function SubstanceDot({ color, size = 8 }: { color: string; size?: number
   )
 }
 
-/** Stylised vial whose liquid level shows what is left. */
+/* Vial drawn in a 40 x 64 box and scaled to `size` px tall; outlines stay 1 px. */
+const VIAL_W = 40
+const VIAL_H = 64
+const VIAL_GLASS =
+  'M12 12.5V14.6C12 17.4 4 17.6 4 21.8V59Q4 62.5 7.5 62.5H32.5Q36 62.5 36 59V21.8C36 17.6 28 17.4 28 14.6V12.5Z'
+const VIAL_INNER = 'M5.6 22.4V58.6Q5.6 61 8 61H32Q34.4 61 34.4 58.6V22.4Z'
+const VIAL_CAP = 'M9 6.8V2.8Q9 0.8 11.2 0.8H28.8Q31 0.8 31 2.8V6.8Z'
+/** Lyophilised cake: a short puck with a slightly crumbly top. */
+const VIAL_CAKE = 'M5.6 54.4Q8 52.6 11 53.4T17 53T23 53.5T29 52.9T34.4 53.6V63H5.6Z'
+const VIAL_LIQ_L = 5.6
+const VIAL_LIQ_R = 34.4
+const VIAL_LIQ_FULL = 23.6
+const VIAL_LIQ_EMPTY = 61
+const VIAL_MENISCUS = 1.4
+const VIAL_LABEL_Y = 34
+const VIAL_LABEL_H = 15
+/** Paper and aluminium read light in both themes: tint white with the muted token. */
+const vialPaper = (muted: number) => `color-mix(in oklab, var(--muted) ${muted}%, white)`
+const vialInk = (pct: number) => `color-mix(in oklab, var(--ink) ${pct}%, transparent)`
+
+/**
+ * Lab vial: aluminium crimp with a flip-off top in the substance colour, glass neck and
+ * shoulder, paper label and the liquid level with its meniscus. `state="powder"` shows
+ * the lyophilised cake of an unreconstituted vial (fill is ignored); `colors` stripes the
+ * liquid and splits the cap for a blend; `low` adds a warning tick.
+ */
 export function Vial({
   color,
   fill = 1,
   size = 34,
   className,
+  state = 'liquid',
+  colors,
+  low = false,
 }: {
   color: string
+  /** Liquid left, 0..1. */
   fill?: number
+  /** Height in px; the width follows the vial's proportions. */
   size?: number
   className?: string
+  state?: 'liquid' | 'powder'
+  /** Compounds of a blend vial, in order. Two or more stripe the liquid and the cap. */
+  colors?: readonly string[]
+  low?: boolean
 }) {
-  const clipId = useId()
-  const f = Math.max(0, Math.min(1, fill))
-  const h = size
-  const w = Math.round(size * 0.62)
-  const bodyTop = h * 0.3
-  const bodyH = h - bodyTop - 1.5
-  const level = bodyTop + bodyH * (1 - f)
+  const id = useId().replace(/[^\w-]/g, '')
+  const f = Math.max(0, Math.min(1, Number.isFinite(fill) ? fill : 0))
+  const blend = colors && colors.length > 1 ? colors : null
+  const detailed = size >= 44
+  const level = VIAL_LIQ_EMPTY - f * (VIAL_LIQ_EMPTY - VIAL_LIQ_FULL)
+  const surface = `M${VIAL_LIQ_L} ${level - VIAL_MENISCUS}Q20 ${level + VIAL_MENISCUS} ${VIAL_LIQ_R} ${level - VIAL_MENISCUS}`
+  const showLiquid = state === 'liquid' && f > 0.004
+  const capFill = blend ? `url(#${id}-cap)` : color
+  const stripeW = blend ? (VIAL_LIQ_R - VIAL_LIQ_L) / (blend.length * 2) : 0
+
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className={className} aria-hidden>
+    <svg
+      width={Math.round((size * VIAL_W) / VIAL_H)}
+      height={size}
+      viewBox={`0 0 ${VIAL_W} ${VIAL_H}`}
+      className={className}
+      style={{ overflow: 'visible' }}
+      aria-hidden
+    >
       <defs>
-        <clipPath id={clipId}>
-          <rect x={1.5} y={bodyTop} width={w - 3} height={bodyH} rx={w * 0.22} />
+        <clipPath id={`${id}-glass`}>
+          <path d={VIAL_GLASS} />
         </clipPath>
+        <clipPath id={`${id}-inner`}>
+          <path d={VIAL_INNER} />
+        </clipPath>
+        <linearGradient id={`${id}-metal`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stopColor={vialPaper(62)} />
+          <stop offset="0.22" stopColor={vialPaper(6)} />
+          <stop offset="0.5" stopColor={vialPaper(28)} />
+          <stop offset="0.8" stopColor={vialPaper(12)} />
+          <stop offset="1" stopColor={vialPaper(70)} />
+        </linearGradient>
+        {/* round glass: darker at both edges */}
+        <linearGradient id={`${id}-shade`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0.1" stopColor="#000" stopOpacity="0.14" />
+          <stop offset="0.3" stopColor="#000" stopOpacity="0" />
+          <stop offset="0.72" stopColor="#000" stopOpacity="0" />
+          <stop offset="0.9" stopColor="#000" stopOpacity="0.2" />
+        </linearGradient>
+        <linearGradient id={`${id}-depth`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.12" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.22" />
+        </linearGradient>
+        {blend && (
+          <>
+            <linearGradient id={`${id}-cap`} x1="0" x2="1" y1="0" y2="0">
+              {/* hard stops: one segment per compound; keyed by offset, colours can repeat */}
+              {blend.flatMap((c, i) => {
+                const start = i / blend.length
+                const end = (i + 1) / blend.length
+                return [
+                  <stop key={`a${start}`} offset={start} stopColor={c} />,
+                  <stop key={`b${end}`} offset={end} stopColor={c} />,
+                ]
+              })}
+            </linearGradient>
+            <pattern
+              id={`${id}-stripes`}
+              patternUnits="userSpaceOnUse"
+              x={VIAL_LIQ_L}
+              y={0}
+              width={stripeW * blend.length}
+              height={VIAL_H}
+            >
+              {blend.map((c, i) => {
+                const sx = i * stripeW
+                return (
+                  <rect key={sx} x={sx} y={0} width={stripeW + 0.05} height={VIAL_H} fill={c} />
+                )
+              })}
+            </pattern>
+          </>
+        )}
       </defs>
-      <rect
-        x={w * 0.2}
-        y={0.5}
-        width={w * 0.6}
-        height={h * 0.13}
-        rx={2}
-        fill="var(--panel-3)"
-        stroke="var(--line-strong)"
-      />
-      <rect x={w * 0.3} y={h * 0.14} width={w * 0.4} height={h * 0.16} fill="var(--line-strong)" />
-      <rect
-        x={1.5}
-        y={bodyTop}
-        width={w - 3}
-        height={bodyH}
-        rx={w * 0.22}
-        fill="var(--panel-2)"
-        stroke="var(--line-strong)"
-      />
-      <g clipPath={`url(#${clipId})`}>
-        <rect x={0} y={level} width={w} height={h} fill={color} opacity={0.9} />
-        <rect x={0} y={level} width={w} height={1.2} fill="white" opacity={0.35} />
+
+      {/* glass: neck, shoulder and body */}
+      <path d={VIAL_GLASS} fill="color-mix(in oklab, var(--panel-2) 60%, transparent)" />
+
+      {/* contents */}
+      <g clipPath={`url(#${id}-inner)`}>
+        {showLiquid && (
+          <>
+            <g
+              style={{
+                filter: `drop-shadow(0 0 1.6px color-mix(in oklab, ${color} 55%, transparent))`,
+              }}
+            >
+              <path
+                d={`${surface}V63H${VIAL_LIQ_L}Z`}
+                fill={blend ? `url(#${id}-stripes)` : color}
+                opacity={0.9}
+              />
+            </g>
+            <path d={`${surface}V63H${VIAL_LIQ_L}Z`} fill={`url(#${id}-depth)`} />
+            <path
+              d={surface}
+              fill="none"
+              stroke="#fff"
+              strokeOpacity={0.6}
+              strokeWidth={1}
+              vectorEffect="non-scaling-stroke"
+            />
+          </>
+        )}
+        {state === 'powder' && (
+          <>
+            <path
+              d={VIAL_CAKE}
+              fill={vialPaper(7)}
+              stroke={vialInk(22)}
+              strokeWidth={1}
+              vectorEffect="non-scaling-stroke"
+            />
+            <path d={VIAL_CAKE} fill={`url(#${id}-depth)`} />
+            {detailed && (
+              <g fill="var(--muted)" opacity={0.28}>
+                <circle cx={12} cy={57} r={0.7} />
+                <circle cx={16.5} cy={55.4} r={0.5} />
+                <circle cx={20.5} cy={58.6} r={0.6} />
+                <circle cx={27} cy={56.4} r={0.7} />
+                <circle cx={30.5} cy={59} r={0.5} />
+              </g>
+            )}
+          </>
+        )}
       </g>
+
+      {/* paper label, then the reflections on the glass over everything */}
+      <g clipPath={`url(#${id}-glass)`}>
+        <rect
+          x={0}
+          y={VIAL_LABEL_Y}
+          width={VIAL_W}
+          height={VIAL_LABEL_H}
+          fill={vialPaper(10)}
+          opacity={0.82}
+        />
+        {/* colour mark on the label, kept clear of the level line */}
+        <rect x={8.5} y={VIAL_LABEL_Y + 4} width={4} height={7} rx={0.8} fill={capFill} />
+        <line
+          x1={0}
+          x2={VIAL_W}
+          y1={VIAL_LABEL_Y + VIAL_LABEL_H}
+          y2={VIAL_LABEL_Y + VIAL_LABEL_H}
+          stroke={vialInk(16)}
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        />
+        {detailed && (
+          <g fill="var(--muted)">
+            <rect x={14.5} y={38.6} width={14} height={1.7} rx={0.85} opacity={0.55} />
+            <rect x={14.5} y={42.4} width={9} height={1.4} rx={0.7} opacity={0.35} />
+          </g>
+        )}
+        {/* the level stays readable behind the label */}
+        {showLiquid &&
+          level > VIAL_LABEL_Y &&
+          level - VIAL_MENISCUS < VIAL_LABEL_Y + VIAL_LABEL_H && (
+            <path
+              d={surface}
+              fill="none"
+              stroke={color}
+              strokeWidth={1.3}
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
+        <rect x={0} y={12} width={VIAL_W} height={VIAL_H - 12} fill={`url(#${id}-shade)`} />
+        <rect x={7} y={23.5} width={2} height={34} rx={1} fill="#fff" opacity={0.38} />
+        <rect x={30.6} y={25} width={1} height={30} rx={0.5} fill="#fff" opacity={0.14} />
+        <path
+          d="M11.6 17Q9 18.6 7 20.8"
+          fill="none"
+          stroke="#fff"
+          strokeOpacity={0.35}
+          strokeWidth={1}
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      </g>
+      <path
+        d={VIAL_GLASS}
+        fill="none"
+        stroke={vialInk(32)}
+        strokeWidth={1}
+        vectorEffect="non-scaling-stroke"
+      />
+
+      {/* aluminium crimp and flip-off top */}
+      <rect
+        x={8.2}
+        y={6.2}
+        width={23.6}
+        height={7}
+        rx={1.4}
+        fill={`url(#${id}-metal)`}
+        stroke={vialInk(26)}
+        strokeWidth={1}
+        vectorEffect="non-scaling-stroke"
+      />
+      {detailed && (
+        <line
+          x1={8.6}
+          x2={31.4}
+          y1={9.9}
+          y2={9.9}
+          stroke="#000"
+          strokeOpacity={0.14}
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        />
+      )}
+      <rect x={8.6} y={12} width={22.8} height={1} fill="#000" opacity={0.12} />
+      <path
+        d={VIAL_CAP}
+        fill={capFill}
+        stroke={vialInk(20)}
+        strokeWidth={1}
+        vectorEffect="non-scaling-stroke"
+      />
+      <rect x={10.6} y={1.7} width={18.8} height={1.3} rx={0.65} fill="#fff" opacity={0.4} />
+      <rect x={9} y={5.3} width={22} height={1.5} fill="#000" opacity={0.16} />
+
+      {low && (
+        <g>
+          <circle
+            cx={34.6}
+            cy={5.4}
+            r={5.2}
+            fill="var(--warn)"
+            stroke="var(--panel)"
+            strokeWidth={1.5}
+            vectorEffect="non-scaling-stroke"
+          />
+          <rect x={33.95} y={2.5} width={1.3} height={3.6} rx={0.65} fill="var(--panel)" />
+          <circle cx={34.6} cy={8.1} r={0.8} fill="var(--panel)" />
+        </g>
+      )}
     </svg>
   )
 }

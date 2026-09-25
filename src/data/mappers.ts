@@ -53,6 +53,16 @@ export function parseComponents(json: unknown): StackComponent[] {
   })
 }
 
+/** Extra compounds of a blend vial: [{ compoundId, mg }], mg being the vial's content. */
+export function parseBlend(json: unknown): { compoundId: string; mg: number }[] {
+  if (!Array.isArray(json)) return []
+  return json.flatMap((c) => {
+    if (!isRecord(c) || typeof c.compoundId !== 'string') return []
+    const mg = Number(c.mg)
+    return mg > 0 ? [{ compoundId: c.compoundId, mg }] : []
+  })
+}
+
 /** `times` supersedes the legacy single `time_of_day` column. */
 function protocolTimes(row: Pick<ProtocolRow, 'times' | 'time_of_day'>): string[] {
   if (Array.isArray(row.times) && row.times.length) return normaliseTimes(row.times)

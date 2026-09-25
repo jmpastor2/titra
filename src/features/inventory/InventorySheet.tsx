@@ -1,3 +1,4 @@
+import { Layers, Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
@@ -8,12 +9,14 @@ import { SubstanceDot } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import type { InventoryForm, InventoryRow } from '@/data/database.types'
+import type { InventoryForm, InventoryRow, Json } from '@/data/database.types'
 import { useSaveInventory } from '@/data/hooks'
+import { parseBlend } from '@/data/mappers'
 import { mgToUnits, vialConcentration } from '@/domain/dosing/reconstitution'
 import { SubstancePicker } from '@/features/protocols/SubstancePicker'
 import { fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { BLEND_PRESETS, type BlendPreset } from './blendPresets'
 
 const FORMS: InventoryForm[] = ['vial', 'pen', 'cartridge', 'tablet']
 const num = (s: string) => Number(s.replace(',', '.'))
@@ -40,7 +43,12 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId }: Omit<Props,
   const save = useSaveInventory(patientId)
 
   const [compoundId, setCompoundId] = useState(editing?.compound_id ?? defaultCompoundId ?? '')
-  const [picker, setPicker] = useState(!editing && !defaultCompoundId)
+  const [picker, setPicker] = useState<'primary' | 'blend' | null>(
+    !editing && !defaultCompoundId ? 'primary' : null,
+  )
+  const [blend, setBlend] = useState(() =>
+    parseBlend(editing?.components).map((c) => ({ ...c, mg: String(c.mg) })),
+  )
   const [form, setForm] = useState<InventoryForm>(editing?.form ?? 'vial')
   const [label, setLabel] = useState(editing?.label ?? '')
   const [total, setTotal] = useState(editing ? String(editing.total_mg) : '')
@@ -54,13 +62,24 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId }: Omit<Props,
   const compound = compoundId ? compoundById(compoundId) : undefined
   const unit = compound?.defaultUnit ?? 'mg'
   const conc = vialConcentration(num(total), num(diluent))
+  const blendParts = blend.filter((b) => num(b.mg) > 0)
+
+  function applyPreset(p: BlendPreset) {
+    const [first, ...rest] = p.parts
+    if (!first) return
+    setCompoundId(first.compoundId)
+    setTotal(String(first.mg))
+    setBlend(rest.map((r) => ({ compoundId: r.compoundId, mg: String(r.mg) })))
+    setLabel(p.name)
+    setPicker(null)
+  }
   // A typical 100 mcg / 0.25 mg draw makes the concentration tangible.
   const sampleMg = unit === 'mcg' ? 0.1 : 0.25
 
   async function submit() {
     const tot = num(total)
     const rem = remaining.trim() === '' ? tot : num(remaining)
-    if (!compoundId) return setPicker(true)
+    if (!compoundId) return setPicker('primary')
     if (!(tot > 0)) return toast(t('errors.positive'), 'warn')
     try {
       await save.mutateAsync({
@@ -70,7 +89,12 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId }: Omit<Props,
         form,
         label:
           label.trim() ||
-          `${compound?.names.generic ?? compoundId} ${fmtNumber(tot, locale, 2)} mg`,
+          `${[compoundId, ...blendParts.map((b) => b.compoundId)]
+            .map((id) => compoundById(id)?.names.generic ?? id)
+            .join(
+              ' + ',
+            )} ${fmtNumber(tot + blendParts.reduce((s, b) => s + num(b.mg), 0), locale, 2)} mg`,
+        components: blendParts.map((b) => ({ compoundId: b.compoundId, mg: num(b.mg) })) as Json,
         total_mg: tot,
         remaining_mg: Math.max(0, Math.min(tot, rem)),
         diluent_ml: num(diluent) > 0 ? num(diluent) : null,
@@ -82,8 +106,10 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId }: Omit<Props,
       })
       toast(t('common.saved'), 'success')
       onClose()
-    } catch {
-      toast(t('common.error'), 'error')
+    } catch (e) {
+      // Blend vials need migration 4 (inventory.components).
+      const missing = blendParts.length > 0 && /components/i.test((e as Error).message ?? '')
+      toast(missing ? t('inventory.needsMigration4') : t('common.error'), 'error')
     }
   }
 
@@ -101,9 +127,32 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId }: Omit<Props,
         }
       >
         <div className="flex flex-col gap-4 py-1">
+          {!editing && (
+            <div>
+              <div className="spec mb-2 flex items-center gap-1.5">
+                <Layers className="size-3.5" /> {t('inventory.blendPresets')}
+              </div>
+              <div className="hide-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5">
+                {BLEND_PRESETS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => applyPreset(p)}
+                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-line-strong bg-panel-2 px-3 py-2 text-[12.5px] font-semibold"
+                  >
+                    {p.parts.map((x) => (
+                      <SubstanceDot key={x.compoundId} color={compoundColor(x.compoundId)} />
+                    ))}
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <button
             type="button"
-            onClick={() => setPicker(true)}
+            onClick={() => setPicker('primary')}
             className="flex items-center gap-3 rounded-control border border-line-strong bg-panel-2 px-3.5 py-3 text-left"
           >
             {compound ? (
@@ -118,6 +167,50 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId }: Omit<Props,
               </span>
             )}
           </button>
+
+          {compound && (
+            <div className="rounded-control border border-line bg-panel-2 p-3">
+              <div className="spec mb-1">{t('inventory.blendTitle')}</div>
+              <p className="mb-2 text-[12px] text-muted">{t('inventory.blendHint')}</p>
+              {blend.map((b, i) => (
+                <div key={b.compoundId} className="mb-2 flex items-center gap-2">
+                  <SubstanceDot color={compoundColor(b.compoundId)} />
+                  <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">
+                    {compoundById(b.compoundId)?.names.generic ?? b.compoundId}
+                  </span>
+                  <div className="w-[110px]">
+                    <Input
+                      inputMode="decimal"
+                      aria-label={t('inventory.totalMg')}
+                      value={b.mg}
+                      onChange={(e) =>
+                        setBlend((xs) =>
+                          xs.map((x, j) => (j === i ? { ...x, mg: e.target.value } : x)),
+                        )
+                      }
+                      suffix="mg"
+                      className="readout h-10 bg-panel"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={t('common.delete')}
+                    onClick={() => setBlend((xs) => xs.filter((_, j) => j !== i))}
+                    className="grid size-8 place-items-center rounded-full text-muted hover:text-danger"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setPicker('blend')}
+                className="flex items-center gap-1.5 text-[13px] font-semibold text-signal"
+              >
+                <Plus className="size-4" /> {t('inventory.blendAdd')}
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <Field label={t('inventory.form')}>
@@ -135,7 +228,13 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId }: Omit<Props,
                 </Select>
               )}
             </Field>
-            <Field label={t('inventory.totalMg')}>
+            <Field
+              label={
+                blend.length
+                  ? t('inventory.totalOf', { name: compound?.names.generic ?? '' })
+                  : t('inventory.totalMg')
+              }
+            >
               {(id) => (
                 <Input
                   id={id}
@@ -247,11 +346,13 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId }: Omit<Props,
         </div>
       </Sheet>
       <SubstancePicker
-        open={picker}
-        onClose={() => setPicker(false)}
+        open={picker !== null}
+        onClose={() => setPicker(null)}
+        exclude={picker === 'blend' ? [compoundId, ...blend.map((x) => x.compoundId)] : []}
         onPick={(cid) => {
-          setCompoundId(cid)
-          setPicker(false)
+          if (picker === 'blend') setBlend((xs) => [...xs, { compoundId: cid, mg: '' }])
+          else setCompoundId(cid)
+          setPicker(null)
         }}
       />
     </>

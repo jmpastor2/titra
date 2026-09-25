@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { DoseEvent, ProtocolLike } from '../types'
 import {
+  componentsAt,
   adherence,
   dayAgenda,
   effectiveIntervalH,
@@ -216,5 +217,22 @@ describe('occurrence-based adherence', () => {
     const a = adherence(CJC_IPA, history, d('2026-03-09T12:00'))
     expect(a.expected).toBe(5)
     expect(a.taken).toBe(3)
+  })
+})
+
+describe('stack components follow the titration', () => {
+  it('scales the partner dose with the primary step', () => {
+    const blend = {
+      compoundId: 'mod-grf-1-29',
+      startDate: '2026-09-21',
+      times: ['22:00'],
+      steps: [
+        { doseMg: 0.1, intervalDays: 1, weekdays: [1, 2, 3, 4, 5], durationWeeks: 1 },
+        { doseMg: 0.15, intervalDays: 1, weekdays: [1, 2, 3, 4, 5], durationWeeks: null },
+      ],
+      components: [{ compoundId: 'ipamorelin', doseMg: 0.1 }],
+    }
+    expect(componentsAt(blend, 0.1)[0]!.doseMg).toBeCloseTo(0.1, 9)
+    expect(componentsAt(blend, 0.15)[0]!.doseMg).toBeCloseTo(0.15, 9)
   })
 })

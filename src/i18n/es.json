@@ -199,7 +199,8 @@
     "count_one": "{{count}} toma",
     "count_other": "{{count}} tomas",
     "vialShort": "Solo quedan {{left}} en este vial: prepara uno nuevo.",
-    "logShort": "Registrar"
+    "logShort": "Registrar",
+    "blend": "Blend"
   },
   "protocols": {
     "title": "Pautas",
@@ -427,7 +428,22 @@
     "openedFor_one": "abierto hace {{count}} día",
     "openedFor_other": "abierto hace {{count}} días",
     "lyophilised": "Liofilizado",
-    "expiresBeforeEmpty": "Caduca antes de acabarse: ten otro listo para el {{date}}"
+    "expiresBeforeEmpty": "Caduca antes de acabarse: ten otro listo para el {{date}}",
+    "blendPresets": "Blends habituales",
+    "blendTitle": "Blend",
+    "blendHint": "Si el vial trae otras sustancias mezcladas, añádelas con sus mg. Se cargan en la misma jeringa, en una sola carga.",
+    "blendAdd": "Añadir otra sustancia del vial",
+    "totalOf": "{{name}} (mg)",
+    "needsMigration4": "Para guardar blends falta ejecutar la migración 4 en Supabase.",
+    "restockEyebrow": "Reposición",
+    "restockTitle": "Hasta cuándo te llega",
+    "vialsCount_one": "{{count}} vial",
+    "vialsCount_other": "{{count}} viales",
+    "reserveCount_one": "{{count}} sin reconstituir",
+    "reserveCount_other": "{{count}} sin reconstituir",
+    "until": "hasta el {{date}}",
+    "orderNow": "Pide ya",
+    "plenty": "+8 meses"
   },
   "calculator": {
     "title": "Calculadora de reconstitución",
@@ -475,7 +491,11 @@
       "arm_r": "Brazo der.",
       "glute_l": "Glúteo izq.",
       "glute_r": "Glúteo der."
-    }
+    },
+    "front": "DELANTE",
+    "back": "DETRÁS",
+    "leftShort": "IZQ",
+    "rightShort": "DER"
   },
   "wiki": {
     "title": "Wiki de péptidos",
@@ -660,7 +680,10 @@
     "installHint": "Instala Titra: Safari → Compartir → Añadir a pantalla de inicio",
     "dangerZone": "Zona de riesgo",
     "signOut": "Cerrar sesión",
-    "role": "Rol"
+    "role": "Rol",
+    "syringe": "Tu jeringa de pinchar",
+    "syringeHint": "La app dibuja esta jeringa, con sus mismas marcas. U-100: 1 ud = 0,01 mL.",
+    "syringeAuto": "Auto"
   },
   "more": {
     "title": "Más",
@@ -814,7 +837,10 @@
     "notFits": "No cabe en una jeringa de 1 mL: repártelo en dos pinchazos.",
     "imprecise": "{{names}}: menos de 2 U es difícil de medir. Con más agua bacteriostática la carga es más precisa.",
     "unknown": "Sin concentración para {{names}}: añade su vial con el agua bacteriostática para ver las unidades.",
-    "aria": "Jeringa de {{capacity}} unidades cargada hasta {{units}} U"
+    "aria": "Jeringa de {{capacity}} unidades cargada hasta {{units}} U",
+    "blendHint": "{{names}} vienen mezclados en el mismo vial: una sola carga.",
+    "offRatio": "{{names}}: la dosis de la pauta no cuadra con la proporción del blend; se registra lo que sale del vial.",
+    "overflowsYours": "No cabe en tu jeringa de {{units}} ud: usa una más grande o reparte en dos pinchazos."
   },
   "reminders": {
     "eyebrow": "Avisos",
@@ -869,5 +895,42 @@
       "local": "Cuando actives el servidor de avisos (migración 3) te llegarán también con la app cerrada."
     },
     "hourBefore": "1 h"
+  },
+  "charts": {
+    "now": "Ahora",
+    "pause": "Pausa",
+    "legend": {
+      "doses": "Dosis · prevista",
+      "step": "Cambio de dosis",
+      "stable": "Rango estable"
+    },
+    "level": {
+      "nextIn": "Próxima en {{time}}",
+      "daysShort": "{{n}} d",
+      "stripAria": "{{taken}} de {{planned}} tomas previstas en los últimos {{days}} días"
+    },
+    "range": {
+      "label": "Periodo",
+      "1m": "1 m",
+      "3m": "3 m",
+      "6m": "6 m",
+      "cycle": "Ciclo"
+    },
+    "progress": {
+      "timeline": "Pautas en el periodo",
+      "noProtocols": "Sin pautas activas en este periodo.",
+      "sinceCycle": "Desde el inicio del ciclo · {{date}}",
+      "sinceDate": "Cambio desde el {{date}}",
+      "changeCycle": "Desde inicio de ciclo",
+      "changeRange": "Cambio en el periodo",
+      "needTwo": "Haz check-ins en al menos dos días distintos para ver el cambio.",
+      "noneInRange": "Sin check-ins en este periodo",
+      "noneInRangeShort": "Sin registros en este periodo",
+      "monthly": "Media por mes",
+      "monthlyHint": "Cada mes junto a la dosis que llevabas. Δ compara el primer y el último mes.",
+      "monthlyHintBody": "Media mensual junto a la dosis de cada pauta.",
+      "month": "Mes",
+      "deltaHint": "El cambio compara tu primera y tu última semana de registros del periodo. Las líneas verticales marcan cambios de dosis."
+    }
   }
 }

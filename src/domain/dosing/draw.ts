@@ -1,7 +1,8 @@
 /**
  * Drawing an administration into one insulin syringe. Several compounds can share the
  * syringe (Mod GRF 1-29 + ipamorelin): each one is drawn from its own vial on top of
- * the previous, so the plunger marks are cumulative. Pure; see draw.test.ts.
+ * the previous, so the plunger marks are cumulative. Compounds that come premixed in
+ * one blend vial are a single load. Pure; see draw.test.ts.
  */
 import { mgToUnits } from './reconstitution'
 
@@ -17,10 +18,14 @@ export interface DrawPart {
   doseMg: number
   /** Vial concentration in mg/mL; null when the vial or its diluent is unknown. */
   concMgPerMl: number | null
+  /** Parts with the same key come out of one blend vial, in one draw. */
+  blendKey?: string
 }
 
 export interface DrawLoad {
+  /** First compound of the load; `compoundIds` lists all of them for a blend. */
   compoundId: string
+  compoundIds: string[]
   doseMg: number
   units: number
   /** Plunger mark before and after this load, in units. */
@@ -39,6 +44,8 @@ export interface DrawPlan {
   imprecise: string[]
   /** Compounds that could not be converted because their concentration is unknown. */
   unknown: string[]
+  /** Blend compounds whose dose does not match the vial's proportion. */
+  offRatio: string[]
 }
 
 /** Half-unit marks are the finest a user can read on a 0.3 mL barrel. */
@@ -66,12 +73,30 @@ export function planDraw(parts: readonly DrawPart[]): DrawPlan | null {
   if (known.length === 0) return null
 
   let mark = 0
-  const loads = known.map<DrawLoad>((p) => {
+  const loads: DrawLoad[] = []
+  const offRatio: string[] = []
+  const byBlend = new Map<string, DrawLoad>()
+  for (const p of known) {
     const units = roundUnits(mgToUnits(p.doseMg, p.concMgPerMl!))
-    const load = { compoundId: p.compoundId, doseMg: p.doseMg, units, from: mark, to: mark + units }
+    const shared = p.blendKey ? byBlend.get(p.blendKey) : undefined
+    if (shared) {
+      // Same liquid: the first compound sets the draw; the rest must fit its proportion.
+      shared.compoundIds.push(p.compoundId)
+      if (Math.abs(units - shared.units) > 0.5) offRatio.push(p.compoundId)
+      continue
+    }
+    const load = {
+      compoundId: p.compoundId,
+      compoundIds: [p.compoundId],
+      doseMg: p.doseMg,
+      units,
+      from: mark,
+      to: mark + units,
+    }
+    if (p.blendKey) byBlend.set(p.blendKey, load)
+    loads.push(load)
     mark += units
-    return load
-  })
+  }
   return {
     loads,
     totalUnits: mark,
@@ -80,5 +105,6 @@ export function planDraw(parts: readonly DrawPart[]): DrawPlan | null {
     fits: mark <= 100,
     imprecise: loads.filter((l) => l.units < MIN_PRECISE_UNITS).map((l) => l.compoundId),
     unknown,
+    offRatio,
   }
 }

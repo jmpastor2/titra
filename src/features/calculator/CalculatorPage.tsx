@@ -10,6 +10,7 @@ import { Segmented } from '@/components/ui/primitives'
 import { syringeFor } from '@/domain/dosing/draw'
 import { drawUp, penClicks, reconstitute, suggestDiluentMl } from '@/domain/dosing/reconstitution'
 import { fmtNumber } from '@/lib/format'
+import { barrelFor, useSyringePref } from '@/lib/syringePref'
 import { useLocale } from '@/lib/useLocale'
 
 type Mode = 'vial' | 'pen'
@@ -36,6 +37,13 @@ export function CalculatorPage() {
       return null
     }
   }, [vialMg, diluentMl, doseMcg])
+
+  const syringePref = useSyringePref()
+  const barrel = barrelFor(
+    syringePref,
+    result?.draw.unitsRounded ?? 0,
+    syringeFor(result?.draw.unitsRounded ?? 0),
+  )
 
   const pen = useMemo(() => {
     const d = Number(penDoseMg.replace(',', '.'))
@@ -155,18 +163,16 @@ export function CalculatorPage() {
                 </div>
               </Card>
 
-              <Card
-                eyebrow={`U-100 · ${fmtNumber(syringeFor(result.draw.unitsRounded) / 100, locale, 1)} mL`}
-              >
+              <Card eyebrow={`U-100 · ${fmtNumber(barrel.capacity / 100, locale, 1)} mL`}>
                 <div className="readout text-glow text-[30px] font-semibold leading-none text-signal">
                   {fmtNumber(result.draw.unitsRounded, locale, 1)}
                   <span className="ml-1 text-[14px]">U</span>
                 </div>
                 <Syringe
-                  capacity={syringeFor(result.draw.unitsRounded)}
+                  capacity={barrel.capacity}
                   loads={[{ from: 0, to: result.draw.unitsRounded, color: 'var(--signal)' }]}
                   label={t('draw.aria', {
-                    capacity: syringeFor(result.draw.unitsRounded),
+                    capacity: barrel.capacity,
                     units: fmtNumber(result.draw.unitsRounded, locale, 1),
                   })}
                   className="mt-1 w-full"

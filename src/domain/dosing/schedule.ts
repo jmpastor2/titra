@@ -11,7 +11,7 @@
  * All date maths is local time via date-fns. Pure functions; callers pass `now`.
  */
 import { addDays, differenceInCalendarDays, parseISO, set, startOfDay } from 'date-fns'
-import type { DoseEvent, ProtocolLike, ScheduleStep } from '../types'
+import type { DoseEvent, ProtocolLike, ScheduleStep, StackComponent } from '../types'
 
 const DAY_MS = 86_400_000
 const HOUR_MS = 3_600_000
@@ -446,4 +446,14 @@ export function referenceRegimen(
   const w = currentStep(protocol, now) ?? lastStep(protocol)
   if (!w || w.step.pause) return { doseMg: 0, intervalH: 24 }
   return { doseMg: w.step.doseMg, intervalH: effectiveIntervalH(w.step, protocol.times) }
+}
+
+/**
+ * Stack compounds at a given primary dose. Their doses are entered for the first dosing
+ * step and follow the titration in proportion, as a premixed blend does by nature.
+ */
+export function componentsAt(protocol: ProtocolLike, primaryDoseMg: number): StackComponent[] {
+  const base = protocol.steps.find((s) => !s.pause && s.doseMg > 0)?.doseMg
+  const k = base && primaryDoseMg > 0 ? primaryDoseMg / base : 1
+  return (protocol.components ?? []).map((c) => ({ ...c, doseMg: c.doseMg * k }))
 }

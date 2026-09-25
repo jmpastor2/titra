@@ -4,7 +4,7 @@
  */
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
 import { toDoseEvent, toProtocolLike } from '@/data/mappers'
-import { dayAgenda, type AgendaStatus } from '@/domain/dosing/schedule'
+import { componentsAt, dayAgenda, type AgendaStatus } from '@/domain/dosing/schedule'
 import type { StackComponent } from '@/domain/types'
 
 export interface TodayItem {
@@ -51,7 +51,7 @@ export function buildToday(
         takenAt: item.takenAt,
         doses: [
           { compoundId: protocol.compound_id, doseMg: item.doseMg },
-          ...(pl.components ?? []),
+          ...componentsAt(pl, item.doseMg),
         ],
       })
     }

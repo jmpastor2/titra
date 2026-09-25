@@ -45,6 +45,27 @@ describe('planDraw', () => {
   })
 })
 
+describe('blend vials', () => {
+  it('draws a premixed blend once and checks the proportion', () => {
+    // CJC-1295 + ipamorelin 5 + 5 mg in 3 mL: 1.667 mg/mL of each, 6 U = 100 mcg of each.
+    const conc = 5 / 3
+    const plan = planDraw([
+      { compoundId: 'mod-grf-1-29', doseMg: 0.1, concMgPerMl: conc, blendKey: 'v1' },
+      { compoundId: 'ipamorelin', doseMg: 0.1, concMgPerMl: conc, blendKey: 'v1' },
+    ])!
+    expect(plan.loads).toHaveLength(1)
+    expect(plan.loads[0]!.compoundIds).toEqual(['mod-grf-1-29', 'ipamorelin'])
+    expect(plan.totalUnits).toBe(6)
+    expect(plan.offRatio).toEqual([])
+
+    const off = planDraw([
+      { compoundId: 'mod-grf-1-29', doseMg: 0.1, concMgPerMl: conc, blendKey: 'v1' },
+      { compoundId: 'ipamorelin', doseMg: 0.2, concMgPerMl: conc, blendKey: 'v1' },
+    ])!
+    expect(off.offRatio).toEqual(['ipamorelin'])
+  })
+})
+
 describe('syringe helpers', () => {
   it('rounds to the half-unit mark', () => {
     expect(roundUnits(12.26)).toBe(12.5)

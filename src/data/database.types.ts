@@ -113,6 +113,8 @@ export type InventoryRow = {
   concentration_mg_per_ml: number | null
   /** Bacteriostatic water used to reconstitute, in mL. */
   diluent_ml: number | null
+  /** Blend vials: the other compounds and their mg, [{ compoundId, mg }] (migration 4). */
+  components: Json
   opened_at: string | null
   expires_at: string | null
   lot: string | null
@@ -296,6 +298,7 @@ export type Database = {
         | 'form'
         | 'concentration_mg_per_ml'
         | 'diluent_ml'
+        | 'components'
         | 'opened_at'
         | 'expires_at'
         | 'lot'

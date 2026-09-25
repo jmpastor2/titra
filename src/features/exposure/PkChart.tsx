@@ -1,12 +1,13 @@
 import { format } from 'date-fns'
 import { enUS, es } from 'date-fns/locale'
-import { useMemo } from 'react'
+import { useId, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Area,
   AreaChart,
   CartesianGrid,
   Line,
+  ReferenceArea,
   ReferenceDot,
   ReferenceLine,
   ResponsiveContainer,
@@ -17,10 +18,18 @@ import {
 import type { CurvePoint } from '@/domain/pk/engine'
 import type { DoseEvent } from '@/domain/types'
 import { fmtNumber, type Locale } from '@/lib/format'
+import { useLocale } from '@/lib/useLocale'
+import { amountScale, niceYAxis, timeTicks } from './chartScale'
 
 export interface SymptomMarker {
   at: Date
   severity: number
+  label: string
+}
+
+/** A vertical guide where a titration step starts, e.g. "↑ 4 mg". */
+export interface StepMarker {
+  at: Date
   label: string
 }
 
@@ -31,17 +40,25 @@ export interface PkChartProps {
   alt?: CurvePoint[]
   altLabel?: string
   doses?: DoseEvent[]
+  /** Future administrations of the plan, drawn as hollow markers. */
+  planned?: DoseEvent[]
+  steps?: StepMarker[]
   symptoms?: SymptomMarker[]
   now: Date
   height?: number
+  /** Unit of the curve values. Amounts in mg switch to mcg when they are tiny. */
   unit?: string
-  /** Steady-state band (avg ± peak/trough) for context. */
+  /** Series colour: the substance identity colour. */
+  color?: string
+  /** Steady-state band (trough to peak) for context. */
   ssBand?: { troughMg: number; peakMg: number }
 }
 
 const NO_POINTS: CurvePoint[] = []
 const NO_DOSES: DoseEvent[] = []
+const NO_STEPS: StepMarker[] = []
 const NO_SYMPTOMS: SymptomMarker[] = []
+const MARGIN = { top: 20, right: 14, bottom: 0, left: 0 }
 
 interface Row {
   t: number
@@ -56,136 +73,168 @@ export function PkChart({
   alt,
   altLabel,
   doses = NO_DOSES,
+  planned = NO_DOSES,
+  steps = NO_STEPS,
   symptoms = NO_SYMPTOMS,
   now,
   height = 220,
   unit = 'mg',
+  color = 'var(--chart-1)',
   ssBand,
 }: PkChartProps) {
-  const { i18n } = useTranslation()
-  const locale: Locale = i18n.language.startsWith('en') ? 'en' : 'es'
+  const { t } = useTranslation()
+  const { locale } = useLocale()
   const dfl = locale === 'es' ? es : enUS
+  const fillId = `pk-fill-${useId().replace(/:/g, '')}`
 
-  const rows = useMemo<Row[]>(() => {
+  const model = useMemo(() => {
+    let rawMax = ssBand?.peakMg ?? 0
+    for (const p of history) rawMax = Math.max(rawMax, p.mg)
+    for (const p of projection) rawMax = Math.max(rawMax, p.mg)
+    for (const p of alt ?? []) rawMax = Math.max(rawMax, p.mg)
+    const scale = unit === 'mg' ? amountScale(rawMax) : { factor: 1, unit }
+    const k = scale.factor
+
     const map = new Map<number, Row>()
-    for (const p of history) {
+    const put = (p: CurvePoint, key: 'hist' | 'proj' | 'alt') => {
       const t0 = p.at.getTime()
-      map.set(t0, { ...(map.get(t0) ?? { t: t0 }), hist: p.mg })
+      map.set(t0, { ...(map.get(t0) ?? { t: t0 }), [key]: p.mg * k })
     }
-    for (const p of projection) {
-      const t0 = p.at.getTime()
-      map.set(t0, { ...(map.get(t0) ?? { t: t0 }), proj: p.mg })
-    }
-    for (const p of alt ?? []) {
-      const t0 = p.at.getTime()
-      map.set(t0, { ...(map.get(t0) ?? { t: t0 }), alt: p.mg })
-    }
+    for (const p of history) put(p, 'hist')
+    for (const p of projection) put(p, 'proj')
+    for (const p of alt ?? []) put(p, 'alt')
     // Make projection continuous with history at the seam.
     const last = history[history.length - 1]
     if (last) {
       const seam = map.get(last.at.getTime())
       if (seam) {
-        if (projection.length) seam.proj = last.mg
-        if (alt?.length) seam.alt = last.mg
+        if (projection.length) seam.proj = last.mg * k
+        if (alt?.length) seam.alt = last.mg * k
       }
     }
-    return [...map.values()].toSorted((a, b) => a.t - b.t)
-  }, [history, projection, alt])
+    const rows = [...map.values()].toSorted((a, b) => a.t - b.t)
+    const domain: [number, number] = [rows[0]?.t ?? 0, rows[rows.length - 1]?.t ?? 1]
+    const y = niceYAxis(rawMax * k)
+    const x = timeTicks(domain[0], domain[1], 5)
+    const nowT = now.getTime()
+    const nowRow = last ? { t: last.at.getTime(), v: last.mg * k } : null
+    return { rows, domain, y, x, k, unit: scale.unit, nowT, nowRow }
+  }, [history, projection, alt, ssBand, unit, now])
 
-  const domain = useMemo<[number, number]>(() => {
-    const ts = rows.map((r) => r.t)
-    return [Math.min(...ts), Math.max(...ts)]
-  }, [rows])
+  const { rows, domain, y, x, k } = model
+  if (rows.length === 0) return null
 
-  const yMax = useMemo(() => {
-    let m = 0
-    for (const r of rows) m = Math.max(m, r.hist ?? 0, r.proj ?? 0, r.alt ?? 0)
-    if (ssBand) m = Math.max(m, ssBand.peakMg)
-    return m * 1.15 || 1
-  }, [rows, ssBand])
-
-  const spanDays = (domain[1] - domain[0]) / 86_400_000
-  const tickFmt = (v: number) =>
-    format(new Date(v), spanDays > 60 ? 'd MMM' : 'EEE d', { locale: dfl })
-
-  const doseMarkers = doses.filter(
-    (d) => d.at.getTime() >= domain[0] && d.at.getTime() <= domain[1],
-  )
-  const symptomMarkers = symptoms.filter(
-    (s) => s.at.getTime() >= domain[0] && s.at.getTime() <= domain[1],
-  )
+  const inDomain = (d: Date) => d.getTime() >= domain[0] && d.getTime() <= domain[1]
+  const span = Math.max(1, domain[1] - domain[0])
+  const decimals = y.max < 1 ? 2 : y.max < 10 ? 1 : 0
+  const yWidth = 10 + 7 * Math.max(...y.ticks.map((v) => fmtNumber(v, locale, decimals).length))
+  const hasFuture = model.nowT < domain[1]
 
   return (
-    <div style={{ height }} className="-mx-2">
+    <div style={{ height }} className="relative">
+      <span className="spec pointer-events-none absolute left-0 top-0 text-[9.5px]">
+        {model.unit}
+      </span>
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={rows} margin={{ top: 12, right: 22, bottom: 0, left: -18 }}>
+        <AreaChart data={rows} margin={MARGIN}>
           <defs>
-            <linearGradient id="pkFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.28} />
-              <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.02} />
+            <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+              <stop offset="100%" stopColor={color} stopOpacity={0.02} />
             </linearGradient>
           </defs>
           <CartesianGrid vertical={false} stroke="var(--line)" strokeDasharray="2 4" />
+          {hasFuture && (
+            <ReferenceArea
+              x1={Math.max(model.nowT, domain[0])}
+              x2={domain[1]}
+              fill="var(--ink)"
+              fillOpacity={0.035}
+              stroke="none"
+              ifOverflow="hidden"
+            />
+          )}
+          {ssBand && (
+            <ReferenceArea
+              y1={ssBand.troughMg * k}
+              y2={ssBand.peakMg * k}
+              fill={color}
+              fillOpacity={0.08}
+              stroke="none"
+              ifOverflow="hidden"
+            />
+          )}
           <XAxis
             dataKey="t"
             type="number"
             domain={domain}
             scale="time"
-            tickFormatter={tickFmt}
+            ticks={x.ticks}
+            interval={0}
+            tickFormatter={(v: number) => format(new Date(v), x.pattern, { locale: dfl })}
             tick={{ fill: 'var(--muted)', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            minTickGap={36}
           />
           <YAxis
-            domain={[0, yMax]}
+            domain={[0, y.max]}
+            ticks={y.ticks}
+            interval={0}
             tick={{ fill: 'var(--muted)', fontSize: 11 }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v: number) => fmtNumber(v, locale, v < 1 ? 2 : 1)}
-            width={48}
+            tickFormatter={(v: number) => fmtNumber(v, locale, decimals)}
+            width={yWidth}
           />
-          {ssBand && (
-            <>
-              <ReferenceLine
-                y={ssBand.peakMg}
-                stroke="var(--chart-5)"
-                strokeDasharray="3 3"
-                strokeOpacity={0.5}
-              />
-              <ReferenceLine
-                y={ssBand.troughMg}
-                stroke="var(--chart-5)"
-                strokeDasharray="3 3"
-                strokeOpacity={0.5}
-              />
-            </>
-          )}
+          {steps
+            .filter((s) => inDomain(s.at))
+            .map((s) => {
+              const frac = (s.at.getTime() - domain[0]) / span
+              return (
+                <ReferenceLine
+                  key={`step${s.at.getTime()}`}
+                  x={s.at.getTime()}
+                  stroke={color}
+                  strokeOpacity={0.55}
+                  strokeDasharray="2 3"
+                  label={{
+                    value: s.label,
+                    position: frac > 0.72 ? 'insideTopRight' : 'insideTopLeft',
+                    fill: 'var(--ink-2)',
+                    fontSize: 10,
+                    fontWeight: 600,
+                  }}
+                />
+              )
+            })}
           <Tooltip
             cursor={{ stroke: 'var(--muted)', strokeWidth: 1 }}
-            content={<PkTooltip unit={unit} altLabel={altLabel} />}
+            position={{ y: 0 }}
+            allowEscapeViewBox={{ x: false, y: true }}
+            content={<PkTooltip unit={model.unit} altLabel={altLabel} locale={locale} />}
           />
           <Area
             dataKey="hist"
             type="monotone"
-            stroke="var(--chart-1)"
+            stroke={color}
             strokeWidth={2}
-            fill="url(#pkFill)"
+            fill={`url(#${fillId})`}
             isAnimationActive={false}
             connectNulls={false}
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--panel)' }}
+            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--panel)', fill: color }}
           />
           <Line
             dataKey="proj"
             type="monotone"
-            stroke="var(--chart-1)"
+            stroke={color}
+            strokeOpacity={0.85}
             strokeWidth={2}
             strokeDasharray="5 4"
             dot={false}
             isAnimationActive={false}
             connectNulls={false}
-            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--panel)' }}
+            activeDot={{ r: 4, strokeWidth: 2, stroke: 'var(--panel)', fill: color }}
           />
           {alt && (
             <Line
@@ -199,39 +248,96 @@ export function PkChart({
               connectNulls={false}
             />
           )}
-          <ReferenceLine
-            x={now.getTime()}
-            stroke="var(--ink-2)"
-            strokeOpacity={0.5}
-            strokeWidth={1}
-          />
-          {doseMarkers.map((d) => (
-            <ReferenceDot
-              key={`d${d.at.getTime()}`}
-              x={d.at.getTime()}
-              y={0}
-              r={4}
-              fill="var(--chart-1)"
-              stroke="var(--panel)"
-              strokeWidth={2}
-              ifOverflow="visible"
+          {model.nowT >= domain[0] && model.nowT <= domain[1] && (
+            <ReferenceLine
+              x={model.nowT}
+              stroke="var(--ink-2)"
+              strokeOpacity={0.6}
+              strokeWidth={1}
+              label={{
+                value: t('charts.now'),
+                position: 'top',
+                fill: 'var(--ink-2)',
+                fontSize: 9.5,
+                fontWeight: 700,
+              }}
             />
-          ))}
-          {symptomMarkers.map((s) => (
+          )}
+          {doses
+            .filter((d) => inDomain(d.at))
+            .map((d) => (
+              <ReferenceDot
+                key={`d${d.at.getTime()}`}
+                x={d.at.getTime()}
+                y={0}
+                r={3.5}
+                fill={color}
+                stroke="var(--panel)"
+                strokeWidth={1.5}
+                ifOverflow="visible"
+              />
+            ))}
+          {planned
+            .filter((d) => inDomain(d.at))
+            .map((d) => (
+              <ReferenceDot
+                key={`p${d.at.getTime()}`}
+                x={d.at.getTime()}
+                y={0}
+                r={3}
+                fill="var(--panel)"
+                stroke={color}
+                strokeWidth={1.5}
+                ifOverflow="visible"
+              />
+            ))}
+          {symptoms
+            .filter((s) => inDomain(s.at))
+            .map((s) => (
+              <ReferenceDot
+                key={`s${s.at.getTime()}-${s.label}`}
+                x={s.at.getTime()}
+                y={y.max * 0.9}
+                r={3 + Math.min(4, s.severity / 2.5)}
+                fill="var(--chart-3)"
+                stroke="var(--panel)"
+                strokeWidth={2}
+                ifOverflow="visible"
+              />
+            ))}
+          {model.nowRow && (
             <ReferenceDot
-              key={`s${s.at.getTime()}-${s.label}`}
-              x={s.at.getTime()}
-              y={yMax * 0.96}
-              r={3 + Math.min(4, s.severity / 2.5)}
-              fill="var(--chart-3)"
-              stroke="var(--panel)"
-              strokeWidth={2}
+              x={model.nowRow.t}
+              y={model.nowRow.v}
+              r={4.5}
               ifOverflow="visible"
+              shape={<NowDot color={color} />}
             />
-          ))}
+          )}
         </AreaChart>
       </ResponsiveContainer>
     </div>
+  )
+}
+
+/** The current reading: a solid point with a soft static glow (no motion). */
+function NowDot({ cx, cy, color }: { cx?: number; cy?: number; color: string }) {
+  if (cx === undefined || cy === undefined || !Number.isFinite(cx) || !Number.isFinite(cy)) {
+    return <g />
+  }
+  return (
+    <g pointerEvents="none">
+      <circle cx={cx} cy={cy} r={9} fill={color} fillOpacity={0.18} />
+      <circle
+        cx={cx}
+        cy={cy}
+        r={4.5}
+        fill={color}
+        stroke="var(--panel)"
+        strokeWidth={2}
+        style={{ filter: `drop-shadow(0 0 4px ${color})` }}
+      />
+    </g>
   )
 }
 
@@ -248,31 +354,34 @@ function PkTooltip({
   label,
   unit,
   altLabel,
-}: TooltipInjected & { unit: string; altLabel?: string }) {
-  const { t, i18n } = useTranslation()
-  const locale: Locale = i18n.language.startsWith('en') ? 'en' : 'es'
+  locale,
+}: TooltipInjected & { unit: string; altLabel?: string; locale: Locale }) {
+  const { t } = useTranslation()
   if (!active || !payload?.length) return null
   const row = payload[0]?.payload as Row | undefined
   if (!row) return null
   const v = row.hist ?? row.proj
+  const digits = v !== undefined && v < 1 ? 2 : 1
   return (
-    <div className="rounded-control border border-line bg-panel px-3 py-2 text-[12px] shadow-lg">
+    <div className="rounded-control border border-line bg-panel px-2.5 py-1.5 text-[11.5px] shadow-lg">
       <div className="text-muted">
         {format(new Date(label as number), 'EEE d MMM, HH:mm', {
           locale: locale === 'es' ? es : enUS,
         })}
       </div>
       {v !== undefined && (
-        <div className="tabular font-semibold">
-          {fmtNumber(v, locale, 2)} {unit}
-          {row.proj !== undefined && row.hist === undefined && (
-            <span className="ml-1 font-normal text-muted">· {t('dashboard.projection')}</span>
+        <div className="readout font-semibold text-ink">
+          {fmtNumber(v, locale, digits)} {unit}
+          {row.hist === undefined && (
+            <span className="ml-1 font-sans font-normal text-muted">
+              · {t('dashboard.projection')}
+            </span>
           )}
         </div>
       )}
       {row.alt !== undefined && altLabel && (
-        <div className="tabular text-accent">
-          {fmtNumber(row.alt, locale, 2)} {unit} · {altLabel}
+        <div className="readout text-ink-2">
+          {fmtNumber(row.alt, locale, digits)} {unit} · {altLabel}
         </div>
       )}
     </div>

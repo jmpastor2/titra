@@ -199,7 +199,8 @@
     "count_one": "{{count}} dose",
     "count_other": "{{count}} doses",
     "vialShort": "Only {{left}} left in this vial: prepare a new one.",
-    "logShort": "Log"
+    "logShort": "Log",
+    "blend": "Blend"
   },
   "protocols": {
     "title": "Protocols",
@@ -427,7 +428,22 @@
     "openedFor_one": "opened {{count}} day ago",
     "openedFor_other": "opened {{count}} days ago",
     "lyophilised": "Lyophilised",
-    "expiresBeforeEmpty": "Expires before it runs out: have another ready by {{date}}"
+    "expiresBeforeEmpty": "Expires before it runs out: have another ready by {{date}}",
+    "blendPresets": "Common blends",
+    "blendTitle": "Blend",
+    "blendHint": "If the vial comes premixed with other substances, add them with their mg. They are drawn together, in one draw.",
+    "blendAdd": "Add another substance in the vial",
+    "totalOf": "{{name}} (mg)",
+    "needsMigration4": "Saving blends needs migration 4 in Supabase.",
+    "restockEyebrow": "Restock",
+    "restockTitle": "How long your stock lasts",
+    "vialsCount_one": "{{count}} vial",
+    "vialsCount_other": "{{count}} vials",
+    "reserveCount_one": "{{count}} not reconstituted",
+    "reserveCount_other": "{{count}} not reconstituted",
+    "until": "until {{date}}",
+    "orderNow": "Order now",
+    "plenty": "8+ months"
   },
   "calculator": {
     "title": "Reconstitution calculator",
@@ -475,7 +491,11 @@
       "arm_r": "Right arm",
       "glute_l": "Left glute",
       "glute_r": "Right glute"
-    }
+    },
+    "front": "FRONT",
+    "back": "BACK",
+    "leftShort": "L",
+    "rightShort": "R"
   },
   "wiki": {
     "title": "Peptide wiki",
@@ -660,7 +680,10 @@
     "installHint": "Install Titra: Safari → Share → Add to Home Screen",
     "dangerZone": "Danger zone",
     "signOut": "Sign out",
-    "role": "Role"
+    "role": "Role",
+    "syringe": "Your injection syringe",
+    "syringeHint": "The app draws this syringe, with the same marks. U-100: 1 U = 0.01 mL.",
+    "syringeAuto": "Auto"
   },
   "more": {
     "title": "More",
@@ -814,7 +837,10 @@
     "notFits": "It does not fit in a 1 mL syringe: split it into two injections.",
     "imprecise": "{{names}}: under 2 U is hard to measure. More bacteriostatic water makes the draw more precise.",
     "unknown": "No concentration for {{names}}: add its vial with the bacteriostatic water to see units.",
-    "aria": "{{capacity}}-unit syringe drawn to {{units}} U"
+    "aria": "{{capacity}}-unit syringe drawn to {{units}} U",
+    "blendHint": "{{names}} come premixed in one vial: a single draw.",
+    "offRatio": "{{names}}: the protocol dose does not match the blend ratio; what comes out of the vial is logged.",
+    "overflowsYours": "It does not fit your {{units}} U syringe: use a bigger one or split it into two injections."
   },
   "reminders": {
     "eyebrow": "Reminders",
@@ -869,5 +895,42 @@
       "local": "Once the reminder server is set up (migration 3) they also arrive with the app closed."
     },
     "hourBefore": "1 h"
+  },
+  "charts": {
+    "now": "Now",
+    "pause": "Pause",
+    "legend": {
+      "doses": "Dose · planned",
+      "step": "Dose change",
+      "stable": "Steady range"
+    },
+    "level": {
+      "nextIn": "Next in {{time}}",
+      "daysShort": "{{n}} d",
+      "stripAria": "{{taken}} of {{planned}} planned doses in the last {{days}} days"
+    },
+    "range": {
+      "label": "Range",
+      "1m": "1 m",
+      "3m": "3 m",
+      "6m": "6 m",
+      "cycle": "Cycle"
+    },
+    "progress": {
+      "timeline": "Protocols in range",
+      "noProtocols": "No active protocols in this range.",
+      "sinceCycle": "Since cycle start · {{date}}",
+      "sinceDate": "Change since {{date}}",
+      "changeCycle": "Since cycle start",
+      "changeRange": "Change in range",
+      "needTwo": "Check in on at least two different days to see the change.",
+      "noneInRange": "No check-ins in this range",
+      "noneInRangeShort": "No entries in this range",
+      "monthly": "Monthly average",
+      "monthlyHint": "Each month next to the dose you were on. Δ compares the first and last month.",
+      "monthlyHintBody": "Monthly average next to each protocol's dose.",
+      "month": "Month",
+      "deltaHint": "The change compares your first and last week of entries in the range. Vertical lines mark dose changes."
+    }
   }
 }

@@ -11,9 +11,11 @@ import { t, type CompoundEntry } from '../schema'
 const modGrf: CompoundEntry = {
   id: 'mod-grf-1-29',
   names: {
-    generic: 'Mod GRF 1-29',
+    // Sold and dosed as "CJC-1295" in the CJC/ipamorelin blends: that is the name users know.
+    generic: 'CJC-1295 (sin DAC)',
     brands: [],
     aliases: [
+      'Mod GRF 1-29',
       'CJC-1295 sin DAC',
       'CJC-1295 no DAC',
       'Modified GRF (1-29)',
