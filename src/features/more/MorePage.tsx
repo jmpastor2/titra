@@ -1,5 +1,6 @@
 import {
   BellRing,
+  TrendingUp,
   Calculator,
   ChevronRight,
   Download,
@@ -63,6 +64,12 @@ export function MorePage() {
           label: t('more.calculator'),
           hint: t('more.calculatorHint'),
           to: '/calculator',
+        },
+        {
+          icon: <TrendingUp className="size-[18px]" />,
+          label: t('more.outlook'),
+          hint: t('more.outlookHint'),
+          to: '/outlook',
         },
         {
           icon: <Sparkles className="size-[18px]" />,

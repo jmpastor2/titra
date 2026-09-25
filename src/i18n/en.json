@@ -710,7 +710,9 @@
     "exportHint": "CSV and backup",
     "settingsHint": "Profile, theme and language",
     "reminders": "Reminders",
-    "remindersHint": "When each protocol is due and how many units to draw"
+    "remindersHint": "When each protocol is due and how many units to draw",
+    "outlook": "Outlook",
+    "outlookHint": "What to expect in 3, 6 and 12 months"
   },
   "export": {
     "title": "Export",
@@ -960,5 +962,105 @@
     "ateAt": "I ate at…",
     "mealTime": "Meal time",
     "clear": "Clear"
+  },
+  "outlook": {
+    "eyebrow": "Outlook",
+    "title": "Outlook",
+    "horizon": {
+      "months": "{{n}} months"
+    },
+    "headline": {
+      "in": "In {{n}} months",
+      "you": "You, at this pace",
+      "bandNote": "body weight · trial reference at {{week}} weeks"
+    },
+    "range": "{{a}} to {{b}}",
+    "compounds": "Substances: {{names}}",
+    "section": {
+      "trial": "With trial data",
+      "you": "Your trend",
+      "noData": "No human data"
+    },
+    "band": {
+      "label": "Trial reference",
+      "at": "Observed at {{week}} weeks",
+      "noneShort": "No reference yet",
+      "firstAt": "The first published data point is at {{week}} weeks; you reach it on {{date}}.",
+      "none": "No published data for this regimen.",
+      "withWeight": "Kilograms use your starting weight ({{weight}})."
+    },
+    "position": {
+      "between": "Your dose on that date ({{dose}}) sits between the {{lower}} and {{upper}} arms: this is the band between them, not a prediction for you.",
+      "exact": "Your dose on that date ({{dose}}) matches the {{lower}} arm: this is the mean observed in that arm.",
+      "below": "Your dose on that date ({{dose}}) is below the lowest arm ({{upper}}): the band runs from placebo to that arm.",
+      "above": "Your dose on that date ({{dose}}) is above the highest arm ({{lower}}): that arm is shown, but your dose is outside what was studied."
+    },
+    "personal": {
+      "label": "At this pace",
+      "badge": "Extrapolation",
+      "badgeWeak": "Long extrapolation",
+      "extrapolationNote": "Your weight trend drawn forward as a straight line; real change is rarely linear.",
+      "weak": "Little data for that far ahead: read it with caution.",
+      "short": {
+        "no_data": "Log your weight",
+        "need_more": "More weigh-ins needed",
+        "too_far": "Needs more weeks of data"
+      },
+      "soFar": "So far: {{kg}} ({{pct}})",
+      "needMoreHint": "It needs {{n}} weigh-ins spread over at least {{days}} days.",
+      "until": "Your data supports a projection up to {{date}}.",
+      "askWeight": "Log your weight to see your own trend next to the trial's.",
+      "logWeight": "Log weight",
+      "emptyTitle": "No weigh-ins yet"
+    },
+    "chart": {
+      "summary": "You are in week {{today}}. At {{week}} weeks the trial observed {{band}} body weight.",
+      "weekTick": "w{{n}}",
+      "today": "today",
+      "band": "Trial (your dose band)",
+      "placebo": "Placebo",
+      "you": "Your weigh-ins",
+      "projection": "Your trend",
+      "observedOnly": "Dots are published data; lines only join them."
+    },
+    "trial": {
+      "open": "See the trial",
+      "population": "Population",
+      "regimen": "Regimen",
+      "outcome": "Outcome",
+      "source": "Source",
+      "arm": "Arm",
+      "weekCol": "{{n}} wk",
+      "placebo": "Placebo",
+      "means": "Group means versus starting weight; they do not show the spread between people."
+    },
+    "noData": {
+      "kpiLabel": "What to expect",
+      "title": "No human outcome data",
+      "titleMixed": "No quantitative reference",
+      "body": "No trials have measured body-composition or metabolic changes at these doses. Your own records are the best way to find out."
+    },
+    "measure": {
+      "title": "What to measure to find out",
+      "count_one": "{{count}} entry",
+      "count_other": "{{count}} entries",
+      "none": "None yet",
+      "lab": "Lab test",
+      "note": "Notes"
+    },
+    "empty": {
+      "title": "No active protocols",
+      "body": "Create a protocol to see what trials observed for each substance and what to measure.",
+      "action": "Create protocol"
+    },
+    "disclaimer": {
+      "title": "How to read this",
+      "body": "Figures are means observed in trials with groups of people, not a prediction for you, and your trend is an extrapolation of your own data. This is not medical advice."
+    },
+    "card": {
+      "noData": "No human data: {{names}}. See what to measure."
+    },
+    "sinceWeek": "Since {{date}} · week {{n}}",
+    "startsOn": "Starts on {{date}}"
   }
 }

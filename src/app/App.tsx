@@ -32,6 +32,7 @@ const SitesPage = named(() => import('@/features/sites/SitesPage'), 'SitesPage')
 const SimulatorPage = named(() => import('@/features/simulator/SimulatorPage'), 'SimulatorPage')
 const SettingsPage = named(() => import('@/features/settings/SettingsPage'), 'SettingsPage')
 const RemindersPage = named(() => import('@/features/reminders/RemindersPage'), 'RemindersPage')
+const OutlookPage = named(() => import('@/features/outlook/OutlookPage'), 'OutlookPage')
 const ExportPage = named(() => import('@/features/settings/ExportPage'), 'ExportPage')
 const SharePage = named(() => import('@/features/share/SharePage'), 'SharePage')
 const PatientDetailPage = named(
@@ -71,6 +72,7 @@ const router = createHashRouter([
       { path: 'simulator', element: page(<SimulatorPage />) },
       { path: 'settings', element: page(<SettingsPage />) },
       { path: 'reminders', element: page(<RemindersPage />) },
+      { path: 'outlook', element: page(<OutlookPage />) },
       { path: 'export', element: page(<ExportPage />) },
       { path: 'share', element: page(<SharePage />) },
       { path: 'shared/:patientId', element: page(<PatientDetailPage />) },

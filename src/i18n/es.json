@@ -710,7 +710,9 @@
     "exportHint": "CSV y copia de seguridad",
     "settingsHint": "Perfil, tema e idioma",
     "reminders": "Avisos",
-    "remindersHint": "Cuándo toca cada pauta y cuántas unidades cargar"
+    "remindersHint": "Cuándo toca cada pauta y cuántas unidades cargar",
+    "outlook": "Futuro",
+    "outlookHint": "Qué puedes esperar en 3, 6 y 12 meses"
   },
   "export": {
     "title": "Exportar",
@@ -960,5 +962,105 @@
     "ateAt": "Comí a las…",
     "mealTime": "Hora de la comida",
     "clear": "Borrar"
+  },
+  "outlook": {
+    "eyebrow": "Proyección",
+    "title": "Futuro",
+    "horizon": {
+      "months": "{{n}} meses"
+    },
+    "headline": {
+      "in": "En {{n}} meses",
+      "you": "Tú, si sigues así",
+      "bandNote": "de peso · referencia de ensayo a {{week}} semanas"
+    },
+    "range": "{{a}} a {{b}}",
+    "compounds": "Sustancias: {{names}}",
+    "section": {
+      "trial": "Con datos de ensayo",
+      "you": "Tu tendencia",
+      "noData": "Sin datos en humanos"
+    },
+    "band": {
+      "label": "Referencia de ensayo",
+      "at": "Observado a {{week}} semanas",
+      "noneShort": "Aún sin referencia",
+      "firstAt": "El primer dato publicado es a {{week}} semanas; llegarás el {{date}}.",
+      "none": "No hay datos publicados para esta pauta.",
+      "withWeight": "Los kilos se calculan sobre tu peso inicial ({{weight}})."
+    },
+    "position": {
+      "between": "Tu dosis en esa fecha ({{dose}}) está entre los brazos de {{lower}} y {{upper}}: es la franja entre ambos, no una predicción para ti.",
+      "exact": "Tu dosis en esa fecha ({{dose}}) coincide con el brazo de {{lower}}: es la media observada en ese brazo.",
+      "below": "Tu dosis en esa fecha ({{dose}}) está por debajo del brazo más bajo ({{upper}}): la franja va de placebo a ese brazo.",
+      "above": "Tu dosis en esa fecha ({{dose}}) supera el brazo más alto ({{lower}}): se muestra ese brazo, pero tu dosis queda fuera de lo estudiado."
+    },
+    "personal": {
+      "label": "Si sigues así",
+      "badge": "Extrapolación",
+      "badgeWeak": "Extrapolación larga",
+      "extrapolationNote": "Tu tendencia de peso prolongada en línea recta; el cambio real rara vez es lineal.",
+      "weak": "Tienes pocos datos para llegar tan lejos: tómalo con cautela.",
+      "short": {
+        "no_data": "Registra tu peso",
+        "need_more": "Faltan pesajes",
+        "too_far": "Faltan semanas de datos"
+      },
+      "soFar": "Hasta hoy: {{kg}} ({{pct}})",
+      "needMoreHint": "Hacen falta {{n}} pesajes repartidos en al menos {{days}} días.",
+      "until": "Tus datos permiten proyectar hasta el {{date}}.",
+      "askWeight": "Registra tu peso para ver tu propia tendencia junto a la del ensayo.",
+      "logWeight": "Registrar peso",
+      "emptyTitle": "Aún no hay pesajes"
+    },
+    "chart": {
+      "summary": "Hoy vas por la semana {{today}}. A las {{week}} semanas, el ensayo observó {{band}} de peso.",
+      "weekTick": "s{{n}}",
+      "today": "hoy",
+      "band": "Ensayo (franja de tu dosis)",
+      "placebo": "Placebo",
+      "you": "Tus pesajes",
+      "projection": "Tu tendencia",
+      "observedOnly": "Los puntos son datos publicados; las líneas solo los unen."
+    },
+    "trial": {
+      "open": "Ver el ensayo",
+      "population": "Población",
+      "regimen": "Pauta",
+      "outcome": "Medida",
+      "source": "Fuente",
+      "arm": "Brazo",
+      "weekCol": "{{n}} sem",
+      "placebo": "Placebo",
+      "means": "Medias del grupo respecto al peso inicial; no muestran la dispersión entre personas."
+    },
+    "noData": {
+      "kpiLabel": "Qué esperar",
+      "title": "Sin datos de resultados en humanos",
+      "titleMixed": "Sin referencia cuantitativa",
+      "body": "No hay ensayos que midan cambios de composición corporal o metabolismo a estas dosis. Tus propios registros son la mejor forma de saberlo."
+    },
+    "measure": {
+      "title": "Qué medir para saberlo",
+      "count_one": "{{count}} registro",
+      "count_other": "{{count}} registros",
+      "none": "Sin registros",
+      "lab": "Analítica",
+      "note": "Notas"
+    },
+    "empty": {
+      "title": "Sin pautas activas",
+      "body": "Crea una pauta para ver qué observaron los ensayos de cada sustancia y qué medir.",
+      "action": "Crear pauta"
+    },
+    "disclaimer": {
+      "title": "Cómo leer esto",
+      "body": "Las cifras son medias observadas en ensayos con grupos de personas, no una predicción para ti, y tu tendencia es una extrapolación de tus propios datos. No es consejo médico."
+    },
+    "card": {
+      "noData": "Sin datos en humanos: {{names}}. Mira qué medir."
+    },
+    "sinceWeek": "Desde el {{date}} · semana {{n}}",
+    "startsOn": "Empieza el {{date}}"
   }
 }

@@ -29,6 +29,7 @@ import { compositionTrend, proteinTarget, rateFlag } from '@/domain/lean/leanMas
 import { TREND_INSET } from '@/features/exposure/chartScale'
 import { TrendChart } from '@/features/exposure/TrendChart'
 import { LogSymptomSheet } from '@/features/symptoms/LogSymptomSheet'
+import { OutlookCard } from '@/features/outlook/OutlookPage'
 import { fmtDate, fmtDateTime, fmtNumber, fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { AddLabSheet } from './AddLabSheet'
@@ -104,6 +105,12 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
             )
           }
         />
+      )}
+
+      {!embedded && !readOnly && (
+        <div className="mb-3">
+          <OutlookCard />
+        </div>
       )}
 
       <Segmented<Tab>
@@ -408,7 +415,9 @@ function LeanTab() {
 
       <Card
         title={t('lean.proteinTarget')}
-        subtitle={t('lean.proteinHint', { gPerKg: patient?.protein_g_per_kg ?? 1.6 })}
+        subtitle={t('lean.proteinHint', {
+          gPerKg: fmtNumber(Number(patient?.protein_g_per_kg ?? 1.6), locale, 1),
+        })}
       >
         <div className="flex items-center gap-4">
           <ProgressRing fraction={target > 0 ? proteinToday / target : 0} size={80} stroke={8}>
