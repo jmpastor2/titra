@@ -34,10 +34,17 @@ export function SimulatorPage() {
 
   // Only substances with human PK data can be simulated (MOTS-c or Mod GRF cannot);
   // long-acting ones first, where skipping or stopping matters most.
-  const simulable = exposure.items
-    .filter((x) => x.pk)
-    .toSorted((a, b) => b.pk!.halfLifeH - a.pk!.halfLifeH)
-  const current = simulable.find((x) => x.compoundId === compoundId) ?? simulable[0]
+  const simulable = useMemo(
+    () =>
+      exposure.items
+        .filter((x) => x.pk)
+        .toSorted((a, b) => (b.pk?.halfLifeH ?? 0) - (a.pk?.halfLifeH ?? 0)),
+    [exposure.items],
+  )
+  const current = useMemo(
+    () => simulable.find((x) => x.compoundId === compoundId) ?? simulable[0],
+    [simulable, compoundId],
+  )
   const pk = current?.pk
 
   const history = useMemo(() => {
