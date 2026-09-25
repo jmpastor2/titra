@@ -862,7 +862,7 @@
       "checking": "Un momento.",
       "on": "Te llegan aunque la app esté cerrada.",
       "off": "Actívalo para recibir los avisos aquí.",
-      "denied": "Permite las notificaciones de Titra en los ajustes del navegador o del sistema y vuelve aquí.",
+      "denied": "En iPhone: Ajustes → Notificaciones → Titra → Permitir notificaciones. En el ordenador, en los permisos del navegador. Luego vuelve aquí.",
       "no-sw": "En el servidor de desarrollo no se instala. En la app publicada funciona.",
       "ios-install": "En iPhone: Safari → Compartir → Añadir a pantalla de inicio. Abre Titra desde el icono y activa los avisos aquí (iOS 16.4 o posterior).",
       "unsupported": "Usa Safari con la app instalada en iPhone, o Chrome o Edge.",

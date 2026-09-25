@@ -86,7 +86,8 @@ export function RemindersCard() {
       return true
     } catch (e) {
       const code = e instanceof PushError ? e.code : 'server'
-      if (code === 'denied') setDevice('denied')
+      // Only a real "Don't allow" is sticky; a dismissed prompt can be asked again.
+      if (code === 'denied') setDevice(notificationPermission() === 'denied' ? 'denied' : 'off')
       else if (code === 'no-sw') setDevice('no-sw')
       toast(t(`reminders.errors.${code}`), code === 'server' ? 'error' : 'warn')
       return false
@@ -96,13 +97,15 @@ export function RemindersCard() {
   async function toggle(next: boolean) {
     setBusy(true)
     try {
-      await prefs.set({ enabled: next })
+      // iOS only shows the permission prompt while still inside the tap, so ask (and
+      // subscribe) before any network round trip.
       if (next && !serverReady && 'Notification' in window) {
         // No push server yet: notifications still show while the app is open.
         const p = await Notification.requestPermission()
         setDevice(p === 'denied' ? 'denied' : 'local')
       } else if (next && device !== 'on' && device !== 'ios-install' && device !== 'unsupported')
         await enableDevice()
+      await prefs.set({ enabled: next })
       toast(next ? t('reminders.enabled') : t('reminders.disabled'), 'success')
     } catch {
       toast(t('reminders.errors.server'), 'error')
@@ -181,7 +184,9 @@ export function RemindersCard() {
             </div>
 
             <DeviceRow state={!serverReady && device !== 'denied' ? 'local' : device}>
-              {(device === 'on' || (!serverReady && device !== 'denied')) && (
+              {(device === 'on' ||
+                notificationPermission() === 'granted' ||
+                (!serverReady && device !== 'denied')) && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   <Button size="sm" variant="soft" onClick={() => void test()}>
                     {t('reminders.test')}

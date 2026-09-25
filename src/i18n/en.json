@@ -862,7 +862,7 @@
       "checking": "One moment.",
       "on": "They arrive even when the app is closed.",
       "off": "Turn it on to get reminders here.",
-      "denied": "Allow notifications for Titra in the browser or system settings and come back.",
+      "denied": "On iPhone: Settings → Notifications → Titra → Allow Notifications. On a computer, in the browser's site permissions. Then come back here.",
       "no-sw": "The dev server does not install it. The published app does.",
       "ios-install": "On iPhone: Safari → Share → Add to Home Screen. Open Titra from the icon and turn reminders on here (iOS 16.4 or later).",
       "unsupported": "Use Safari with the installed app on iPhone, or Chrome or Edge.",
