@@ -112,11 +112,11 @@ export function ExposureCard({
               stroke={9}
             >
               <div className="text-center leading-none">
-                <div className="tabular text-[20px] font-bold">
+                <div className="readout text-[20px] font-bold">
                   {x.progress ? fmtPercent(Math.min(x.progress.fraction, 1.5), locale) : '—'}
                 </div>
-                <div className="mt-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-muted">
-                  {t('dashboard.steadyState')}
+                <div className="spec mx-auto mt-1 max-w-[60px] text-[8.5px] leading-tight tracking-[0.08em]">
+                  {t('dashboard.steadyStateShort')}
                 </div>
               </div>
             </ProgressRing>

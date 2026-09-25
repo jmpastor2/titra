@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import { fmtDose, fmtHours, fmtNumber } from '@/lib/format'
+import { fmtDoseList, fmtHours, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import type { TodayItem } from './agenda'
 
@@ -30,7 +30,16 @@ export function AgendaRow({
   const taken = item.status === 'taken'
   const alert = item.status === 'due' || item.status === 'overdue'
   const missed = item.status === 'missed'
-  const names = item.doses.map((d) => compoundById(d.compoundId)?.names.generic ?? d.compoundId)
+  const name =
+    item.protocol.name ||
+    item.doses.map((d) => compoundById(d.compoundId)?.names.generic ?? d.compoundId).join(' + ')
+  const doseText = fmtDoseList(
+    item.doses.map((d) => ({
+      valueMg: d.doseMg,
+      unit: compoundById(d.compoundId)?.defaultUnit ?? 'mg',
+    })),
+    locale,
+  )
 
   const status =
     item.status === 'overdue'
@@ -67,16 +76,10 @@ export function AgendaRow({
           {item.doses.map((d) => (
             <SubstanceDot key={d.compoundId} color={compoundColor(d.compoundId)} />
           ))}
-          <span className="truncate text-[14.5px] font-semibold">{names.join(' + ')}</span>
+          <span className="truncate text-[14.5px] font-semibold">{name}</span>
         </div>
         <div className="mt-0.5 flex items-center gap-2 text-[12.5px] text-muted">
-          <span className="readout truncate">
-            {item.doses
-              .map((d) =>
-                fmtDose(d.doseMg, compoundById(d.compoundId)?.defaultUnit ?? 'mg', locale),
-              )
-              .join(' · ')}
-          </span>
+          <span className="readout truncate">{doseText}</span>
           {units != null && !taken && (
             <span className="readout shrink-0 font-semibold text-signal">
               {fmtNumber(units, locale, 1)} U

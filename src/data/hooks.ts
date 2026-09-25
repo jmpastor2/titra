@@ -169,7 +169,11 @@ export function useDeleteDose(patientId: string) {
       const { error } = await sb.from('doses').delete().eq('id', id)
       if (error) throw new Error(error.message)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['doses', patientId] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['doses', patientId] })
+      // Deleting a dose gives its amount back to the vial (migration 3 trigger).
+      void qc.invalidateQueries({ queryKey: qk.inventory(patientId) })
+    },
   })
 }
 

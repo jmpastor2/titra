@@ -162,11 +162,12 @@
     "whatIf": "Simulator",
     "noDosesYet": "No doses logged yet",
     "pkNotAvailable": "This compound has no pharmacokinetic parameters for the curve.",
-    "clinicianNotes": "Shared notes"
+    "clinicianNotes": "Shared notes",
+    "steadyStateShort": "Steady state"
   },
   "doses": {
     "title": "Dose log",
-    "log": "Log dose",
+    "log": "Log a dose",
     "logTitle": "Log administration",
     "compound": "Compound",
     "protocol": "Protocol",
@@ -174,7 +175,7 @@
     "dose": "Dose",
     "site": "Injection site",
     "suggestedSite": "Suggested",
-    "siteTooRecent": "Every site was used less than 7 days ago",
+    "siteTooRecent": "Every site was used less than 3 days ago",
     "inventory": "Deduct from",
     "noInventory": "Do not deduct",
     "when": "When",
@@ -197,7 +198,8 @@
     "eyebrow": "History",
     "count_one": "{{count}} dose",
     "count_other": "{{count}} doses",
-    "vialShort": "Only {{left}} left in this vial: prepare a new one."
+    "vialShort": "Only {{left}} left in this vial: prepare a new one.",
+    "logShort": "Log"
   },
   "protocols": {
     "title": "Protocols",
@@ -274,7 +276,21 @@
     "pickDays": "Pick at least one day",
     "history": "History",
     "savedTitle": "Saved protocols",
-    "shared": "shared"
+    "shared": "shared",
+    "ladder": {
+      "nextStep_one": "Up to {{dose}} tomorrow · {{date}}",
+      "nextStep_other": "Up to {{dose}} in {{count}} days · {{date}}",
+      "nextPause_one": "Pause from tomorrow · {{date}}",
+      "nextPause_other": "Pause in {{count}} days · {{date}}",
+      "pauseUntil_one": "Paused · back tomorrow · {{date}}",
+      "pauseUntil_other": "Paused · back in {{count}} days · {{date}}",
+      "paused": "Paused",
+      "maintenance": "Maintenance: steady dose",
+      "startsOn": "Starts {{date}}"
+    },
+    "adherence": "Adherence 28 d",
+    "adherenceValue": "{{taken}}/{{expected}} · {{pct}} %",
+    "ladderPreview": "Dose ladder"
   },
   "symptoms": {
     "title": "Symptoms",
@@ -394,8 +410,8 @@
     "expired": "Expired",
     "expiresSoon": "Expires in {{days}} d",
     "low": "Running low",
-    "dosesLeft_one": "{{count}} dose left",
-    "dosesLeft_other": "{{count}} doses left",
+    "dosesLeft_one": "{{count}} dose",
+    "dosesLeft_other": "{{count}} doses",
     "archive": "Archive",
     "inUse": "In use for {{days}} d",
     "inUseWarning": "Beyond the recommended {{days}} d after opening",
@@ -404,7 +420,14 @@
     "diluentHint": "With the vial content, Titra works out concentration and units.",
     "remainingHint": "Leave empty if the vial is full.",
     "openedShort": "In use",
-    "expiresShort": "Expires"
+    "expiresShort": "Expires",
+    "yourDose": "Dose {{dose}}",
+    "covers": "Covers",
+    "nextVialBy": "Have the next vial ready by {{date}}",
+    "openedFor_one": "opened {{count}} day ago",
+    "openedFor_other": "opened {{count}} days ago",
+    "lyophilised": "Lyophilised",
+    "expiresBeforeEmpty": "Expires before it runs out: have another ready by {{date}}"
   },
   "calculator": {
     "title": "Reconstitution calculator",
@@ -555,7 +578,10 @@
     "washout": "Washout",
     "washoutHint": "Time to fall to 10% of the current level",
     "atDay": "Day {{n}}",
-    "needProtocol": "You need an active protocol with logged doses."
+    "needProtocol": "You need an active protocol with logged doses.",
+    "tabSkip": "Skip one",
+    "tabStop": "Stop",
+    "tabSwitch": "Switch"
   },
   "clinic": {
     "title": "Patients",
@@ -658,7 +684,9 @@
     "share": "Share",
     "shareHint": "Show your control to your clinician",
     "exportHint": "CSV and backup",
-    "settingsHint": "Profile, theme and language"
+    "settingsHint": "Profile, theme and language",
+    "reminders": "Reminders",
+    "remindersHint": "When each protocol is due and how many units to draw"
   },
   "export": {
     "title": "Export",
@@ -721,7 +749,9 @@
     "readMore": "Read entry",
     "onBoard": "On board",
     "lastDose": "Last dose",
-    "strip": "Today's doses across the day"
+    "strip": "Today's doses across the day",
+    "remindersOff": "Turn on reminders",
+    "remindersOffHint": "We tell you when each protocol is due and how many units to draw."
   },
   "setupLab": {
     "title": "Set up your lab",

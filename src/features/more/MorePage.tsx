@@ -1,4 +1,5 @@
 import {
+  BellRing,
   Calculator,
   ChevronRight,
   Download,
@@ -75,6 +76,12 @@ export function MorePage() {
       title: t('more.account'),
       index: '03',
       items: [
+        {
+          icon: <BellRing className="size-[18px]" />,
+          label: t('more.reminders'),
+          hint: t('more.remindersHint'),
+          to: '/reminders',
+        },
         {
           icon: <Share2 className="size-[18px]" />,
           label: t('more.share'),

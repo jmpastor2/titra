@@ -43,7 +43,8 @@ export function suggestNextSite(
   history: readonly SiteUse[],
   rotation: readonly string[] = DEFAULT_ROTATION,
   now: Date = new Date(),
-  minGapDays = 7,
+  // Daily protocols cycle six sites in under a week; three days apart is the useful alarm.
+  minGapDays = 3,
 ): SiteSuggestion | null {
   if (rotation.length === 0) return null
   const lastUse = new Map<string, number>()

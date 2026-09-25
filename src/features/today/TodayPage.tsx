@@ -1,5 +1,15 @@
 import { differenceInCalendarDays, getDayOfYear } from 'date-fns'
-import { Activity, BookOpen, FlaskConical, Gauge, Plus, Scale, Syringe } from 'lucide-react'
+import {
+  Activity,
+  BellRing,
+  BookOpen,
+  ChevronRight,
+  FlaskConical,
+  Gauge,
+  Plus,
+  Scale,
+  Syringe,
+} from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -18,6 +28,7 @@ import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
 import { activeVial, concentrationOf } from '@/features/inventory/vials'
 import { useExposure } from '@/features/exposure/useExposure'
 import { LogMeasurementSheet } from '@/features/health/LogMeasurementSheet'
+import { useReminderPrefs } from '@/features/reminders/useReminders'
 import { LogSymptomSheet } from '@/features/symptoms/LogSymptomSheet'
 import { fmtDate, fmtHours, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
@@ -41,6 +52,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const now = useNow()
   const exposure = useExposure(patientId, now)
   const inventory = useInventory(patientId)
+  const reminders = useReminderPrefs()
   const [openSheet, setSheet] = useState<SheetState>(null)
   const [params, setParams] = useSearchParams()
   const logParam = params.get('log')
@@ -144,9 +156,10 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
                       <SubstanceDot key={d.compoundId} color={compoundColor(d.compoundId)} />
                     ))}
                     <span className="truncate text-[16px] font-semibold">
-                      {focus.doses
-                        .map((d) => compoundById(d.compoundId)?.names.generic)
-                        .join(' + ')}
+                      {focus.protocol.name ||
+                        focus.doses
+                          .map((d) => compoundById(d.compoundId)?.names.generic)
+                          .join(' + ')}
                     </span>
                   </div>
                   <div className="readout mt-1 text-[13px] text-muted">
@@ -201,6 +214,22 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
             ))}
           </ul>
         </section>
+      )}
+
+      {!readOnly && hasProtocols && reminders.loaded && !reminders.enabled && (
+        <Link
+          to="/reminders"
+          className="card flex items-center gap-3 px-4 py-3 transition active:scale-[0.99]"
+        >
+          <span className="grid size-9 shrink-0 place-items-center rounded-full border border-signal/30 bg-signal-soft text-signal">
+            <BellRing className="size-[18px]" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[14px] font-semibold">{t('today.remindersOff')}</span>
+            <span className="block text-[12px] text-muted">{t('today.remindersOffHint')}</span>
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-muted" />
+        </Link>
       )}
 
       {tracked.length > 0 && (

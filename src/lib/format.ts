@@ -13,21 +13,47 @@ export function fmtNumber(value: number, locale: Locale, maxFractionDigits = 2):
   }).format(value)
 }
 
-/** Smart dose formatting: 0.25 mg, 250 mcg, 10 U. */
-export function fmtDose(valueMg: number, unit: DoseUnit, locale: Locale): string {
+const DOSE_LABEL: Record<DoseUnit, string> = {
+  mcg: 'mcg',
+  iu: 'UI',
+  units: 'U',
+  ml: 'mL',
+  mg: 'mg',
+}
+
+/** The number part of fmtDose: 250 for 0.25 mg shown in mcg. */
+export function fmtDoseValue(valueMg: number, unit: DoseUnit, locale: Locale): string {
   switch (unit) {
     case 'mcg':
-      return `${fmtNumber(valueMg * 1000, locale, 0)} mcg`
+      return fmtNumber(valueMg * 1000, locale, 0)
     case 'iu':
-      return `${fmtNumber(valueMg, locale, 0)} UI`
+      return fmtNumber(valueMg, locale, 0)
     case 'units':
-      return `${fmtNumber(valueMg, locale, 1)} U`
+      return fmtNumber(valueMg, locale, 1)
     case 'ml':
-      return `${fmtNumber(valueMg, locale, 2)} mL`
+      return fmtNumber(valueMg, locale, 2)
     case 'mg':
     default:
-      return `${fmtNumber(valueMg, locale, valueMg < 1 ? 3 : 2)} mg`
+      return fmtNumber(valueMg, locale, valueMg < 1 ? 3 : 2)
   }
+}
+
+/** Smart dose formatting: 0.25 mg, 250 mcg, 10 U. */
+export function fmtDose(valueMg: number, unit: DoseUnit, locale: Locale): string {
+  return `${fmtDoseValue(valueMg, unit, locale)} ${DOSE_LABEL[unit] ?? 'mg'}`
+}
+
+/** Several doses in one line: "100 + 100 mcg" when they share a unit, else "2 mg · 100 mcg". */
+export function fmtDoseList(
+  doses: readonly { valueMg: number; unit: DoseUnit }[],
+  locale: Locale,
+): string {
+  const first = doses[0]
+  if (first && doses.length > 1 && doses.every((d) => d.unit === first.unit)) {
+    const values = doses.map((d) => fmtDoseValue(d.valueMg, d.unit, locale)).join(' + ')
+    return `${values} ${DOSE_LABEL[first.unit] ?? 'mg'}`
+  }
+  return doses.map((d) => fmtDose(d.valueMg, d.unit, locale)).join(' · ')
 }
 
 export function fmtPercent(fraction: number, locale: Locale, digits = 0): string {

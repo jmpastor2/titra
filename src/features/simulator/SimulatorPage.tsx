@@ -32,7 +32,12 @@ export function SimulatorPage() {
   const [switchTo, setSwitchTo] = useState<string>('tirzepatide')
   const [switchTemplateId, setSwitchTemplateId] = useState<string>('')
 
-  const current = exposure.items.find((x) => x.compoundId === compoundId) ?? exposure.primary
+  // Only substances with human PK data can be simulated (MOTS-c or Mod GRF cannot);
+  // long-acting ones first, where skipping or stopping matters most.
+  const simulable = exposure.items
+    .filter((x) => x.pk)
+    .toSorted((a, b) => b.pk!.halfLifeH - a.pk!.halfLifeH)
+  const current = simulable.find((x) => x.compoundId === compoundId) ?? simulable[0]
   const pk = current?.pk
 
   const history = useMemo(() => {
@@ -126,9 +131,9 @@ export function SimulatorPage() {
       <PageHeader title={t('simulator.title')} subtitle={t('simulator.intro')} back="/more" />
 
       <div className="flex flex-col gap-3">
-        {exposure.items.length > 1 && (
+        {simulable.length > 1 && (
           <Select value={current.compoundId} onChange={(e) => setCompoundId(e.target.value)}>
-            {exposure.items.map((x) => (
+            {simulable.map((x) => (
               <option key={x.compoundId} value={x.compoundId}>
                 {x.compound?.names.generic ?? x.compoundId}
               </option>
@@ -141,9 +146,9 @@ export function SimulatorPage() {
           onChange={setScenario}
           size="sm"
           options={[
-            { value: 'skip_next', label: t('simulator.skipNext') },
-            { value: 'stop', label: t('simulator.stop') },
-            { value: 'switch', label: t('simulator.switch') },
+            { value: 'skip_next', label: t('simulator.tabSkip') },
+            { value: 'stop', label: t('simulator.tabStop') },
+            { value: 'switch', label: t('simulator.tabSwitch') },
           ]}
         />
 

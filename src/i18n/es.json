@@ -162,11 +162,12 @@
     "whatIf": "Simulador",
     "noDosesYet": "Aún no has registrado dosis",
     "pkNotAvailable": "Este compuesto no tiene parámetros farmacocinéticos para la curva.",
-    "clinicianNotes": "Notas compartidas"
+    "clinicianNotes": "Notas compartidas",
+    "steadyStateShort": "Estado estable"
   },
   "doses": {
     "title": "Registro de dosis",
-    "log": "Registrar dosis",
+    "log": "Registrar toma",
     "logTitle": "Registrar toma",
     "compound": "Compuesto",
     "protocol": "Pauta",
@@ -174,7 +175,7 @@
     "dose": "Dosis",
     "site": "Punto de inyección",
     "suggestedSite": "Sugerido",
-    "siteTooRecent": "Todos los puntos se han usado hace menos de 7 días",
+    "siteTooRecent": "Todos los puntos se han usado hace menos de 3 días",
     "inventory": "Descontar de",
     "noInventory": "No descontar",
     "when": "Cuándo",
@@ -197,7 +198,8 @@
     "eyebrow": "Historial",
     "count_one": "{{count}} toma",
     "count_other": "{{count}} tomas",
-    "vialShort": "Solo quedan {{left}} en este vial: prepara uno nuevo."
+    "vialShort": "Solo quedan {{left}} en este vial: prepara uno nuevo.",
+    "logShort": "Registrar"
   },
   "protocols": {
     "title": "Pautas",
@@ -274,7 +276,21 @@
     "pickDays": "Elige al menos un día",
     "history": "Historial",
     "savedTitle": "Pautas guardadas",
-    "shared": "compartida"
+    "shared": "compartida",
+    "ladder": {
+      "nextStep_one": "Sube a {{dose}} mañana · {{date}}",
+      "nextStep_other": "Sube a {{dose}} en {{count}} días · {{date}}",
+      "nextPause_one": "Pausa desde mañana · {{date}}",
+      "nextPause_other": "Pausa en {{count}} días · {{date}}",
+      "pauseUntil_one": "En pausa · vuelves mañana · {{date}}",
+      "pauseUntil_other": "En pausa · vuelves en {{count}} días · {{date}}",
+      "paused": "En pausa",
+      "maintenance": "Mantenimiento: dosis estable",
+      "startsOn": "Empieza el {{date}}"
+    },
+    "adherence": "Adherencia 28 d",
+    "adherenceValue": "{{taken}}/{{expected}} · {{pct}} %",
+    "ladderPreview": "Escalera de dosis"
   },
   "symptoms": {
     "title": "Síntomas",
@@ -394,8 +410,8 @@
     "expired": "Caducado",
     "expiresSoon": "Caduca en {{days}} d",
     "low": "Queda poco",
-    "dosesLeft_one": "{{count}} dosis restante",
-    "dosesLeft_other": "{{count}} dosis restantes",
+    "dosesLeft_one": "{{count}} toma",
+    "dosesLeft_other": "{{count}} tomas",
     "archive": "Archivar",
     "inUse": "En uso desde hace {{days}} d",
     "inUseWarning": "Supera los {{days}} d recomendados tras abrir",
@@ -404,7 +420,14 @@
     "diluentHint": "Con el contenido del vial, Titra calcula la concentración y las unidades.",
     "remainingHint": "Déjalo vacío si el vial está entero.",
     "openedShort": "En uso",
-    "expiresShort": "Caduca"
+    "expiresShort": "Caduca",
+    "yourDose": "Dosis {{dose}}",
+    "covers": "Alcanza para",
+    "nextVialBy": "Ten listo el siguiente vial para el {{date}}",
+    "openedFor_one": "abierto hace {{count}} día",
+    "openedFor_other": "abierto hace {{count}} días",
+    "lyophilised": "Liofilizado",
+    "expiresBeforeEmpty": "Caduca antes de acabarse: ten otro listo para el {{date}}"
   },
   "calculator": {
     "title": "Calculadora de reconstitución",
@@ -555,7 +578,10 @@
     "washout": "Lavado",
     "washoutHint": "Tiempo hasta caer al 10 % del nivel actual",
     "atDay": "Día {{n}}",
-    "needProtocol": "Necesitas una pauta activa con tomas registradas."
+    "needProtocol": "Necesitas una pauta activa con tomas registradas.",
+    "tabSkip": "Saltar una",
+    "tabStop": "Suspender",
+    "tabSwitch": "Cambiar"
   },
   "clinic": {
     "title": "Pacientes",
@@ -658,7 +684,9 @@
     "share": "Compartir",
     "shareHint": "Enseña tu control a tu médico",
     "exportHint": "CSV y copia de seguridad",
-    "settingsHint": "Perfil, tema e idioma"
+    "settingsHint": "Perfil, tema e idioma",
+    "reminders": "Avisos",
+    "remindersHint": "Cuándo toca cada pauta y cuántas unidades cargar"
   },
   "export": {
     "title": "Exportar",
@@ -721,7 +749,9 @@
     "readMore": "Leer ficha",
     "onBoard": "A bordo",
     "lastDose": "Última toma",
-    "strip": "Tomas de hoy a lo largo del día"
+    "strip": "Tomas de hoy a lo largo del día",
+    "remindersOff": "Activa los avisos",
+    "remindersOffHint": "Te decimos cuándo toca cada pauta y cuántas unidades cargar."
   },
   "setupLab": {
     "title": "Monta tu laboratorio",

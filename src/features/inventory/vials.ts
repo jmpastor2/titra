@@ -23,3 +23,32 @@ export function activeVial(
       (a, b) => rank(a) - rank(b) || (a.opened_at ?? '9999').localeCompare(b.opened_at ?? '9999'),
     )[0]
 }
+
+export interface VialRunway {
+  /** Upcoming administrations the vial still covers. */
+  doses: number
+  /** The first administration it cannot cover: have the next vial ready by then. */
+  runsOutAt: Date | null
+  /** Dose of the next administration, for "your dose → units". */
+  nextDoseMg: number | null
+}
+
+/**
+ * How far a vial goes, walking the upcoming administrations in order (so a titration
+ * step up is accounted for). `upcoming` holds this compound's doses, soonest first.
+ */
+export function vialRunway(
+  remainingMg: number,
+  upcoming: readonly { at: Date; doseMg: number }[],
+): VialRunway {
+  let left = remainingMg
+  let doses = 0
+  for (const u of upcoming) {
+    if (u.doseMg > left + 1e-9) {
+      return { doses, runsOutAt: u.at, nextDoseMg: upcoming[0]?.doseMg ?? null }
+    }
+    left -= u.doseMg
+    doses++
+  }
+  return { doses, runsOutAt: null, nextDoseMg: upcoming[0]?.doseMg ?? null }
+}

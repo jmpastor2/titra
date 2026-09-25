@@ -28,6 +28,7 @@ import { useSession } from '@/features/auth/SessionProvider'
 import { fmtHours, fmtNumber, toDateInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { SubstancePicker } from './SubstancePicker'
+import { TitrationLadder } from './TitrationLadder'
 
 type ScheduleMode = 'interval' | 'weekdays'
 
@@ -733,6 +734,21 @@ function ProtocolForm({
             <p role="alert" className="mt-3 text-[12.5px] text-danger">
               {t('protocols.openEndedLastOnly')}
             </p>
+          )}
+          {steps.length > 1 && !openEndedInMiddle && (
+            <div className="mt-4 rounded-control border border-line bg-panel-2 p-3">
+              <div className="spec mb-2">{t('protocols.ladderPreview')}</div>
+              <TitrationLadder
+                protocol={{
+                  compoundId: draft.compoundId,
+                  startDate: draft.startDate,
+                  steps,
+                  times,
+                }}
+                unit={unit}
+                color={compoundColor(draft.compoundId)}
+              />
+            </div>
           )}
         </Card>
 

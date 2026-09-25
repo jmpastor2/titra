@@ -9,19 +9,27 @@ import { Badge, EmptyState, SectionTitle, Skeleton, SubstanceDot } from '@/compo
 import { useToast } from '@/components/ui/Toast'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import type { ProtocolRow, ProtocolStatus } from '@/data/database.types'
+import type { DoseRow, ProtocolRow, ProtocolStatus } from '@/data/database.types'
 import {
   useDeleteSavedProtocol,
+  useDoses,
   useProtocols,
   useSavedProtocols,
   useSetProtocolStatus,
 } from '@/data/hooks'
-import { parseComponents, parseSteps, protocolCompoundIds, toProtocolLike } from '@/data/mappers'
-import { titrationStatus } from '@/domain/dosing/schedule'
+import {
+  parseComponents,
+  parseSteps,
+  protocolCompoundIds,
+  toDoseEvent,
+  toProtocolLike,
+} from '@/data/mappers'
+import { adherence, titrationStatus } from '@/domain/dosing/schedule'
 import { useSession } from '@/features/auth/SessionProvider'
 import { fmtDose } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useScheduleLabel } from './scheduleLabel'
+import { TitrationLadder } from './TitrationLadder'
 
 const STATUS_TONE: Record<ProtocolStatus, 'ok' | 'warn' | 'neutral'> = {
   active: 'ok',
@@ -37,6 +45,7 @@ export function ProtocolsPage() {
   const { toast } = useToast()
   const { patientId, readOnly, canPrescribe } = usePatientScope()
   const protocols = useProtocols(patientId)
+  const doses = useDoses(patientId, 60)
   const saved = useSavedProtocols(user?.id)
   const delSaved = useDeleteSavedProtocol(user?.id ?? '')
   const scheduleLabel = useScheduleLabel()
@@ -84,7 +93,13 @@ export function ProtocolsPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {current.map((p) => (
-            <ProtocolCard key={p.id} p={p} canEdit={canEdit} scheduleLabel={scheduleLabel} />
+            <ProtocolCard
+              key={p.id}
+              p={p}
+              doses={doses.data}
+              canEdit={canEdit}
+              scheduleLabel={scheduleLabel}
+            />
           ))}
           {past.length > 0 && (
             <>
@@ -157,10 +172,13 @@ export function ProtocolsPage() {
 
 function ProtocolCard({
   p,
+  doses,
   canEdit,
   scheduleLabel,
 }: {
   p: ProtocolRow
+  /** Recent doses, for adherence; omitted for past protocols. */
+  doses?: readonly DoseRow[]
   canEdit: boolean
   scheduleLabel: ReturnType<typeof useScheduleLabel>
 }) {
@@ -174,6 +192,19 @@ function ProtocolCard({
   const tit = titrationStatus(pl, new Date())
   const ids = protocolCompoundIds(p)
   const primaryColor = compoundColor(p.compound_id)
+  const unit = compoundById(p.compound_id)?.defaultUnit ?? 'mg'
+  const adh =
+    doses && p.status === 'active'
+      ? adherence(
+          pl,
+          doses
+            .filter(
+              (d) => d.compound_id === p.compound_id && (!d.protocol_id || d.protocol_id === p.id),
+            )
+            .map(toDoseEvent),
+          new Date(),
+        )
+      : null
 
   async function change(status: ProtocolStatus) {
     try {
@@ -231,7 +262,24 @@ function ProtocolCard({
               </span>
             </span>
           )}
+          {adh && adh.expected > 0 && (
+            <span className="spec">
+              {t('protocols.adherence')}{' '}
+              <span className={adh.ratio >= 0.9 ? 'readout text-signal' : 'readout text-warn'}>
+                {t('protocols.adherenceValue', {
+                  taken: adh.taken,
+                  expected: adh.expected,
+                  pct: Math.round(adh.ratio * 100),
+                })}
+              </span>
+            </span>
+          )}
         </div>
+        {pl.steps.length > 1 && (
+          <div className="mt-3.5">
+            <TitrationLadder protocol={pl} unit={unit} color={primaryColor} />
+          </div>
+        )}
       </button>
       {canEdit && (
         <div className="flex gap-2 border-t border-line px-4 py-2.5">

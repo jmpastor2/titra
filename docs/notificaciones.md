@@ -24,6 +24,7 @@ Necesitas:
    La ves en `VITE_SUPABASE_URL` de `.env.local`, o en Project Settings → General → Project ID.
 
 En esta guía, `TU-REFERENCIA` es esa referencia y `TU_CRON_SECRET` es el valor de `CRON_SECRET`.
+En el proyecto actual, `TU-REFERENCIA` es `kdcckauwxagytzegfkpq`.
 
 ## Paso 1 · Crear las tablas (SQL Editor)
 
@@ -210,8 +211,17 @@ Para la versión de GitHub Pages:
 
 1. GitHub → repositorio → **Settings** → **Secrets and variables** → **Actions**.
 2. **New repository secret**: nombre `VITE_VAPID_PUBLIC_KEY`, valor el de `VAPID_PUBLIC_KEY`.
-3. El paso **Build** de `.github/workflows/deploy.yml` debe pasar esa variable
-   (igual que `VITE_SUPABASE_URL`). Pídeselo a quien mantenga el código.
+3. El paso **Build** de `.github/workflows/deploy.yml` ya la pasa a la app.
+
+## Paso 9 · Activarlos en el móvil
+
+1. En iPhone, abre Titra desde el icono de la pantalla de inicio (Safari → Compartir →
+   Añadir a pantalla de inicio). Desde Safari sin instalar, iOS no permite avisos.
+2. **Más → Avisos** → activa **Avisarme cuando toca** y acepta el permiso.
+3. Pulsa **Probar aviso**. Debe llegar una notificación con la dosis y las unidades.
+4. Elige la antelación: a la hora, 15 min, 30 min o 1 h antes.
+
+Hasta completar los pasos 1 a 5, Titra avisa igualmente mientras la app está abierta.
 
 ## Mantenimiento
 

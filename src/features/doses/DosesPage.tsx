@@ -10,8 +10,11 @@ import { useToast } from '@/components/ui/Toast'
 import { compoundById, compoundName } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { DoseRow } from '@/data/database.types'
-import { useDeleteDose, useDoses } from '@/data/hooks'
-import { fmtDose, fmtRelativeDay } from '@/lib/format'
+import { useDeleteDose, useDoses, useInventory } from '@/data/hooks'
+import { roundUnits } from '@/domain/dosing/draw'
+import { mgToUnits } from '@/domain/dosing/reconstitution'
+import { concentrationOf } from '@/features/inventory/vials'
+import { fmtDose, fmtNumber, fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { LogDoseSheet } from './LogDoseSheet'
 
@@ -41,6 +44,25 @@ export function DosesPage() {
   const { locale } = useLocale()
   const { patientId, readOnly } = usePatientScope()
   const doses = useDoses(patientId, 365)
+  const inventory = useInventory(patientId, true)
+  // Units drawn, from the vial each dose came out of.
+  const concById = useMemo(
+    () => new Map((inventory.data ?? []).map((v) => [v.id, concentrationOf(v)])),
+    [inventory.data],
+  )
+  /** "10 + 5 = 15 U" for a stack, "50 U" for a single dose; null when a vial is unknown. */
+  const drawnUnits = (rows: readonly DoseRow[]) => {
+    const units = rows.map((r) => {
+      const conc = r.inventory_id ? concById.get(r.inventory_id) : null
+      return conc ? roundUnits(mgToUnits(Number(r.dose_mg), conc)) : null
+    })
+    if (units.some((u) => u === null)) return null
+    const n = (x: number) => fmtNumber(x, locale, 1)
+    const total = units.reduce<number>((sum, u) => sum + u!, 0)
+    return units.length > 1
+      ? `${units.map((u) => n(u!)).join(' + ')} = ${n(total)} U`
+      : `${n(total)} U`
+  }
   const del = useDeleteDose(patientId)
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
@@ -77,12 +99,12 @@ export function DosesPage() {
     <div>
       <PageHeader
         eyebrow={t('doses.eyebrow')}
-        title={t('doses.title')}
+        title={t('nav.log')}
         large
         action={
           !readOnly && (
             <Button size="sm" leading={<Plus className="size-4" />} onClick={() => setOpen(true)}>
-              {t('doses.log')}
+              {t('doses.logShort')}
             </Button>
           )
         }
@@ -151,13 +173,11 @@ export function DosesPage() {
                             </span>
                           </div>
                         ))}
-                        {(a.rows[0]!.site_id || a.rows[0]!.notes) && (
-                          <div className="mt-0.5 truncate text-[12px] text-muted">
-                            {a.rows[0]!.site_id && t(`sites.labels.${a.rows[0]!.site_id}`)}
-                            {a.rows[0]!.site_id && a.rows[0]!.notes && ' · '}
-                            {a.rows[0]!.notes}
-                          </div>
-                        )}
+                        <AdminMeta
+                          site={a.rows[0]!.site_id ? t(`sites.labels.${a.rows[0]!.site_id}`) : null}
+                          notes={a.rows[0]!.notes}
+                          units={drawnUnits(a.rows)}
+                        />
                       </div>
                       {!readOnly && (
                         <button
@@ -179,6 +199,25 @@ export function DosesPage() {
       )}
 
       <LogDoseSheet open={open} onClose={() => setOpen(false)} />
+    </div>
+  )
+}
+
+function AdminMeta({
+  site,
+  notes,
+  units,
+}: {
+  site: string | null
+  notes: string | null
+  units: string | null
+}) {
+  const parts = [site, notes].filter(Boolean)
+  if (!parts.length && !units) return null
+  return (
+    <div className="mt-0.5 flex items-center gap-2 text-[12px] text-muted">
+      {units && <span className="readout shrink-0 font-semibold text-signal">{units}</span>}
+      <span className="truncate">{parts.join(' · ')}</span>
     </div>
   )
 }

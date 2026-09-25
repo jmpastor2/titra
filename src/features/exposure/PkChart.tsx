@@ -118,7 +118,7 @@ export function PkChart({
   return (
     <div style={{ height }} className="-mx-2">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={rows} margin={{ top: 12, right: 12, bottom: 0, left: -18 }}>
+        <AreaChart data={rows} margin={{ top: 12, right: 22, bottom: 0, left: -18 }}>
           <defs>
             <linearGradient id="pkFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.28} />

@@ -1,6 +1,6 @@
 import { differenceInCalendarDays } from 'date-fns'
 import { Archive, Package, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -10,20 +10,49 @@ import { Badge, EmptyState, Skeleton, Vial } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
-import { useArchiveInventory, useInventory } from '@/data/hooks'
+import { useArchiveInventory, useDoses, useInventory, useProtocols } from '@/data/hooks'
+import { roundUnits } from '@/domain/dosing/draw'
 import { mgToUnits } from '@/domain/dosing/reconstitution'
-import { fmtDate, fmtNumber } from '@/lib/format'
+import { upcomingAdministrations } from '@/features/reminders/plan'
+import { fmtDate, fmtDose, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { InventorySheet } from './InventorySheet'
-import { concentrationOf } from './vials'
+import { activeVial, concentrationOf, vialRunway, type VialRunway } from './vials'
 
 export function InventoryPage() {
   const { t } = useTranslation()
   const { patientId, readOnly } = usePatientScope()
   const inventory = useInventory(patientId)
+  const protocols = useProtocols(patientId)
+  const doses = useDoses(patientId, 120)
   const [editing, setEditing] = useState<InventoryRow | null>(null)
   const [open, setOpen] = useState(false)
-  const list = inventory.data ?? []
+  const list = useMemo(() => inventory.data ?? [], [inventory.data])
+
+  // For the vial each compound is drawn from: how many upcoming doses it still covers.
+  const runways = useMemo(() => {
+    const upcoming = upcomingAdministrations(
+      protocols.data ?? [],
+      doses.data ?? [],
+      list,
+      new Date(),
+      {
+        horizonDays: 180,
+      },
+    )
+    const out = new Map<string, VialRunway>()
+    for (const compoundId of new Set(list.map((v) => v.compound_id))) {
+      const vial = activeVial(list, compoundId)
+      if (!vial) continue
+      const mine = upcoming.flatMap((u) =>
+        u.doses
+          .filter((d) => d.compoundId === compoundId)
+          .map((d) => ({ at: u.at, doseMg: d.doseMg })),
+      )
+      if (mine.length) out.set(vial.id, vialRunway(Number(vial.remaining_mg), mine))
+    }
+    return out
+  }, [protocols.data, doses.data, list])
 
   const add = () => {
     setEditing(null)
@@ -65,6 +94,7 @@ export function InventoryPage() {
             <VialCard
               key={item.id}
               item={item}
+              runway={runways.get(item.id)}
               readOnly={readOnly}
               onEdit={() => {
                 setEditing(item)
@@ -82,10 +112,13 @@ export function InventoryPage() {
 
 function VialCard({
   item,
+  runway,
   readOnly,
   onEdit,
 }: {
   item: InventoryRow
+  /** Present for the vial currently drawn from, when a protocol uses it. */
+  runway?: VialRunway
   readOnly: boolean
   onEdit: () => void
 }) {
@@ -105,7 +138,18 @@ function VialCard({
   const openDays = item.opened_at
     ? differenceInCalendarDays(new Date(), new Date(item.opened_at))
     : null
-  const sampleMg = compound?.defaultUnit === 'mcg' ? 0.1 : 0.25
+  const unit = compound?.defaultUnit ?? 'mg'
+  // Your next dose when a protocol uses this vial; otherwise a typical 100 mcg / 0.25 mg.
+  const doseMg = runway?.nextDoseMg ?? (unit === 'mcg' ? 0.1 : 0.25)
+  // It expires before it runs out: the expiry date is what forces the next vial.
+  const expiresFirst =
+    runway && item.expires_at
+      ? !runway.runsOutAt || new Date(item.expires_at) < runway.runsOutAt
+      : false
+  const needBy = expiresFirst ? new Date(item.expires_at!) : (runway?.runsOutAt ?? null)
+  const short =
+    (runway ? runway.runsOutAt !== null && runway.doses <= 2 : false) ||
+    (expiresFirst && expiryDays !== null && expiryDays <= 7)
 
   return (
     <Card
@@ -128,7 +172,7 @@ function VialCard({
             <span className="ml-1 text-[12px] text-muted">/ {fmtNumber(total, locale, 2)} mg</span>
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {fill <= 0.2 && <Badge tone="warn">{t('inventory.low')}</Badge>}
+            {(short || (!runway && fill <= 0.2)) && <Badge tone="warn">{t('inventory.low')}</Badge>}
             {expiryDays !== null && expiryDays < 0 && (
               <Badge tone="danger">{t('inventory.expired')}</Badge>
             )}
@@ -145,21 +189,48 @@ function VialCard({
         />
         <Spec
           label={
-            compound?.defaultUnit === 'mcg' ? '100 mcg' : `${fmtNumber(sampleMg, locale, 2)} mg`
+            runway
+              ? t('inventory.yourDose', { dose: fmtDose(doseMg, unit, locale) })
+              : fmtDose(doseMg, unit, locale)
           }
-          value={conc ? `${fmtNumber(mgToUnits(sampleMg, conc), locale, 1)} U` : '—'}
+          value={conc ? `${fmtNumber(roundUnits(mgToUnits(doseMg, conc)), locale, 1)} U` : '—'}
+          accent={Boolean(runway && conc)}
         />
-        <Spec
-          label={openDays !== null ? t('inventory.openedShort') : t('inventory.expiresShort')}
-          value={
-            openDays !== null
-              ? t('common.days', { count: openDays })
-              : item.expires_at
-                ? fmtDate(new Date(item.expires_at), locale, 'd MMM')
-                : '—'
-          }
-        />
+        {runway ? (
+          <Spec
+            label={t('inventory.covers')}
+            value={t('inventory.dosesLeft', { count: runway.doses })}
+            warn={short}
+          />
+        ) : (
+          <Spec
+            label={openDays !== null ? t('inventory.openedShort') : t('inventory.expiresShort')}
+            value={
+              openDays !== null
+                ? t('common.days', { count: openDays })
+                : item.expires_at
+                  ? fmtDate(new Date(item.expires_at), locale, 'd MMM')
+                  : conc
+                    ? '—'
+                    : t('inventory.lyophilised')
+            }
+          />
+        )}
       </div>
+      {runway && needBy && (
+        <div
+          className={
+            short
+              ? 'border-t border-line bg-warn-soft px-4 py-2 text-[12px] font-semibold text-warn'
+              : 'border-t border-line px-4 py-2 text-[12px] text-muted'
+          }
+        >
+          {t(expiresFirst ? 'inventory.expiresBeforeEmpty' : 'inventory.nextVialBy', {
+            date: fmtDate(needBy, locale, 'EEE d MMM'),
+          })}
+          {openDays !== null && ` · ${t('inventory.openedFor', { count: openDays })}`}
+        </div>
+      )}
       {!readOnly && (
         <button
           type="button"
@@ -174,11 +245,27 @@ function VialCard({
   )
 }
 
-function Spec({ label, value }: { label: string; value: string }) {
+function Spec({
+  label,
+  value,
+  accent,
+  warn,
+}: {
+  label: string
+  value: string
+  accent?: boolean
+  warn?: boolean
+}) {
   return (
     <div className="bg-panel px-2 py-2.5">
       <div className="spec truncate text-[9.5px]">{label}</div>
-      <div className="readout mt-0.5 truncate text-[12.5px] font-semibold">{value}</div>
+      <div
+        className={`readout mt-0.5 truncate text-[12.5px] font-semibold ${
+          warn ? 'text-warn' : accent ? 'text-signal' : ''
+        }`}
+      >
+        {value}
+      </div>
     </div>
   )
 }
