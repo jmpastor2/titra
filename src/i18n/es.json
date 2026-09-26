@@ -780,7 +780,16 @@
     "remindersOffHint": "Te decimos cuándo toca cada pauta y cuántas unidades cargar.",
     "extraAt": "Fuera de pauta · {{time}}",
     "onlyExtra_one": "Hoy no tocaba. Registraste {{count}} toma fuera de pauta.",
-    "onlyExtra_other": "Hoy no tocaba. Registraste {{count}} tomas fuera de pauta."
+    "onlyExtra_other": "Hoy no tocaba. Registraste {{count}} tomas fuera de pauta.",
+    "last7": "7 días",
+    "extraShort": "extra",
+    "legend": {
+      "onTime": "a su hora",
+      "late": "fuera de hora",
+      "missed": "perdida",
+      "upcoming": "pendiente",
+      "extra": "extra"
+    }
   },
   "setupLab": {
     "title": "Monta tu laboratorio",

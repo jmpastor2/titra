@@ -16,7 +16,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { ProgressRing, SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
+import { SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow, ProtocolRow } from '@/data/database.types'
@@ -29,6 +29,7 @@ import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
 import { activeVial, drawPartFor } from '@/features/inventory/vials'
 import { useExposure } from '@/features/exposure/useExposure'
 import { FastingCard } from '@/features/fasting/FastingCard'
+import { upcomingAdministrations } from '@/features/reminders/plan'
 import { needsFasting } from '@/features/fasting/fasting'
 import { LogMeasurementSheet } from '@/features/health/LogMeasurementSheet'
 import { useReminderPrefs } from '@/features/reminders/useReminders'
@@ -37,8 +38,8 @@ import { fmtDate, fmtHours, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
 import { AgendaRow } from './AgendaRow'
+import { useLastSevenDays, WeekGrid, WeekRing } from './WeekPulse'
 import { buildToday, focusItem, summarise } from './agenda'
-import { DayStrip } from './DayStrip'
 import { LevelCard } from './LevelCard'
 
 type SheetState =
@@ -78,7 +79,9 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
     () => buildToday(exposure.protocols, exposure.doses, now),
     [exposure.protocols, exposure.doses, now],
   )
-  const summary = summarise(items)
+  const summary = summarise(items.filter((i) => !i.extra))
+  const week = useLastSevenDays(exposure.protocols, exposure.doses, now)
+  const weekExtras = week.days.flatMap((d) => d.cells).filter((c) => c.status === 'extra').length
   const focus = focusItem(items)
   // Compounds that ride along in another protocol's syringe or blend vial are shown
   // on that protocol's card, not on their own.
@@ -108,6 +111,12 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const hasProtocols = exposure.protocols.some((p) => p.status === 'active')
   const vials = inventory.data ?? []
   const focusUnits = focus ? unitsToDraw(focus.doses, vials) : null
+  // Nothing left today: the next administration on any later day.
+  const nextUp = focus
+    ? null
+    : (upcomingAdministrations(exposure.protocols, exposure.doses, vials, now, {
+        horizonDays: 14,
+      })[0] ?? null)
   // The next GH-secretagogue shot in the coming hours asks for a fasting window.
   const fastFor = items.find(
     (i) =>
@@ -160,19 +169,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
       ) : (
         <Card instrument className="overflow-hidden p-5">
           <div className="flex items-center gap-5">
-            <ProgressRing
-              fraction={summary.total ? summary.taken / summary.total : 1}
-              size={96}
-              stroke={7}
-            >
-              <div className="text-center leading-none">
-                <div className="readout text-[24px] font-semibold text-glow">
-                  {summary.taken}
-                  <span className="text-[14px] text-muted">/{summary.total}</span>
-                </div>
-                <div className="spec mt-1 text-[9px]">{t('today.doses')}</div>
-              </div>
-            </ProgressRing>
+            <WeekRing summary={week.summary} extras={weekExtras} />
             <div className="min-w-0 flex-1">
               <div className="spec">{t('today.next')}</div>
               {focus ? (
@@ -213,18 +210,38 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
                     </div>
                   )}
                 </>
-              ) : (
-                <p className="mt-1 text-[14px] text-ink-2">
-                  {items.length && items.every((i) => i.extra)
-                    ? t('today.onlyExtra', { count: items.length })
-                    : summary.total
+              ) : nextUp ? (
+                <>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    {nextUp.doses.map((d) => (
+                      <SubstanceDot key={d.compoundId} color={compoundColor(d.compoundId)} />
+                    ))}
+                    <span className="truncate text-[16px] font-semibold">
+                      {nextUp.protocol.name}
+                    </span>
+                  </div>
+                  <div className="readout mt-1 text-[13px] text-muted">
+                    {fmtDate(nextUp.at, locale, 'EEE d')} ·{' '}
+                    {String(nextUp.at.getHours()).padStart(2, '0')}:
+                    {String(nextUp.at.getMinutes()).padStart(2, '0')} ·{' '}
+                    {t('today.inTime', {
+                      time: fmtHours((nextUp.at.getTime() - now.getTime()) / 3_600_000, locale),
+                    })}
+                  </div>
+                  <p className="mt-2 text-[12.5px] text-ink-2">
+                    {summary.total
                       ? t('today.allDone')
-                      : t('today.nothingToday')}
-                </p>
+                      : items.length
+                        ? t('today.onlyExtra', { count: items.length })
+                        : t('today.nothingToday')}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-1 text-[14px] text-ink-2">{t('today.nothingToday')}</p>
               )}
             </div>
           </div>
-          <DayStrip items={items} now={now} />
+          <WeekGrid days={week.days} protocols={exposure.protocols} now={now} />
         </Card>
       )}
 

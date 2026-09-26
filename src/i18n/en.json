@@ -780,7 +780,16 @@
     "remindersOffHint": "We tell you when each protocol is due and how many units to draw.",
     "extraAt": "Off schedule · {{time}}",
     "onlyExtra_one": "Nothing was due today. You logged {{count}} off-schedule dose.",
-    "onlyExtra_other": "Nothing was due today. You logged {{count}} off-schedule doses."
+    "onlyExtra_other": "Nothing was due today. You logged {{count}} off-schedule doses.",
+    "last7": "7 days",
+    "extraShort": "extra",
+    "legend": {
+      "onTime": "on time",
+      "late": "off time",
+      "missed": "missed",
+      "upcoming": "pending",
+      "extra": "extra"
+    }
   },
   "setupLab": {
     "title": "Set up your lab",
