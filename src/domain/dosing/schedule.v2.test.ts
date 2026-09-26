@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { DoseEvent, ProtocolLike } from '../types'
 import {
   componentsAt,
+  splitNightTime,
   adherence,
   dayAgenda,
   effectiveIntervalH,
@@ -234,5 +235,31 @@ describe('stack components follow the titration', () => {
     }
     expect(componentsAt(blend, 0.1)[0]!.doseMg).toBeCloseTo(0.1, 9)
     expect(componentsAt(blend, 0.15)[0]!.doseMg).toBeCloseTo(0.15, 9)
+  })
+})
+
+describe('night times after midnight', () => {
+  const NIGHT = {
+    compoundId: 'mod-grf-1-29',
+    startDate: '2026-09-21',
+    times: ['25:00'],
+    steps: [{ doseMg: 0.1, intervalDays: 1, weekdays: [1, 2, 3, 4, 5], durationWeeks: null }],
+  }
+
+  it('puts Friday night 01:00 on Saturday at 01:00 but owned by Friday', () => {
+    // Friday 00:00 → Sunday: Thursday night's 01:00 and Friday night's 01:00.
+    const occ = scheduledDoses(NIGHT, d('2026-09-25T00:00'), d('2026-09-27T00:00'))
+    expect(occ.map((o) => o.at)).toEqual([d('2026-09-25T01:00'), d('2026-09-26T01:00')])
+    expect(occ.map((o) => o.day)).toEqual([d('2026-09-24T00:00'), d('2026-09-25T00:00')])
+    expect(splitNightTime('25:00')).toEqual({ clock: '01:00', nextDay: true })
+  })
+
+  it("shows it on Friday's agenda and not on Saturday's", () => {
+    const taken: DoseEvent[] = [{ at: d('2026-09-26T00:40'), mg: 0.1 }]
+    expect(dayAgenda(NIGHT, [], d('2026-09-25T20:00')).map((x) => x.at)).toEqual([
+      d('2026-09-26T01:00'),
+    ])
+    expect(dayAgenda(NIGHT, taken, d('2026-09-25T23:00'))[0]!.status).toBe('taken')
+    expect(dayAgenda(NIGHT, taken, d('2026-09-26T10:00'))).toEqual([])
   })
 })

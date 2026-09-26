@@ -21,7 +21,12 @@ import {
   useSaveSavedProtocol,
 } from '@/data/hooks'
 import { parseComponents, parseSteps } from '@/data/mappers'
-import { effectiveIntervalH, normaliseTimes, scheduledDoses } from '@/domain/dosing/schedule'
+import {
+  effectiveIntervalH,
+  normaliseTimes,
+  scheduledDoses,
+  splitNightTime,
+} from '@/domain/dosing/schedule'
 import { steadyState } from '@/domain/pk/engine'
 import type { DoseUnit, ProtocolLike, ScheduleStep, StackComponent } from '@/domain/types'
 import { useSession } from '@/features/auth/SessionProvider'
@@ -57,6 +62,8 @@ interface Draft {
   steps: StepDraft[]
   notes: string
   saveAsTemplate: boolean
+  /** Small-hours times (before 06:00) belong to the evening before, e.g. a 01:00 night shot. */
+  nightShift: boolean
 }
 
 /** Monday-first week, as both locales expect. */
@@ -80,7 +87,14 @@ function draftFromParts(
   times: readonly string[],
 ): Pick<
   Draft,
-  'compoundId' | 'steps' | 'components' | 'times' | 'mode' | 'intervalDays' | 'weekdays'
+  | 'compoundId'
+  | 'steps'
+  | 'components'
+  | 'times'
+  | 'mode'
+  | 'intervalDays'
+  | 'weekdays'
+  | 'nightShift'
 > {
   const unit = unitOf(compoundId)
   const firstDose = steps.find((s) => !s.pause)
@@ -90,7 +104,9 @@ function draftFromParts(
     mode,
     intervalDays: String(firstDose?.intervalDays ?? 7),
     weekdays: firstDose?.weekdays ?? [1, 2, 3, 4, 5],
-    times: normaliseTimes(times),
+    // The editor shows clock times; "25:00" comes back as 01:00 with the night option on.
+    times: normaliseTimes(times).map((x) => splitNightTime(x).clock),
+    nightShift: normaliseTimes(times).some((x) => splitNightTime(x).nextDay),
     steps: steps.map((s) => ({
       key: key(),
       pause: Boolean(s.pause),
@@ -120,6 +136,7 @@ function emptyDraft(): Draft {
     steps: [{ key: key(), pause: false, dose: '', weeks: '', label: '' }],
     notes: '',
     saveAsTemplate: false,
+    nightShift: false,
   }
 }
 
@@ -288,7 +305,13 @@ function ProtocolForm({
   )
 
   const openEndedInMiddle = steps.slice(0, -1).some((s) => s.durationWeeks === null)
-  const times = normaliseTimes(draft.times)
+  // Stored times: with the night option, 00:00–05:59 become 24:00–29:59 of the day before.
+  const times = normaliseTimes(
+    draft.times.map((x) => {
+      const [h = 0, m = 0] = x.split(':').map(Number)
+      return draft.nightShift && h < 6 ? `${h + 24}:${String(m).padStart(2, '0')}` : x
+    }),
+  )
 
   const weekPreview = useMemo(() => {
     const doseStep = steps.find((s) => !s.pause)
@@ -338,7 +361,8 @@ function ProtocolForm({
         route: compound?.routes[0] ?? 'sc',
         unit,
         start_date: draft.startDate,
-        time_of_day: times[0]!,
+        // Postgres `time` has no 25:00: the clock time goes there, the full value in `times`.
+        time_of_day: splitNightTime(times[0]!).clock,
         times,
         steps: steps as unknown as Json,
         components: components as unknown as Json,
@@ -595,6 +619,24 @@ function ProtocolForm({
                 </button>
               )}
             </div>
+            {draft.times.some((x) => Number(x.split(':')[0]) < 6) && (
+              <label className="mt-3 flex items-start gap-3 rounded-control border border-line bg-panel-2 px-3.5 py-3">
+                <input
+                  type="checkbox"
+                  checked={draft.nightShift}
+                  onChange={(e) => patch({ nightShift: e.target.checked })}
+                  className="mt-0.5 size-5 shrink-0 accent-[var(--signal)]"
+                />
+                <span>
+                  <span className="block text-[14px] font-semibold">
+                    {t('protocols.nightShift')}
+                  </span>
+                  <span className="block text-[12px] text-muted">
+                    {t('protocols.nightShiftHint')}
+                  </span>
+                </span>
+              </label>
+            )}
           </div>
 
           {weekPreview && (

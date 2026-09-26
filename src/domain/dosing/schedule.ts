@@ -30,6 +30,31 @@ export interface PlannedDose {
   at: Date
   doseMg: number
   stepIndex: number
+  /**
+   * The calendar day the administration belongs to. Equal to the day of `at`, except
+   * for night times after midnight ("24:30"), which belong to the evening before.
+   */
+  day?: Date
+}
+
+/** Day an administration belongs to (see PlannedDose.day). */
+export function ownerDay(o: Pick<PlannedDose, 'at' | 'day'>): Date {
+  return o.day ?? startOfDay(o.at)
+}
+
+/**
+ * Times are "HH:mm" on the protocol's day. Hours 24–29 are the small hours of the
+ * next morning that still belong to that day: "24:30" is Friday night's 00:30 shot.
+ */
+export const NIGHT_HOURS_MAX = 29
+
+/** "24:30" → { clock: "00:30", nextDay: true } for display and for Postgres `time`. */
+export function splitNightTime(time: string): { clock: string; nextDay: boolean } {
+  const [h = 0, m = 0] = time.split(':').map(Number)
+  return {
+    clock: `${String(h % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
+    nextDay: h >= 24,
+  }
 }
 
 /* ------------------------------------------------------------------ times */
@@ -41,7 +66,7 @@ export function normaliseTimes(times: readonly string[] | undefined): string[] {
     .filter((t) => /^\d{1,2}:\d{2}$/.test(t))
     .map((t) => {
       const [h = 0, m = 0] = t.split(':').map(Number)
-      return `${String(Math.min(23, h)).padStart(2, '0')}:${String(Math.min(59, m)).padStart(2, '0')}`
+      return `${String(Math.min(NIGHT_HOURS_MAX, h)).padStart(2, '0')}:${String(Math.min(59, m)).padStart(2, '0')}`
     })
   const unique = [...new Set(valid)].toSorted()
   return unique.length ? unique : [DEFAULT_TIME]
@@ -50,8 +75,10 @@ export function normaliseTimes(times: readonly string[] | undefined): string[] {
 /** Apply "HH:mm" to a date, defaulting to 09:00. */
 export function atTimeOfDay(date: Date, timeOfDay: string | undefined): Date {
   const [h, m] = (timeOfDay ?? DEFAULT_TIME).split(':').map((v) => Number.parseInt(v, 10))
-  return set(startOfDay(date), {
-    hours: Number.isFinite(h) ? h : 9,
+  const hours = Number.isFinite(h) ? h! : 9
+  // Night times past 24:00 fall on the next calendar day (DST-safe: add a day, not 24 h).
+  return set(addDays(startOfDay(date), Math.floor(hours / 24)), {
+    hours: hours % 24,
     minutes: Number.isFinite(m) ? m : 0,
     seconds: 0,
     milliseconds: 0,
@@ -133,13 +160,16 @@ export function scheduledDoses(protocol: ProtocolLike, from: Date, to: Date): Pl
 
     if (hasWeekdays(w.step)) {
       const days = new Set(w.step.weekdays)
-      let day = startOfDay(from > w.start ? from : w.start)
+      const first = startOfDay(from > w.start ? from : w.start)
+      // A night time of the day before can still fall inside [from, to).
+      const hasNight = times.some((t) => splitNightTime(t).nextDay)
+      let day = hasNight && first > startOfDay(w.start) ? addDays(first, -1) : first
       while (day.getTime() < end) {
         if (days.has(day.getDay())) {
           for (const time of times) {
             const at = atTimeOfDay(day, time)
             if (at >= from && at >= w.start && at.getTime() < end) {
-              out.push({ at, doseMg: w.step.doseMg, stepIndex: w.index })
+              out.push({ at, doseMg: w.step.doseMg, stepIndex: w.index, day })
             }
           }
         }
@@ -154,8 +184,15 @@ export function scheduledDoses(protocol: ProtocolLike, from: Date, to: Date): Pl
       let t = atTimeOfDay(w.start, time).getTime()
       // Jump straight to the first occurrence at or after `from`.
       if (t < from.getTime()) t += Math.ceil((from.getTime() - t) / intervalMs) * intervalMs
+      const night = splitNightTime(time).nextDay
       for (; t < end; t += intervalMs) {
-        out.push({ at: new Date(t), doseMg: w.step.doseMg, stepIndex: w.index })
+        const at = new Date(t)
+        out.push({
+          at,
+          doseMg: w.step.doseMg,
+          stepIndex: w.index,
+          day: addDays(startOfDay(at), night ? -1 : 0),
+        })
       }
     }
   }
@@ -348,7 +385,10 @@ export function dayAgenda(
   }
 
   const tolH = matchToleranceH(active?.step, times)
-  const occurrences = scheduledDoses(protocol, dayStart, dayEnd)
+  // Today's administrations, including a night shot that falls after midnight.
+  const occurrences = scheduledDoses(protocol, dayStart, addDays(dayEnd, 1)).filter(
+    (o) => ownerDay(o).getTime() === dayStart.getTime(),
+  )
   return matchOccurrences(occurrences, history, tolH).map((o) => {
     if (o.takenAt) return { ...o, status: 'taken' as const }
     const deltaH = (now.getTime() - o.at.getTime()) / HOUR_MS

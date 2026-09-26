@@ -42,7 +42,7 @@ describe('weekPlanVsActual', () => {
       dose('2026-09-21T22:05'),
       dose('2026-09-22T22:10'),
       // Wednesday forgotten
-      dose('2026-09-24T21:20'),
+      dose('2026-09-24T20:50'),
       dose('2026-09-26T00:02'), // Friday's 22:00, after a late dinner
     ]
     const days = weekPlanVsActual(

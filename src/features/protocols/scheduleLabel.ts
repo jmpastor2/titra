@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { splitNightTime } from '@/domain/dosing/schedule'
 import type { ScheduleStep } from '@/domain/types'
 import { useLocale } from '@/lib/useLocale'
 
@@ -25,6 +26,11 @@ export function useScheduleLabel() {
     } else if (s.intervalDays === 1) days = t('protocols.daily')
     else if (s.intervalDays === 7) days = t('protocols.weekly')
     else days = t('protocols.everyNDays', { n: s.intervalDays })
-    return `${days} · ${times.join(' / ')}`
+    return `${days} · ${times
+      .map((x) => {
+        const { clock, nextDay } = splitNightTime(x)
+        return nextDay ? `${clock} ☾` : clock
+      })
+      .join(' / ')}`
   }
 }

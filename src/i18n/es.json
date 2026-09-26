@@ -291,7 +291,9 @@
     },
     "adherence": "Adherencia 28 d",
     "adherenceValue": "{{taken}}/{{expected}} · {{pct}} %",
-    "ladderPreview": "Escalera de dosis"
+    "ladderPreview": "Escalera de dosis",
+    "nightShift": "La toma de noche cae después de medianoche",
+    "nightShiftHint": "Las horas antes de las 06:00 cuentan para el día anterior: la 01:00 del sábado es la toma del viernes."
   },
   "symptoms": {
     "title": "Síntomas",
@@ -789,7 +791,8 @@
       "missed": "perdida",
       "upcoming": "pendiente",
       "extra": "extra"
-    }
+    },
+    "afterMidnight": "☾ madrugada"
   },
   "setupLab": {
     "title": "Monta tu laboratorio",

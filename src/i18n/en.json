@@ -291,7 +291,9 @@
     },
     "adherence": "Adherence 28 d",
     "adherenceValue": "{{taken}}/{{expected}} · {{pct}} %",
-    "ladderPreview": "Dose ladder"
+    "ladderPreview": "Dose ladder",
+    "nightShift": "The night dose falls after midnight",
+    "nightShiftHint": "Times before 06:00 count for the day before: Saturday 01:00 is Friday's dose."
   },
   "symptoms": {
     "title": "Symptoms",
@@ -789,7 +791,8 @@
       "missed": "missed",
       "upcoming": "pending",
       "extra": "extra"
-    }
+    },
+    "afterMidnight": "☾ small hours"
   },
   "setupLab": {
     "title": "Set up your lab",
