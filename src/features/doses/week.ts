@@ -16,7 +16,7 @@ import {
 /** Within this of the planned time counts as on time. */
 export const ON_TIME_MIN = 30
 
-export type WeekStatus = 'onTime' | 'late' | 'early' | 'missed' | 'due' | 'upcoming'
+export type WeekStatus = 'onTime' | 'late' | 'early' | 'missed' | 'due' | 'upcoming' | 'extra'
 
 export interface WeekCell {
   protocol: ProtocolRow
@@ -64,7 +64,24 @@ export function weekPlanVsActual(
           (!d.protocol_id || d.protocol_id === protocol.id),
       )
       .map(toDoseEvent)
-    for (const o of matchOccurrences(scheduledDoses(pl, from, to), history, tolH)) {
+    // Match against a day either side so a shot after midnight lands on its evening.
+    const matched = matchOccurrences(
+      scheduledDoses(pl, addDays(from, -1), addDays(to, 1)),
+      history,
+      tolH,
+    )
+    const accounted = new Set(matched.flatMap((o) => (o.takenAt ? [o.takenAt.getTime()] : [])))
+    for (const d of history) {
+      if (d.at < from || d.at >= to || accounted.has(d.at.getTime())) continue
+      days[Math.floor((startOfDay(d.at).getTime() - from.getTime()) / 86_400_000)]?.cells.push({
+        protocol,
+        plannedAt: d.at,
+        takenAt: d.at,
+        deltaMin: null,
+        status: 'extra',
+      })
+    }
+    for (const o of matched.filter((m) => m.at >= from && m.at < to)) {
       const deltaMin = o.takenAt
         ? Math.round((o.takenAt.getTime() - o.at.getTime()) / 60_000)
         : null

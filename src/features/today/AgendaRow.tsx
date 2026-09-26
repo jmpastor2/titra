@@ -54,7 +54,9 @@ export function AgendaRow({
             })
           : item.status === 'missed'
             ? t('today.missed')
-            : t('today.takenAt', { time: hhmm(item.takenAt ?? item.at) })
+            : item.extra
+              ? t('today.extraAt', { time: hhmm(item.takenAt ?? item.at) })
+              : t('today.takenAt', { time: hhmm(item.takenAt ?? item.at) })
 
   return (
     <li

@@ -777,7 +777,10 @@
     "lastDose": "Última toma",
     "strip": "Tomas de hoy a lo largo del día",
     "remindersOff": "Activa los avisos",
-    "remindersOffHint": "Te decimos cuándo toca cada pauta y cuántas unidades cargar."
+    "remindersOffHint": "Te decimos cuándo toca cada pauta y cuántas unidades cargar.",
+    "extraAt": "Fuera de pauta · {{time}}",
+    "onlyExtra_one": "Hoy no tocaba. Registraste {{count}} toma fuera de pauta.",
+    "onlyExtra_other": "Hoy no tocaba. Registraste {{count}} tomas fuera de pauta."
   },
   "setupLab": {
     "title": "Monta tu laboratorio",
@@ -949,7 +952,8 @@
     "status": {
       "missed": "Perdida",
       "due": "Toca",
-      "upcoming": "Pendiente"
+      "upcoming": "Pendiente",
+      "extra": "Fuera de pauta"
     }
   },
   "fasting": {

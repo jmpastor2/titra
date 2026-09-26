@@ -72,3 +72,16 @@ describe('weekPlanVsActual', () => {
     expect(summariseWeek(days).planned).toBe(0)
   })
 })
+
+describe('off-schedule doses in the week', () => {
+  it('lists a rest-day shot as extra without touching the plan', () => {
+    const days = weekPlanVsActual(
+      [protocol],
+      [dose('2026-09-26T00:02'), dose('2026-09-26T02:40')],
+      new Date('2026-09-21T00:00'),
+      new Date('2026-09-26T03:00'),
+    )
+    expect(days[4]!.cells[0]!.status).toBe('late')
+    expect(days[5]!.cells.map((c) => c.status)).toEqual(['extra'])
+  })
+})

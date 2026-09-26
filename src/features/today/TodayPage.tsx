@@ -215,7 +215,11 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
                 </>
               ) : (
                 <p className="mt-1 text-[14px] text-ink-2">
-                  {summary.total ? t('today.allDone') : t('today.nothingToday')}
+                  {items.length && items.every((i) => i.extra)
+                    ? t('today.onlyExtra', { count: items.length })
+                    : summary.total
+                      ? t('today.allDone')
+                      : t('today.nothingToday')}
                 </p>
               )}
             </div>

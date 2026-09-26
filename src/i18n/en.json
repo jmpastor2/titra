@@ -777,7 +777,10 @@
     "lastDose": "Last dose",
     "strip": "Today's doses across the day",
     "remindersOff": "Turn on reminders",
-    "remindersOffHint": "We tell you when each protocol is due and how many units to draw."
+    "remindersOffHint": "We tell you when each protocol is due and how many units to draw.",
+    "extraAt": "Off schedule · {{time}}",
+    "onlyExtra_one": "Nothing was due today. You logged {{count}} off-schedule dose.",
+    "onlyExtra_other": "Nothing was due today. You logged {{count}} off-schedule doses."
   },
   "setupLab": {
     "title": "Set up your lab",
@@ -949,7 +952,8 @@
     "status": {
       "missed": "Missed",
       "due": "Due",
-      "upcoming": "Pending"
+      "upcoming": "Pending",
+      "extra": "Off schedule"
     }
   },
   "fasting": {

@@ -31,6 +31,7 @@ const TONE: Record<WeekCell['status'], string> = {
   missed: 'text-danger',
   due: 'text-warn',
   upcoming: 'text-muted',
+  extra: 'text-accent',
 }
 
 /** The week as planned against what was injected, one row per day. */
@@ -134,13 +135,18 @@ export function WeekCard({
                       ))}
                     </span>
                     <span className="min-w-0 flex-1 truncate font-semibold">{c.protocol.name}</span>
-                    <span className="readout shrink-0 text-muted">{hhmm(c.plannedAt)}</span>
+                    <span className="readout shrink-0 text-muted">
+                      {c.status === 'extra' ? '—' : hhmm(c.plannedAt)}
+                    </span>
                     <span className="readout w-[92px] shrink-0 text-right">
                       {c.takenAt ? (
                         <span className={TONE[c.status]}>
                           {hhmm(c.takenAt)}
                           {!isSameDay(c.takenAt, c.plannedAt) &&
                             ` · ${fmtDate(c.takenAt, locale, 'EEE')}`}
+                          {c.status === 'extra' && (
+                            <span className="block text-[10.5px]">{t('week.status.extra')}</span>
+                          )}
                           {c.status !== 'onTime' && c.deltaMin !== null && (
                             <span className="block text-[10.5px]">{fmtDelta(c.deltaMin)}</span>
                           )}

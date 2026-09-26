@@ -80,3 +80,17 @@ describe('focus and summary', () => {
     expect(summarise(items)).toEqual({ total: 3, taken: 1, pending: 2, missed: 0 })
   })
 })
+
+describe('off-schedule doses', () => {
+  it('shows a rest-day shot as an extra, but not a late one from the evening before', () => {
+    const saturday = new Date('2026-03-07T03:00')
+    const late = dose('mod-grf-1-29', '2026-03-07T00:02') // Friday 22:00, after dinner
+    expect(buildToday([CJC], [late], saturday)).toEqual([])
+    const extra = dose('mod-grf-1-29', '2026-03-07T02:40')
+    const items = buildToday([CJC], [late, extra], saturday)
+    expect(items).toHaveLength(1)
+    expect(items[0]!.extra).toBe(true)
+    expect(items[0]!.status).toBe('taken')
+    expect(items[0]!.doses.map((d) => d.compoundId)).toEqual(['mod-grf-1-29', 'ipamorelin'])
+  })
+})

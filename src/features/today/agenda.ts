@@ -4,7 +4,17 @@
  */
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
 import { toDoseEvent, toProtocolLike } from '@/data/mappers'
-import { componentsAt, dayAgenda, type AgendaStatus } from '@/domain/dosing/schedule'
+import { addDays, startOfDay } from 'date-fns'
+import {
+  componentsAt,
+  currentStep,
+  dayAgenda,
+  matchOccurrences,
+  matchToleranceH,
+  normaliseTimes,
+  scheduledDoses,
+  type AgendaStatus,
+} from '@/domain/dosing/schedule'
 import type { StackComponent } from '@/domain/types'
 
 export interface TodayItem {
@@ -15,6 +25,8 @@ export interface TodayItem {
   takenAt: Date | null
   /** Every compound in this administration, primary first, with its dose in mg. */
   doses: StackComponent[]
+  /** Logged today although no administration of this protocol was planned for it. */
+  extra?: boolean
 }
 
 const STATUS_ORDER: Record<AgendaStatus, number> = {
@@ -42,7 +54,8 @@ export function buildToday(
           (!d.protocol_id || d.protocol_id === protocol.id),
       )
       .map(toDoseEvent)
-    for (const item of dayAgenda(pl, history, now)) {
+    const agenda = dayAgenda(pl, history, now)
+    for (const item of agenda) {
       items.push({
         key: `${protocol.id}:${item.at.getTime()}`,
         protocol,
@@ -53,6 +66,34 @@ export function buildToday(
           { compoundId: protocol.compound_id, doseMg: item.doseMg },
           ...componentsAt(pl, item.doseMg),
         ],
+      })
+    }
+
+    // Doses logged today that belong to no planned administration: a rest-day shot, a
+    // second one… A late dose after midnight still belongs to yesterday's evening.
+    const dayStart = startOfDay(now)
+    const dayEnd = addDays(dayStart, 1)
+    const tolH = matchToleranceH(currentStep(pl, now)?.step, normaliseTimes(pl.times))
+    const around = matchOccurrences(
+      scheduledDoses(pl, addDays(dayStart, -1), addDays(dayEnd, 1)),
+      history,
+      tolH,
+    )
+    const accounted = new Set(
+      [...around.map((o) => o.takenAt), ...agenda.map((a) => a.takenAt)]
+        .filter((d): d is Date => d !== null)
+        .map((d) => d.getTime()),
+    )
+    for (const d of history) {
+      if (d.at < dayStart || d.at >= dayEnd || accounted.has(d.at.getTime())) continue
+      items.push({
+        key: `${protocol.id}:extra:${d.at.getTime()}`,
+        protocol,
+        at: d.at,
+        status: 'taken',
+        takenAt: d.at,
+        doses: [{ compoundId: protocol.compound_id, doseMg: d.mg }, ...componentsAt(pl, d.mg)],
+        extra: true,
       })
     }
   }
