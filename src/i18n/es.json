@@ -888,7 +888,95 @@
     "eyebrow": "Mis mejoras",
     "title": "Progreso",
     "wellbeing": "Bienestar",
-    "body": "Cuerpo"
+    "body": "Cuerpo",
+    "summary": {
+      "title": "Resumen",
+      "weight": "Peso",
+      "waist": "Cintura",
+      "since": "desde el {{date}}",
+      "firstReading": "Primera medida: repítela para ver el cambio",
+      "noWeight": "Pésate para empezar tu línea base",
+      "noWaist": "Mide tu cintura",
+      "log": "Registrar {{what}}",
+      "weighIns": "Pesajes · 14 d",
+      "last": {
+        "today": "Último: hoy",
+        "yesterday": "Último: ayer",
+        "ago_one": "Último: hace {{count}} día",
+        "ago_other": "Último: hace {{count}} días",
+        "never": "Aún ninguno"
+      },
+      "adh7": "Adherencia · 7 d",
+      "adh28": "Adherencia · 28 d",
+      "doses": "{{taken}}/{{expected}} tomas",
+      "noDoses": "Sin tomas previstas",
+      "noProtocols": "Sin pautas activas",
+      "checkin": "Check-in",
+      "streak_one": "día seguido",
+      "streak_other": "días seguidos",
+      "checkinNow": "Hacer check-in",
+      "stripDays": "{{n}} de {{total}} días con registro",
+      "stripDoses": "{{n}} de {{total}} días con todas las tomas"
+    },
+    "trend": {
+      "label": "Tendencia",
+      "legend": "Línea: tendencia (media móvil de 7 días). Puntos: tus registros. Las marcas verticales son cambios de dosis.",
+      "rateLabel": "Ritmo",
+      "rateNeed": "El ritmo semanal aparece con 3 registros en 7 días",
+      "weekShort": "sem"
+    },
+    "week": {
+      "eyebrow": "Últimos 7 días",
+      "title": "Qué ha cambiado esta semana",
+      "empty": "Registra peso, tomas o un check-in y aquí verás lo que cambia cada semana.",
+      "vsLast": "vs la semana pasada",
+      "weighIns_one": "Te has pesado {{count}} día esta semana: la próxima ya podrás comparar",
+      "weighIns_other": "Te has pesado {{count}} días esta semana: la próxima ya podrás comparar",
+      "adherence": "Adherencia {{pct}} ({{taken}}/{{expected}})",
+      "offTime_one": "{{count}} toma fuera de hora (más de 1 h)",
+      "offTime_other": "{{count}} tomas fuera de hora (más de 1 h)",
+      "allOnTime_one": "La toma, en hora",
+      "allOnTime_other": "Las {{count}} tomas, en hora",
+      "checkIns_one": "{{count}} check-in esta semana",
+      "checkIns_other": "{{count}} check-ins esta semana",
+      "symptoms_one": "{{count}} síntoma registrado",
+      "symptoms_other": "{{count}} síntomas registrados",
+      "symptomsTop": " · sobre todo {{kind}}",
+      "step": {
+        "up": "{{name}} sube a {{dose}} {{day}}",
+        "upPast": "{{name}} subió a {{dose}} {{day}}",
+        "down": "{{name}} baja a {{dose}} {{day}}",
+        "downPast": "{{name}} bajó a {{dose}} {{day}}",
+        "pause": "{{name}} entra en pausa {{day}}",
+        "pausePast": "{{name}} entró en pausa {{day}}",
+        "resume": "{{name}} vuelve con {{dose}} {{day}}",
+        "resumePast": "{{name}} volvió con {{dose}} {{day}}",
+        "start": "{{name}} empieza con {{dose}} {{day}}",
+        "startPast": "{{name}} empezó con {{dose}} {{day}}"
+      },
+      "day": {
+        "today": "hoy",
+        "tomorrow": "mañana",
+        "yesterday": "ayer",
+        "weekday": "el {{weekday}}"
+      }
+    },
+    "baseline": {
+      "eyebrow": "Bienestar",
+      "title": "Tu punto de partida",
+      "titleCompare": "Frente a tu punto de partida",
+      "single": "Check-in del {{date}}. Desde el siguiente verás el cambio en cada dimensión.",
+      "compare": "Último check-in ({{latest}}) frente al primero ({{base}}).",
+      "legend": "Barra: último check-in. Marca: tu punto de partida.",
+      "mean": "Media",
+      "srCompare": "Empezaste en {{base}}, ahora {{latest}}"
+    },
+    "nudge": {
+      "title_one": "Tu último check-in fue hace {{count}} día",
+      "title_other": "Tu último check-in fue hace {{count}} días",
+      "body": "Un minuto basta para ver cómo te sienta cada pauta.",
+      "action": "Check-in"
+    }
   },
   "share": {
     "eyebrow": "Ecosistema",

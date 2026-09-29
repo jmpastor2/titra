@@ -171,6 +171,16 @@ describe('progressScope / laneMarks', () => {
       },
     ])
   })
+  it('labels only the guides the caller names', () => {
+    const s = progressScope('cycle', now, [RETA, CJC])
+    const m = laneMarks(
+      s.lanes,
+      (id) => `c:${id}`,
+      (lane, c) => (lane.compoundId === 'retatrutide' ? `${c.doseMg} mg` : undefined),
+    )
+    expect(m.guides.filter((g) => g.label).map((g) => g.label)).toEqual(['4 mg', '6 mg'])
+    expect(m.guides.filter((g) => !('label' in g))).toHaveLength(3)
+  })
   it('measures from the window start for fixed ranges', () => {
     const s = progressScope('1m', now, [RETA])
     expect(s.since).toEqual(s.window.from)

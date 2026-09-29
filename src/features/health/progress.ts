@@ -262,17 +262,28 @@ export function progressScope(
   return { range, window, cycle, lanes: protocolLanes(protocols, window), since }
 }
 
-/** Chart overlays from the timeline: a guide per dose change and a shade per pause. */
+/**
+ * Chart overlays from the timeline: a guide per dose change and a shade per pause.
+ * `labelOf` may name a guide ("1,5 mg"); returning undefined leaves it unlabelled.
+ */
 export function laneMarks(
   lanes: readonly ProtocolLane[],
   colorOf: (compoundId: string) => string,
+  labelOf?: (lane: ProtocolLane, change: StepChange) => string | undefined,
 ): {
-  guides: { at: number; color: string }[]
+  guides: { at: number; color: string; label?: string }[]
   shades: { from: number; to: number; color: string }[]
 } {
   return {
     guides: lanes.flatMap((l) =>
-      l.changes.map((c) => ({ at: c.at.getTime(), color: colorOf(l.compoundId) })),
+      l.changes.map((c) => {
+        const label = labelOf?.(l, c)
+        return {
+          at: c.at.getTime(),
+          color: colorOf(l.compoundId),
+          ...(label ? { label } : {}),
+        }
+      }),
     ),
     shades: lanes.flatMap((l) =>
       l.segments

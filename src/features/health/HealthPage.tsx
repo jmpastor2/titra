@@ -15,6 +15,7 @@ import {
   Skeleton,
   Stat,
 } from '@/components/ui/primitives'
+import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { LabResultRow, MeasurementKind } from '@/data/database.types'
 import {
@@ -25,18 +26,20 @@ import {
   useProtocols,
   useSymptoms,
 } from '@/data/hooks'
+import type { DoseUnit } from '@/domain/types'
 import { compositionTrend, proteinTarget, rateFlag } from '@/domain/lean/leanMass'
 import { TREND_INSET } from '@/features/exposure/chartScale'
 import { TrendChart } from '@/features/exposure/TrendChart'
 import { LogSymptomSheet } from '@/features/symptoms/LogSymptomSheet'
 import { OutlookCard } from '@/features/outlook/OutlookPage'
-import { fmtDate, fmtDateTime, fmtNumber, fmtRelativeDay } from '@/lib/format'
+import { fmtDate, fmtDateTime, fmtDose, fmtNumber, fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { AddLabSheet } from './AddLabSheet'
 import { KIND_DIGITS, KIND_UNIT } from './kinds'
 import { LogMeasurementSheet } from './LogMeasurementSheet'
 import {
   changeSince,
+  fmtSigned,
   inWindow,
   laneMarks,
   monthlyMeans,
@@ -46,6 +49,8 @@ import {
   type ProgressScope,
 } from './progress'
 import { ChangeValue, MonthTable, ProtocolStrip, RangePicker } from './ProgressCharts'
+import { ProgressSummary } from './ProgressSummary'
+import { ema, weeklyRate } from './trend'
 import { WellbeingTab } from './WellbeingTab'
 
 type Tab = 'wellbeing' | 'body' | 'symptoms' | 'labs'
@@ -113,6 +118,8 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
         </div>
       )}
 
+      <ProgressSummary />
+
       <Segmented<Tab>
         value={tab}
         onChange={changeTab}
@@ -149,6 +156,16 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
   )
 }
 
+/** Body kinds drawn as a smoothed trend over the raw readings, with a weekly rate. */
+const TRENDED: ReadonlySet<MeasurementKind> = new Set(['weight', 'waist'])
+
+const DOSE_UNITS: readonly DoseUnit[] = ['mg', 'mcg', 'iu', 'units', 'ml']
+
+/** Incretins drive weight: their dose steps get a label on the body charts. */
+function isIncretin(compoundId: string): boolean {
+  return compoundById(compoundId)?.category === 'incretin'
+}
+
 /** Kind-specific threshold under which a change reads as flat. */
 function changeThreshold(kind: MeasurementKind): number {
   return KIND_DIGITS[kind] === 0 ? 1 : 0.2
@@ -182,23 +199,30 @@ function MeasurementsTab({ scope }: { scope: ProgressScope }) {
   const view = useMemo(() => {
     if (!active) return null
     const pts = sortPoints(inWindow(byKind.get(active) ?? [], win))
-    const days = Math.max(7, (win.to.getTime() - win.from.getTime()) / 86_400_000)
+    const trended = TRENDED.has(active)
     return {
       pts,
       latest: pts[pts.length - 1] ?? null,
       change: changeSince(pts, since),
       months: monthlyMeans(pts, win),
-      trend:
-        active === 'weight'
-          ? compositionTrend(
-              pts.map((p) => ({ at: p.at, kg: p.value })),
-              days,
-            )
-          : null,
+      trended,
+      smooth: trended && pts.length > 1 ? ema(pts) : undefined,
+      rate: trended ? weeklyRate(pts) : null,
     }
   }, [active, byKind, win, since])
 
-  const marks = useMemo(() => laneMarks(lanes, compoundColor), [lanes])
+  const marks = useMemo(
+    () =>
+      laneMarks(lanes, compoundColor, (lane, c) => {
+        if (!isIncretin(lane.compoundId)) return undefined
+        if (c.pause) return t('charts.pause')
+        const unit = (DOSE_UNITS as readonly string[]).includes(lane.unit)
+          ? (lane.unit as DoseUnit)
+          : 'mg'
+        return fmtDose(c.doseMg, unit, locale)
+      }),
+    [lanes, t, locale],
+  )
   const xDomain = useMemo<[number, number]>(() => [win.from.getTime(), win.to.getTime()], [win])
 
   if (measurements.isPending) {
@@ -280,9 +304,21 @@ function MeasurementsTab({ scope }: { scope: ProgressScope }) {
                 threshold={changeThreshold(active)}
                 className="mt-1 text-[22px] leading-none"
               />
-              {view.trend && (
-                <span className="mt-1.5 text-[12.5px] text-muted">
-                  {fmtNumber(view.trend.kgPerWeek, locale, 2)} kg/{t('common.week').toLowerCase()}
+            </div>
+          )}
+          {view.trended && (
+            <div className="flex flex-col">
+              <span className="spec">{t('progress.trend.rateLabel')}</span>
+              {view.rate ? (
+                <span className="readout mt-1 text-[22px] font-semibold leading-none text-ink">
+                  {fmtSigned(view.rate.perWeek, locale, 2)}
+                  <span className="ml-0.5 text-[0.55em] font-medium text-muted">
+                    {unit}/{t('progress.trend.weekShort')}
+                  </span>
+                </span>
+              ) : (
+                <span className="mt-1 max-w-[11rem] text-[12px] leading-snug text-muted">
+                  {t('progress.trend.rateNeed')}
                 </span>
               )}
             </div>
@@ -303,11 +339,16 @@ function MeasurementsTab({ scope }: { scope: ProgressScope }) {
             guides={marks.guides}
             shades={marks.shades}
             target={active === 'weight' ? (patient?.goal_weight_kg ?? undefined) : undefined}
+            smooth={view.smooth}
+            smoothLabel={t('progress.trend.label')}
           />
         ) : (
           <p className="py-6 text-center text-[13px] text-muted">
             {t('charts.progress.noneInRangeShort')}
           </p>
+        )}
+        {view.smooth && (
+          <p className="mt-2 text-[11.5px] text-muted">{t('progress.trend.legend')}</p>
         )}
       </Card>
 
@@ -405,7 +446,9 @@ function LeanTab() {
     (m) => m.kind === 'resistance_session' && new Date(m.measured_at).getTime() > weekAgo,
   ).length
 
-  const flag = trend ? rateFlag(trend.kgPerWeek, currentKg) : null
+  // Same rule as the weight chart: a weekly rate needs 3 weigh-ins over at least 7 days.
+  const rate = weeklyRate(weights.map((w) => ({ at: w.at, value: w.kg })))
+  const flag = rate ? rateFlag(rate.perWeek, currentKg) : null
 
   return (
     <div className="flex flex-col gap-3">
@@ -464,15 +507,18 @@ function LeanTab() {
       </Card>
 
       <Card title={t('lean.rate')}>
-        {trend ? (
+        {rate ? (
           <>
-            <div className="flex items-baseline gap-2">
+            <div className="flex flex-wrap items-baseline gap-2">
               <span className="tabular text-[24px] font-bold">
-                {fmtNumber(trend.kgPerWeek, locale, 2)}
+                {fmtNumber(rate.perWeek, locale, 2)}
               </span>
               <span className="text-[13px] text-muted">kg / {t('common.week').toLowerCase()}</span>
               {flag && (
-                <Badge tone={flag === 'ok' ? 'ok' : flag === 'fast' ? 'warn' : 'neutral'}>
+                <Badge
+                  tone={flag === 'ok' ? 'ok' : flag === 'fast' ? 'warn' : 'neutral'}
+                  className="whitespace-normal!"
+                >
                   {flag === 'ok'
                     ? t('lean.rateOk')
                     : flag === 'fast'
@@ -481,14 +527,16 @@ function LeanTab() {
                 </Badge>
               )}
             </div>
-            {trend.leanShare !== null && (
+            {trend && trend.leanShare !== null && (
               <p className="mt-2 text-[13.5px] text-ink-2">
                 {t('lean.leanShare', { pct: `${Math.round(trend.leanShare * 100)} %` })}
               </p>
             )}
           </>
         ) : (
-          <p className="text-[13px] text-muted">{t('lean.needTwoWeights')}</p>
+          <p className="text-[13px] text-muted">
+            {weights.length < 2 ? t('lean.needTwoWeights') : t('progress.trend.rateNeed')}
+          </p>
         )}
       </Card>
 

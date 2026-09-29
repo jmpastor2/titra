@@ -21,10 +21,11 @@ export interface TrendPoint {
   value: number
 }
 
-/** A vertical guide, e.g. where a protocol changes dose. */
+/** A vertical guide, e.g. where a protocol changes dose, optionally labelled ("1,5 mg"). */
 export interface TrendGuide {
   at: number
   color: string
+  label?: string
 }
 
 /** A shaded time span, e.g. a protocol pause. */
@@ -39,6 +40,23 @@ const DAY_MS = 86_400_000
 const NO_GUIDES: TrendGuide[] = []
 const NO_SHADES: TrendShade[] = []
 
+/** One row per instant: the raw reading (v) and/or the smoothed trend (s). */
+interface Row {
+  t: number
+  v?: number
+  s?: number
+}
+
+function mergeSeries(raw: readonly TrendPoint[], smooth: readonly TrendPoint[] | undefined): Row[] {
+  const rows = new Map<number, Row>()
+  for (const p of raw) rows.set(p.at.getTime(), { t: p.at.getTime(), v: p.value })
+  for (const p of smooth ?? []) {
+    const t = p.at.getTime()
+    rows.set(t, { ...rows.get(t), t, s: p.value })
+  }
+  return [...rows.values()].toSorted((a, b) => a.t - b.t)
+}
+
 export function TrendChart({
   points,
   unit,
@@ -51,6 +69,8 @@ export function TrendChart({
   xDomain,
   guides = NO_GUIDES,
   shades = NO_SHADES,
+  smooth,
+  smoothLabel = '~',
 }: {
   points: TrendPoint[]
   unit: string
@@ -65,17 +85,23 @@ export function TrendChart({
   xDomain?: [number, number]
   guides?: TrendGuide[]
   shades?: TrendShade[]
+  /**
+   * A smoothed trend drawn as the main line; the raw readings then show as dots on a
+   * faint line, so the day-to-day noise stays visible but does not steal the story.
+   */
+  smooth?: TrendPoint[]
+  /** Tooltip label for the smoothed value, e.g. "Tendencia". */
+  smoothLabel?: string
 }) {
   const { locale } = useLocale()
   const dfl = locale === 'es' ? es : enUS
 
   const model = useMemo(() => {
-    const data = points
-      .filter((p) => !xDomain || (p.at.getTime() >= xDomain[0] && p.at.getTime() <= xDomain[1]))
-      .toSorted((a, b) => a.at.getTime() - b.at.getTime())
-      .map((p) => ({ t: p.at.getTime(), v: p.value }))
+    const inDomain = (p: TrendPoint) =>
+      !xDomain || (p.at.getTime() >= xDomain[0] && p.at.getTime() <= xDomain[1])
+    const data = mergeSeries(points.filter(inDomain), smooth?.filter(inDomain))
     if (data.length === 0) return null
-    const vals = data.map((d) => d.v)
+    const vals = data.flatMap((d) => [d.v, d.s].filter((x): x is number => x !== undefined))
     const lo = Math.min(...vals, target ?? Infinity, refRange?.low ?? Infinity)
     const hi = Math.max(...vals, target ?? -Infinity, refRange?.high ?? -Infinity)
     const pad = (hi - lo) * 0.15 || 1
@@ -90,10 +116,12 @@ export function TrendChart({
       x,
       pattern,
     }
-  }, [points, xDomain, target, refRange?.low, refRange?.high, range])
+  }, [points, smooth, xDomain, target, refRange?.low, refRange?.high, range])
 
   if (!model) return null
   const { data, domain } = model
+  const hasSmooth = data.some((d) => d.s !== undefined)
+  const rawCount = data.filter((d) => d.v !== undefined).length
   const visibleGuides = guides.filter((g) => g.at > domain[0] && g.at < domain[1])
   const visibleShades = shades.filter((s) => s.to > domain[0] && s.from < domain[1])
 
@@ -120,6 +148,17 @@ export function TrendChart({
               stroke={g.color}
               strokeOpacity={0.6}
               strokeDasharray="2 3"
+              label={
+                g.label
+                  ? {
+                      value: g.label,
+                      position: 'insideTopLeft',
+                      fill: 'var(--muted)',
+                      fontSize: 9.5,
+                      fontFamily: 'var(--font-mono)',
+                    }
+                  : undefined
+              }
             />
           ))}
           <XAxis
@@ -164,24 +203,51 @@ export function TrendChart({
           )}
           <Tooltip
             cursor={{ stroke: 'var(--muted)', strokeWidth: 1 }}
-            content={<TrendTooltip unit={unit} digits={digits} locale={locale} />}
+            content={
+              <TrendTooltip unit={unit} digits={digits} locale={locale} smoothLabel={smoothLabel} />
+            }
           />
           <Line
             dataKey="v"
             type="monotone"
             stroke={color}
-            strokeWidth={2}
-            style={{
-              filter: `drop-shadow(0 0 4px color-mix(in oklab, ${color} 60%, transparent))`,
-            }}
+            strokeWidth={hasSmooth ? 1 : 2}
+            strokeOpacity={hasSmooth ? 0.35 : 1}
+            connectNulls
+            style={
+              hasSmooth
+                ? undefined
+                : { filter: `drop-shadow(0 0 4px color-mix(in oklab, ${color} 60%, transparent))` }
+            }
             dot={
-              data.length <= 40
-                ? { r: 3, strokeWidth: 2, stroke: 'var(--panel)', fill: color }
+              rawCount <= 40 || hasSmooth
+                ? {
+                    r: hasSmooth ? 2.5 : 3,
+                    strokeWidth: hasSmooth ? 1.5 : 2,
+                    stroke: 'var(--panel)',
+                    fill: color,
+                    fillOpacity: hasSmooth ? 0.7 : 1,
+                  }
                 : false
             }
             activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--panel)', fill: color }}
             isAnimationActive={false}
           />
+          {hasSmooth && (
+            <Line
+              dataKey="s"
+              type="monotone"
+              stroke={color}
+              strokeWidth={2.25}
+              connectNulls
+              style={{
+                filter: `drop-shadow(0 0 4px color-mix(in oklab, ${color} 60%, transparent))`,
+              }}
+              dot={false}
+              activeDot={false}
+              isAnimationActive={false}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -190,7 +256,7 @@ export function TrendChart({
 
 interface TooltipInjected {
   active?: boolean
-  payload?: ReadonlyArray<{ value?: unknown }>
+  payload?: ReadonlyArray<{ value?: unknown; dataKey?: unknown }>
   label?: unknown
 }
 
@@ -202,18 +268,31 @@ function TrendTooltip({
   unit,
   digits,
   locale,
-}: TooltipInjected & { unit: string; digits: number; locale: Locale }) {
+  smoothLabel,
+}: TooltipInjected & { unit: string; digits: number; locale: Locale; smoothLabel: string }) {
   if (!active || !payload?.length) return null
-  const v = payload[0]?.value
-  if (typeof v !== 'number') return null
+  const pick = (key: string) => {
+    const v = payload.find((p) => p.dataKey === key)?.value
+    return typeof v === 'number' ? v : null
+  }
+  const v = pick('v')
+  const s = pick('s')
+  if (v === null && s === null) return null
   return (
     <div className="rounded-control border border-line bg-panel px-2.5 py-1.5 text-[11.5px] shadow-lg">
       <div className="text-muted">
         {format(new Date(label as number), 'd MMM yyyy', { locale: locale === 'es' ? es : enUS })}
       </div>
-      <div className="readout font-semibold text-ink">
-        {fmtNumber(v, locale, digits)} {unit}
-      </div>
+      {v !== null && (
+        <div className="readout font-semibold text-ink">
+          {fmtNumber(v, locale, digits)} {unit}
+        </div>
+      )}
+      {s !== null && (
+        <div className="readout text-muted">
+          {smoothLabel} {fmtNumber(s, locale, digits)} {unit}
+        </div>
+      )}
     </div>
   )
 }

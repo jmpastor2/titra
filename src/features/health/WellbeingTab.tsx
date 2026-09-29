@@ -14,6 +14,10 @@ import { TREND_INSET } from '@/features/exposure/chartScale'
 import { TrendChart } from '@/features/exposure/TrendChart'
 import { fmtDate, fmtNumber, fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { useNow } from '@/lib/useNow'
+import { wellbeingBaseline } from './baseline'
+import { BaselineCard, CheckInNudge } from './BaselineCard'
+import { CHECKIN_STALE_DAYS, daySet, daysSinceLast } from './consistency'
 import { KIND_DIGITS, KIND_UNIT } from './kinds'
 import {
   changeSince,
@@ -42,6 +46,7 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
   const { patientId, readOnly } = usePatientScope()
   const measurements = useMeasurements(patientId, 365)
   const [open, setOpen] = useState(false)
+  const now = useNow(5 * 60_000)
   const { window: win, lanes, since } = scope
 
   const all = useMemo(() => {
@@ -54,6 +59,13 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
     }
     return m
   }, [measurements.data])
+
+  // The first check-in ever is the baseline, whatever range is in view.
+  const baseline = useMemo(() => wellbeingBaseline(all, WELLBEING), [all])
+  const checkInAgo = useMemo(
+    () => daysSinceLast(daySet(WELLBEING.flatMap((k) => (all.get(k) ?? []).map((p) => p.at))), now),
+    [all, now],
+  )
 
   const series = useMemo(
     () =>
@@ -120,6 +132,7 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
     return [...scores, ...body]
   }, [all, series, win, since])
   const hasScores = series.length > 0
+  const hasHistory = baseline.some((b) => b.delta !== null)
   const sinceLabel =
     scope.range === 'cycle' && scope.cycle
       ? t('charts.progress.sinceCycle', { date: fmtDate(since, locale, 'd MMM') })
@@ -160,6 +173,11 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
         )}
       </Card>
 
+      {!readOnly && checkInAgo !== null && checkInAgo >= CHECKIN_STALE_DAYS && (
+        <CheckInNudge days={checkInAgo} onCheckIn={() => setOpen(true)} />
+      )}
+      {baseline.length > 0 && <BaselineCard rows={baseline} />}
+
       {measurements.isPending ? (
         <Card>
           <Skeleton className="h-32 w-full" />
@@ -179,6 +197,9 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
             }
           />
         </Card>
+      ) : !hasHistory ? (
+        // One check-in day so far: the baseline card says it all; charts of single dots do not.
+        checkInButton
       ) : (
         <>
           {checkInButton}

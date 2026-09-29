@@ -888,7 +888,95 @@
     "eyebrow": "My improvements",
     "title": "Progress",
     "wellbeing": "Wellbeing",
-    "body": "Body"
+    "body": "Body",
+    "summary": {
+      "title": "Summary",
+      "weight": "Weight",
+      "waist": "Waist",
+      "since": "since {{date}}",
+      "firstReading": "First reading: repeat it to see the change",
+      "noWeight": "Weigh in to start your baseline",
+      "noWaist": "Measure your waist",
+      "log": "Log {{what}}",
+      "weighIns": "Weigh-ins · 14 d",
+      "last": {
+        "today": "Last: today",
+        "yesterday": "Last: yesterday",
+        "ago_one": "Last: {{count}} day ago",
+        "ago_other": "Last: {{count}} days ago",
+        "never": "None yet"
+      },
+      "adh7": "Adherence · 7 d",
+      "adh28": "Adherence · 28 d",
+      "doses": "{{taken}}/{{expected}} doses",
+      "noDoses": "No doses planned",
+      "noProtocols": "No active protocols",
+      "checkin": "Check-in",
+      "streak_one": "day in a row",
+      "streak_other": "days in a row",
+      "checkinNow": "Check in",
+      "stripDays": "{{n}} of {{total}} days logged",
+      "stripDoses": "{{n}} of {{total}} days with every dose"
+    },
+    "trend": {
+      "label": "Trend",
+      "legend": "Line: trend (7-day moving average). Dots: your readings. Vertical marks are dose changes.",
+      "rateLabel": "Rate",
+      "rateNeed": "Weekly rate appears after 3 readings over 7 days",
+      "weekShort": "wk"
+    },
+    "week": {
+      "eyebrow": "Last 7 days",
+      "title": "What changed this week",
+      "empty": "Log weight, doses or a check-in and this is where you will see what changes each week.",
+      "vsLast": "vs last week",
+      "weighIns_one": "Weighed in on {{count}} day this week: next week you can compare",
+      "weighIns_other": "Weighed in on {{count}} days this week: next week you can compare",
+      "adherence": "Adherence {{pct}} ({{taken}}/{{expected}})",
+      "offTime_one": "{{count}} dose off schedule (over 1 h)",
+      "offTime_other": "{{count}} doses off schedule (over 1 h)",
+      "allOnTime_one": "The dose was on time",
+      "allOnTime_other": "All {{count}} doses on time",
+      "checkIns_one": "{{count}} check-in this week",
+      "checkIns_other": "{{count}} check-ins this week",
+      "symptoms_one": "{{count}} symptom logged",
+      "symptoms_other": "{{count}} symptoms logged",
+      "symptomsTop": " · mostly {{kind}}",
+      "step": {
+        "up": "{{name}} steps up to {{dose}} {{day}}",
+        "upPast": "{{name}} stepped up to {{dose}} {{day}}",
+        "down": "{{name}} steps down to {{dose}} {{day}}",
+        "downPast": "{{name}} stepped down to {{dose}} {{day}}",
+        "pause": "{{name}} pauses {{day}}",
+        "pausePast": "{{name}} paused {{day}}",
+        "resume": "{{name}} resumes at {{dose}} {{day}}",
+        "resumePast": "{{name}} resumed at {{dose}} {{day}}",
+        "start": "{{name}} starts at {{dose}} {{day}}",
+        "startPast": "{{name}} started at {{dose}} {{day}}"
+      },
+      "day": {
+        "today": "today",
+        "tomorrow": "tomorrow",
+        "yesterday": "yesterday",
+        "weekday": "on {{weekday}}"
+      }
+    },
+    "baseline": {
+      "eyebrow": "Wellbeing",
+      "title": "Your baseline",
+      "titleCompare": "Against your baseline",
+      "single": "Check-in from {{date}}. From the next one you will see the change in each dimension.",
+      "compare": "Latest check-in ({{latest}}) against the first ({{base}}).",
+      "legend": "Bar: latest check-in. Mark: your baseline.",
+      "mean": "Mean",
+      "srCompare": "Started at {{base}}, now {{latest}}"
+    },
+    "nudge": {
+      "title_one": "Your last check-in was {{count}} day ago",
+      "title_other": "Your last check-in was {{count}} days ago",
+      "body": "One minute is enough to see how each protocol suits you.",
+      "action": "Check in"
+    }
   },
   "share": {
     "eyebrow": "Ecosystem",
