@@ -451,7 +451,8 @@
     "until": "hasta el {{date}}",
     "orderNow": "Pide ya",
     "plenty": "+8 meses",
-    "reconstituteHint": "cuando lo reconstituyas, toca el vial y pon el agua que le añades."
+    "reconstituteHint": "cuando lo reconstituyas, toca el vial y pon el agua que le añades.",
+    "expiresInUse": "+ Caduca {{days}} días después de reconstituir"
   },
   "calculator": {
     "title": "Calculadora de reconstitución",
@@ -797,7 +798,8 @@
       "upcoming": "pendiente",
       "extra": "extra"
     },
-    "afterMidnight": "☾ madrugada"
+    "afterMidnight": "☾ madrugada",
+    "stock": "Stock"
   },
   "setupLab": {
     "title": "Monta tu laboratorio",
@@ -1084,5 +1086,28 @@
     },
     "sinceWeek": "Desde el {{date}} · semana {{n}}",
     "startsOn": "Empieza el {{date}}"
+  },
+  "stock": {
+    "title": {
+      "expired": "Vial caducado",
+      "expiresSoon": "Caduca pronto",
+      "expiresBeforeEmpty": "Caducará antes de acabarse",
+      "runsOut": "Se acaba el vial",
+      "reconstitute": "Toca reconstituir",
+      "reorder": "Pide más"
+    },
+    "expired": "{{names}}: caducó el {{date}}. No lo uses y abre otro.",
+    "expiresSoon_one": "{{names}}: caduca el {{date}}, mañana.",
+    "expiresSoon_other": "{{names}}: caduca el {{date}}, en {{days}} días.",
+    "expiresBeforeEmpty": "{{names}}: caduca el {{date}} y aún le quedará producto. Planifica el siguiente.",
+    "runsOut_one": "{{names}}: queda {{count}} toma. Ten otro listo para el {{date}}.",
+    "runsOut_other": "{{names}}: quedan {{count}} tomas. Ten otro listo para el {{date}}.",
+    "reconstitute_one": "{{names}}: queda {{count}} toma. Reconstituye el vial de reserva antes del {{date}}.",
+    "reconstitute_other": "{{names}}: quedan {{count}} tomas. Reconstituye el vial de reserva antes del {{date}}.",
+    "reorder": "{{names}}: con todo tu stock te llega hasta el {{date}}. Pide ahora para no quedarte sin.",
+    "estimated": "Caducidad orientativa: 28 días desde que lo reconstituiste. Pon la de la etiqueta en el vial.",
+    "more_one": "Ver {{count}} alerta más",
+    "more_other": "Ver {{count}} alertas más",
+    "expiresSoon_zero": "{{names}}: caduca hoy, {{date}}."
   }
 }

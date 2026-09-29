@@ -361,9 +361,11 @@ export function dayAgenda(
   protocol: ProtocolLike,
   history: readonly DoseEvent[],
   now: Date,
+  /** The day to list; defaults to today. Status is always judged against `now`. */
+  day: Date = now,
 ): AgendaItem[] {
   const times = normaliseTimes(protocol.times)
-  const dayStart = startOfDay(now)
+  const dayStart = startOfDay(day)
   const dayEnd = addDays(dayStart, 1)
   const active = currentStep(protocol, now) ?? lastStep(protocol)
 

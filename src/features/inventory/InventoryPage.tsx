@@ -10,79 +10,25 @@ import { Badge, EmptyState, Skeleton, SubstanceDot, Vial } from '@/components/ui
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
-import { useArchiveInventory, useDoses, useInventory, useProtocols } from '@/data/hooks'
+import { useArchiveInventory } from '@/data/hooks'
 import { roundUnits } from '@/domain/dosing/draw'
 import { mgToUnits } from '@/domain/dosing/reconstitution'
-import { upcomingAdministrations } from '@/features/reminders/plan'
 import { fmtDate, fmtDose, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { effectiveExpiry } from './alerts'
 import { InventorySheet } from './InventorySheet'
-import {
-  activeVial,
-  concentrationOf,
-  restockPlan,
-  vialHas,
-  vialContents,
-  vialLook,
-  vialRunway,
-  type RestockLine,
-  type VialRunway,
-} from './vials'
+import { StockAlerts } from './StockAlerts'
+import { useStock } from './useStock'
+import { concentrationOf, vialContents, vialLook, type RestockLine, type VialRunway } from './vials'
 
 export function InventoryPage() {
   const { t } = useTranslation()
   const { patientId, readOnly } = usePatientScope()
-  const inventory = useInventory(patientId)
-  const protocols = useProtocols(patientId)
-  const doses = useDoses(patientId, 120)
+  const stock = useStock(patientId)
+  const { list, runways, restock, alerts } = stock
   const [editing, setEditing] = useState<InventoryRow | null>(null)
   const [open, setOpen] = useState(false)
-  const list = useMemo(() => inventory.data ?? [], [inventory.data])
 
-  // Upcoming doses per compound over the next months, soonest first.
-  const upcomingByCompound = useMemo(() => {
-    const upcoming = upcomingAdministrations(
-      protocols.data ?? [],
-      doses.data ?? [],
-      list,
-      new Date(),
-      {
-        horizonDays: 240,
-      },
-    )
-    const out = new Map<string, { at: Date; doseMg: number }[]>()
-    for (const u of upcoming)
-      for (const d of u.doses)
-        out.set(d.compoundId, [...(out.get(d.compoundId) ?? []), { at: u.at, doseMg: d.doseMg }])
-    return out
-  }, [protocols.data, doses.data, list])
-
-  // For the vial each compound is drawn from: how many upcoming doses it still covers.
-  const runways = useMemo(() => {
-    const out = new Map<string, VialRunway>()
-    for (const compoundId of new Set(list.map((v) => v.compound_id))) {
-      const vial = activeVial(list, compoundId)
-      const mine = upcomingByCompound.get(compoundId)
-      if (vial && vial.compound_id === compoundId && mine?.length)
-        out.set(vial.id, vialRunway(Number(vial.remaining_mg), mine))
-    }
-    return out
-  }, [upcomingByCompound, list])
-
-  const restock = useMemo(
-    () =>
-      restockPlan(list, upcomingByCompound).filter(
-        // A blend partner is covered by the line of the vial's own compound.
-        (l) =>
-          !list.some(
-            (v) =>
-              v.compound_id !== l.compoundId &&
-              vialHas(v, l.compoundId) &&
-              upcomingByCompound.has(v.compound_id),
-          ),
-      ),
-    [list, upcomingByCompound],
-  )
   // In use first, then reserve vials, then empty ones.
   const sortedVials = useMemo(() => {
     const rank = (v: InventoryRow) => (Number(v.remaining_mg) <= 0 ? 2 : concentrationOf(v) ? 0 : 1)
@@ -110,7 +56,7 @@ export function InventoryPage() {
         }
       />
 
-      {inventory.isPending ? (
+      {stock.pending ? (
         <Card>
           <Skeleton className="h-24 w-full" />
         </Card>
@@ -125,6 +71,7 @@ export function InventoryPage() {
         </Card>
       ) : (
         <>
+          {alerts.length > 0 && <StockAlerts alerts={alerts} className="mb-3" />}
           {restock.length > 0 && <RestockCard lines={restock} />}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {sortedVials.map((item) => (
@@ -170,9 +117,9 @@ function VialCard({
   const remaining = Number(item.remaining_mg)
   const fill = total > 0 ? remaining / total : 0
   const conc = concentrationOf(item)
-  const expiryDays = item.expires_at
-    ? differenceInCalendarDays(new Date(item.expires_at), new Date())
-    : null
+  // Label expiry, or 28 days after reconstitution as an estimate.
+  const expiry = effectiveExpiry(item)
+  const expiryDays = expiry ? differenceInCalendarDays(expiry.date, new Date()) : null
   const openDays = item.opened_at
     ? differenceInCalendarDays(new Date(), new Date(item.opened_at))
     : null
@@ -181,10 +128,8 @@ function VialCard({
   const doseMg = runway?.nextDoseMg ?? (unit === 'mcg' ? 0.1 : 0.25)
   // It expires before it runs out: the expiry date is what forces the next vial.
   const expiresFirst =
-    runway && item.expires_at
-      ? !runway.runsOutAt || new Date(item.expires_at) < runway.runsOutAt
-      : false
-  const needBy = expiresFirst ? new Date(item.expires_at!) : (runway?.runsOutAt ?? null)
+    runway && expiry ? !runway.runsOutAt || expiry.date < runway.runsOutAt : false
+  const needBy = expiresFirst && expiry ? expiry.date : (runway?.runsOutAt ?? null)
   const short =
     (runway ? runway.runsOutAt !== null && runway.doses <= 2 : false) ||
     (expiresFirst && expiryDays !== null && expiryDays <= 7)
@@ -219,7 +164,10 @@ function VialCard({
               <Badge tone="danger">{t('inventory.expired')}</Badge>
             )}
             {expiryDays !== null && expiryDays >= 0 && expiryDays <= 30 && (
-              <Badge tone="warn">{t('inventory.expiresSoon', { days: expiryDays })}</Badge>
+              <Badge tone="warn">
+                {expiry?.estimated ? '≈ ' : ''}
+                {t('inventory.expiresSoon', { days: expiryDays })}
+              </Badge>
             )}
           </div>
         </div>

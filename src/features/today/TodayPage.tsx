@@ -26,6 +26,8 @@ import type { StackComponent } from '@/domain/types'
 import { useInventory } from '@/data/hooks'
 import { CheckInSheet } from '@/features/checkin/CheckInSheet'
 import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
+import { StockAlerts } from '@/features/inventory/StockAlerts'
+import { useStock } from '@/features/inventory/useStock'
 import { activeVial, drawPartFor } from '@/features/inventory/vials'
 import { useExposure } from '@/features/exposure/useExposure'
 import { FastingCard } from '@/features/fasting/FastingCard'
@@ -57,6 +59,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const exposure = useExposure(patientId, now)
   const inventory = useInventory(patientId)
   const reminders = useReminderPrefs()
+  const stock = useStock(patientId, now)
   const [openSheet, setSheet] = useState<SheetState>(null)
   const [params, setParams] = useSearchParams()
   const logParam = params.get('log')
@@ -252,6 +255,13 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
       )}
 
       {!readOnly && fastFor && <FastingCard name={fastFor.protocol.name} />}
+
+      {!readOnly && stock.alerts.length > 0 && (
+        <section>
+          <SectionTitle index={nextIndex()}>{t('today.stock')}</SectionTitle>
+          <StockAlerts alerts={stock.alerts} limit={2} linkTo="/inventory" />
+        </section>
+      )}
 
       {items.length > 0 && (
         <section>

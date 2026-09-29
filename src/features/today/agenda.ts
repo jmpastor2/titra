@@ -54,7 +54,11 @@ export function buildToday(
           (!d.protocol_id || d.protocol_id === protocol.id),
       )
       .map(toDoseEvent)
-    const agenda = dayAgenda(pl, history, now)
+    // In the small hours, last night's shot (planned after midnight) belongs here too.
+    const lastNight = dayAgenda(pl, history, now, addDays(now, -1)).filter(
+      (a) => a.at >= startOfDay(now),
+    )
+    const agenda = [...lastNight, ...dayAgenda(pl, history, now)]
     for (const item of agenda) {
       items.push({
         key: `${protocol.id}:${item.at.getTime()}`,

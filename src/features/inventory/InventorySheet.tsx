@@ -16,6 +16,7 @@ import { mgToUnits, vialConcentration } from '@/domain/dosing/reconstitution'
 import { SubstancePicker } from '@/features/protocols/SubstancePicker'
 import { fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { IN_USE_DAYS } from './alerts'
 import { BLEND_PRESETS, type BlendPreset } from './blendPresets'
 
 const FORMS: InventoryForm[] = ['vial', 'pen', 'cartridge', 'tablet']
@@ -328,6 +329,19 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId }: Omit<Props,
                 />
               )}
             </Field>
+            {openedAt && !expiresAt && num(diluent) > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const d = new Date(`${openedAt}T12:00`)
+                  d.setDate(d.getDate() + IN_USE_DAYS)
+                  setExpiresAt(d.toISOString().slice(0, 10))
+                }}
+                className="col-span-2 -mt-1 text-left text-[12.5px] font-semibold text-signal"
+              >
+                {t('inventory.expiresInUse', { days: IN_USE_DAYS })}
+              </button>
+            )}
           </div>
 
           <Field label={`${t('inventory.lot')} · ${t('common.optional')}`}>

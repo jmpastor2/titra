@@ -94,3 +94,18 @@ describe('off-schedule doses', () => {
     expect(items[0]!.doses.map((d) => d.compoundId)).toEqual(['mod-grf-1-29', 'ipamorelin'])
   })
 })
+
+describe('night shots after midnight', () => {
+  const NIGHT = protocol({ times: ['25:00'] })
+  it("shows last night's 01:00 shot in the small hours, due until taken", () => {
+    const at = new Date('2026-03-04T01:40') // Wednesday, Tuesday night's shot
+    const items = buildToday([NIGHT], [], at)
+    expect(items.map((i) => [i.at.getHours(), i.status])).toEqual([
+      [1, 'due'],
+      [1, 'upcoming'],
+    ])
+    const taken = buildToday([NIGHT], [dose('mod-grf-1-29', '2026-03-04T01:45')], at)
+    expect(taken[0]!.status).toBe('taken')
+    expect(taken.some((i) => i.extra)).toBe(false)
+  })
+})
