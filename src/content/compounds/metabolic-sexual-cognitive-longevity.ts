@@ -13,7 +13,7 @@ export const METABOLIC_SEXUAL_COGNITIVE_LONGEVITY: CompoundEntry[] = [
     names: {
       generic: 'MOTS-c',
       brands: [],
-      aliases: ['Mitochondrial ORF of the 12S rRNA type-c', 'CB4211 (análogo)'],
+      aliases: ['MOTSc', 'Mitochondrial ORF of the 12S rRNA type-c', 'CB4211 (análogo)'],
     },
     category: 'metabolic',
     pharmClass: t(
@@ -55,18 +55,18 @@ export const METABOLIC_SEXUAL_COGNITIVE_LONGEVITY: CompoundEntry[] = [
         'CB4211 (analogue, not native MOTS-c): daily SC doses in phase 1 with modest glucose and weight reduction at 4 weeks.',
       ),
       anecdotal: t(
-        'Uso no aprobado — 5–10 mg SC 2–3×/semana en ciclos de 4–8 semanas; en roedores las dosis eficaces fueron 0,5–15 mg/kg, muy superiores por kg a las usadas en humanos.',
-        'Unapproved use — 5–10 mg SC 2–3×/week in 4–8-week cycles; effective rodent doses were 0.5–15 mg/kg, far higher per kg than community human doses.',
+        'Uso no aprobado — las pautas comunitarias varían mucho: desde 1–2,5 mg hasta 5–10 mg SC, 2–3×/semana (p. ej. lunes, miércoles y viernes), en ciclos de 4–8 semanas; hay quien lo pone antes de entrenar. En roedores las dosis eficaces fueron 0,5–15 mg/kg, muy superiores por kg a las usadas en personas.',
+        'Unapproved use — community schedules vary widely: from 1–2.5 mg up to 5–10 mg SC, 2–3×/week (e.g. Monday, Wednesday and Friday), in 4–8-week cycles; some inject it before training. Effective rodent doses were 0.5–15 mg/kg, far higher per kg than those used in people.',
       ),
       frequency: t('2–3×/semana (uso no aprobado)', '2–3×/week (unapproved use)'),
     },
     reconstitution: t(
-      'Vial liofilizado de 10 mg + 2 mL de agua bacteriostática = 5 mg/mL. En jeringa U-100: 5 mg = 100 U; 1 mg = 20 U. Estable 2–4 semanas en nevera tras reconstituir.',
-      '10 mg lyophilised vial + 2 mL bacteriostatic water = 5 mg/mL. U-100 syringe: 5 mg = 100 U; 1 mg = 20 U. Stable 2–4 weeks refrigerated after reconstitution.',
+      'Vial liofilizado de 10 mg. Con 1 mL de agua bacteriostática = 10 mg/mL: en jeringa U-100, 1 U = 0,1 mg → 1 mg = 10 U, 1,5 mg = 15 U, 5 mg = 50 U. Con 2 mL = 5 mg/mL → 1 mg = 20 U, 5 mg = 100 U. Menos agua deja volúmenes más pequeños; más agua facilita medir dosis bajas.',
+      '10 mg lyophilised vial. With 1 mL bacteriostatic water = 10 mg/mL: on a U-100 syringe, 1 U = 0.1 mg → 1 mg = 10 U, 1.5 mg = 15 U, 5 mg = 50 U. With 2 mL = 5 mg/mL → 1 mg = 20 U, 5 mg = 100 U. Less water gives smaller volumes; more water makes low doses easier to measure.',
     ),
     storage: t(
-      'Polvo liofilizado: −20 °C a largo plazo, 2–8 °C hasta meses. Reconstituido: 2–8 °C, proteger de la luz, no congelar.',
-      'Lyophilised powder: −20 °C long term, 2–8 °C for months. Reconstituted: 2–8 °C, protect from light, do not freeze.',
+      'Liofilizado: −20 °C a largo plazo, 2–8 °C durante meses. Reconstituido: 2–8 °C, protegido de la luz, no congelar. Habitualmente se indica usarlo en 28–30 días: orientación de fabricantes y de la comunidad, sin datos de estabilidad publicados (los 28 días vienen de la norma USP <797> para viales multidosis y se refieren a la esterilidad).',
+      'Lyophilised: −20 °C long term, 2–8 °C for months. Reconstituted: 2–8 °C, protected from light, do not freeze. The usual guidance is to use it within 28–30 days: manufacturer and community guidance with no published stability data (the 28 days come from USP <797> for multiple-dose vials and concern sterility).',
     ),
     adverseEffects: {
       common: [
@@ -92,12 +92,21 @@ export const METABOLIC_SEXUAL_COGNITIVE_LONGEVITY: CompoundEntry[] = [
         'Insulina, sulfonilureas, metformina: efecto aditivo teórico sobre la glucemia (AMPK)',
         'Insulin, sulfonylureas, metformin: theoretical additive glucose-lowering (AMPK)',
       ),
+      t(
+        'Agonistas de GLP-1/GIP (retatrutida, tirzepatida, semaglutida): efecto aditivo teórico sobre la glucosa; sin estudios de la combinación',
+        'GLP-1/GIP agonists (retatrutide, tirzepatide, semaglutide): theoretical additive glucose effect; the combination is unstudied',
+      ),
     ],
     monitoring: [
       t(
-        'Glucemia en ayunas, HbA1c si se usa pese a la falta de evidencia',
-        'Fasting glucose, HbA1c if used despite lack of evidence',
+        'Glucosa en ayunas y HbA1c al inicio y a los 2–3 meses',
+        'Fasting glucose and HbA1c at baseline and after 2–3 months',
       ),
+      t(
+        'Síntomas de hipoglucemia (temblor, sudor, mareo), sobre todo si se combina con otros fármacos que bajan la glucosa',
+        'Hypoglycaemia symptoms (shaking, sweating, dizziness), above all when combined with other glucose-lowering drugs',
+      ),
+      t('Peso y reacciones en el punto de inyección', 'Weight and injection-site reactions'),
     ],
     keyTrials: [
       {
@@ -116,7 +125,6 @@ export const METABOLIC_SEXUAL_COGNITIVE_LONGEVITY: CompoundEntry[] = [
           'Análogo de MOTS-c en sujetos con obesidad y MASLD: seguro, con reducciones modestas de glucosa y peso; programa abandonado.',
           'MOTS-c analogue in obese subjects with MASLD: safe, modest glucose and weight reductions; programme abandoned.',
         ),
-        ref: 'NCT03998514',
       },
     ],
     references: [
@@ -131,6 +139,6 @@ export const METABOLIC_SEXUAL_COGNITIVE_LONGEVITY: CompoundEntry[] = [
       { label: 'FDA 503A Bulks List — category 2 nominations (peptides)' },
     ],
     tags: ['mitocondrial', 'metabolico', 'obesidad', 'investigacion'],
-    lastReviewed: '2026-09-19',
+    lastReviewed: '2026-09-30',
   },
 ]

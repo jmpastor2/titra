@@ -192,7 +192,7 @@ const ipamorelin: CompoundEntry = {
   names: {
     generic: 'Ipamorelina',
     brands: [],
-    aliases: ['NNC 26-0161', 'ipa'],
+    aliases: ['Ipamorelin', 'NNC 26-0161', 'ipa', 'IPA'],
   },
   category: 'gh_axis',
   pharmClass: t(
@@ -245,18 +245,18 @@ const ipamorelin: CompoundEntry = {
       'Phase 1: IV boluses in healthy volunteers with dose-dependent GH release. Phase 2 in postoperative ileus (Helsinn): 0.03 mg/kg IV twice daily for up to 7 days.',
     ),
     anecdotal: t(
-      'Uso no aprobado — 200–300 µg SC 1–3×/día (al acostarse y/o en ayunas), habitualmente con Modified GRF 1-29 100 µg; ciclos de 8–12 semanas. Rangos comunitarios.',
-      'Unapproved use — 200–300 µg SC 1–3×/day (bedtime and/or fasted), usually with Modified GRF 1-29 100 µg; 8–12-week cycles. Community ranges.',
+      'Uso no aprobado — sola, 200–300 µg SC 1–3×/día; con CJC-1295 sin DAC (Mod GRF 1-29) lo más citado es 100 µg de cada uno, que es lo que da el blend 1:1. A menudo una dosis al acostarse. En ayunas: al menos 2 h después de comer y esperar unos 30 min antes de volver a comer. Ciclos de 8–12 semanas. Rangos comunitarios.',
+      'Unapproved use — alone, 200–300 µg SC 1–3×/day; with DAC-free CJC-1295 (Mod GRF 1-29) the most quoted dose is 100 µg of each, which is what the 1:1 blend gives. Often one dose at bedtime. Fasted: at least 2 h after eating and wait about 30 min before eating again. 8–12-week cycles. Community ranges.',
     ),
     frequency: t('1–3×/día', '1–3×/day'),
   },
   reconstitution: t(
-    'Viales liofilizados de 2 mg y 5 mg. 5 mg + 2,5 mL de agua bacteriostática = 2 mg/mL → 200 µg = 0,1 mL = 10 U en jeringa U-100; 300 µg = 15 U. 2 mg + 1 mL = 2 mg/mL. Reconstituido en nevera 2–8 °C durante 3–4 semanas.',
-    'Lyophilised vials of 2 mg and 5 mg. 5 mg + 2.5 mL bacteriostatic water = 2 mg/mL → 200 µg = 0.1 mL = 10 U on a U-100 syringe; 300 µg = 15 U. 2 mg + 1 mL = 2 mg/mL. Reconstituted: refrigerate 2–8 °C for 3–4 weeks.',
+    'Viales liofilizados de 2 mg y 5 mg, o en blend con CJC-1295 sin DAC (5 + 5 mg). Sola: 5 mg + 2,5 mL de agua bacteriostática = 2 mg/mL → 200 µg = 0,1 mL = 10 U en jeringa U-100; 300 µg = 15 U. 2 mg + 1 mL = 2 mg/mL. Blend 5 + 5 mg + 3 mL: 1,67 mg/mL de cada uno → 6 U = 100 µg de ipamorelina + 100 µg de CJC-1295 (con 2 mL, 4 U).',
+    'Lyophilised vials of 2 mg and 5 mg, or blended with DAC-free CJC-1295 (5 + 5 mg). Alone: 5 mg + 2.5 mL bacteriostatic water = 2 mg/mL → 200 µg = 0.1 mL = 10 U on a U-100 syringe; 300 µg = 15 U. 2 mg + 1 mL = 2 mg/mL. 5 + 5 mg blend + 3 mL: 1.67 mg/mL of each → 6 U = 100 µg ipamorelin + 100 µg CJC-1295 (with 2 mL, 4 U).',
   ),
   storage: t(
-    'Liofilizado: nevera 2–8 °C protegido de la luz (congelador a largo plazo). Reconstituido: nevera, no congelar, no agitar.',
-    'Lyophilised: refrigerate 2–8 °C, protect from light (freezer long term). Reconstituted: refrigerate, do not freeze, do not shake.',
+    'Liofilizado: nevera 2–8 °C, protegido de la luz (−20 °C para meses). Reconstituido: nevera, no congelar, no agitar. Habitualmente se indica usarlo en 28–30 días: orientación de fabricantes y de la comunidad, sin datos de estabilidad publicados (los 28 días vienen de la norma USP <797> para viales multidosis y se refieren a la esterilidad).',
+    'Lyophilised: fridge 2–8 °C, protected from light (−20 °C for months). Reconstituted: fridge, do not freeze, do not shake. The usual guidance is to use it within 28–30 days: manufacturer and community guidance with no published stability data (the 28 days come from USP <797> for multiple-dose vials and concern sterility).',
   ),
   adverseEffects: {
     common: [
@@ -309,8 +309,11 @@ const ipamorelin: CompoundEntry = {
     t('Análogos de somatostatina: antagonizan', 'Somatostatin analogues: antagonise'),
   ],
   monitoring: [
-    t('IGF-1 a las 4–8 semanas', 'IGF-1 at 4–8 weeks'),
-    t('Glucosa en ayunas / HbA1c', 'Fasting glucose / HbA1c'),
+    t('IGF-1 antes de empezar y a las 4–8 semanas', 'IGF-1 before starting and at 4–8 weeks'),
+    t(
+      'Glucosa en ayunas y HbA1c (la GH reduce la sensibilidad a la insulina)',
+      'Fasting glucose and HbA1c (GH lowers insulin sensitivity)',
+    ),
     t('Peso y edema', 'Weight and oedema'),
     t(
       'Cortisol y prolactina solo si hay síntomas (no se esperan cambios)',
@@ -358,7 +361,7 @@ const ipamorelin: CompoundEntry = {
     { label: 'WADA Prohibited List — S2' },
   ],
   tags: ['ghrp', 'ghs-r1a', 'gh', 'selectivo', 'investigación'],
-  lastReviewed: '2026-09-19',
+  lastReviewed: '2026-09-30',
 }
 
 const sermorelin: CompoundEntry = {

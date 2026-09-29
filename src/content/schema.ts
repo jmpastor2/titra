@@ -46,6 +46,30 @@ export interface DosingInfo {
   templateIds?: string[]
 }
 
+/** One peptide inside a premixed vial. */
+export interface BlendComponent {
+  /** Id of the component's own wiki entry. */
+  compoundId: string
+  /** Typical label amount per vial, in mg. */
+  mg: number
+}
+
+/**
+ * Premixed multi-peptide vial ("blend"). Blends are wiki entries in their own right
+ * (so they have a page), but they are not substances: protocols and inventory store
+ * their components. Evidence must equal the weakest component (see content tests).
+ */
+export interface BlendInfo {
+  /** Components in label order; the first is the vial's primary. */
+  components: BlendComponent[]
+  /** Why these peptides are sold together. */
+  rationale: L10n
+  /** Matching preset id in src/features/inventory/blendPresets.ts, if there is one. */
+  presetId?: string
+  /** Water volume (mL) used for the worked example and the default of the calculator. */
+  exampleDiluentMl?: number
+}
+
 export interface CompoundEntry {
   /** Stable slug used as primary key everywhere (e.g. "semaglutide"). */
   id: string
@@ -89,6 +113,8 @@ export interface CompoundEntry {
   tags: string[]
   /** ISO date of last editorial review. */
   lastReviewed: string
+  /** Present only on premixed blend entries. */
+  blend?: BlendInfo
 }
 
 export interface ProtocolTemplate {

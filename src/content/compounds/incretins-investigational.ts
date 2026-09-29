@@ -17,7 +17,7 @@ const retatrutide: CompoundEntry = {
   names: {
     generic: 'Retatrutida',
     brands: [],
-    aliases: ['LY3437943', 'triple G', 'GGG tri-agonista'],
+    aliases: ['LY3437943', 'Retatrutide', 'Reta', 'triple G', 'GGG tri-agonista'],
   },
   category: 'incretin',
   pharmClass: t(
@@ -25,8 +25,8 @@ const retatrutide: CompoundEntry = {
     'Triple GIP/GLP-1/glucagon receptor agonist (once weekly)',
   ),
   summary: t(
-    'Péptido único de 39 aminoácidos acilado con un diácido graso C20 que activa simultáneamente los receptores de GIP, GLP-1 y glucagón. En fase 2 produjo la mayor pérdida de peso publicada hasta la fecha para un fármaco (−24,2% a 48 semanas con 12 mg). En desarrollo fase 3 (programa TRIUMPH).',
-    'Single 39-amino-acid peptide acylated with a C20 fatty diacid that simultaneously activates the GIP, GLP-1 and glucagon receptors. In phase 2 it produced the largest published weight loss for any drug to date (−24.2% at 48 weeks with 12 mg). In phase 3 development (TRIUMPH programme).',
+    'Péptido único de 39 aminoácidos acilado con un diácido graso C20 que activa simultáneamente los receptores de GIP, GLP-1 y glucagón. En el fase 2 en obesidad la pérdida media de peso a 48 semanas fue del −8,7 % con 1 mg al −24,2 % con 12 mg (placebo −2,1 %). Está en fase 3 (programa TRIUMPH) y no está aprobada en ningún país.',
+    'Single 39-amino-acid peptide acylated with a C20 fatty diacid that simultaneously activates the GIP, GLP-1 and glucagon receptors. In the phase 2 obesity trial mean weight loss at 48 weeks ranged from −8.7% with 1 mg to −24.2% with 12 mg (placebo −2.1%). It is in phase 3 (TRIUMPH programme) and not approved anywhere.',
   ),
   mechanism: t(
     'Combina la anorexia y la insulinotropía dependiente de glucosa de GLP-1 y GIP con el componente glucagónico, que aumenta el gasto energético y la lipólisis hepática. El brazo glucagón explica parte de la pérdida de grasa hepática y también el aumento de frecuencia cardíaca observado. Potencia relativa sesgada hacia GIP y glucagón, con agonismo GLP-1 más débil que la semaglutida a nivel molar.',
@@ -34,16 +34,16 @@ const retatrutide: CompoundEntry = {
   ),
   indications: [
     t(
-      'Obesidad y sobrepeso con comorbilidad (fase 3, TRIUMPH-1/-3/-4)',
-      'Obesity and overweight with comorbidity (phase 3, TRIUMPH-1/-3/-4)',
+      'Obesidad y sobrepeso con comorbilidad (fase 2 publicada; fase 3 TRIUMPH en curso)',
+      'Obesity and overweight with comorbidity (published phase 2; phase 3 TRIUMPH ongoing)',
     ),
     t(
-      'Diabetes mellitus tipo 2 con obesidad (TRIUMPH-2)',
-      'Type 2 diabetes with obesity (TRIUMPH-2)',
+      'Diabetes tipo 2 (fase 2 publicada; en fase 3)',
+      'Type 2 diabetes (published phase 2; in phase 3)',
     ),
     t(
-      'Esteatohepatitis metabólica (MASH) y esteatosis hepática (fase 2: reducción de grasa hepática >80%)',
-      'Metabolic steatohepatitis (MASH) and hepatic steatosis (phase 2: >80% liver fat reduction)',
+      'Esteatosis hepática metabólica (MASLD): marcada reducción de grasa hepática en un subestudio de fase 2 (cifras pendientes de verificar)',
+      'Metabolic dysfunction-associated steatotic liver disease (MASLD): marked liver-fat reduction in a phase 2 substudy (figures pending verification)',
     ),
     t(
       'Artrosis de rodilla asociada a obesidad y apnea del sueño (subestudios fase 3)',
@@ -72,34 +72,38 @@ const retatrutide: CompoundEntry = {
   },
   dosing: {
     investigational: t(
-      'Fase 2: escalada desde 2 mg/semana con incrementos cada 4 semanas hasta 4, 8 o 12 mg/semana; los brazos de escalada más lenta (2 mg → 4 → 8 → 12) toleraron mejor. Fase 3 emplea escalada análoga hasta dosis de mantenimiento de 6–12 mg/semana. No hay dosis aprobada.',
-      'Phase 2: escalation from 2 mg weekly with 4-weekly increments to 4, 8 or 12 mg weekly; slower-escalation arms (2 mg → 4 → 8 → 12) were better tolerated. Phase 3 uses analogous escalation to 6–12 mg weekly maintenance. There is no approved dose.',
+      'Fase 2 en obesidad (Jastreboff, NEJM 2023): 1, 4, 8 o 12 mg/semana frente a placebo durante 48 semanas. El brazo de 1 mg se mantuvo en 1 mg desde el inicio, sin escalada. Los de 4, 8 y 12 mg subían por escalones cada 4 semanas, empezando en 2 mg (algunos brazos de 4 y 8 mg empezaban directamente en 4 mg); el de 12 mg hacía 2 → 4 → 8 → 12 mg. Empezar en 2 mg dio menos síntomas digestivos. Cambio medio de peso a 24 semanas: 1 mg −7,2 %, 4 mg −12,9 %, 8 mg −17,3 %, 12 mg −17,5 %, placebo −1,6 %. A 48 semanas: 1 mg −8,7 %, 4 mg −17,1 %, 8 mg −22,8 %, 12 mg −24,2 %, placebo −2,1 %. Las dosis intermedias (p. ej. 2,5 mg de mantenimiento) no se estudiaron como brazo propio. El programa TRIUMPH también escala por escalones; no hay dosis aprobada.',
+      'Phase 2 obesity trial (Jastreboff, NEJM 2023): 1, 4, 8 or 12 mg weekly versus placebo for 48 weeks. The 1 mg arm stayed at 1 mg from the start, with no escalation. The 4, 8 and 12 mg arms stepped up every 4 weeks, starting at 2 mg (some 4 and 8 mg arms started directly at 4 mg); the 12 mg arm went 2 → 4 → 8 → 12 mg. Starting at 2 mg gave fewer GI symptoms. Mean weight change at 24 weeks: 1 mg −7.2%, 4 mg −12.9%, 8 mg −17.3%, 12 mg −17.5%, placebo −1.6%. At 48 weeks: 1 mg −8.7%, 4 mg −17.1%, 8 mg −22.8%, 12 mg −24.2%, placebo −2.1%. In-between doses (e.g. 2.5 mg maintenance) were not studied as an arm of their own. The TRIUMPH programme also escalates stepwise; there is no approved dose.',
+    ),
+    anecdotal: t(
+      'Uso no aprobado — con material del mercado de investigación es habitual empezar en 1 mg/semana y subir despacio (p. ej. 1 → 2 → 2,5 mg) según la tolerancia digestiva, por debajo de las dosis altas del ensayo. Son pautas comunitarias sin ensayo que las respalde.',
+      'Unapproved use — with research-market material it is common to start at 1 mg weekly and step up slowly (e.g. 1 → 2 → 2.5 mg) by GI tolerance, below the trial’s high doses. These are community schedules with no trial behind them.',
     ),
     frequency: t('1×/semana', 'Once weekly'),
     templateIds: ['retatrutide-triumph'],
   },
   reconstitution: t(
-    'En los ensayos se administra en autoinyector/pluma precargada lista para usar. No existe presentación comercial; el polvo liofilizado del mercado de investigación carece de garantías de contenido y esterilidad.',
-    'In trials it is given as a ready-to-use prefilled pen/autoinjector. There is no commercial presentation; lyophilised powder from the research market has no content or sterility guarantees.',
+    'En los ensayos se usa producto listo para inyectar; no hay presentación comercial. El polvo liofilizado del mercado de investigación no garantiza contenido ni esterilidad. Ejemplo con jeringa U-100 (1 U = 0,01 mL): vial de 15 mg + 1,5 mL de agua bacteriostática = 10 mg/mL, así que 1 U = 0,1 mg → 1 mg = 10 U, 2 mg = 20 U, 2,5 mg = 25 U. Un vial de 10 mg + 1 mL da la misma concentración. Añadir el agua por la pared del vial y disolver girando, sin agitar.',
+    'Trials use a ready-to-inject product; there is no commercial presentation. Lyophilised powder from the research market guarantees neither content nor sterility. Example with a U-100 syringe (1 U = 0.01 mL): 15 mg vial + 1.5 mL bacteriostatic water = 10 mg/mL, so 1 U = 0.1 mg → 1 mg = 10 U, 2 mg = 20 U, 2.5 mg = 25 U. A 10 mg vial + 1 mL gives the same concentration. Run the water down the vial wall and dissolve by swirling, do not shake.',
   ),
   storage: t(
-    'Producto de ensayo: nevera 2–8 °C, protegido de la luz, sin congelar. No hay datos públicos de estabilidad a temperatura ambiente ni de caducidad tras la primera punción.',
-    'Investigational product: refrigerate 2–8 °C, protect from light, do not freeze. No public stability data at room temperature or in-use shelf life.',
+    'Liofilizado: nevera 2–8 °C, protegido de la luz; −20 °C para guardarlo meses. Reconstituido: nevera, no congelar. Habitualmente se indica usarlo en 28–30 días: es orientación de fabricantes y de la comunidad, sin datos de estabilidad publicados (el límite de 28 días viene de la norma USP <797> para viales multidosis y se refiere a la esterilidad). Tampoco hay datos públicos a temperatura ambiente.',
+    'Lyophilised: fridge 2–8 °C, protected from light; −20 °C to keep it for months. Reconstituted: fridge, do not freeze. The usual guidance is to use it within 28–30 days: this is manufacturer and community guidance with no published stability data (the 28-day limit comes from USP <797> for multiple-dose vials and concerns sterility). There are no public room-temperature data either.',
   ),
   adverseEffects: {
     common: [
       t(
-        'Náuseas, vómitos y diarrea dependientes de la dosis (hasta ~45% de náuseas con 12 mg)',
-        'Dose-dependent nausea, vomiting and diarrhoea (nausea up to ~45% at 12 mg)',
+        'Náuseas, vómitos y diarrea, dependientes de la dosis y sobre todo durante la escalada; menos frecuentes empezando en 2 mg que en 4 mg',
+        'Nausea, vomiting and diarrhoea, dose-dependent and mostly during escalation; less frequent when starting at 2 mg than at 4 mg',
       ),
       t('Estreñimiento, dolor abdominal, dispepsia', 'Constipation, abdominal pain, dyspepsia'),
       t(
-        'Aumento de frecuencia cardíaca de ~5–8 lpm (componente glucagónico), máximo a las 24 semanas',
-        'Heart-rate increase of ~5–8 bpm (glucagon component), peaking at 24 weeks',
+        'Aumento de la frecuencia cardíaca dependiente de la dosis, máximo hacia la semana 24 y menor después',
+        'Dose-dependent heart-rate increase, peaking around week 24 and declining afterwards',
       ),
       t(
-        'Reacciones en el punto de inyección; alopecia en ~5–11% con dosis altas',
-        'Injection-site reactions; alopecia in ~5–11% at higher doses',
+        'Reacciones en el punto de inyección; caída de pelo descrita con pérdidas de peso rápidas',
+        'Injection-site reactions; hair loss reported with rapid weight loss',
       ),
     ],
     serious: [
@@ -114,10 +118,6 @@ const retatrutide: CompoundEntry = {
       t(
         'Colelitiasis/colecistitis asociada a pérdida rápida de peso',
         'Cholelithiasis/cholecystitis with rapid weight loss',
-      ),
-      t(
-        'Hiperglucemia transitoria por el agonismo glucagónico si la escalada es rápida en DM2',
-        'Transient hyperglycaemia from glucagon agonism with rapid escalation in T2D',
       ),
       t(
         'Pérdida excesiva de masa magra con pérdidas ponderales >20%',
@@ -167,8 +167,12 @@ const retatrutide: CompoundEntry = {
       'Heart rate and blood pressure at each dose step',
     ),
     t(
-      'HbA1c y glucemia; en DM2 vigilar hiperglucemia paradójica inicial',
-      'HbA1c and glucose; in T2D watch for initial paradoxical hyperglycaemia',
+      'Glucosa y HbA1c; con insulina o sulfonilureas, riesgo de hipoglucemia al bajar de peso',
+      'Glucose and HbA1c; with insulin or sulfonylureas, hypoglycaemia risk as weight falls',
+    ),
+    t(
+      'Síntomas digestivos y lo que se come en cada escalón: con poca proteína se pierde más masa magra',
+      'GI symptoms and food intake at each step: with little protein more lean mass is lost',
     ),
     t(
       'Función renal e hidratación durante la escalada',
@@ -184,8 +188,8 @@ const retatrutide: CompoundEntry = {
       name: 'Fase 2 obesidad (Jastreboff)',
       year: 2023,
       finding: t(
-        '−24,2% de peso a 48 semanas con 12 mg frente a −2,1% con placebo; ninguna meseta al final del estudio.',
-        '−24.2% body weight at 48 weeks with 12 mg vs −2.1% with placebo; no plateau by study end.',
+        'Adultos con obesidad sin diabetes. Cambio medio de peso a 48 semanas: 1 mg −8,7 %, 4 mg −17,1 %, 8 mg −22,8 %, 12 mg −24,2 %, placebo −2,1 % (a 24 semanas: −7,2, −12,9, −17,3, −17,5 y −1,6 %). Con 12 mg la pérdida no se había estabilizado al final del estudio.',
+        'Adults with obesity without diabetes. Mean weight change at 48 weeks: 1 mg −8.7%, 4 mg −17.1%, 8 mg −22.8%, 12 mg −24.2%, placebo −2.1% (at 24 weeks: −7.2, −12.9, −17.3, −17.5 and −1.6%). With 12 mg weight loss had not plateaued by the end of the study.',
       ),
       ref: 'NEJM 2023;389:514',
     },
@@ -202,8 +206,8 @@ const retatrutide: CompoundEntry = {
       name: 'TRIUMPH (programa fase 3)',
       year: 2025,
       finding: t(
-        'Programa fase 3 en obesidad, DM2, artrosis de rodilla y apnea del sueño; resultados iniciales confirman pérdidas ponderales superiores a las de agonistas duales. Verificar publicaciones individuales.',
-        'Phase 3 programme in obesity, T2D, knee osteoarthritis and sleep apnoea; initial results confirm weight loss exceeding dual agonists. Check individual publications.',
+        'Programa de fase 3 en obesidad, diabetes tipo 2, artrosis de rodilla y apnea del sueño. Esta ficha no recoge resultados de fase 3: consultar cada publicación.',
+        'Phase 3 programme in obesity, type 2 diabetes, knee osteoarthritis and sleep apnoea. This entry does not include phase 3 results: check each publication.',
       ),
     },
   ],
@@ -219,7 +223,7 @@ const retatrutide: CompoundEntry = {
     { label: 'Eli Lilly TRIUMPH clinical programme (investigational)' },
   ],
   tags: ['glp1', 'gip', 'glucagón', 'triple agonista', 'obesidad', 'semanal', 'investigacional'],
-  lastReviewed: '2026-09-19',
+  lastReviewed: '2026-09-30',
 }
 
 const survodutide: CompoundEntry = {

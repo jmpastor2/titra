@@ -75,15 +75,15 @@ en ensayos; nada de lo siguiente aparece en la app hasta que alguien lo verifiqu
 - **Retatrutida, fase 2 en obesidad (Jastreboff et al., NEJM 2023;389:514).** Se muestran las
   medias de cambio de peso a 24 semanas (1 mg −7,2 %, 4 mg −12,9 % con los brazos agrupados,
   8 mg −17,3 %, 12 mg −17,5 %, placebo −1,6 %) y a 48 semanas (1 mg −8,7 %, 4 mg −17,1 %,
-  8 mg −22,8 %, 12 mg −24,2 %, placebo −2,1 %). La ficha de la wiki coincide en el dato que
-  cita (12 mg −24,2 % frente a −2,1 % a 48 semanas). La wiki no trae los brazos de 1, 4 y 8 mg:
-  compararlos con la tabla del artículo.
+  8 mg −22,8 %, 12 mg −24,2 %, placebo −2,1 %). Desde la revisión de octubre de 2026 la wiki
+  trae los mismos brazos y un test comprueba que coinciden con `outlook.ts`. Falta compararlos
+  con la tabla del artículo.
 - No se muestran intervalos de confianza ni la dispersión por brazo: no están verificados.
 - Falta confirmar el tamaño de la muestra y los criterios de inclusión del ensayo (IMC ≥30, o
   27–30 con comorbilidad) y las pautas de inicio de los brazos de 4 mg agrupados. La app solo
   dice "adultos con obesidad, sin diabetes".
-- La wiki dice que la escalada del fase 2 empezaba en 2 mg. En el ensayo el brazo de 1 mg no
-  escalaba. Revisar la redacción de `dosing.investigational` de la retatrutida.
+- Corregido en octubre de 2026: la wiki ya dice que el brazo de 1 mg no escalaba. Ver la
+  sección siguiente para lo que queda por verificar de las pautas de inicio.
 - **Descartados por ahora:**
   - Perímetro de cintura, triglicéridos y presión arterial del mismo ensayo: la wiki no los
     trae.
@@ -102,3 +102,88 @@ en ensayos; nada de lo siguiente aparece en la app hasta que alguien lo verifiqu
 - La tendencia personal es una recta de mínimos cuadrados sobre sus pesajes. Se marca como
   extrapolación larga pasado 2× el tiempo con datos y se oculta pasado 4×. Esos límites son una
   decisión de producto, no un dato clínico.
+
+## Revisión wiki (octubre 2026)
+
+Se añadieron los blends y se repasaron las fichas de retatrutida, CJC-1295 sin DAC
+(`mod-grf-1-29`), ipamorelina, MOTS-c, NAD+, GHK-Cu, BPC-157, TB-500 y KPV. Sin fuentes en
+línea: todo lo que sigue está sin verificar.
+
+### Blends (CJC-1295 + ipamorelina, KLOW, GLOW)
+
+- Composición típica de etiqueta (5 + 5 mg; KLOW 50 + 10 + 10 + 10 mg; GLOW 50 + 10 + 10 mg):
+  sale de `blendPresets.ts` y del mercado, no de una norma. Hay vendedores con otras cantidades.
+- Nombres "KLOW" y "GLOW": denominaciones comerciales. No consta de dónde vienen.
+- Ninguna combinación tiene ensayos en humanos. La evidencia de cada blend es la del componente
+  más débil (un test lo comprueba). CJC-1295 + ipamorelina queda en "anecdótico" por la ficha de
+  Mod GRF 1-29; KLOW y GLOW en "preclínico".
+- Estabilidad de las mezclas: no hay datos. Tampoco se sabe si el cobre del GHK-Cu degrada los
+  otros péptidos en solución; la ficha lo dice como incógnita.
+- Pautas comunitarias de KLOW/GLOW (dosis fijada por el BPC-157, 250–500 µg al día, unas 10 U con
+  3 mL): orientativas. Con esa pauta el TB-500 queda muy por debajo de su pauta habitual por
+  separado; confirmar si es lo que se usa.
+- KPV en la categoría 2 de la FDA: se hereda de la nota común de reparación, sin verificar para
+  KPV en concreto.
+
+### Estabilidad tras reconstituir (todas las fichas repasadas)
+
+- Se cambió "3–4 semanas" por "habitualmente 28–30 días en nevera, orientación de fabricantes y
+  comunidad, sin datos de estabilidad publicados". Se atribuye el límite de 28 días a la norma
+  USP <797> para viales multidosis abiertos, que trata de esterilidad y no de potencia.
+  Confirmar la cita de USP <797> y su redacción actual.
+- NAD+: se mantiene "2–4 semanas" como orientación. Sin fuente.
+- "Parece menos estable en solución que la forma con DAC" (CJC-1295 sin DAC): sin fuente.
+
+### Retatrutida
+
+- Pautas del fase 2: la ficha dice que el brazo de 1 mg no escalaba, que los de 4, 8 y 12 mg
+  subían cada 4 semanas empezando en 2 mg, que algunos brazos de 4 y 8 mg empezaban en 4 mg y
+  que empezar en 2 mg dio menos síntomas digestivos. Todo de memoria: comparar con el método del
+  artículo. `outlook.ts` solo menciona brazos de 4 mg agrupados; si los de 8 mg también se
+  agruparon, añadir la nota.
+- Se quitaron cifras que no se podían respaldar: náuseas "hasta ~45 %" con 12 mg, subida de
+  frecuencia cardíaca "~5–8 lpm", alopecia "~5–11 %", la "hiperglucemia transitoria en DM2" (el
+  fase 2 en DM2 bajó la HbA1c), la "reducción de grasa hepática >80 %" y la frase de "mayor
+  pérdida de peso publicada". Recuperar las que se confirmen.
+- Se quitaron las etiquetas TRIUMPH-1/-2/-3/-4 por indicación y la dosis de mantenimiento de
+  fase 3 "6–12 mg": no se pudo confirmar qué ensayo es cada uno ni sus dosis.
+- Resultados de fase 3 (TRIUMPH): la ficha dice expresamente que no los recoge. La frase
+  anterior ("confirman pérdidas superiores a los duales") se quitó por no estar verificada.
+- Fase 2 en DM2 (Rosenstock, Lancet 2023;402:529: HbA1c −2,02 % y peso hasta −16,9 % a 36
+  semanas): se dejó como estaba, sin verificar.
+- La plantilla `retatrutide-triumph` (`src/content/protocols/templates.ts`, fuera del alcance de
+  esta revisión) se llama "fase 2/3" y tiene evidencia `phase3`, pero reproduce el brazo de 12 mg
+  del fase 2.
+- Ejemplo de reconstitución con 15 mg + 1,5 mL y 10 mg + 1 mL (10 mg/mL, 1 U = 0,1 mg):
+  aritmética, no dato clínico. La escalada comunitaria 1 → 2 → 2,5 mg no es un brazo de ensayo.
+
+### Eje GH (CJC-1295 sin DAC, ipamorelina)
+
+- Ayuno: la wiki usa ahora la misma regla que la app (`fasting.ts`): al menos 2 h después de
+  comer y 30 min antes de volver a comer. Es práctica comunitaria, no dato de ensayo.
+- "100 µg de cada uno" como dosis más citada del blend 1:1: comunitario.
+- IGF-1 "con el rango normal para la edad como referencia, igual que con la GH": criterio de la
+  terapia con GH, no validado para secretagogos.
+- Ipamorelina, fase 2 en íleo posoperatorio: la ficha lo fecha en 2016 y da 0,03 mg/kg IV 2×/día.
+  Hay una publicación de Beck et al. (Int J Colorectal Dis) que podría ser de 2014. Verificar año,
+  revista y dosis.
+
+### MOTS-c
+
+- Se quitó el identificador de registro del ensayo de CB4211 que figuraba en la ficha: no se
+  pudo verificar. Buscar el registro real antes de volver a ponerlo.
+- Rango comunitario ampliado a "1–2,5 mg hasta 5–10 mg, 2–3×/semana": comunitario.
+- La interacción con agonistas de GLP-1/GIP es teórica (efecto aditivo sobre la glucosa).
+- Clasificación de "riesgo de seguridad significativo" de la FDA (2023–2024): sin verificar.
+
+### NAD+
+
+- Efectos por vía SC (rubor, náuseas, calambres) y "inyectar despacio": comunitario.
+- Grant et al. 2019: el NAD+ plasmático "no aumentó hasta pasadas ~2 h". Comprobar con el
+  artículo.
+
+### Reparación (GHK-Cu, BPC-157, TB-500, KPV)
+
+- Las líneas nuevas sobre su parte en KLOW y GLOW son aritmética sobre la composición típica.
+- TB-500 en blends: se da por hecho que es el fragmento 17-23; la etiqueta no suele aclarar si es
+  el fragmento o la timosina β4 completa.

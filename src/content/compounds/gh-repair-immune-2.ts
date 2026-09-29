@@ -1205,12 +1205,12 @@ const bpc157: CompoundEntry = {
     frequency: t('1–2×/día', '1–2×/day'),
   },
   reconstitution: t(
-    'Viales liofilizados de 5 mg y 10 mg. 5 mg + 2 mL de agua bacteriostática = 2,5 mg/mL → 250 µg = 0,1 mL = 10 U en jeringa U-100; 500 µg = 20 U. 10 mg + 2 mL = 5 mg/mL → 250 µg = 5 U. Reconstituido: nevera 2–8 °C, uso en 3–4 semanas, protegido de la luz.',
-    'Lyophilised vials of 5 mg and 10 mg. 5 mg + 2 mL bacteriostatic water = 2.5 mg/mL → 250 µg = 0.1 mL = 10 U on a U-100 syringe; 500 µg = 20 U. 10 mg + 2 mL = 5 mg/mL → 250 µg = 5 U. Reconstituted: refrigerate 2–8 °C, use within 3–4 weeks, protect from light.',
+    'Viales liofilizados de 5 mg y 10 mg. 5 mg + 2 mL de agua bacteriostática = 2,5 mg/mL → 250 µg = 0,1 mL = 10 U en jeringa U-100; 500 µg = 20 U. 10 mg + 2 mL = 5 mg/mL → 250 µg = 5 U. También va en blends: en KLOW o GLOW (10 mg de BPC-157 por vial) con 3 mL, 10 U = 333 µg de BPC-157 más la parte proporcional de los demás.',
+    'Lyophilised vials of 5 mg and 10 mg. 5 mg + 2 mL bacteriostatic water = 2.5 mg/mL → 250 µg = 0.1 mL = 10 U on a U-100 syringe; 500 µg = 20 U. 10 mg + 2 mL = 5 mg/mL → 250 µg = 5 U. It also comes in blends: in KLOW or GLOW (10 mg BPC-157 per vial) with 3 mL, 10 U = 333 µg BPC-157 plus the matching share of the others.',
   ),
   storage: t(
-    'Liofilizado: nevera 2–8 °C o −20 °C a largo plazo, protegido de la luz. Reconstituido: nevera, no congelar. Cápsulas orales: temperatura ambiente, secas.',
-    'Lyophilised: refrigerate 2–8 °C or −20 °C long term, protect from light. Reconstituted: refrigerate, do not freeze. Oral capsules: room temperature, dry.',
+    'Liofilizado: nevera 2–8 °C o −20 °C a largo plazo, protegido de la luz. Reconstituido: nevera, protegido de la luz, no congelar. Habitualmente se indica usarlo en 28–30 días: orientación de fabricantes y de la comunidad, sin datos de estabilidad publicados (los 28 días vienen de la norma USP <797> para viales multidosis y se refieren a la esterilidad). Cápsulas orales: temperatura ambiente, secas.',
+    'Lyophilised: fridge 2–8 °C or −20 °C long term, protected from light. Reconstituted: fridge, protected from light, do not freeze. The usual guidance is to use it within 28–30 days: manufacturer and community guidance with no published stability data (the 28 days come from USP <797> for multiple-dose vials and concern sterility). Oral capsules: room temperature, dry.',
   ),
   adverseEffects: {
     common: [
@@ -1285,7 +1285,7 @@ const bpc157: CompoundEntry = {
     { label: 'WADA Prohibited List — S0 non-approved substances' },
   ],
   tags: ['reparación', 'tendón', 'digestivo', 'angiogénesis', 'preclínico', 'investigación'],
-  lastReviewed: '2026-09-19',
+  lastReviewed: '2026-09-30',
 }
 
 const tb500: CompoundEntry = {
@@ -1357,12 +1357,12 @@ const tb500: CompoundEntry = {
     ),
   },
   reconstitution: t(
-    'Viales liofilizados de 2 mg, 5 mg y 10 mg. 5 mg + 2 mL de agua bacteriostática = 2,5 mg/mL → 2 mg = 0,8 mL = 80 U en jeringa U-100; 250 µg = 10 U. 10 mg + 2 mL = 5 mg/mL → 2 mg = 40 U. Reconstituido: nevera 2–8 °C, 3–4 semanas.',
-    'Lyophilised vials of 2 mg, 5 mg and 10 mg. 5 mg + 2 mL bacteriostatic water = 2.5 mg/mL → 2 mg = 0.8 mL = 80 U on a U-100 syringe; 250 µg = 10 U. 10 mg + 2 mL = 5 mg/mL → 2 mg = 40 U. Reconstituted: refrigerate 2–8 °C, 3–4 weeks.',
+    'Viales liofilizados de 2 mg, 5 mg y 10 mg. 5 mg + 2 mL de agua bacteriostática = 2,5 mg/mL → 2 mg = 0,8 mL = 80 U en jeringa U-100; 250 µg = 10 U. 10 mg + 2 mL = 5 mg/mL → 2 mg = 40 U. En KLOW o GLOW (10 mg de TB-500 por vial) con 3 mL, 10 U = 333 µg de TB-500: dosis diarias bajas, distintas de la pauta habitual de 2 mg 2×/semana cuando va solo.',
+    'Lyophilised vials of 2 mg, 5 mg and 10 mg. 5 mg + 2 mL bacteriostatic water = 2.5 mg/mL → 2 mg = 0.8 mL = 80 U on a U-100 syringe; 250 µg = 10 U. 10 mg + 2 mL = 5 mg/mL → 2 mg = 40 U. In KLOW or GLOW (10 mg TB-500 per vial) with 3 mL, 10 U = 333 µg TB-500: low daily doses, unlike the usual 2 mg twice weekly when used alone.',
   ),
   storage: t(
-    'Liofilizado: nevera 2–8 °C o −20 °C a largo plazo, protegido de la luz. Reconstituido: nevera, no congelar, no agitar.',
-    'Lyophilised: refrigerate 2–8 °C or −20 °C long term, protect from light. Reconstituted: refrigerate, do not freeze, do not shake.',
+    'Liofilizado: nevera 2–8 °C o −20 °C a largo plazo, protegido de la luz. Reconstituido: nevera, no congelar, no agitar. Habitualmente se indica usarlo en 28–30 días: orientación de fabricantes y de la comunidad, sin datos de estabilidad publicados (los 28 días vienen de la norma USP <797> para viales multidosis y se refieren a la esterilidad).',
+    'Lyophilised: fridge 2–8 °C or −20 °C long term, protected from light. Reconstituted: fridge, do not freeze, do not shake. The usual guidance is to use it within 28–30 days: manufacturer and community guidance with no published stability data (the 28 days come from USP <797> for multiple-dose vials and concern sterility).',
   ),
   adverseEffects: {
     common: [
@@ -1427,7 +1427,7 @@ const tb500: CompoundEntry = {
     { label: 'WADA Prohibited List — S2 (thymosin β4 and derivatives)' },
   ],
   tags: ['reparación', 'timosina', 'actina', 'angiogénesis', 'preclínico', 'investigación'],
-  lastReviewed: '2026-09-19',
+  lastReviewed: '2026-09-30',
 }
 
 const ghkCu: CompoundEntry = {
@@ -1489,12 +1489,12 @@ const ghkCu: CompoundEntry = {
     frequency: t('1×/día', 'Once daily'),
   },
   reconstitution: t(
-    'Viales liofilizados de 50 mg y 100 mg (polvo azul). 50 mg + 5 mL de agua bacteriostática = 10 mg/mL → 1 mg = 0,1 mL = 10 U en jeringa U-100; 2 mg = 20 U. 100 mg + 5 mL = 20 mg/mL → 1 mg = 5 U. Solución azul; desechar si cambia de color o precipita. Reconstituido: nevera 2–8 °C, 3–4 semanas, protegido de la luz.',
-    'Lyophilised vials of 50 mg and 100 mg (blue powder). 50 mg + 5 mL bacteriostatic water = 10 mg/mL → 1 mg = 0.1 mL = 10 U on a U-100 syringe; 2 mg = 20 U. 100 mg + 5 mL = 20 mg/mL → 1 mg = 5 U. Blue solution; discard if colour changes or it precipitates. Reconstituted: refrigerate 2–8 °C, 3–4 weeks, protect from light.',
+    'Viales liofilizados de 50 mg y 100 mg (polvo azul). 50 mg + 5 mL de agua bacteriostática = 10 mg/mL → 1 mg = 0,1 mL = 10 U en jeringa U-100; 2 mg = 20 U. 100 mg + 5 mL = 20 mg/mL → 1 mg = 5 U. Es el componente mayoritario de KLOW y GLOW (50 mg por vial): con 3 mL, 10 U = 1,67 mg de GHK-Cu. Cuanto más concentrado, más escuece. Solución azul; desechar si cambia de color o precipita.',
+    'Lyophilised vials of 50 mg and 100 mg (blue powder). 50 mg + 5 mL bacteriostatic water = 10 mg/mL → 1 mg = 0.1 mL = 10 U on a U-100 syringe; 2 mg = 20 U. 100 mg + 5 mL = 20 mg/mL → 1 mg = 5 U. It is the main component of KLOW and GLOW (50 mg per vial): with 3 mL, 10 U = 1.67 mg GHK-Cu. The more concentrated, the more it stings. Blue solution; discard if colour changes or it precipitates.',
   ),
   storage: t(
-    'Liofilizado: nevera 2–8 °C o −20 °C, protegido de la luz. Reconstituido: nevera, no congelar. Cosméticos: según etiqueta; incompatibles con ácidos fuertes y vitamina C a pH bajo en la misma formulación.',
-    'Lyophilised: refrigerate 2–8 °C or −20 °C, protect from light. Reconstituted: refrigerate, do not freeze. Cosmetics: per label; incompatible with strong acids and low-pH vitamin C in the same formulation.',
+    'Liofilizado: nevera 2–8 °C o −20 °C, protegido de la luz. Reconstituido: nevera, protegido de la luz, no congelar. Habitualmente se indica usarlo en 28–30 días: orientación de fabricantes y de la comunidad, sin datos de estabilidad publicados (los 28 días vienen de la norma USP <797> para viales multidosis y se refieren a la esterilidad). Cosméticos: según etiqueta; incompatibles con ácidos fuertes y vitamina C a pH bajo en la misma formulación.',
+    'Lyophilised: fridge 2–8 °C or −20 °C, protected from light. Reconstituted: fridge, protected from light, do not freeze. The usual guidance is to use it within 28–30 days: manufacturer and community guidance with no published stability data (the 28 days come from USP <797> for multiple-dose vials and concern sterility). Cosmetics: per label; incompatible with strong acids and low-pH vitamin C in the same formulation.',
   ),
   adverseEffects: {
     common: [
@@ -1571,7 +1571,7 @@ const ghkCu: CompoundEntry = {
     { label: 'FDA — 503A bulk drug substances Category 2 list (2023–2024)' },
   ],
   tags: ['reparación', 'cobre', 'piel', 'cosmético', 'tópico', 'preclínico'],
-  lastReviewed: '2026-09-19',
+  lastReviewed: '2026-09-30',
 }
 
 const kpv: CompoundEntry = {
@@ -1626,12 +1626,12 @@ const kpv: CompoundEntry = {
     frequency: t('1–2×/día', '1–2×/day'),
   },
   reconstitution: t(
-    'Viales liofilizados de 5 mg y 10 mg. 10 mg + 2 mL de agua bacteriostática = 5 mg/mL → 500 µg = 0,1 mL = 10 U en jeringa U-100; 250 µg = 5 U. 5 mg + 2 mL = 2,5 mg/mL → 250 µg = 10 U. Reconstituido: nevera 2–8 °C, 3–4 semanas.',
-    'Lyophilised vials of 5 mg and 10 mg. 10 mg + 2 mL bacteriostatic water = 5 mg/mL → 500 µg = 0.1 mL = 10 U on a U-100 syringe; 250 µg = 5 U. 5 mg + 2 mL = 2.5 mg/mL → 250 µg = 10 U. Reconstituted: refrigerate 2–8 °C, 3–4 weeks.',
+    'Viales liofilizados de 5 mg y 10 mg. 10 mg + 2 mL de agua bacteriostática = 5 mg/mL → 500 µg = 0,1 mL = 10 U en jeringa U-100; 250 µg = 5 U. 5 mg + 2 mL = 2,5 mg/mL → 250 µg = 10 U. En KLOW (10 mg de KPV por vial) con 3 mL, 10 U = 333 µg de KPV.',
+    'Lyophilised vials of 5 mg and 10 mg. 10 mg + 2 mL bacteriostatic water = 5 mg/mL → 500 µg = 0.1 mL = 10 U on a U-100 syringe; 250 µg = 5 U. 5 mg + 2 mL = 2.5 mg/mL → 250 µg = 10 U. In KLOW (10 mg KPV per vial) with 3 mL, 10 U = 333 µg KPV.',
   ),
   storage: t(
-    'Liofilizado: nevera 2–8 °C o −20 °C, protegido de la luz. Reconstituido: nevera, no congelar. Cápsulas: temperatura ambiente, secas.',
-    'Lyophilised: refrigerate 2–8 °C or −20 °C, protect from light. Reconstituted: refrigerate, do not freeze. Capsules: room temperature, dry.',
+    'Liofilizado: nevera 2–8 °C o −20 °C, protegido de la luz. Reconstituido: nevera, no congelar. Habitualmente se indica usarlo en 28–30 días: orientación de fabricantes y de la comunidad, sin datos de estabilidad publicados (los 28 días vienen de la norma USP <797> para viales multidosis y se refieren a la esterilidad). Cápsulas: temperatura ambiente, secas.',
+    'Lyophilised: fridge 2–8 °C or −20 °C, protected from light. Reconstituted: fridge, do not freeze. The usual guidance is to use it within 28–30 days: manufacturer and community guidance with no published stability data (the 28 days come from USP <797> for multiple-dose vials and concern sterility). Capsules: room temperature, dry.',
   ),
   adverseEffects: {
     common: [
@@ -1696,7 +1696,7 @@ const kpv: CompoundEntry = {
     'preclínico',
     'investigación',
   ],
-  lastReviewed: '2026-09-19',
+  lastReviewed: '2026-09-30',
 }
 
 const pentadecaArginate: CompoundEntry = {

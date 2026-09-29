@@ -475,7 +475,7 @@
   },
   "sites": {
     "title": "Puntos de inyección",
-    "intro": "Rota los puntos para evitar lipodistrofia e irritación. Titra sugiere el punto menos usado.",
+    "intro": "Rota los puntos para evitar lipodistrofia e irritación. Titra sugiere el punto que más ha descansado, nunca el que ya usaste hoy, y alterna lado y zona.",
     "suggested": "Siguiente sugerido",
     "lastUsed": "Último uso {{when}}",
     "neverUsed": "Sin usar",
@@ -504,7 +504,54 @@
     "front": "DELANTE",
     "back": "DETRÁS",
     "leftShort": "IZQ",
-    "rightShort": "DER"
+    "rightShort": "DER",
+    "next": "Próximos puntos",
+    "byRest": "Descanso por punto",
+    "timeline": "Últimos 14 días",
+    "timelineEmpty": "Sin inyecciones con punto registrado en los últimos 14 días.",
+    "injected": "Inyección",
+    "tapHint": "Toca un punto para ver cuándo lo usaste por última vez.",
+    "pickHint": "Toca un punto del mapa o una sugerencia.",
+    "allResting": "Todos los puntos llevan menos de 72 h de descanso: usa el que más ha descansado.",
+    "usedAgo": "Usado {{when}}",
+    "ready": "Listo",
+    "restUntil": "Descansa hasta {{when}}.",
+    "freeAt": "Libre {{when}}",
+    "restWarning": "Usado hace menos de {{hours}} h: mejor elige otro punto.",
+    "usedTodayWarning": "Ya lo usaste hoy: elige otro punto.",
+    "restProgress": "Descanso completado",
+    "recentUses_one": "{{count}} en 14 d",
+    "recentUses_other": "{{count}} en 14 d",
+    "reason": {
+      "never": "Nunca usado",
+      "rested_one": "Sin usar {{count}} día",
+      "rested_other": "Sin usar {{count}} días",
+      "recent": "Usado hace {{ago}}",
+      "today": "Usado hoy"
+    },
+    "balance": {
+      "otherSide": "Alterna lado",
+      "otherRegion": "Cambia de zona"
+    },
+    "heat": {
+      "hot": "< 24 h",
+      "warm": "1–3 d",
+      "cool": "3–7 d",
+      "rested": "> 7 d",
+      "never": "Sin usar"
+    },
+    "short": {
+      "abd_ul": "Abd. SI",
+      "abd_ur": "Abd. SD",
+      "abd_ll": "Abd. II",
+      "abd_lr": "Abd. ID",
+      "thigh_l": "Muslo I",
+      "thigh_r": "Muslo D",
+      "arm_l": "Brazo I",
+      "arm_r": "Brazo D",
+      "glute_l": "Glúteo I",
+      "glute_r": "Glúteo D"
+    }
   },
   "wiki": {
     "title": "Wiki de péptidos",
@@ -590,7 +637,20 @@
       "sl": "Sublingual"
     },
     "eyebrow": "Aprende",
-    "mine": "Tus sustancias"
+    "mine": "Tus sustancias",
+    "blends": "Blends",
+    "blendBadge": "Blend premezclado",
+    "blendNoTrials": "Ningún ensayo en humanos ha estudiado esta combinación. Cada componente conserva sus propios riesgos y la evidencia del blend es la de su componente más débil.",
+    "blendComponents": "Qué lleva el vial",
+    "blendTotal": "{{total}} en total por vial",
+    "blendWhy": "Por qué se combinan",
+    "blendEvidenceNote": "Toca un componente para ver su ficha. La evidencia del blend es la del componente más débil.",
+    "blendMath": "Cuánto lleva cada dosis",
+    "blendMathHint": "Jeringa de insulina U-100. Todos los componentes salen en la misma proporción: no se pueden ajustar por separado.",
+    "blendDiluent": "Agua bacteriostática añadida",
+    "blendUnits": "Unidades cargadas",
+    "blendPerDraw": "{{units}} U = {{ml}} mL. Comprueba siempre la etiqueta de tu vial.",
+    "inBlends": "También en estos blends"
   },
   "simulator": {
     "title": "Simulador",

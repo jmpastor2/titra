@@ -15,7 +15,7 @@ import { toProtocolLike } from '@/data/mappers'
 import { planDraw } from '@/domain/dosing/draw'
 import { mgToUnits, unitsToMg } from '@/domain/dosing/reconstitution'
 import { componentsAt, currentStep } from '@/domain/dosing/schedule'
-import { INJECTION_SITES, suggestNextSite } from '@/domain/sites/injectionSites'
+import { suggestNextSite } from '@/domain/sites/injectionSites'
 import type { DoseUnit } from '@/domain/types'
 import {
   activeVial,
@@ -36,6 +36,7 @@ import {
 import { useLocale } from '@/lib/useLocale'
 import { FastingCard } from '@/features/fasting/FastingCard'
 import { needsFasting } from '@/features/fasting/fasting'
+import { SitePicker } from '@/features/sites/SitePicker'
 import { DrawGuide } from './DrawGuide'
 
 export interface LogDoseSheetProps {
@@ -80,7 +81,9 @@ const plain = (n: number) => String(Math.round(n * 1000) / 1000)
 
 function siteHistory(doses: readonly DoseRow[] | undefined) {
   return (doses ?? []).flatMap((d) =>
-    d.site_id ? [{ siteId: d.site_id, at: new Date(d.administered_at) }] : [],
+    d.site_id
+      ? [{ siteId: d.site_id, at: new Date(d.administered_at), compoundId: d.compound_id }]
+      : [],
   )
 }
 
@@ -205,7 +208,6 @@ function LogDoseForm({
   const [siteId, setSiteId] = useState(() => suggestNextSite(siteHistory(doses.data))?.siteId ?? '')
   const [notes, setNotes] = useState('')
 
-  const suggestion = useMemo(() => suggestNextSite(siteHistory(doses.data)), [doses.data])
   const injectable = lines.some((l) =>
     compoundById(l.compoundId)?.routes.some((r) => r === 'sc' || r === 'im'),
   )
@@ -448,35 +450,21 @@ function LogDoseForm({
           </Field>
 
           {injectable && (
-            <Field
-              label={t('doses.site')}
-              hint={suggestion?.tooRecent ? t('doses.siteTooRecent') : undefined}
-            >
+            <Field label={t('doses.site')}>
               {() => (
-                <div className="grid grid-cols-2 gap-2" role="radiogroup">
-                  {INJECTION_SITES.map((s) => {
-                    const on = siteId === s.id
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={on}
-                        onClick={() => setSiteId(on ? '' : s.id)}
-                        className={
-                          on
-                            ? 'flex h-11 items-center justify-between gap-1 rounded-control border border-signal/50 bg-signal-soft px-3 text-[13px] font-semibold text-ink'
-                            : 'flex h-11 items-center justify-between gap-1 rounded-control border border-line bg-panel-2 px-3 text-[13px] text-ink-2'
-                        }
-                      >
-                        <span className="truncate">{t(`sites.labels.${s.labelKey}`)}</span>
-                        {suggestion?.siteId === s.id && (
-                          <Badge tone="brand">{t('doses.suggestedSite')}</Badge>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
+                <SitePicker
+                  value={siteId}
+                  onChange={setSiteId}
+                  history={siteHistory(doses.data)}
+                  now={
+                    whenMode === 'now'
+                      ? new Date(openedAt)
+                      : whenMode === 'planned' && plannedAt
+                        ? plannedAt
+                        : fromDateTimeInputs(date, time)
+                  }
+                  compoundId={lines[0]?.compoundId}
+                />
               )}
             </Field>
           )}

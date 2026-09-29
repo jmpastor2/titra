@@ -1,4 +1,4 @@
-import { Search, X } from 'lucide-react'
+import { FlaskConical, Search, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -7,7 +7,14 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { controlClass } from '@/components/ui/Field'
 import { Badge, Chip, EmptyState, SectionTitle, SubstanceDot } from '@/components/ui/primitives'
-import { CATEGORY_ORDER, COMPOUNDS, compoundById, searchCompounds } from '@/content/compounds'
+import {
+  BLENDS,
+  CATEGORY_ORDER,
+  COMPOUNDS,
+  compoundById,
+  compoundName,
+  searchWiki,
+} from '@/content/compounds'
 import type { CompoundEntry } from '@/content/schema'
 import { categoryColor } from '@/content/substanceColor'
 import { useProtocols } from '@/data/hooks'
@@ -22,10 +29,10 @@ export function WikiPage() {
   const { patientId } = usePatientScope()
   const protocols = useProtocols(patientId)
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState<CompoundCategory | 'all'>('all')
+  const [category, setCategory] = useState<CompoundCategory | 'blends' | 'all'>('all')
 
   const results = useMemo(
-    () => searchCompounds(query, category === 'all' ? undefined : category),
+    () => searchWiki(query, category === 'all' ? undefined : category),
     [query, category],
   )
 
@@ -36,10 +43,13 @@ export function WikiPage() {
 
   const mine = useMemo(() => {
     const ids = new Set((protocols.data ?? []).flatMap(protocolCompoundIds))
-    return [...ids].flatMap((id) => {
+    const substances = [...ids].flatMap((id) => {
       const c = compoundById(id)
       return c ? [c] : []
     })
+    // A blend is "yours" when every one of its components is in your protocols.
+    const blends = BLENDS.filter((b) => b.blend?.components.every((p) => ids.has(p.compoundId)))
+    return [...substances, ...blends]
   }, [protocols.data])
 
   const browsing = category === 'all' && !query
@@ -79,6 +89,10 @@ export function WikiPage() {
         <Chip active={category === 'all'} onClick={() => setCategory('all')}>
           {t('wiki.all')}
         </Chip>
+        <Chip active={category === 'blends'} onClick={() => setCategory('blends')}>
+          <FlaskConical className="size-3.5" aria-hidden />
+          {t('wiki.blends')}
+        </Chip>
         {categories.map((c) => (
           <Chip
             key={c}
@@ -103,8 +117,18 @@ export function WikiPage() {
               <CompoundList items={mine} />
             </section>
           )}
+          <section>
+            <SectionTitle action={<span className="spec">{BLENDS.length}</span>}>
+              <span className="inline-flex items-center gap-2">
+                <FlaskConical className="size-3.5 text-muted" aria-hidden />
+                {t('wiki.blends')}
+              </span>
+            </SectionTitle>
+            <CompoundList items={results.filter((c) => c.blend)} />
+          </section>
           {categories.map((cat) => {
-            const items = results.filter((c) => c.category === cat)
+            // Blends have their own section while browsing.
+            const items = results.filter((c) => c.category === cat && !c.blend)
             if (items.length === 0) return null
             return (
               <section key={cat}>
@@ -150,10 +174,16 @@ function CompoundList({
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[15px] font-semibold">{c.names.generic}</span>
                 <span className="block truncate text-[12.5px] text-muted">
-                  {showBrands && c.names.brands.length > 0
-                    ? `${c.names.brands.slice(0, 3).join(' · ')} — `
-                    : ''}
-                  {pick(c.pharmClass)}
+                  {c.blend ? (
+                    c.blend.components.map((p) => compoundName(p.compoundId)).join(' + ')
+                  ) : (
+                    <>
+                      {showBrands && c.names.brands.length > 0
+                        ? `${c.names.brands.slice(0, 3).join(' · ')} — `
+                        : ''}
+                      {pick(c.pharmClass)}
+                    </>
+                  )}
                 </span>
               </span>
               <span className="flex shrink-0 flex-col items-end gap-1">

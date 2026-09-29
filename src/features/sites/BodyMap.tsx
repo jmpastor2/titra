@@ -1,31 +1,19 @@
+import { clsx } from 'clsx'
+import { useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ageShort, type SiteHeat, type SiteStatus } from '@/domain/sites/rotation'
+import { BACK, COMPACT_CAPTION_X, FRONT, SPOTS, VIEWBOX } from './bodyMapGeometry'
+import { SiteDetail } from './SiteDetail'
 
-interface Spot {
-  id: string
-  cx: number
-  cy: number
+/** Fresh sites burn warm; rested ones cool down to the action colour. */
+const HEAT: Record<SiteHeat, { fill: string; ink: string }> = {
+  hot: { fill: 'var(--danger)', ink: 'var(--panel)' },
+  warm: { fill: 'var(--warn)', ink: 'var(--panel)' },
+  cool: { fill: 'color-mix(in oklab, var(--signal) 45%, var(--panel))', ink: 'var(--ink)' },
+  rested: { fill: 'var(--signal)', ink: 'var(--panel)' },
+  never: { fill: 'var(--panel)', ink: 'var(--muted)' },
 }
-
-/** Centre lines of the two figures in the 300 × 300 viewBox. */
-const FRONT = 78
-const BACK = 222
-
-/*
- * Drawn as you see yourself: your left on the left in both views. Front shows the
- * abdomen and thighs; back shows the back of the upper arms and the glutes.
- */
-const SPOTS: Spot[] = [
-  { id: 'abd_ul', cx: FRONT - 13, cy: 104 },
-  { id: 'abd_ur', cx: FRONT + 13, cy: 104 },
-  { id: 'abd_ll', cx: FRONT - 13, cy: 133 },
-  { id: 'abd_lr', cx: FRONT + 13, cy: 133 },
-  { id: 'thigh_l', cx: FRONT - 15, cy: 200 },
-  { id: 'thigh_r', cx: FRONT + 15, cy: 200 },
-  { id: 'arm_l', cx: BACK - 41.5, cy: 88 },
-  { id: 'arm_r', cx: BACK + 41.5, cy: 88 },
-  { id: 'glute_l', cx: BACK - 13, cy: 156 },
-  { id: 'glute_r', cx: BACK + 13, cy: 156 },
-]
+const LEGEND: readonly SiteHeat[] = ['hot', 'warm', 'cool', 'rested', 'never']
 
 function Figure({ cx, back }: { cx: number; back?: boolean }) {
   return (
@@ -55,93 +43,206 @@ function Figure({ cx, back }: { cx: number; back?: boolean }) {
   )
 }
 
-export function BodyMap({
-  usage,
-  maxUse,
-  suggestedId,
-}: {
-  usage: Record<string, number>
-  maxUse: number
+export interface BodyMapProps {
+  /** Recency of each site (from `siteStatuses`); spots without a status read as never used. */
+  statuses: readonly SiteStatus[]
+  now: Date
   suggestedId?: string
-}) {
+  /** Controlled selection (the picker). */
+  selectedId?: string
+  /** Makes the map a radio group: tapping a spot selects it. */
+  onSelect?: (siteId: string) => void
+  /** ~200 px tall crop for bottom sheets; hides the legend and the detail line. */
+  compact?: boolean
+  className?: string
+}
+
+/**
+ * Body map of the injection sites, coloured by how recently each was used. Every spot is
+ * tappable: with `onSelect` it selects, and the full map shows the tapped site's last
+ * use underneath.
+ */
+export function BodyMap({
+  statuses,
+  now,
+  suggestedId,
+  selectedId,
+  onSelect,
+  compact = false,
+  className,
+}: BodyMapProps) {
   const { t } = useTranslation()
+  const [inspected, setInspected] = useState<string | undefined>(undefined)
+  const byId = new Map(statuses.map((s) => [s.siteId, s]))
+  const focusId = selectedId || inspected
+  const detail = focusId ? byId.get(focusId) : undefined
+  const selectable = Boolean(onSelect)
+
+  function pick(id: string) {
+    setInspected(id)
+    onSelect?.(id)
+  }
+  function onKey(e: KeyboardEvent, id: string) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      pick(id)
+    }
+  }
+
   return (
-    <figure className="m-0">
-      <svg
-        viewBox="0 0 300 312"
-        className="mx-auto block w-full max-w-[360px]"
-        role="img"
-        aria-label={t('sites.title')}
-      >
-        <Figure cx={FRONT} />
-        <Figure cx={BACK} back />
+    <figure className={clsx('m-0', className)}>
+      <div className="relative mx-auto" style={{ maxWidth: compact ? 288 : 360 }}>
+        <svg
+          viewBox={compact ? VIEWBOX.compact : VIEWBOX.full}
+          className="block w-full select-none"
+          role={selectable ? 'radiogroup' : 'group'}
+          aria-label={t('sites.title')}
+        >
+          <Figure cx={FRONT} />
+          <Figure cx={BACK} back />
 
-        {[FRONT, BACK].map((cx) => (
-          <g key={cx} className="spec" fontSize={8.5} fill="var(--muted)" letterSpacing="0.12em">
-            <text x={cx - 44} y={300} textAnchor="middle">
-              {t('sites.leftShort')}
-            </text>
-            <text x={cx} y={300} textAnchor="middle" fill="var(--ink-2)" fontWeight={700}>
-              {cx === FRONT ? t('sites.front') : t('sites.back')}
-            </text>
-            <text x={cx + 44} y={300} textAnchor="middle">
-              {t('sites.rightShort')}
-            </text>
-          </g>
-        ))}
+          {!compact &&
+            [FRONT, BACK].map((cx) => (
+              <g
+                key={cx}
+                className="spec"
+                fontSize={8.5}
+                fill="var(--muted)"
+                letterSpacing="0.12em"
+              >
+                <text x={cx - 44} y={300} textAnchor="middle">
+                  {t('sites.leftShort')}
+                </text>
+                <text x={cx} y={300} textAnchor="middle" fill="var(--ink-2)" fontWeight={700}>
+                  {cx === FRONT ? t('sites.front') : t('sites.back')}
+                </text>
+                <text x={cx + 44} y={300} textAnchor="middle">
+                  {t('sites.rightShort')}
+                </text>
+              </g>
+            ))}
 
-        {SPOTS.map((s) => {
-          const count = usage[s.id] ?? 0
-          const intensity = count / maxUse
-          const suggested = s.id === suggestedId
-          return (
-            <g key={s.id}>
-              <title>{t(`sites.labels.${s.id}`)}</title>
-              {suggested && (
+          {SPOTS.map((s) => {
+            const status = byId.get(s.id)
+            const heat = status?.heat ?? 'never'
+            const colors = HEAT[heat]
+            const suggested = s.id === suggestedId
+            const focused = s.id === focusId
+            const label = t(`sites.labels.${s.id}`)
+            return (
+              <g
+                key={s.id}
+                role={selectable ? 'radio' : 'button'}
+                aria-checked={selectable ? s.id === selectedId : undefined}
+                aria-pressed={selectable ? undefined : focused}
+                aria-label={label}
+                tabIndex={0}
+                onClick={() => pick(s.id)}
+                onKeyDown={(e) => onKey(e, s.id)}
+                className="group cursor-pointer outline-none"
+              >
+                <rect x={s.hit.x} y={s.hit.y} width={s.hit.w} height={s.hit.h} fill="transparent" />
                 <circle
                   cx={s.cx}
                   cy={s.cy}
-                  r={11.5}
+                  r={15.5}
                   fill="none"
                   stroke="var(--signal)"
-                  strokeWidth={1.8}
-                  strokeDasharray="3 2.5"
+                  strokeWidth={2}
+                  className="opacity-0 group-focus-visible:opacity-100"
                 />
-              )}
-              <circle
-                cx={s.cx}
-                cy={s.cy}
-                r={8}
-                fill={count === 0 ? 'var(--panel)' : 'var(--chart-3)'}
-                fillOpacity={count === 0 ? 1 : 0.3 + intensity * 0.7}
-                stroke={suggested ? 'var(--signal)' : 'var(--line-strong)'}
-                strokeWidth={suggested ? 1.8 : 1.2}
-              />
-              <text
-                x={s.cx}
-                y={s.cy + 3.2}
-                textAnchor="middle"
-                fontSize={8.5}
-                fontWeight={700}
-                fill="var(--ink)"
-                fontFamily="var(--font-mono)"
+                {suggested && (
+                  <circle
+                    cx={s.cx}
+                    cy={s.cy}
+                    r={12.5}
+                    fill="none"
+                    stroke="var(--signal)"
+                    strokeWidth={1.8}
+                    strokeDasharray="3 2.5"
+                    className={clsx(compact && !focused && 'motion-safe:animate-pulse')}
+                  />
+                )}
+                {focused && (
+                  <circle
+                    cx={s.cx}
+                    cy={s.cy}
+                    r={suggested ? 10 : 11}
+                    fill="none"
+                    stroke="var(--ink)"
+                    strokeWidth={2}
+                  />
+                )}
+                <circle
+                  cx={s.cx}
+                  cy={s.cy}
+                  r={8}
+                  style={{ fill: colors.fill }}
+                  stroke={heat === 'never' ? 'var(--line-strong)' : 'none'}
+                  strokeWidth={1.2}
+                  className="transition-[fill] duration-300 group-active:opacity-75"
+                />
+                <text
+                  x={s.cx}
+                  y={s.cy + 2.5}
+                  textAnchor="middle"
+                  fontSize={7}
+                  fontWeight={700}
+                  fill={colors.ink}
+                  fontFamily="var(--font-mono)"
+                  aria-hidden
+                  className="pointer-events-none"
+                >
+                  {ageShort(status?.hoursSince ?? null)}
+                </text>
+              </g>
+            )
+          })}
+        </svg>
+
+        {compact && (
+          <div aria-hidden className="relative h-3.5">
+            {COMPACT_CAPTION_X.map((x, i) => (
+              <div
+                key={x}
+                className="spec absolute top-0 flex -translate-x-1/2 gap-2 text-[9px] leading-none"
+                style={{ left: `${x * 100}%` }}
               >
-                {count || ''}
-              </text>
-            </g>
-          )
-        })}
-      </svg>
-      <figcaption className="mt-2 flex items-center justify-center gap-4 text-[11.5px] text-muted">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block size-2.5 rounded-full border border-line-strong bg-panel" />
-          {t('sites.neverUsed')}
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block size-2.5 rounded-full bg-[var(--chart-3)]" />
-          {t('sites.uses', { count: maxUse })}
-        </span>
-      </figcaption>
+                <span>{t('sites.leftShort')}</span>
+                <span className="text-ink-2">{i === 0 ? t('sites.front') : t('sites.back')}</span>
+                <span>{t('sites.rightShort')}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {!compact && (
+        <figcaption className="mt-3 space-y-3">
+          <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11.5px] text-muted">
+            {LEGEND.map((h) => (
+              <li key={h} className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden
+                  className={clsx(
+                    'inline-block size-2.5 rounded-full',
+                    h === 'never' && 'border border-line-strong',
+                  )}
+                  style={{ background: HEAT[h].fill }}
+                />
+                {t(`sites.heat.${h}`)}
+              </li>
+            ))}
+          </ul>
+          <div aria-live="polite" className="min-h-[52px] rounded-control bg-panel-2 px-3 py-2.5">
+            {detail ? (
+              <SiteDetail status={detail} now={now} />
+            ) : (
+              <p className="text-[12.5px] text-muted">{t('sites.tapHint')}</p>
+            )}
+          </div>
+        </figcaption>
+      )}
     </figure>
   )
 }

@@ -395,7 +395,13 @@ export const METABOLIC_SEXUAL_OTHER: CompoundEntry[] = [
     names: {
       generic: 'NAD+',
       brands: [],
-      aliases: ['Nicotinamida adenina dinucleótido', 'Nicotinamide adenine dinucleotide', 'β-NAD'],
+      aliases: [
+        'NAD',
+        'NAD plus',
+        'Nicotinamida adenina dinucleótido',
+        'Nicotinamide adenine dinucleotide',
+        'β-NAD',
+      ],
     },
     category: 'metabolic',
     pharmClass: t(
@@ -433,8 +439,8 @@ export const METABOLIC_SEXUAL_OTHER: CompoundEntry[] = [
         'Pilot study: 750 mg IV infused over 6 h in healthy volunteers (pharmacokinetics/metabolome, no clinical endpoints).',
       ),
       anecdotal: t(
-        'Uso no aprobado — IV 250–1000 mg por sesión en 2–4 h (a veces más lento por tolerancia); SC 50–100 mg 1–3×/semana.',
-        'Unapproved use — IV 250–1000 mg per session over 2–4 h (sometimes slower for tolerability); SC 50–100 mg 1–3×/week.',
+        'Uso no aprobado — IV 250–1000 mg por sesión en 2–4 h (a veces más lento por tolerancia); SC 50–100 mg 1–3×/semana, empezando por la dosis baja. Por vía SC también puede dar rubor, náuseas o calambres en los minutos siguientes: se suele inyectar despacio.',
+        'Unapproved use — IV 250–1000 mg per session over 2–4 h (sometimes slower for tolerability); SC 50–100 mg 1–3×/week, starting with the low dose. SC injection can also cause flushing, nausea or cramps in the following minutes: it is usually injected slowly.',
       ),
       frequency: t(
         'Sesiones IV variables; SC 1–3×/semana (uso no aprobado)',
@@ -442,12 +448,12 @@ export const METABOLIC_SEXUAL_OTHER: CompoundEntry[] = [
       ),
     },
     reconstitution: t(
-      'Vial liofilizado de 500 mg + 5 mL de agua bacteriostática = 100 mg/mL. En jeringa U-100: 50 mg = 0,5 mL = 50 U; 100 mg = 100 U. Para IV se diluye en suero salino según protocolo de farmacia. Reconstituido: nevera, uso en ≤2–4 semanas.',
-      '500 mg lyophilised vial + 5 mL bacteriostatic water = 100 mg/mL. U-100 syringe: 50 mg = 0.5 mL = 50 U; 100 mg = 100 U. For IV it is diluted in saline per pharmacy protocol. Reconstituted: refrigerate, use within ≤2–4 weeks.',
+      'Vial liofilizado de 500 mg + 5 mL de agua bacteriostática = 100 mg/mL. En jeringa U-100, 1 U = 1 mg → 50 mg = 50 U (0,5 mL); 100 mg = 100 U (1 mL). Si escuece mucho, más diluido: 500 mg + 10 mL = 50 mg/mL → 50 mg = 100 U (1 mL). Para IV se diluye en suero salino según el protocolo de la farmacia.',
+      '500 mg lyophilised vial + 5 mL bacteriostatic water = 100 mg/mL. On a U-100 syringe, 1 U = 1 mg → 50 mg = 50 U (0.5 mL); 100 mg = 100 U (1 mL). If it stings a lot, dilute more: 500 mg + 10 mL = 50 mg/mL → 50 mg = 100 U (1 mL). For IV it is diluted in saline per the pharmacy protocol.',
     ),
     storage: t(
-      'Liofilizado: 2–8 °C (o −20 °C a largo plazo), protegido de la luz y la humedad. Solución: 2–8 °C; el NAD+ se degrada en solución a temperatura ambiente.',
-      'Lyophilisate: 2–8 °C (or −20 °C long term), protected from light and moisture. Solution: 2–8 °C; NAD+ degrades in solution at room temperature.',
+      'Liofilizado: 2–8 °C (o −20 °C a largo plazo), protegido de la luz y la humedad. Reconstituido: nevera, protegido de la luz, no congelar; el NAD+ se degrada en solución a temperatura ambiente. Se suele indicar usarlo en 2–4 semanas: orientación de fabricantes y de la comunidad, sin datos de estabilidad publicados. Desechar si amarillea o se enturbia.',
+      'Lyophilisate: 2–8 °C (or −20 °C long term), protected from light and moisture. Reconstituted: fridge, protected from light, do not freeze; NAD+ degrades in solution at room temperature. The usual guidance is to use it within 2–4 weeks: manufacturer and community guidance with no published stability data. Discard if it yellows or turns cloudy.',
     ),
     adverseEffects: {
       common: [
@@ -483,6 +489,14 @@ export const METABOLIC_SEXUAL_OTHER: CompoundEntry[] = [
         'Tensión arterial y síntomas durante la perfusión; ajustar velocidad',
         'Blood pressure and symptoms during infusion; adjust rate',
       ),
+      t(
+        'Vía SC: rubor, náuseas o calambres tras la dosis y reacciones locales',
+        'SC route: flushing, nausea or cramps after the dose and local reactions',
+      ),
+      t(
+        'No hay un marcador útil: el NAD+ en sangre no se mide en analíticas de rutina',
+        'There is no useful marker: blood NAD+ is not measured in routine lab tests',
+      ),
     ],
     keyTrials: [
       {
@@ -506,7 +520,7 @@ export const METABOLIC_SEXUAL_OTHER: CompoundEntry[] = [
       },
     ],
     tags: ['no-peptido', 'nad', 'longevidad', 'intravenoso', 'magistral'],
-    lastReviewed: '2026-09-19',
+    lastReviewed: '2026-09-30',
   },
   {
     id: 'humanin',

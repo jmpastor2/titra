@@ -1,32 +1,7 @@
-import type { InjectionSite } from '../types'
+import { DEFAULT_ROTATION, type SiteUse } from './catalog'
+import { rankSites } from './rotation'
 
-/** Canonical subcutaneous injection sites. Labels come from i18n `sites.<id>`. */
-export const INJECTION_SITES: readonly InjectionSite[] = [
-  { id: 'abd_ul', labelKey: 'abd_ul', region: 'abdomen', side: 'left' },
-  { id: 'abd_ur', labelKey: 'abd_ur', region: 'abdomen', side: 'right' },
-  { id: 'abd_ll', labelKey: 'abd_ll', region: 'abdomen', side: 'left' },
-  { id: 'abd_lr', labelKey: 'abd_lr', region: 'abdomen', side: 'right' },
-  { id: 'thigh_l', labelKey: 'thigh_l', region: 'thigh', side: 'left' },
-  { id: 'thigh_r', labelKey: 'thigh_r', region: 'thigh', side: 'right' },
-  { id: 'arm_l', labelKey: 'arm_l', region: 'arm', side: 'left' },
-  { id: 'arm_r', labelKey: 'arm_r', region: 'arm', side: 'right' },
-  { id: 'glute_l', labelKey: 'glute_l', region: 'glute', side: 'left' },
-  { id: 'glute_r', labelKey: 'glute_r', region: 'glute', side: 'right' },
-]
-
-export const DEFAULT_ROTATION: readonly string[] = [
-  'abd_ul',
-  'abd_ur',
-  'thigh_l',
-  'thigh_r',
-  'abd_ll',
-  'abd_lr',
-]
-
-export interface SiteUse {
-  siteId: string
-  at: Date
-}
+export { DEFAULT_ROTATION, INJECTION_SITES, isKnownSite, siteById, type SiteUse } from './catalog'
 
 export interface SiteSuggestion {
   siteId: string
@@ -36,8 +11,9 @@ export interface SiteSuggestion {
 }
 
 /**
- * Suggest the next site: the least recently used among the enabled rotation.
- * Ties (never used) are broken by rotation order.
+ * Suggest the next site among the enabled rotation: the top of `rankSites`, i.e. the
+ * least recently used site, never one used earlier the same day, nudged to the other
+ * side or region after a recent shot. Ties (never used) are broken by rotation order.
  */
 export function suggestNextSite(
   history: readonly SiteUse[],
@@ -46,31 +22,12 @@ export function suggestNextSite(
   // Daily protocols cycle six sites in under a week; three days apart is the useful alarm.
   minGapDays = 3,
 ): SiteSuggestion | null {
-  if (rotation.length === 0) return null
-  const lastUse = new Map<string, number>()
-  for (const h of history) {
-    const prev = lastUse.get(h.siteId) ?? Number.NEGATIVE_INFINITY
-    if (h.at.getTime() > prev) lastUse.set(h.siteId, h.at.getTime())
-  }
-  let best: string | null = null
-  let bestTime = Number.POSITIVE_INFINITY
-  for (const id of rotation) {
-    const t = lastUse.get(id) ?? Number.NEGATIVE_INFINITY
-    if (t < bestTime) {
-      bestTime = t
-      best = id
-    }
-  }
-  if (best === null) return null
-  const used = Number.isFinite(bestTime)
-  return {
-    siteId: best,
-    tooRecent: used && now.getTime() - bestTime < minGapDays * 86_400_000,
-    lastUsedAt: used ? new Date(bestTime) : null,
-  }
+  const best = rankSites(history, now, { candidates: rotation, minRestHours: minGapDays * 24 })[0]
+  if (!best) return null
+  return { siteId: best.siteId, tooRecent: best.resting, lastUsedAt: best.lastUsedAt }
 }
 
-/** Per-site usage counts, for the heat map. */
+/** Per-site usage counts (raw rows). */
 export function siteUsage(history: readonly SiteUse[]): Record<string, number> {
   const out: Record<string, number> = {}
   for (const h of history) out[h.siteId] = (out[h.siteId] ?? 0) + 1

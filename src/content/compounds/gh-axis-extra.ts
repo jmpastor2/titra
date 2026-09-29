@@ -57,18 +57,18 @@ const modGrf: CompoundEntry = {
   defaultUnit: 'mcg',
   dosing: {
     anecdotal: t(
-      'Uso no aprobado — 100 µg SC (a veces expresado como ~1 µg/kg) 1–3×/día, en ayunas (unas 2 h sin comer y esperando ~20–30 min antes de la siguiente comida), con frecuencia una dosis al acostarse para coincidir con el pulso nocturno de GH. Habitualmente en la misma jeringa con un GHRP como ipamorelina 100–300 µg. Rangos comunitarios sin ensayos que los respalden.',
-      'Unapproved use — 100 µg SC (sometimes expressed as ~1 µg/kg) 1–3×/day, fasted (about 2 h without food and waiting ~20–30 min before the next meal), often one dose at bedtime to coincide with the nocturnal GH pulse. Usually in the same syringe with a GHRP such as ipamorelin 100–300 µg. Community ranges with no supporting trials.',
+      'Uso no aprobado — 100 µg SC (a veces expresado como ~1 µg/kg) 1–3×/día, con frecuencia una dosis al acostarse para coincidir con el pulso nocturno de GH. En ayunas: al menos 2 h después de comer y esperar unos 30 min antes de volver a comer; la comida, sobre todo hidratos y grasa, reduce el pico de GH. Casi siempre junto a un GHRP como la ipamorelina, en la misma jeringa o en un blend 1:1 ya mezclado (100 + 100 µg). Rangos comunitarios sin ensayos que los respalden.',
+      'Unapproved use — 100 µg SC (sometimes expressed as ~1 µg/kg) 1–3×/day, often one dose at bedtime to coincide with the nocturnal GH pulse. Fasted: at least 2 h after eating and wait about 30 min before eating again; food, above all carbohydrate and fat, blunts the GH peak. Almost always with a GHRP such as ipamorelin, in the same syringe or as a premixed 1:1 blend (100 + 100 µg). Community ranges with no supporting trials.',
     ),
     frequency: t('1–3×/día', '1–3×/day'),
   },
   reconstitution: t(
-    'Viales liofilizados de 2 mg (también de 5 mg). Ejemplo: 2 mg + 2 mL de agua bacteriostática = 1 mg/mL → 100 µg = 0,1 mL = 10 U en jeringa U-100. Para combinar con ipamorelina, cargar cada péptido desde su propio vial en la misma jeringa justo antes de inyectar. Reconstituido: nevera 2–8 °C, usar en ~3–4 semanas (estabilidad orientativa, sin datos del fabricante); no agitar, disolver girando suavemente.',
-    'Lyophilised 2 mg vials (5 mg also available). Example: 2 mg + 2 mL bacteriostatic water = 1 mg/mL → 100 µg = 0.1 mL = 10 units on a U-100 syringe. To combine with ipamorelin, draw each peptide from its own vial into the same syringe just before injecting. Reconstituted: refrigerate 2–8 °C, use within ~3–4 weeks (indicative stability, no manufacturer data); do not shake, dissolve by gentle swirling.',
+    'Viales liofilizados de 2 mg (también de 5 mg), o en blend con ipamorelina (5 + 5 mg). Solo: 2 mg + 2 mL de agua bacteriostática = 1 mg/mL → 100 µg = 0,1 mL = 10 U en jeringa U-100. Blend 5 + 5 mg + 3 mL: 1,67 mg/mL de cada uno → 6 U = 100 µg de CJC-1295 + 100 µg de ipamorelina (con 2 mL, 4 U). Si van en viales separados, cargar cada uno en la misma jeringa justo antes de inyectar. No agitar: disolver girando suavemente.',
+    'Lyophilised 2 mg vials (5 mg also available), or blended with ipamorelin (5 + 5 mg). Alone: 2 mg + 2 mL bacteriostatic water = 1 mg/mL → 100 µg = 0.1 mL = 10 units on a U-100 syringe. 5 + 5 mg blend + 3 mL: 1.67 mg/mL of each → 6 U = 100 µg CJC-1295 + 100 µg ipamorelin (with 2 mL, 4 U). If they come in separate vials, draw each into the same syringe just before injecting. Do not shake: dissolve by gentle swirling.',
   ),
   storage: t(
-    'Liofilizado: nevera 2–8 °C (o −20 °C a largo plazo), protegido de la luz. Reconstituido: nevera, no congelar. Parece menos estable en solución que la forma con DAC; desechar si se enturbia.',
-    'Lyophilised: refrigerate 2–8 °C (or −20 °C long term), protect from light. Reconstituted: refrigerate, do not freeze. Appears less stable in solution than the DAC form; discard if it turns cloudy.',
+    'Liofilizado: nevera 2–8 °C (o −20 °C para meses), protegido de la luz. Reconstituido: nevera, no congelar. Habitualmente se indica usarlo en 28–30 días: es orientación de fabricantes y de la comunidad, sin datos de estabilidad publicados (los 28 días vienen de la norma USP <797> para viales multidosis y se refieren a la esterilidad). Parece menos estable en solución que la forma con DAC; desechar si se enturbia.',
+    'Lyophilised: fridge 2–8 °C (or −20 °C for months), protected from light. Reconstituted: fridge, do not freeze. The usual guidance is to use it within 28–30 days: this is manufacturer and community guidance with no published stability data (the 28 days come from USP <797> for multiple-dose vials and concern sterility). Appears less stable in solution than the DAC form; discard if it turns cloudy.',
   ),
   adverseEffects: {
     common: [
@@ -137,9 +137,15 @@ const modGrf: CompoundEntry = {
     ),
   ],
   monitoring: [
-    t('IGF-1 basal y a las 4–8 semanas', 'Baseline and 4–8-week IGF-1'),
-    t('Glucosa en ayunas / HbA1c', 'Fasting glucose / HbA1c'),
-    t('Peso, edema, presión arterial', 'Weight, oedema, blood pressure'),
+    t(
+      'IGF-1 antes de empezar y a las 4–8 semanas; como referencia se usa el rango normal para la edad, igual que con la GH',
+      'IGF-1 before starting and at 4–8 weeks; the age-specific normal range is used as reference, as with GH',
+    ),
+    t(
+      'Glucosa en ayunas y HbA1c (la GH reduce la sensibilidad a la insulina)',
+      'Fasting glucose and HbA1c (GH lowers insulin sensitivity)',
+    ),
+    t('Peso, edemas y tensión arterial', 'Weight, oedema and blood pressure'),
     t(
       'Síntomas de túnel carpiano o parestesias persistentes',
       'Carpal tunnel symptoms or persistent paraesthesia',
@@ -162,7 +168,7 @@ const modGrf: CompoundEntry = {
     { label: 'WADA Prohibited List — S2 peptide hormones, growth factors and related substances' },
   ],
   tags: ['ghrh', 'gh', 'pulsátil', 'diario', 'ipamorelina', 'cjc-1295', 'investigación'],
-  lastReviewed: '2026-09-25',
+  lastReviewed: '2026-09-30',
 }
 
 export const GH_AXIS_EXTRA: CompoundEntry[] = [modGrf]

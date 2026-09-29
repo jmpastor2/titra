@@ -475,7 +475,7 @@
   },
   "sites": {
     "title": "Injection sites",
-    "intro": "Rotate sites to avoid lipodystrophy and irritation. Titra suggests the least recently used site.",
+    "intro": "Rotate sites to avoid lipodystrophy and irritation. Titra suggests the most rested site, never one you already used today, and alternates side and region.",
     "suggested": "Next suggested",
     "lastUsed": "Last used {{when}}",
     "neverUsed": "Never used",
@@ -504,7 +504,54 @@
     "front": "FRONT",
     "back": "BACK",
     "leftShort": "L",
-    "rightShort": "R"
+    "rightShort": "R",
+    "next": "Next sites",
+    "byRest": "Rest by site",
+    "timeline": "Last 14 days",
+    "timelineEmpty": "No injections with a logged site in the last 14 days.",
+    "injected": "Injection",
+    "tapHint": "Tap a site to see when you last used it.",
+    "pickHint": "Tap a site on the map or a suggestion.",
+    "allResting": "Every site has rested less than 72 h: use the most rested one.",
+    "usedAgo": "Used {{when}}",
+    "ready": "Ready",
+    "restUntil": "Rest until {{when}}.",
+    "freeAt": "Free {{when}}",
+    "restWarning": "Used less than {{hours}} h ago: better pick another site.",
+    "usedTodayWarning": "You already used it today: pick another site.",
+    "restProgress": "Rest completed",
+    "recentUses_one": "{{count}} in 14 d",
+    "recentUses_other": "{{count}} in 14 d",
+    "reason": {
+      "never": "Never used",
+      "rested_one": "Unused for {{count}} day",
+      "rested_other": "Unused for {{count}} days",
+      "recent": "Used {{ago}} ago",
+      "today": "Used today"
+    },
+    "balance": {
+      "otherSide": "Other side",
+      "otherRegion": "New region"
+    },
+    "heat": {
+      "hot": "< 24 h",
+      "warm": "1–3 d",
+      "cool": "3–7 d",
+      "rested": "> 7 d",
+      "never": "Never used"
+    },
+    "short": {
+      "abd_ul": "Abd UL",
+      "abd_ur": "Abd UR",
+      "abd_ll": "Abd LL",
+      "abd_lr": "Abd LR",
+      "thigh_l": "Thigh L",
+      "thigh_r": "Thigh R",
+      "arm_l": "Arm L",
+      "arm_r": "Arm R",
+      "glute_l": "Glute L",
+      "glute_r": "Glute R"
+    }
   },
   "wiki": {
     "title": "Peptide wiki",
@@ -590,7 +637,20 @@
       "sl": "Sublingual"
     },
     "eyebrow": "Learn",
-    "mine": "Your substances"
+    "mine": "Your substances",
+    "blends": "Blends",
+    "blendBadge": "Premixed blend",
+    "blendNoTrials": "No human trial has studied this combination. Each component keeps its own risks, and the blend's evidence is that of its weakest component.",
+    "blendComponents": "What the vial holds",
+    "blendTotal": "{{total}} in total per vial",
+    "blendWhy": "Why they are combined",
+    "blendEvidenceNote": "Tap a component to open its entry. The blend's evidence is that of its weakest component.",
+    "blendMath": "What each dose contains",
+    "blendMathHint": "U-100 insulin syringe. Every component comes out in the same ratio: they cannot be adjusted separately.",
+    "blendDiluent": "Bacteriostatic water added",
+    "blendUnits": "Units drawn",
+    "blendPerDraw": "{{units}} U = {{ml}} mL. Always check your vial's label.",
+    "inBlends": "Also in these blends"
   },
   "simulator": {
     "title": "Simulator",
