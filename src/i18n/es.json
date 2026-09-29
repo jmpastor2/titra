@@ -200,7 +200,12 @@
     "count_other": "{{count}} tomas",
     "vialShort": "Solo quedan {{left}} en este vial: prepara uno nuevo.",
     "logShort": "Registrar",
-    "blend": "Blend"
+    "blend": "Blend",
+    "quickPlan": "Pauta",
+    "quickLast": "Última",
+    "pickUnits": "Unidades",
+    "atPlanned": "A su hora · {{time}}",
+    "nightOf": "{{day}} noche"
   },
   "protocols": {
     "title": "Pautas",
@@ -966,7 +971,8 @@
       "due": "Toca",
       "upcoming": "Pendiente",
       "extra": "Fuera de pauta"
-    }
+    },
+    "logIt": "regístrala"
   },
   "fasting": {
     "ask": "Ayuno para {{name}}: ¿cuándo comiste?",

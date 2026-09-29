@@ -81,6 +81,7 @@ export function DosesPage() {
   const del = useDeleteDose(patientId)
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
+  const [target, setTarget] = useState<{ protocolId: string; plannedAt: Date } | null>(null)
   const [filter, setFilter] = useState<string>('all')
 
   // One filter per thing you inject: a blend or stack is one chip, not one per compound.
@@ -131,7 +132,18 @@ export function DosesPage() {
       />
 
       {(protocols.data ?? []).length > 0 && doses.data && (
-        <WeekCard protocols={protocols.data ?? []} doses={doses.data} />
+        <WeekCard
+          protocols={protocols.data ?? []}
+          doses={doses.data}
+          onLog={
+            readOnly
+              ? undefined
+              : (protocolId, plannedAt) => {
+                  setTarget({ protocolId, plannedAt })
+                  setOpen(true)
+                }
+          }
+        />
       )}
 
       {combos.length > 1 && (
@@ -225,7 +237,16 @@ export function DosesPage() {
         </div>
       )}
 
-      <LogDoseSheet open={open} onClose={() => setOpen(false)} />
+      <LogDoseSheet
+        key={target ? `${target.protocolId}:${target.plannedAt.getTime()}` : 'free'}
+        open={open}
+        onClose={() => {
+          setOpen(false)
+          setTarget(null)
+        }}
+        protocolId={target?.protocolId}
+        plannedAt={target?.plannedAt}
+      />
     </div>
   )
 }

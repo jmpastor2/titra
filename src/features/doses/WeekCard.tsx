@@ -38,9 +38,12 @@ const TONE: Record<WeekCell['status'], string> = {
 export function WeekCard({
   protocols,
   doses,
+  onLog,
 }: {
   protocols: readonly ProtocolRow[]
   doses: readonly DoseRow[]
+  /** Log a missed or due administration at its planned time. */
+  onLog?: (protocolId: string, plannedAt: Date) => void
 }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
@@ -151,6 +154,14 @@ export function WeekCard({
                             <span className="block text-[10.5px]">{fmtDelta(c.deltaMin)}</span>
                           )}
                         </span>
+                      ) : onLog && (c.status === 'missed' || c.status === 'due') ? (
+                        <button
+                          type="button"
+                          onClick={() => onLog(c.protocol.id, c.plannedAt)}
+                          className={`rounded-full border border-current px-2 py-0.5 text-[11px] font-semibold ${TONE[c.status]}`}
+                        >
+                          {t(`week.status.${c.status}`)} · {t('week.logIt')}
+                        </button>
                       ) : (
                         <span className={TONE[c.status]}>{t(`week.status.${c.status}`)}</span>
                       )}

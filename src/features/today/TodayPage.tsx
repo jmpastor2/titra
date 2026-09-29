@@ -43,7 +43,7 @@ import { buildToday, focusItem, summarise } from './agenda'
 import { LevelCard } from './LevelCard'
 
 type SheetState =
-  | { kind: 'dose'; protocolId?: string | null; compoundId?: string }
+  | { kind: 'dose'; protocolId?: string | null; compoundId?: string; plannedAt?: Date }
   | { kind: 'checkin' | 'symptom' | 'weight' }
   | null
 
@@ -197,7 +197,13 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
                       <Button
                         size="sm"
                         leading={<Syringe className="size-4" />}
-                        onClick={() => setSheet({ kind: 'dose', protocolId: focus.protocol.id })}
+                        onClick={() =>
+                          setSheet({
+                            kind: 'dose',
+                            protocolId: focus.protocol.id,
+                            plannedAt: focus.at,
+                          })
+                        }
                       >
                         {t('today.logNow')}
                       </Button>
@@ -258,7 +264,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
                 now={now}
                 units={unitsToDraw(i.doses, vials)}
                 readOnly={readOnly}
-                onLog={() => setSheet({ kind: 'dose', protocolId: i.protocol.id })}
+                onLog={() => setSheet({ kind: 'dose', protocolId: i.protocol.id, plannedAt: i.at })}
               />
             ))}
           </ul>
@@ -383,6 +389,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         onClose={closeSheet}
         protocolId={sheet?.kind === 'dose' ? sheet.protocolId : undefined}
         compoundId={sheet?.kind === 'dose' ? sheet.compoundId : undefined}
+        plannedAt={sheet?.kind === 'dose' ? sheet.plannedAt : undefined}
       />
       <CheckInSheet open={sheet?.kind === 'checkin'} onClose={closeSheet} />
       <LogSymptomSheet open={sheet?.kind === 'symptom'} onClose={closeSheet} />

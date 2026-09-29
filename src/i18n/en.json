@@ -200,7 +200,12 @@
     "count_other": "{{count}} doses",
     "vialShort": "Only {{left}} left in this vial: prepare a new one.",
     "logShort": "Log",
-    "blend": "Blend"
+    "blend": "Blend",
+    "quickPlan": "Protocol",
+    "quickLast": "Last",
+    "pickUnits": "Units",
+    "atPlanned": "On time · {{time}}",
+    "nightOf": "{{day}} night"
   },
   "protocols": {
     "title": "Protocols",
@@ -966,7 +971,8 @@
       "due": "Due",
       "upcoming": "Pending",
       "extra": "Off schedule"
-    }
+    },
+    "logIt": "log it"
   },
   "fasting": {
     "ask": "Fasting for {{name}}: when did you eat?",

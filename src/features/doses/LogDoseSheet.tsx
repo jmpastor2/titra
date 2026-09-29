@@ -26,6 +26,7 @@ import {
 } from '@/features/inventory/vials'
 import { SubstancePicker } from '@/features/protocols/SubstancePicker'
 import {
+  fmtDate,
   fmtDose,
   fmtNumber,
   fromDateTimeInputs,
@@ -44,6 +45,8 @@ export interface LogDoseSheetProps {
   protocolId?: string | null
   /** Free dose of a single compound, outside any protocol. */
   compoundId?: string
+  /** The planned time of the administration being logged, to log it "on time" later. */
+  plannedAt?: Date
 }
 
 type EntryMode = 'dose' | 'units'
@@ -53,6 +56,10 @@ interface Line {
   compoundId: string
   amount: string
   mode: EntryMode
+  /** Unit of `amount` in dose mode: mg or mcg for peptides, else the compound's own. */
+  doseUnit: DoseUnit
+  /** The protocol's dose for this line, for the quick pick. */
+  plannedMg?: number
   inventoryId: string
   /** Other compounds drawn in the same units from the same blend vial. */
   partners: string[]
@@ -91,7 +98,16 @@ function makeLine(
   let amount = ''
   if (mg !== undefined)
     amount = conc ? plain(mgToUnits(mg, conc)) : plain(fromMg(mg, unitOf(compoundId)))
-  return { key: ++lineSeq, compoundId, amount, mode, inventoryId: vial?.id ?? '', partners: [] }
+  return {
+    key: ++lineSeq,
+    compoundId,
+    amount,
+    mode,
+    doseUnit: unitOf(compoundId),
+    ...(mg !== undefined ? { plannedMg: mg } : {}),
+    inventoryId: vial?.id ?? '',
+    partners: [],
+  }
 }
 
 /** Compounds of one blend vial become a single line: one draw, several doses. */
@@ -111,10 +127,12 @@ function mergeBlends(lines: Line[], vials: readonly InventoryRow[]): Line[] {
 function linesForProtocol(
   protocol: ProtocolRow | undefined,
   vials: readonly InventoryRow[],
+  at: Date = new Date(),
 ): Line[] {
   if (!protocol) return []
   const pl = toProtocolLike(protocol)
-  const step = currentStep(pl, new Date())?.step ?? pl.steps[pl.steps.length - 1]
+  // The dose of the step the administration belongs to, also when logging it late.
+  const step = currentStep(pl, at)?.step ?? pl.steps[pl.steps.length - 1]
   const primaryMg = step && !step.pause ? step.doseMg : undefined
   return mergeBlends(
     [
@@ -146,6 +164,7 @@ function LogDoseForm({
   onClose,
   protocolId: initialProtocolId,
   compoundId: initialCompoundId,
+  plannedAt,
 }: LogDoseSheetProps) {
   const { t } = useTranslation()
   const { locale } = useLocale()
@@ -168,13 +187,19 @@ function LogDoseForm({
       ? linesForProtocol(
           active.find((p) => p.id === initialProtocolId),
           vials,
+          plannedAt,
         )
       : initialCompoundId
         ? [makeLine(initialCompoundId, undefined, vials)]
         : [],
   )
   const [pickerOpen, setPickerOpen] = useState(!initialProtocolId && !initialCompoundId)
-  const [whenMode, setWhenMode] = useState<'now' | 'custom'>('now')
+  // When the sheet opened: fixed for the life of the form.
+  const [openedAt] = useState(() => Date.now())
+  // Logging a dose well after its planned time: default to "at its time".
+  const [whenMode, setWhenMode] = useState<'now' | 'planned' | 'custom'>(() =>
+    plannedAt && Date.now() - plannedAt.getTime() > 45 * 60_000 ? 'planned' : 'now',
+  )
   const [date, setDate] = useState(() => toDateInputValue(new Date()))
   const [time, setTime] = useState(() => toTimeInputValue(new Date()))
   const [siteId, setSiteId] = useState(() => suggestNextSite(siteHistory(doses.data))?.siteId ?? '')
@@ -222,7 +247,13 @@ function LogDoseForm({
       const conc = vial ? concentrationFor(vial, l.compoundId) : null
       return conc ? unitsToMg(v, conc) : null
     }
-    return toMg(v, unitOf(l.compoundId))
+    return toMg(v, l.doseUnit)
+  }
+
+  /** The last dose logged for a compound, for the quick pick. */
+  function lastMgOf(compoundId: string): number | undefined {
+    const last = (doses.data ?? []).find((d) => d.compound_id === compoundId)
+    return last ? Number(last.dose_mg) : undefined
   }
 
   /** mg of a blend partner drawn with the line: same volume, its own concentration. */
@@ -256,7 +287,13 @@ function LogDoseForm({
       toast(t('errors.positive'), 'warn')
       return
     }
-    const at = (whenMode === 'now' ? new Date() : fromDateTimeInputs(date, time)).toISOString()
+    const at = (
+      whenMode === 'planned' && plannedAt
+        ? plannedAt
+        : whenMode === 'now'
+          ? new Date()
+          : fromDateTimeInputs(date, time)
+    ).toISOString()
     try {
       const base = {
         patient_id: patientId,
@@ -353,6 +390,7 @@ function LogDoseForm({
                 onChange={(p) => patchLine(l.key, p)}
                 onRemove={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
                 partnerDoses={l.partners.map((c) => ({ compoundId: c, mg: partnerMg(l, c) }))}
+                lastMg={lastMgOf(l.compoundId)}
               />
             ))}
             {drawPlan && <DrawGuide plan={drawPlan} />}
@@ -369,12 +407,33 @@ function LogDoseForm({
           <Field label={t('doses.when')}>
             {() => (
               <div className="flex flex-col gap-2">
-                <Segmented<'now' | 'custom'>
+                <Segmented<'now' | 'planned' | 'custom'>
                   value={whenMode}
                   onChange={setWhenMode}
                   size="sm"
                   options={[
                     { value: 'now', label: t('doses.now') },
+                    ...(plannedAt && plannedAt.getTime() < openedAt
+                      ? [
+                          {
+                            value: 'planned' as const,
+                            label: t('doses.atPlanned', {
+                              // A 01:00 night shot reads as the evening it belongs to.
+                              time: `${
+                                plannedAt.getHours() < 6
+                                  ? t('doses.nightOf', {
+                                      day: fmtDate(
+                                        new Date(plannedAt.getTime() - 86_400_000),
+                                        locale,
+                                        'EEE',
+                                      ),
+                                    })
+                                  : fmtDate(plannedAt, locale, 'EEE')
+                              } ${String(plannedAt.getHours()).padStart(2, '0')}:${String(plannedAt.getMinutes()).padStart(2, '0')}`,
+                            }),
+                          },
+                        ]
+                      : []),
                     { value: 'custom', label: t('doses.otherTime') },
                   ]}
                 />
@@ -443,6 +502,9 @@ function LogDoseForm({
   )
 }
 
+/** Entry units a line offers: syringe units when a vial allows it, plus mg and mcg. */
+type Pick = 'units' | DoseUnit
+
 function DoseLine({
   line,
   vials,
@@ -451,6 +513,7 @@ function DoseLine({
   onChange,
   onRemove,
   partnerDoses = [],
+  lastMg,
 }: {
   line: Line
   vials: readonly InventoryRow[]
@@ -460,31 +523,60 @@ function DoseLine({
   onRemove: () => void
   /** Blend partners drawn with this line and the mg each one gets. */
   partnerDoses?: { compoundId: string; mg: number | null }[]
+  /** mg of the last logged dose of this compound, for the quick pick. */
+  lastMg?: number
 }) {
   const { t } = useTranslation()
-  const unit = unitOf(line.compoundId)
+  const native = unitOf(line.compoundId)
   const vial = vials.find((v) => v.id === line.inventoryId)
   const concOf = (v: InventoryRow) => concentrationFor(v, line.compoundId)
   const conc = vial ? concOf(vial) : null
   const value = parse(line.amount)
   const canUseUnits = vials.some((v) => concOf(v))
+  // Peptides are dosed in mg or mcg interchangeably; other units (IU…) stay as they are.
+  const doseUnits: DoseUnit[] = native === 'mg' || native === 'mcg' ? ['mg', 'mcg'] : [native]
+  const picks: Pick[] = [...(canUseUnits ? (['units'] as const) : []), ...doseUnits]
+  const current: Pick = line.mode === 'units' ? 'units' : line.doseUnit
 
-  const lineDoseMg =
-    value > 0
-      ? line.mode === 'units'
-        ? conc
-          ? unitsToMg(value, conc)
-          : null
-        : toMg(value, unit)
-      : null
+  /** mg of an amount typed in a given pick; null when it cannot be converted. */
+  const mgOf = (amount: number, pick: Pick, c: number | null = conc) =>
+    !(amount > 0) ? null : pick === 'units' ? (c ? unitsToMg(amount, c) : null) : toMg(amount, pick)
+  /** The same mg written in a given pick. */
+  const amountIn = (mg: number, pick: Pick, c: number | null) =>
+    pick === 'units' ? (c ? plain(mgToUnits(mg, c)) : '') : plain(fromMg(mg, pick))
 
-  // Live conversion readout: units → dose, or dose → units when the vial allows it.
-  let conversion: string | null = null
-  if (value > 0 && conc) {
-    conversion =
-      line.mode === 'units'
-        ? `= ${fmtNumber(fromMg(unitsToMg(value, conc), unit), locale, 1)} ${t(`units.${unit}`)}`
-        : `= ${fmtNumber(mgToUnits(toMg(value, unit), conc), locale, 1)} U`
+  const lineDoseMg = mgOf(value, current)
+
+  // Live readout of the same dose in the other units.
+  const others =
+    lineDoseMg === null
+      ? []
+      : picks
+          .filter((p) => p !== current && (p !== 'units' || conc))
+          .map((p) =>
+            p === 'units'
+              ? `${fmtNumber(mgToUnits(lineDoseMg, conc!), locale, 1)} U`
+              : fmtDose(lineDoseMg, p, locale),
+          )
+
+  function choose(pick: Pick) {
+    if (pick === current) return
+    // Convert what is typed so switching never silently changes the dose.
+    let inventoryId = line.inventoryId
+    let c = conc
+    if (pick === 'units' && !c) {
+      const target = vials.find((v) => concOf(v))
+      if (target) {
+        inventoryId = target.id
+        c = concOf(target)
+      }
+    }
+    const amount = lineDoseMg !== null ? amountIn(lineDoseMg, pick, c) : line.amount
+    onChange(
+      pick === 'units'
+        ? { mode: 'units', amount, inventoryId }
+        : { mode: 'dose', doseUnit: pick, amount, inventoryId },
+    )
   }
 
   // Units only mean something against a vial: without one, fall back to the dose itself.
@@ -492,32 +584,23 @@ function DoseLine({
     const next = vials.find((v) => v.id === inventoryId)
     const nextConc = next ? concOf(next) : null
     if (line.mode === 'units' && !nextConc) {
-      const amount = value > 0 && conc ? plain(fromMg(unitsToMg(value, conc), unit)) : line.amount
-      onChange({ inventoryId, mode: 'dose', amount })
-    } else if (line.mode === 'units' && nextConc && conc && value > 0) {
+      const amount = lineDoseMg !== null ? amountIn(lineDoseMg, native, null) : line.amount
+      onChange({ inventoryId, mode: 'dose', doseUnit: native, amount })
+    } else if (line.mode === 'units' && nextConc && lineDoseMg !== null) {
       // Same dose from a vial of another strength: keep the dose, recompute the units.
-      onChange({ inventoryId, amount: plain(mgToUnits(unitsToMg(value, conc), nextConc)) })
+      onChange({ inventoryId, amount: amountIn(lineDoseMg, 'units', nextConc) })
     } else {
       onChange({ inventoryId })
     }
   }
 
-  function switchMode(mode: EntryMode) {
-    if (mode === line.mode) return
-    // Convert the typed amount so switching never silently changes the dose.
-    let amount = line.amount
-    let inventoryId = line.inventoryId
-    const target = conc ? vial : vials.find((v) => concOf(v))
-    const targetConc = target ? concOf(target) : null
-    if (mode === 'units' && target) inventoryId = target.id
-    if (value > 0 && targetConc) {
-      amount =
-        mode === 'units'
-          ? plain(mgToUnits(toMg(value, unit), targetConc))
-          : plain(fromMg(unitsToMg(value, targetConc), unit))
-    }
-    onChange({ mode, amount, inventoryId })
-  }
+  /** Quick picks: the protocol's dose and the last one logged, in the current unit. */
+  const quick = [
+    line.plannedMg ? { key: 'plan', label: t('doses.quickPlan'), mg: line.plannedMg } : null,
+    lastMg && Math.abs(lastMg - (line.plannedMg ?? -1)) > 1e-9
+      ? { key: 'last', label: t('doses.quickLast'), mg: lastMg }
+      : null,
+  ].filter((q): q is { key: string; label: string; mg: number } => q !== null)
 
   return (
     <div className="rounded-control border border-line bg-panel-2 p-3">
@@ -543,39 +626,63 @@ function DoseLine({
           </button>
         )}
       </div>
-      <div className="flex items-stretch gap-2">
-        <div className="min-w-0 flex-1">
-          <Input
-            inputMode="decimal"
-            aria-label={t('doses.dose')}
-            value={line.amount}
-            onChange={(e) => onChange({ amount: e.target.value })}
-            suffix={line.mode === 'units' ? 'U' : t(`units.${unit}`)}
-            className="readout bg-panel text-[20px] font-semibold"
-          />
+      <Input
+        inputMode="decimal"
+        aria-label={t('doses.dose')}
+        value={line.amount}
+        onChange={(e) => onChange({ amount: e.target.value })}
+        suffix={current === 'units' ? 'U' : t(`units.${current}`)}
+        className="readout bg-panel text-[22px] font-semibold"
+      />
+      {picks.length > 1 && (
+        <Segmented<Pick>
+          value={current}
+          onChange={choose}
+          size="sm"
+          className="mt-2"
+          options={picks.map((p) => ({
+            value: p,
+            label: p === 'units' ? t('doses.pickUnits') : t(`units.${p}`),
+          }))}
+        />
+      )}
+      {others.length > 0 && (
+        <div className="readout mt-2 text-[13px] font-semibold text-signal">
+          = {others.join(' · ')}
         </div>
-        {canUseUnits && (
-          <div className="w-[108px] shrink-0">
-            <Segmented<EntryMode>
-              value={line.mode}
-              onChange={switchMode}
-              size="sm"
-              className="h-12"
-              options={[
-                { value: 'units', label: 'U' },
-                { value: 'dose', label: t(`units.${unit}`) },
-              ]}
-            />
-          </div>
-        )}
-      </div>
-      <div className="mt-2 flex items-center justify-between gap-2">
+      )}
+      {quick.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {quick.map((q) => (
+            <button
+              key={q.key}
+              type="button"
+              onClick={() =>
+                onChange({
+                  amount: amountIn(q.mg, current, conc) || plain(fromMg(q.mg, native)),
+                  ...(current === 'units' && !conc
+                    ? { mode: 'dose' as const, doseUnit: native }
+                    : {}),
+                })
+              }
+              className="rounded-full border border-line-strong bg-panel px-2.5 py-1 text-[12px]"
+            >
+              <span className="text-muted">{q.label}</span>{' '}
+              <span className="readout font-semibold">
+                {conc ? `${fmtNumber(mgToUnits(q.mg, conc), locale, 1)} U · ` : ''}
+                {fmtDose(q.mg, native, locale)}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="mt-2">
         {vials.length > 0 ? (
           <select
             aria-label={t('doses.inventory')}
             value={line.inventoryId}
             onChange={(e) => changeVial(e.target.value)}
-            className="min-w-0 max-w-[65%] truncate bg-transparent font-mono text-[11.5px] text-muted outline-none"
+            className="w-full truncate bg-transparent font-mono text-[11.5px] text-muted outline-none"
           >
             <option value="">{t('doses.noInventory')}</option>
             {vials.map((v) => (
@@ -587,12 +694,9 @@ function DoseLine({
         ) : (
           <span className="font-mono text-[11.5px] text-muted">{t('doses.noVial')}</span>
         )}
-        {conversion && (
-          <span className="readout text-[12.5px] font-semibold text-signal">{conversion}</span>
-        )}
       </div>
       {partnerDoses.length > 0 && (
-        <div className="mt-1 flex flex-wrap justify-end gap-x-3 text-[12px] text-muted">
+        <div className="mt-1 flex flex-wrap gap-x-3 text-[12px] text-muted">
           {partnerDoses.map((p) => (
             <span key={p.compoundId} className="readout">
               {compoundById(p.compoundId)?.names.generic}{' '}
@@ -606,7 +710,7 @@ function DoseLine({
       {vial && lineDoseMg !== null && lineDoseMg > Number(vial.remaining_mg) + 1e-9 && (
         <p className="mt-1.5 text-[12px] font-semibold text-warn">
           {t('doses.vialShort', {
-            left: fmtDose(Number(vial.remaining_mg), unit, locale),
+            left: fmtDose(Number(vial.remaining_mg), native, locale),
           })}
         </p>
       )}
