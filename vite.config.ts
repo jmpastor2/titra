@@ -46,6 +46,14 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
+          // Launch screens are fetched by iOS itself; the Cyrillic, Greek and Vietnamese font
+          // subsets are only downloaded if text ever needs them. Neither belongs in the install.
+          globIgnores: [
+            'splash/**',
+            '**/*-cyrillic-*.woff2',
+            '**/*-greek-*.woff2',
+            '**/*-vietnamese-*.woff2',
+          ],
           navigateFallback: `${base}index.html`,
           navigateFallbackDenylist: [/^\/api\//],
           runtimeCaching: [
