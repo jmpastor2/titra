@@ -15,7 +15,8 @@ export function ExportPage() {
   const { toast } = useToast()
   const doses = useDoses(patientId, 3650)
   const symptoms = useSymptoms(patientId, 3650)
-  const measurements = useMeasurements(patientId, 3650)
+  // The export wants every row, water and protein included.
+  const measurements = useMeasurements(patientId, 3650, true)
   const labs = useLabs(patientId)
 
   const stamp = new Date().toISOString().slice(0, 10)

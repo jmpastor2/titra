@@ -1,4 +1,4 @@
-import { BellRing, Info, Smartphone } from 'lucide-react'
+import { BellRing, Info, Smartphone, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
@@ -162,6 +162,11 @@ export function RemindersCard() {
             onChange={(v) => void toggle(v)}
           />
         </div>
+
+        <p className="flex items-start gap-2 text-[12px] leading-snug text-muted">
+          <TrendingUp className="mt-px size-3.5 shrink-0" />
+          {t('reminders.decisionsHint')}
+        </p>
 
         {enabled && (
           <>

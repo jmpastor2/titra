@@ -1,96 +1,118 @@
-import { subDays } from 'date-fns'
+/**
+ * The level instrument of one substance: how much is on board and where it is heading for
+ * the ones with a curve worth drawing, one mark per administration for the rest, with the
+ * range, the titration, adherence and the next dose beside it.
+ */
 import { Clock, Syringe } from 'lucide-react'
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Badge, ProgressRing, Stat } from '@/components/ui/primitives'
+import { Badge, ProgressRing, Skeleton, Stat } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
-import type { SymptomRow } from '@/data/database.types'
-import { plannedDoses } from '@/domain/dosing/schedule'
-import { exposureCurve, steadyState } from '@/domain/pk/engine'
-import { projectPlanned } from '@/domain/pk/scenarios'
-import { fmtDateTime, fmtDose, fmtHours, fmtNumber, fmtPercent } from '@/lib/format'
+import type { InventoryRow, SymptomRow } from '@/data/database.types'
+import { cycleInfo, type CycleInfo } from '@/domain/dosing/cycle'
+import { useScheduleLabel } from '@/features/protocols/scheduleLabel'
+import { fmtDate, fmtDateTime, fmtDose, fmtHours, fmtNumber, fmtPercent } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { scaledAmount, stepChanges } from './chartScale'
+import { LegendItem, LegendList, NextDoseChip, RangeTabs } from './CardParts'
+import { Head, type DoseMark } from './chartParts'
+import { DoseTimelineChart } from './DoseTimelineChart'
+import { amountIn } from './chartScale'
+import { ADMIN_STATES, buildTimeline, type AdminState, type TimelineModel } from './doseTimeline'
+import { buildCurveBundle } from './exposureCurves'
+import { levelKind } from './levelSummary'
 import { PkChart, type StepMarker } from './PkChart'
+import { cropToActivity, firstActivity, timelineWindow, type RangeKey } from './ranges'
+import { stepLabel } from './stepLabels'
+import { fmtAgo } from './relative'
+import { administrationOf, describeDoses, noBreak, unitsFor } from './units'
 import type { CompoundExposure } from './useExposure'
 
 const NO_SYMPTOMS: SymptomRow[] = []
-const DAY_MS = 86_400_000
-/** Stretch the projection to show the next titration step when it is this close. */
-const MAX_PROJECTION_DAYS = 35
+const NO_VIALS: InventoryRow[] = []
 
 export function ExposureCard({
   x,
   symptoms = NO_SYMPTOMS,
-  now,
   onLogDose,
   readOnly = false,
-  historyDays = 28,
-  projectionDays = 14,
+  vials = NO_VIALS,
+  showTitle = true,
 }: {
   x: CompoundExposure
   symptoms?: SymptomRow[]
-  now: Date
+  /** The clock is `x.asOf`; the prop stays so existing callers keep compiling. */
+  now?: Date
   onLogDose?: () => void
   readOnly?: boolean
-  historyDays?: number
-  projectionDays?: number
+  /** Every vial, to give doses in syringe units when the concentration is known. */
+  vials?: readonly InventoryRow[]
+  /** The heading is redundant on a page that already carries the substance name. */
+  showTitle?: boolean
 }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
+  const scheduleLabel = useScheduleLabel()
+  const now = x.asOf
   const unit = x.compound?.defaultUnit ?? 'mg'
-
   const color = compoundColor(x.compoundId)
-  const toNextStep = x.titration?.daysToNextStep ?? null
-  const horizonDays =
-    toNextStep !== null && toNextStep >= projectionDays - 3
-      ? Math.min(MAX_PROJECTION_DAYS, Math.max(projectionDays, toNextStep + 7))
-      : projectionDays
+  const kind = levelKind(x)
+  const protocol = x.protocolLike
+  const [range, setRange] = useState<RangeKey>('4w')
+  const active: RangeKey = range === 'cycle' && !protocol ? '4w' : range
 
-  const curves = useMemo(() => {
-    if (!x.pk) return null
-    const first = x.history[0]?.at
-    const from =
-      first && first > subDays(now, historyDays) ? subDays(first, 1) : subDays(now, historyDays)
-    const to = new Date(now.getTime() + horizonDays * DAY_MS)
-    const history = exposureCurve(x.history, x.pk, { from, to: now, stepH: 3, refineAtDoses: true })
-    const projection = projectPlanned({
-      compoundId: x.compoundId,
-      pk: x.pk,
+  // Only the range on screen is computed; the figures are rebuilt when the data or the minute moves.
+  const curve = useMemo(
+    () =>
+      kind === 'curve' && x.pk
+        ? buildCurveBundle({
+            compoundId: x.compoundId,
+            pk: x.pk,
+            history: x.history,
+            protocol,
+            daysToNextStep: x.titration?.daysToNextStep ?? null,
+            range: active,
+            now,
+          })
+        : null,
+    [kind, x, protocol, active, now],
+  )
+  const timeline = useMemo<TimelineModel | null>(() => {
+    if (kind !== 'timeline') return null
+    const win = cropToActivity(
+      timelineWindow(active, now, protocol),
+      firstActivity(protocol, x.history),
+    )
+    return buildTimeline({
+      protocol,
       history: x.history,
-      protocol: x.protocolLike,
+      partners: x.partners.map((p) => ({ compoundId: p.compoundId, history: p.history })),
+      ...win,
       now,
-      horizonDays,
-      stepH: 3,
-    }).points
-    const planned = x.protocolLike
-      ? plannedDoses(x.protocolLike, x.history, now, to).map((p) => ({ at: p.at, mg: p.doseMg }))
-      : []
-    const changes = x.protocolLike ? stepChanges(x.protocolLike, from, to) : []
-    const ss =
-      x.reference && x.reference.doseMg > 0
-        ? steadyState(x.reference.doseMg, x.reference.intervalH, x.pk)
-        : null
-    return { history, projection, planned, changes, ss }
-  }, [x, now, historyDays, horizonDays])
+    })
+  }, [kind, x, protocol, active, now])
+
+  // What happened to each administration on the curve's range, judged like the timeline's.
+  const marks = useMemo<DoseMark[] | undefined>(() => {
+    if (!curve) return undefined
+    return buildTimeline({
+      protocol,
+      history: x.history,
+      from: curve.from,
+      to: curve.to,
+      now,
+    }).items.map((i) => ({ at: i.at, state: i.state }))
+  }, [curve, protocol, x.history, now])
 
   const stepMarkers = useMemo<StepMarker[]>(
     () =>
-      (curves?.changes ?? []).map((c) => ({
+      (curve?.steps ?? []).map((c) => ({
         at: c.at,
-        label:
-          c.kind === 'pause'
-            ? t('charts.pause')
-            : `${c.kind === 'down' ? '↓' : c.kind === 'up' ? '↑' : '▸'} ${fmtDose(c.doseMg, unit, locale)}`,
+        label: stepLabel(c, unit, locale, t('charts.pause')),
       })),
-    [curves, t, unit, locale],
+    [curve, unit, locale, t],
   )
-
-  const nowAmount =
-    x.nowMg !== null ? scaledAmount(x.nowMg, Math.max(x.nowMg, curves?.ss?.peakMg ?? 0)) : null
-
   const symptomMarkers = useMemo(
     () =>
       symptoms.map((s) => ({
@@ -101,117 +123,149 @@ export function ExposureCard({
     [symptoms, t],
   )
 
-  const name = x.compound?.names.generic ?? x.compoundId
   const ref = x.reference
-  const intervalLabel = ref
-    ? ref.intervalH === 168
-      ? t('protocols.weekly')
-      : ref.intervalH === 24
-        ? t('protocols.daily')
-        : t('protocols.everyNDays', { n: fmtNumber(ref.intervalH / 24, locale, 1) })
-    : null
+  const current =
+    ref && ref.doseMg > 0 ? administrationOf(protocol, x.compoundId, ref.doseMg) : null
+  const nextDoses = x.next ? administrationOf(protocol, x.compoundId, x.next.doseMg) : null
+  const amount = x.nowMg !== null ? amountIn(x.nowMg, unit) : null
+  const info = useMemo(() => (protocol ? cycleInfo(protocol, now) : null), [protocol, now])
 
   return (
     <Card padded={false} className="overflow-hidden">
       <div className="flex items-start justify-between gap-3 px-4 pt-4">
-        <div>
-          <h2 className="text-[17px] font-bold tracking-tight">{name}</h2>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {ref && ref.doseMg > 0 && (
-              <Badge tone="brand">
-                {fmtDose(ref.doseMg, unit, locale)} · {intervalLabel}
-              </Badge>
+        <div className="min-w-0">
+          {showTitle && <h2 className="text-[17px] font-bold tracking-tight">{x.title}</h2>}
+          <div className={showTitle ? 'mt-1 flex flex-wrap gap-1.5' : 'flex flex-wrap gap-1.5'}>
+            {current && protocol && (
+              <>
+                <Badge tone="brand">{describeDoses(current, locale)}</Badge>
+                <Badge>{scheduleLabel(protocol.steps, protocol.times)}</Badge>
+              </>
             )}
-            {x.titration && !x.titration.isMaintenance && (
+            {info && info.phase === 'rest' && <Badge>{t('charts.cycle.resting')}</Badge>}
+            {info && info.phase === 'dosing' && info.stepCount > 1 && (
               <Badge tone="accent">
-                {t('dashboard.step', {
-                  n: x.titration.stepIndex + 1,
-                  total: x.titration.totalSteps,
-                })}
+                {t('charts.cycle.step', { n: info.stepNumber, total: info.stepCount })}
               </Badge>
             )}
-            {x.titration?.isMaintenance && <Badge>{t('dashboard.maintenance')}</Badge>}
+            {info?.phase === 'maintenance' && <Badge>{t('charts.cycle.maintenance')}</Badge>}
           </div>
         </div>
-        {x.next && <NextDoseChip next={x.next} unit={unit} now={now} />}
+        {x.next && nextDoses && (
+          <NextDoseChip
+            next={x.next}
+            now={now}
+            dose={describeDoses(nextDoses, locale)}
+            units={unitsFor(nextDoses, vials)}
+          />
+        )}
       </div>
 
-      {x.pk && nowAmount ? (
-        <>
-          <div className="flex items-center gap-4 px-4 pt-4">
-            <ProgressRing
-              fraction={x.progress ? Math.min(1, x.progress.fraction) : 0}
-              size={92}
-              stroke={9}
-            >
-              <div className="text-center leading-none">
-                <div className="readout text-[20px] font-bold">
-                  {x.progress ? fmtPercent(Math.min(x.progress.fraction, 1.5), locale) : '—'}
-                </div>
-                <div className="spec mx-auto mt-1 max-w-[60px] text-[8.5px] leading-tight tracking-[0.08em]">
-                  {t('dashboard.steadyStateShort')}
-                </div>
+      {kind === 'curve' && amount ? (
+        <div className="flex items-center gap-4 px-4 pt-4">
+          <ProgressRing
+            fraction={x.progress ? Math.min(1, x.progress.fraction) : 0}
+            size={92}
+            stroke={9}
+          >
+            <div className="text-center leading-none">
+              <div className="readout text-[20px] font-bold">
+                {x.progress ? fmtPercent(Math.min(x.progress.fraction, 1.5), locale) : '—'}
               </div>
-            </ProgressRing>
-            <div className="flex-1">
-              <Stat
-                label={t('dashboard.onBoard')}
-                value={fmtNumber(nowAmount.value, locale, nowAmount.digits)}
-                unit={nowAmount.unit}
-                hint={
-                  x.progress && ref
-                    ? x.progress.fraction >= 0.9
-                      ? `${t('dashboard.reached')} · ${t('dashboard.steadyStateOf', { dose: fmtDose(ref.doseMg, unit, locale) })}`
-                      : t('dashboard.toReach', { time: fmtHours(x.progress.hoursTo90, locale) })
-                    : t('dashboard.onBoardHint')
-                }
-              />
+              <div className="spec mx-auto mt-1 max-w-[60px] text-[8.5px] leading-tight tracking-[0.08em]">
+                {t('charts.steady.short')}
+              </div>
             </div>
+          </ProgressRing>
+          <div className="min-w-0 flex-1">
+            <Stat
+              label={t('levels.onBoard')}
+              value={fmtNumber(amount.value, locale, amount.digits)}
+              unit={amount.label}
+              hint={
+                x.progress && ref
+                  ? x.progress.fraction >= 0.9
+                    ? t('charts.steady.reached', { dose: fmtDose(ref.doseMg, unit, locale) })
+                    : t('charts.steady.toReach', { time: fmtHours(x.progress.hoursTo90, locale) })
+                  : t('charts.steady.hint')
+              }
+            />
           </div>
+        </div>
+      ) : timeline ? (
+        <div className="flex items-center gap-4 px-4 pt-4">
+          <ProgressRing
+            fraction={timeline.summary.expected > 0 ? timeline.summary.ratio : 0}
+            size={92}
+            stroke={9}
+          >
+            <div className="text-center leading-none">
+              <div className="readout text-[20px] font-bold">
+                {timeline.summary.expected > 0 ? fmtPercent(timeline.summary.ratio, locale) : '—'}
+              </div>
+              <div className="spec mx-auto mt-1 max-w-[60px] text-[8.5px] leading-tight tracking-[0.08em]">
+                {t('charts.timeline.adherenceShort')}
+              </div>
+            </div>
+          </ProgressRing>
+          <div className="min-w-0 flex-1">
+            <Stat
+              label={t('levels.lastDose')}
+              value={x.lastDose ? fmtAgo(x.lastDose.at, now, locale, t('levels.justNow')) : '—'}
+              hint={
+                x.lastDose
+                  ? `${fmtDateTime(x.lastDose.at, locale)} · ${describeDoses(
+                      [
+                        { compoundId: x.compoundId, doseMg: x.lastDose.mg },
+                        ...x.partners.flatMap((p) => {
+                          const same = p.history.find(
+                            (h) => h.at.getTime() === x.lastDose?.at.getTime(),
+                          )
+                          return same ? [{ compoundId: p.compoundId, doseMg: same.mg }] : []
+                        }),
+                      ],
+                      locale,
+                    )}`
+                  : t('charts.timeline.noDoses')
+              }
+            />
+          </div>
+        </div>
+      ) : null}
 
-          <div className="px-3 pt-3">
-            {curves && (
-              <PkChart
-                history={curves.history}
-                projection={curves.projection}
-                doses={x.history}
-                planned={curves.planned}
-                steps={stepMarkers}
-                symptoms={symptomMarkers}
-                now={now}
-                color={color}
-                height={210}
-                ssBand={
-                  curves.ss ? { troughMg: curves.ss.troughMg, peakMg: curves.ss.peakMg } : undefined
-                }
-              />
-            )}
-            <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1 pb-1 pt-2 text-[11px] text-muted">
+      <div className="px-3 pt-3">
+        <div className="px-1 pb-2">
+          <RangeTabs value={active} onChange={setRange} withCycle={Boolean(protocol)} />
+        </div>
+        {curve && (
+          <>
+            <PkChart
+              history={curve.history}
+              projection={curve.projection}
+              marks={marks}
+              steps={stepMarkers}
+              symptoms={symptomMarkers}
+              bands={curve.bands}
+              now={now}
+              color={color}
+              unit={unit}
+              height={210}
+              label={t('charts.exposureAria')}
+            />
+            <LegendList>
               <LegendItem
                 swatch={<span className="h-[2px] w-4 rounded" style={{ background: color }} />}
               >
-                {t('dashboard.history')}
+                {t('charts.legend.history')}
               </LegendItem>
               <LegendItem
                 swatch={
                   <span className="w-4 border-t-2 border-dashed" style={{ borderColor: color }} />
                 }
               >
-                {t('dashboard.projection')}
+                {t('charts.legend.projection')}
               </LegendItem>
-              <LegendItem
-                swatch={
-                  <span className="flex items-center gap-0.5">
-                    <span className="size-[7px] rounded-full" style={{ background: color }} />
-                    <span
-                      className="size-[7px] rounded-full border-[1.5px] bg-panel"
-                      style={{ borderColor: color }}
-                    />
-                  </span>
-                }
-              >
-                {t('charts.legend.doses')}
-              </LegendItem>
+              <MarkLegendItems states={markStates(marks)} color={color} />
               {stepMarkers.length > 0 && (
                 <LegendItem
                   swatch={
@@ -221,7 +275,7 @@ export function ExposureCard({
                   {t('charts.legend.step')}
                 </LegendItem>
               )}
-              {curves?.ss && (
+              {curve.bands.length > 0 && (
                 <LegendItem
                   swatch={
                     <span
@@ -235,61 +289,50 @@ export function ExposureCard({
               )}
               {symptomMarkers.length > 0 && (
                 <LegendItem swatch={<span className="size-2 rounded-full bg-[var(--chart-3)]" />}>
-                  {t('dashboard.symptomsOverlay')}
+                  {t('charts.legend.symptoms')}
                 </LegendItem>
               )}
-            </ul>
-          </div>
-        </>
-      ) : (
-        <p className="px-4 pt-3 text-[13px] text-muted">{t('dashboard.pkNotAvailable')}</p>
-      )}
+            </LegendList>
+          </>
+        )}
+        {timeline && (
+          <>
+            <DoseTimelineChart model={timeline} now={now} color={color} unit={unit} />
+            <TimelineLegend model={timeline} color={color} />
+            <p className="px-1 pb-1 pt-1 text-[11.5px] leading-snug text-muted">
+              {x.pk ? t('charts.timeline.whyShort') : t('charts.timeline.whyNoData')}
+            </p>
+          </>
+        )}
+      </div>
 
       <div className="mt-3 grid grid-cols-2 gap-px border-t border-line bg-line">
         <div className="bg-panel px-4 py-3">
-          <div className="text-[11.5px] font-semibold uppercase tracking-wider text-muted">
-            {t('dashboard.titration')}
-          </div>
-          {x.titration ? (
-            <div className="mt-0.5 text-[13.5px]">
-              {x.titration.isMaintenance ? (
-                <span>{t('dashboard.maintenance')}</span>
-              ) : x.titration.nextDoseMg !== null && x.titration.daysToNextStep !== null ? (
-                <span>
-                  {t('dashboard.nextStep', {
-                    dose: fmtDose(x.titration.nextDoseMg, unit, locale),
-                    days: t('common.days', { count: Math.max(0, x.titration.daysToNextStep) }),
-                  })}
-                </span>
-              ) : (
-                <span>
-                  {t('dashboard.step', {
-                    n: x.titration.stepIndex + 1,
-                    total: x.titration.totalSteps,
-                  })}
-                </span>
-              )}
-            </div>
-          ) : (
-            <div className="mt-0.5 text-[13.5px] text-muted">—</div>
-          )}
+          <div className="spec">{t('charts.cycle.title')}</div>
+          <Titration info={info} x={x} vials={vials} className="mt-1 text-[13.5px]" />
         </div>
         <div className="bg-panel px-4 py-3">
-          <div className="text-[11.5px] font-semibold uppercase tracking-wider text-muted">
-            {t('dashboard.adherence')}
-          </div>
-          {x.adherence ? (
-            <div className="mt-0.5 text-[13.5px]">
-              <span className="tabular font-semibold">{fmtPercent(x.adherence.ratio, locale)}</span>
-              <span className="ml-1.5 text-muted">
-                {t('dashboard.adherenceHint', {
-                  taken: x.adherence.taken,
-                  expected: x.adherence.expected,
-                })}
-              </span>
-            </div>
+          {timeline ? (
+            <TimelineCounts model={timeline} range={active} />
           ) : (
-            <div className="mt-0.5 text-[13.5px] text-muted">—</div>
+            <>
+              <div className="spec">{t('charts.adherence.title')}</div>
+              {x.adherence ? (
+                <div className="mt-1 text-[13.5px]">
+                  <span className="tabular font-semibold">
+                    {fmtPercent(x.adherence.ratio, locale)}
+                  </span>
+                  <span className="ml-1.5 text-muted">
+                    {t('charts.adherence.hint', {
+                      taken: x.adherence.taken,
+                      expected: x.adherence.expected,
+                    })}
+                  </span>
+                </div>
+              ) : (
+                <div className="mt-1 text-[13.5px] text-muted">—</div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -297,13 +340,13 @@ export function ExposureCard({
       {!readOnly && onLogDose && (
         <div className="border-t border-line p-3">
           <Button block size="lg" leading={<Syringe className="size-5" />} onClick={onLogDose}>
-            {t('dashboard.logNow')}
+            {t('charts.logDose')}
           </Button>
         </div>
       )}
-      {x.lastDose && (
-        <div className="flex items-center gap-1.5 px-4 pb-3 text-[12px] text-muted">
-          <Clock className="size-3.5" /> {t('clinic.lastDose')}:{' '}
+      {kind === 'curve' && x.lastDose && (
+        <div className="flex items-center gap-1.5 border-t border-line px-4 py-3 text-[12px] text-muted">
+          <Clock className="size-3.5" /> {t('charts.lastDose')}:{' '}
           {fmtDateTime(x.lastDose.at, locale)} · {fmtDose(x.lastDose.mg, unit, locale)}
         </div>
       )}
@@ -311,47 +354,181 @@ export function ExposureCard({
   )
 }
 
-function NextDoseChip({
-  next,
-  unit,
-  now,
-}: {
-  next: NonNullable<CompoundExposure['next']>
-  unit: 'mg' | 'mcg' | 'iu' | 'units' | 'ml'
-  now: Date
-}) {
-  const { t } = useTranslation()
-  const { locale } = useLocale()
-  const hours = (next.at.getTime() - now.getTime()) / 3_600_000
-  const tone = next.status === 'overdue' ? 'danger' : next.status === 'due' ? 'warn' : 'neutral'
-  const label =
-    next.status === 'overdue'
-      ? t('dashboard.overdue', { time: fmtHours(next.overdueH, locale) })
-      : next.status === 'due'
-        ? t('dashboard.due')
-        : t('dashboard.in', { time: fmtHours(hours, locale) })
+/** The loading shape of the card, so the page does not jump when the data arrives. */
+export function ExposureCardSkeleton() {
   return (
-    <div className="shrink-0 text-right">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-        {t('dashboard.nextDose')}
+    <Card padded={false} className="overflow-hidden" aria-hidden>
+      <div className="flex items-start justify-between gap-3 px-4 pt-4">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <Skeleton className="h-14 w-24" />
       </div>
-      <Badge tone={tone} className="mt-1 text-[12px]">
-        {label}
-      </Badge>
-      <div className="tabular mt-1 text-[12px] text-muted">
-        {fmtDose(next.doseMg, unit, locale)}
+      <div className="flex items-center gap-4 px-4 pt-4">
+        <Skeleton className="size-[92px] rounded-full" />
+        <div className="flex flex-1 flex-col gap-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-7 w-28" />
+          <Skeleton className="h-3 w-36" />
+        </div>
       </div>
-    </div>
+      <div className="px-4 pt-4">
+        <Skeleton className="h-10 w-full rounded-full" />
+        <Skeleton className="mt-3 h-[230px] w-full" />
+      </div>
+      <div className="mt-4 h-[72px] border-t border-line" />
+    </Card>
   )
 }
 
-function LegendItem({ swatch, children }: { swatch: ReactNode; children: ReactNode }) {
+/** The states present among the marks, in legend order. */
+function markStates(marks: readonly DoseMark[] | undefined): AdminState[] {
+  return ADMIN_STATES.filter((s) => marks?.some((m) => m.state === s))
+}
+
+/** The states that appear on the chart, as the marks they are drawn with. */
+function MarkLegendItems({ states, color }: { states: readonly AdminState[]; color: string }) {
+  const { t } = useTranslation()
   return (
-    <li className="inline-flex items-center gap-1.5">
-      <span className="inline-flex items-center" aria-hidden>
-        {swatch}
-      </span>
-      {children}
-    </li>
+    <>
+      {states.map((s) => (
+        <LegendItem
+          key={s}
+          swatch={
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <Head state={s} cx={8} cy={8} r={3.6} color={color} />
+            </svg>
+          }
+        >
+          {t(`charts.legend.${s}`)}
+        </LegendItem>
+      ))}
+    </>
+  )
+}
+
+/** The legend of the dose timeline: the marks present and the dose changes. */
+function TimelineLegend({ model, color }: { model: TimelineModel; color: string }) {
+  const { t } = useTranslation()
+  return (
+    <LegendList>
+      <MarkLegendItems states={model.states} color={color} />
+      {model.steps.length > 0 && (
+        <LegendItem
+          swatch={<span className="h-3 border-l border-dashed" style={{ borderColor: color }} />}
+        >
+          {t('charts.legend.step')}
+        </LegendItem>
+      )}
+    </LegendList>
+  )
+}
+
+/** Taken, missed, off the hour and extra over the range on screen. */
+function TimelineCounts({ model, range }: { model: TimelineModel; range: RangeKey }) {
+  const { t } = useTranslation()
+  const s = model.summary
+  return (
+    <>
+      <div className="spec">{t(`charts.timeline.countsTitle.${range}`)}</div>
+      <div className="mt-1 text-[13.5px]">
+        {model.hasPlan ? (
+          <>
+            <span className="tabular font-semibold">
+              {t('charts.timeline.taken', { taken: s.taken, expected: s.expected })}
+            </span>
+            <div className="mt-0.5 flex flex-wrap gap-x-2 text-[12px] text-muted">
+              {s.missed > 0 && (
+                <span className="text-danger">
+                  {t('charts.timeline.missed', { count: s.missed })}
+                </span>
+              )}
+              {s.offTime > 0 && <span>{t('charts.timeline.offTime', { count: s.offTime })}</span>}
+              {s.extras > 0 && <span>{t('charts.timeline.extras', { count: s.extras })}</span>}
+              {s.missed + s.offTime + s.extras === 0 && s.expected > 0 && (
+                <span>{t('charts.timeline.allOnTime')}</span>
+              )}
+            </div>
+          </>
+        ) : (
+          <span className="tabular font-semibold">
+            {t('charts.timeline.free', { count: model.items.length })}
+          </span>
+        )}
+      </div>
+    </>
+  )
+}
+
+/** Week of the cycle, the next change of dose (also in syringe units) and when it is. */
+function Titration({
+  info,
+  x,
+  vials,
+  className,
+}: {
+  info: CycleInfo | null
+  x: CompoundExposure
+  vials: readonly InventoryRow[]
+  className?: string
+}) {
+  const { t } = useTranslation()
+  const { locale } = useLocale()
+  if (!info) return <div className={className}>—</div>
+
+  const week =
+    info.phase === 'before'
+      ? t('charts.cycle.before', { date: fmtDate(info.startsOn, locale, 'EEE d MMM') })
+      : info.phase === 'finished'
+        ? t('charts.cycle.finished')
+        : info.phase === 'maintenance'
+          ? t('charts.cycle.maintenanceWeek', { n: info.week })
+          : info.phase === 'rest'
+            ? t('charts.cycle.resting')
+            : info.doseWeeks !== null && info.doseWeek !== null
+              ? t('charts.cycle.week', { n: info.doseWeek, total: info.doseWeeks })
+              : t('charts.cycle.weekOpen', { n: info.week })
+
+  const next = info.next
+  let change: string | null = null
+  if (next) {
+    const doses =
+      next.doseMg !== null && next.doseMg > 0
+        ? administrationOf(x.protocolLike, x.compoundId, next.doseMg)
+        : null
+    const units = doses ? unitsFor(doses, vials) : null
+    const dose = doses
+      ? `${noBreak(describeDoses(doses, locale))}${
+          units !== null ? ` ${noBreak(`(${fmtNumber(units, locale, 1)} U)`)}` : ''
+        }`
+      : ''
+    change = t(`charts.cycle.next.${next.kind}`, { dose })
+  }
+  return (
+    <div className={className}>
+      <div className="font-semibold">{week}</div>
+      {next && change && (
+        <>
+          <div className="mt-0.5">{change}</div>
+          <div className="text-[12px] text-muted">
+            {fmtDate(next.on, locale, 'EEE d MMM')} ·{' '}
+            {next.daysAway <= 0
+              ? t('charts.cycle.today')
+              : next.daysAway === 1
+                ? t('charts.cycle.tomorrow')
+                : t('charts.cycle.inDays', { count: next.daysAway })}
+          </div>
+        </>
+      )}
+      {info.decisionDue && (
+        <div className="mt-1.5">
+          <Badge tone="accent">{t('charts.cycle.decide')}</Badge>
+          <p className="mt-1 text-[11.5px] leading-snug text-muted">
+            {t('charts.cycle.decideHint')}
+          </p>
+        </div>
+      )}
+    </div>
   )
 }

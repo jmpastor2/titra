@@ -34,3 +34,4 @@ coverage
 
 # Supabase CLI local state
 supabase/.temp/
+src/dev/real-snapshot.*

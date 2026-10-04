@@ -3,8 +3,10 @@
  * The server only stores and sends what this produces (see supabase/functions/send-reminders).
  * Pure; see plan.test.ts.
  */
+import { addDays, set } from 'date-fns'
 import type { DoseRow, InventoryRow, ProtocolRow } from '@/data/database.types'
 import { toDoseEvent, toProtocolLike } from '@/data/mappers'
+import { changeKind, cycleInfo } from '@/domain/dosing/cycle'
 import { planDraw } from '@/domain/dosing/draw'
 import {
   componentsAt,
@@ -15,6 +17,10 @@ import {
   plannedDoses,
 } from '@/domain/dosing/schedule'
 import type { StackComponent } from '@/domain/types'
+import { decisionKey } from '@/features/cycle/decision'
+import { stepDose, type StepDose } from '@/features/cycle/dose'
+import { doseDrift, driftKey } from '@/features/cycle/drift'
+import { protocolDoses } from '@/features/cycle/items'
 import { drawPartFor } from '@/features/inventory/vials'
 
 const HOUR_MS = 3_600_000
@@ -88,6 +94,84 @@ export function upcomingAdministrations(
     }
   }
   return out.toSorted((a, b) => a.at.getTime() - b.at.getTime())
+}
+
+/**
+ * `compound_id` of a decision reminder. No dose ever has it, so the server never skips the
+ * reminder as "already taken".
+ */
+export const DECISION_COMPOUND_ID = 'cycle'
+/** The evening before a step-up, at this hour, the person is asked whether to go up. */
+export const DECISION_HOUR = 20
+
+export interface UpcomingDecision {
+  protocol: ProtocolRow
+  /** The step the dose goes up into. */
+  stepIndex: number
+  /** The day the new step begins (local midnight). */
+  on: Date
+  /** What the server stores as the occurrence: just after the new day begins. */
+  occurrenceAt: Date
+  /** When to ask: the evening before. */
+  fireAt: Date
+  from: StepDose
+  to: StepDose
+}
+
+export interface DecisionOptions {
+  /** How far ahead a step-up is looked for, in days. */
+  horizonDays?: number
+  /** Alert keys already dealt with: those decisions are not asked again. */
+  dismissed?: ReadonlySet<string>
+  /** Logged doses: a protocol whose doses disagree with its plan is not asked about its next step. */
+  doses?: readonly DoseRow[]
+}
+
+/**
+ * The dose-increase decisions to ask about, one per step-up in the next days: the evening
+ * before it takes effect, so the person decides whether to go up or hold a week.
+ */
+export function upcomingDecisions(
+  protocols: readonly ProtocolRow[],
+  vials: readonly InventoryRow[],
+  now: Date,
+  { horizonDays = 14, dismissed = new Set<string>(), doses = [] }: DecisionOptions = {},
+): UpcomingDecision[] {
+  const horizon = new Date(now.getTime() + horizonDays * DAY_MS)
+  const out: UpcomingDecision[] = []
+
+  for (const protocol of protocols) {
+    if (protocol.status !== 'active') continue
+    const pl = toProtocolLike(protocol)
+    const info = cycleInfo(pl, now)
+    if (!info) continue
+    // While the doses and the plan disagree, the plan's next step would only mislead.
+    const drift = doseDrift(pl, protocolDoses(protocol, doses), now)
+    if (drift && !dismissed.has(driftKey(protocol.id, drift.sinceDay))) continue
+
+    for (const step of info.steps) {
+      const prev = info.steps[step.index - 1]
+      if (!prev || changeKind(prev, step) !== 'increase' || step.startsOn > horizon) continue
+      const fireAt = set(addDays(step.startsOn, -1), {
+        hours: DECISION_HOUR,
+        minutes: 0,
+        seconds: 0,
+        milliseconds: 0,
+      })
+      if (fireAt <= now || dismissed.has(decisionKey(protocol.id, { to: step, on: step.startsOn })))
+        continue
+      out.push({
+        protocol,
+        stepIndex: step.index,
+        on: step.startsOn,
+        occurrenceAt: set(step.startsOn, { hours: 0, minutes: 0, seconds: 1, milliseconds: 0 }),
+        fireAt,
+        from: stepDose(pl, vials, prev.doseMg),
+        to: stepDose(pl, vials, step.doseMg),
+      })
+    }
+  }
+  return out.toSorted((a, b) => a.fireAt.getTime() - b.fireAt.getTime())
 }
 
 /** A stable fingerprint of what would be sent, to skip redundant syncs. */

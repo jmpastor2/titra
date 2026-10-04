@@ -1,16 +1,6 @@
 import { differenceInCalendarDays, getDayOfYear } from 'date-fns'
-import {
-  Activity,
-  BellRing,
-  BookOpen,
-  ChevronRight,
-  FlaskConical,
-  Gauge,
-  Plus,
-  Scale,
-  Syringe,
-} from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { BellRing, BookOpen, ChevronRight, FlaskConical, Syringe } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
@@ -19,12 +9,11 @@ import { Card } from '@/components/ui/Card'
 import { SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import type { InventoryRow, ProtocolRow } from '@/data/database.types'
-import { parseComponents } from '@/data/mappers'
+import type { InventoryRow } from '@/data/database.types'
 import { planDraw } from '@/domain/dosing/draw'
 import type { StackComponent } from '@/domain/types'
 import { useInventory } from '@/data/hooks'
-import { CheckInSheet } from '@/features/checkin/CheckInSheet'
+import { CycleCard } from '@/features/cycle/CycleCard'
 import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
 import { StockAlerts } from '@/features/inventory/StockAlerts'
 import { useStock } from '@/features/inventory/useStock'
@@ -33,21 +22,22 @@ import { useExposure } from '@/features/exposure/useExposure'
 import { FastingCard } from '@/features/fasting/FastingCard'
 import { upcomingAdministrations } from '@/features/reminders/plan'
 import { needsFasting } from '@/features/fasting/fasting'
-import { LogMeasurementSheet } from '@/features/health/LogMeasurementSheet'
 import { useReminderPrefs } from '@/features/reminders/useReminders'
-import { LogSymptomSheet } from '@/features/symptoms/LogSymptomSheet'
+import { QuickLog } from '@/features/quicklog/QuickLog'
 import { fmtDate, fmtHours, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
 import { AgendaRow } from './AgendaRow'
 import { useLastSevenDays, WeekGrid, WeekRing } from './WeekPulse'
 import { buildToday, focusItem, summarise } from './agenda'
-import { LevelCard } from './LevelCard'
+import { LevelCard, LevelCardSkeleton } from './LevelCard'
 
-type SheetState =
-  | { kind: 'dose'; protocolId?: string | null; compoundId?: string; plannedAt?: Date }
-  | { kind: 'checkin' | 'symptom' | 'weight' }
-  | null
+type SheetState = {
+  kind: 'dose'
+  protocolId?: string | null
+  compoundId?: string
+  plannedAt?: Date
+} | null
 
 /** `embedded` renders the page inside another screen (a shared, read-only view) without its header. */
 export function TodayPage({ embedded = false }: { embedded?: boolean }) {
@@ -86,22 +76,9 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const week = useLastSevenDays(exposure.protocols, exposure.doses, now)
   const weekExtras = week.days.flatMap((d) => d.cells).filter((c) => c.status === 'extra').length
   const focus = focusItem(items)
-  // Compounds that ride along in another protocol's syringe or blend vial are shown
-  // on that protocol's card, not on their own.
-  const partnerOf = new Map<string, ProtocolRow>()
-  for (const p of exposure.protocols)
-    if (p.status === 'active')
-      for (const c of parseComponents(p.components)) partnerOf.set(c.compoundId, p)
-  const tracked = exposure.items.filter(
-    (x) => (x.protocol || x.lastDose) && !partnerOf.has(x.compoundId),
-  )
-  const cardTitle = (compoundId: string) =>
-    exposure.protocols.find(
-      (p) =>
-        p.status === 'active' &&
-        p.compound_id === compoundId &&
-        parseComponents(p.components).length,
-    )?.name
+  // Compounds that ride along in another protocol's syringe or blend vial are shown on that
+  // protocol's card, not on their own.
+  const tracked = exposure.items.filter((x) => (x.protocol || x.lastDose) && !x.partnerOf)
   const firstStart = exposure.protocols
     .filter((p) => p.status === 'active')
     .map((p) => new Date(p.start_date))
@@ -254,6 +231,8 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         </Card>
       )}
 
+      {hasProtocols && <CycleCard focusProtocolId={params.get('cycle')} />}
+
       {!readOnly && fastFor && <FastingCard name={fastFor.protocol.name} />}
 
       {!readOnly && stock.alerts.length > 0 && (
@@ -297,6 +276,17 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         </Link>
       )}
 
+      {exposure.isPending && (
+        <section aria-hidden>
+          <SectionTitle index={nextIndex()}>{t('today.levels')}</SectionTitle>
+          <div className="hide-scrollbar -mx-4 flex gap-3 overflow-hidden px-4 pb-1">
+            <LevelCardSkeleton />
+            <LevelCardSkeleton />
+            <LevelCardSkeleton />
+          </div>
+        </section>
+      )}
+
       {tracked.length > 0 && (
         <section>
           <SectionTitle
@@ -317,41 +307,14 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
                 key={x.compoundId}
                 x={x}
                 now={now}
-                title={cardTitle(x.compoundId)}
-                vial={activeVial(vials, x.compoundId)}
+                vial={activeVial(vials, x.compoundId, x.next?.doseMg)}
               />
             ))}
           </div>
         </section>
       )}
 
-      {!readOnly && (
-        <section>
-          <SectionTitle index={nextIndex()}>{t('today.quick')}</SectionTitle>
-          <div className="grid grid-cols-4 gap-2">
-            <Quick
-              icon={<Plus className="size-5" />}
-              label={t('today.freeDose')}
-              onClick={() => setSheet({ kind: 'dose' })}
-            />
-            <Quick
-              icon={<Gauge className="size-5" />}
-              label={t('today.checkin')}
-              onClick={() => setSheet({ kind: 'checkin' })}
-            />
-            <Quick
-              icon={<Activity className="size-5" />}
-              label={t('dashboard.logSymptom')}
-              onClick={() => setSheet({ kind: 'symptom' })}
-            />
-            <Quick
-              icon={<Scale className="size-5" />}
-              label={t('dashboard.logWeight')}
-              onClick={() => setSheet({ kind: 'weight' })}
-            />
-          </div>
-        </section>
-      )}
+      {!readOnly && <QuickLog index={nextIndex()} />}
 
       {learn && (
         <section>
@@ -401,13 +364,6 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         compoundId={sheet?.kind === 'dose' ? sheet.compoundId : undefined}
         plannedAt={sheet?.kind === 'dose' ? sheet.plannedAt : undefined}
       />
-      <CheckInSheet open={sheet?.kind === 'checkin'} onClose={closeSheet} />
-      <LogSymptomSheet open={sheet?.kind === 'symptom'} onClose={closeSheet} />
-      <LogMeasurementSheet
-        open={sheet?.kind === 'weight'}
-        onClose={closeSheet}
-        defaultKind="weight"
-      />
     </div>
   )
 }
@@ -416,21 +372,6 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 function unitsToDraw(doses: readonly StackComponent[], vials: readonly InventoryRow[]) {
   const plan = planDraw(doses.map((d) => drawPartFor(vials, d.compoundId, d.doseMg)))
   return plan && plan.unknown.length === 0 ? plan.totalUnits : null
-}
-
-function Quick({ icon, label, onClick }: { icon: ReactNode; label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="card flex flex-col items-center gap-2 px-1 py-3 text-center transition active:scale-[0.97]"
-    >
-      <span className="grid size-10 place-items-center rounded-full border border-signal/25 bg-signal-soft text-signal">
-        {icon}
-      </span>
-      <span className="text-[11.5px] font-semibold leading-tight text-ink-2">{label}</span>
-    </button>
-  )
 }
 
 /** First run: three steps to a working lab. */

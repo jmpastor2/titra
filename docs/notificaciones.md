@@ -11,6 +11,9 @@ No hace falta saber programar. Sigue los pasos en orden.
 - Si la dosis ya está registrada (±4 horas por defecto), no avisa.
 - Si un aviso lleva más de 30 minutos sin poder enviarse, se descarta.
 - Si un móvil ya no acepta avisos, su suscripción se borra sola.
+- Además de las tomas, la app avisa de las decisiones de ciclo: la tarde anterior (20:00) a una
+  subida de dosis, con un enlace que abre la decisión en Hoy («¿subes o mantienes una semana más?»).
+  Se guardan como filas de `reminders` con `compound_id = 'cycle'`; si ya respondiste, no se envía.
 
 ## Antes de empezar
 

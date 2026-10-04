@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ProtocolLike, ScheduleStep } from '../types'
-import { cycleInfo } from './cycle'
+import { changeKind, cycleInfo, type CycleStep } from './cycle'
 import { holdStep } from './stepEdit'
 
 const d = (iso: string) => new Date(iso)
@@ -102,5 +102,25 @@ describe('cycleInfo', () => {
 
   it('returns null for a protocol without steps', () => {
     expect(cycleInfo({ ...CJC, steps: [] }, d('2026-10-04T10:00'))).toBeNull()
+  })
+})
+
+describe('changeKind', () => {
+  const step = (doseMg: number, pause = false): CycleStep => ({
+    index: 0,
+    doseMg,
+    pause,
+    startsOn: d('2026-01-01'),
+    endsOn: null,
+    weeks: 1,
+  })
+  it('classifies the change from one step to the next', () => {
+    expect(changeKind(step(1), step(1.5))).toBe('increase')
+    expect(changeKind(step(1.5), step(1))).toBe('decrease')
+    expect(changeKind(step(1), step(1))).toBe('same')
+    expect(changeKind(step(1), step(0, true))).toBe('rest')
+    expect(changeKind(step(0, true), step(1))).toBe('resume')
+    expect(changeKind(step(1), undefined)).toBe('end')
+    expect(changeKind(undefined, step(1))).toBe('increase')
   })
 })

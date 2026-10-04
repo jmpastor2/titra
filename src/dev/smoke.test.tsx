@@ -88,6 +88,7 @@ function routesFor(store: Store): string[] {
     '/more',
     '/protocols',
     '/protocols/new',
+    '/cycles',
     '/inventory',
     '/calculator',
     '/sites',
@@ -98,7 +99,7 @@ function routesFor(store: Store): string[] {
     '/export',
     '/share',
   ]
-  return protocol ? [...base, `/protocols/${protocol}`] : base
+  return protocol ? [...base, `/protocols/${protocol}`, `/protocols/${protocol}/edit`] : base
 }
 
 async function visit(route: string) {

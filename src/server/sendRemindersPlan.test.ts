@@ -59,6 +59,11 @@ describe('buildPayload', () => {
     })
   })
 
+  it('keeps a cycle decision apart from the dose reminders of the same protocol', () => {
+    expect(buildPayload(reminder({ compound_id: 'cycle' })).tag).toBe('titra-cycle-p1')
+    expect(buildPayload(reminder()).tag).toBe('titra-p1')
+  })
+
   it('falls back to / when url is empty', () => {
     expect(buildPayload(reminder({ url: '' })).url).toBe('/')
   })

@@ -1,15 +1,28 @@
-import { useState } from 'react'
+import { clsx } from 'clsx'
+import { subDays } from 'date-fns'
+import { Plus, RotateCcw } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Textarea } from '@/components/ui/Field'
 import { Sheet } from '@/components/ui/Sheet'
-import { Segmented } from '@/components/ui/primitives'
+import { Skeleton } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import type { SymptomKind } from '@/data/database.types'
-import { useAddSymptom } from '@/data/hooks'
+import { useAddSymptom, useDeleteSymptom, useSymptoms } from '@/data/hooks'
+import { rowId } from '@/features/quicklog/data'
+import { BlockLabel, Choice } from '@/features/quicklog/SheetBits'
+import { agoLabel } from '@/features/quicklog/text'
 import { fromDateTimeInputs, toDateInputValue, toTimeInputValue } from '@/lib/format'
-import { SYMPTOM_KINDS } from './kinds'
+import {
+  habitualKinds,
+  lastDaySymptoms,
+  levelOf,
+  severityOf,
+  severityTone,
+  SYMPTOM_KINDS,
+} from './kinds'
 
 interface Props {
   open: boolean
@@ -21,38 +34,89 @@ export function LogSymptomSheet({ open, onClose }: Props) {
   return open ? <LogSymptomForm onClose={onClose} /> : null
 }
 
+const LEVELS = [1, 2, 3, 4, 5] as const
+
+const TONE_TEXT = { ok: 'text-ok', warn: 'text-warn', danger: 'text-danger' } as const
+
+function KindChip({
+  active,
+  onPress,
+  children,
+}: {
+  active: boolean
+  onPress: () => void
+  children: string
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      onClick={onPress}
+      className={clsx(
+        'h-11 touch-manipulation rounded-full border px-4 text-[13.5px] transition active:scale-[0.97]',
+        active
+          ? 'border-signal bg-signal-soft font-semibold text-signal'
+          : 'border-line bg-panel text-ink-2',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
 function LogSymptomForm({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
   const { patientId } = usePatientScope()
   const { toast } = useToast()
   const add = useAddSymptom(patientId)
-  const [kind, setKind] = useState<SymptomKind>('nausea')
-  const [severity, setSeverity] = useState(5)
+  const del = useDeleteSymptom(patientId)
+  const history = useSymptoms(patientId, 90)
+  const [now] = useState(() => new Date())
+
+  const rows = useMemo(() => history.data ?? [], [history.data])
+  const habitual = useMemo(() => habitualKinds(rows), [rows])
+  const again = useMemo(() => lastDaySymptoms(rows, now), [rows, now])
+
+  const [kind, setKind] = useState<SymptomKind | null>(null)
+  const [level, setLevel] = useState<number | null>(null)
+  const [showAll, setShowAll] = useState(false)
   const [whenMode, setWhenMode] = useState<'now' | 'custom'>('now')
   const [date, setDate] = useState(() => toDateInputValue(new Date()))
   const [time, setTime] = useState(() => toTimeInputValue(new Date()))
+  const [showNote, setShowNote] = useState(false)
   const [notes, setNotes] = useState('')
 
-  async function submit() {
-    try {
-      await add.mutateAsync({
-        patient_id: patientId,
-        kind,
-        severity,
-        occurred_at: (whenMode === 'now'
-          ? new Date()
-          : fromDateTimeInputs(date, time)
-        ).toISOString(),
-        notes: notes.trim() || null,
-      })
-      toast(t('common.saved'), 'success')
-      onClose()
-    } catch {
-      toast(t('common.error'), 'error')
-    }
-  }
+  const others = SYMPTOM_KINDS.filter((k) => !habitual.includes(k))
+  const canSave = kind !== null && level !== null
 
-  const sevTone = severity >= 7 ? 'text-danger' : severity >= 4 ? 'text-warn' : 'text-ok'
+  function save() {
+    if (kind === null || level === null) return
+    // Closed at once: offline, the save waits for the network without holding the sheet.
+    const saved = add.mutateAsync({
+      patient_id: patientId,
+      kind,
+      severity: severityOf(level),
+      occurred_at: (whenMode === 'now' ? new Date() : fromDateTimeInputs(date, time)).toISOString(),
+      notes: notes.trim() || null,
+    })
+    const fail = () => toast(t('common.error'), 'error')
+    saved.catch(fail)
+    toast(t('symptoms.saved', { kind: t(`symptoms.kinds.${kind}`) }), 'success', {
+      action: {
+        label: t('quick.counter.undo'),
+        // The row may not have come back yet: wait for it, then take it out.
+        onAction: () =>
+          saved
+            .then((row) => {
+              const id = rowId(row)
+              return id ? del.mutateAsync(id) : undefined
+            })
+            .then(() => undefined, fail),
+      },
+    })
+    onClose()
+  }
 
   return (
     <Sheet
@@ -60,62 +124,138 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       title={t('symptoms.log')}
       footer={
-        <Button block size="lg" loading={add.isPending} onClick={submit}>
-          {t('common.save')}
+        <Button block size="lg" disabled={!canSave} onClick={save}>
+          {kind !== null && level !== null
+            ? t('symptoms.saveValue', { kind: t(`symptoms.kinds.${kind}`), level })
+            : t('common.save')}
         </Button>
       }
     >
-      <div className="flex flex-col gap-4 py-1">
-        <Field label={t('symptoms.kind')}>
-          {() => (
-            <div className="flex flex-wrap gap-2" role="radiogroup">
-              {SYMPTOM_KINDS.map((k) => (
+      <div className="flex flex-col gap-5 py-1">
+        {history.isPending ? (
+          // Waiting for the history, so the usual symptoms do not shuffle when it arrives.
+          <Skeleton className="h-[188px] w-full" />
+        ) : (
+          <>
+            {again && (
+              <div>
+                <BlockLabel>
+                  {again.daysAgo === 1
+                    ? t('symptoms.sameYesterday')
+                    : t('symptoms.sameAgo', {
+                        when: agoLabel(t, subDays(now, again.daysAgo), now),
+                      })}
+                </BlockLabel>
+                <div className="flex flex-wrap gap-2">
+                  {again.items.map((item) => (
+                    <button
+                      key={item.kind}
+                      type="button"
+                      onClick={() => {
+                        setKind(item.kind)
+                        setLevel(levelOf(item.severity))
+                      }}
+                      className="flex h-11 touch-manipulation items-center gap-1.5 rounded-full border border-line-strong bg-panel-2 px-3.5 text-[13.5px] font-semibold transition active:scale-[0.97]"
+                    >
+                      <RotateCcw className="size-3.5 text-signal" aria-hidden />
+                      {t(`symptoms.kinds.${item.kind}`)}
+                      <span className="readout text-[12px] text-muted">
+                        {levelOf(item.severity)}/5
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <BlockLabel>{t('symptoms.kind')}</BlockLabel>
+              <div
+                className="flex flex-wrap gap-2"
+                role="radiogroup"
+                aria-label={t('symptoms.kind')}
+              >
+                {habitual.map((k) => (
+                  <KindChip key={k} active={kind === k} onPress={() => setKind(k)}>
+                    {t(`symptoms.kinds.${k}`)}
+                  </KindChip>
+                ))}
+                {showAll &&
+                  others.map((k) => (
+                    <KindChip key={k} active={kind === k} onPress={() => setKind(k)}>
+                      {t(`symptoms.kinds.${k}`)}
+                    </KindChip>
+                  ))}
+                {!showAll && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAll(true)}
+                    className="h-11 rounded-full px-3 text-[13.5px] font-semibold text-signal"
+                  >
+                    {t('symptoms.more')}
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        <div>
+          <BlockLabel>{t('symptoms.severity')}</BlockLabel>
+          <div
+            className="grid grid-cols-5 gap-2"
+            role="radiogroup"
+            aria-label={t('symptoms.severity')}
+          >
+            {LEVELS.map((n) => {
+              const active = level === n
+              const tone = TONE_TEXT[severityTone(severityOf(n))]
+              return (
                 <button
-                  key={k}
+                  key={n}
                   type="button"
                   role="radio"
-                  aria-checked={kind === k}
-                  onClick={() => setKind(k)}
-                  className={
-                    kind === k
-                      ? 'rounded-full border border-signal bg-signal-soft px-3 py-1.5 text-[13px] font-semibold text-signal'
-                      : 'rounded-full border border-line bg-panel px-3 py-1.5 text-[13px] text-ink-2'
-                  }
+                  aria-checked={active}
+                  aria-label={`${n}/5, ${t(`symptoms.level.${n}`)}`}
+                  onClick={() => setLevel(n)}
+                  className={clsx(
+                    'flex h-[62px] touch-manipulation flex-col items-center justify-center rounded-control border transition active:scale-[0.97]',
+                    active ? 'border-signal bg-signal-soft' : 'border-line bg-panel-2',
+                  )}
                 >
-                  {t(`symptoms.kinds.${k}`)}
+                  <span
+                    aria-hidden
+                    className={clsx(
+                      'readout text-[22px] font-semibold leading-none',
+                      active ? tone : 'text-ink-2',
+                    )}
+                  >
+                    {n}
+                  </span>
+                  <span
+                    aria-hidden
+                    className="mt-1 max-w-full truncate px-0.5 text-[10.5px] leading-none text-muted"
+                  >
+                    {t(`symptoms.level.${n}`)}
+                  </span>
                 </button>
-              ))}
-            </div>
-          )}
-        </Field>
-
-        <Field label={t('symptoms.severity')} hint={t('symptoms.severityScale')}>
-          {(id) => (
-            <div className="flex items-center gap-3">
-              <input
-                id={id}
-                type="range"
-                min={0}
-                max={10}
-                step={1}
-                value={severity}
-                onChange={(e) => setSeverity(Number(e.target.value))}
-                className="h-2 flex-1 accent-[var(--signal)]"
-              />
-              <span className={`tabular w-8 text-right text-[22px] font-bold ${sevTone}`}>
-                {severity}
-              </span>
-            </div>
-          )}
-        </Field>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-[12px] text-muted">
+            {level === null
+              ? t('symptoms.severityHint')
+              : t('symptoms.severityOf10', { value: severityOf(level) })}
+          </p>
+        </div>
 
         <Field label={t('symptoms.when')}>
           {() => (
             <div className="flex flex-col gap-2">
-              <Segmented<'now' | 'custom'>
+              <Choice<'now' | 'custom'>
                 value={whenMode}
                 onChange={setWhenMode}
-                size="sm"
+                label={t('symptoms.when')}
                 options={[
                   { value: 'now', label: t('doses.now') },
                   { value: 'custom', label: t('common.date') },
@@ -123,19 +263,40 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
               />
               {whenMode === 'custom' && (
                 <div className="grid grid-cols-2 gap-2">
-                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                  <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+                  <Input
+                    type="date"
+                    aria-label={t('common.date')}
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                  <Input
+                    type="time"
+                    aria-label={t('common.time')}
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                  />
                 </div>
               )}
             </div>
           )}
         </Field>
 
-        <Field label={`${t('common.notes')} (${t('common.optional')})`}>
-          {(id) => (
-            <Textarea id={id} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
-          )}
-        </Field>
+        {showNote ? (
+          <Field label={`${t('common.notes')} (${t('common.optional')})`}>
+            {(id) => (
+              <Textarea id={id} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            )}
+          </Field>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowNote(true)}
+            className="-mt-2 flex h-11 items-center gap-1.5 self-start text-[13px] font-semibold text-signal"
+          >
+            <Plus className="size-3.5" aria-hidden />
+            {t('symptoms.addNote')}
+          </button>
+        )}
       </div>
     </Sheet>
   )

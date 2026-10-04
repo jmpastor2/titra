@@ -79,6 +79,33 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
   return res.data
 }
 
+/** The API answers at most this many rows per request. */
+const PAGE_SIZE = 1000
+/** A safety stop: ten thousand rows of one table is far beyond a personal log. */
+const MAX_PAGES = 10
+
+/**
+ * Every row of a query, however many there are: pages of `PAGE_SIZE` until one comes back
+ * short. A short log (the usual case) costs a single request. `page` builds the query for a
+ * row range, ordered so the pages do not overlap.
+ */
+async function allPages<R>(
+  page: (
+    from: number,
+    to: number,
+  ) => PromiseLike<{ data: R[] | null; error: { message: string } | null }>,
+): Promise<R[]> {
+  const rows: R[] = []
+  for (let n = 0; n < MAX_PAGES; n++) {
+    // Each page needs the one before it to know whether there is another.
+    // oxlint-disable-next-line no-await-in-loop
+    const chunk = unwrap(await page(n * PAGE_SIZE, (n + 1) * PAGE_SIZE - 1))
+    rows.push(...chunk)
+    if (chunk.length < PAGE_SIZE) break
+  }
+  return rows
+}
+
 /* ------------------------------ Profile ------------------------------ */
 
 export function useProfile(userId: string | undefined) {
@@ -155,15 +182,18 @@ export function useSetProtocolStatus(patientId: string) {
 export const dosesOptions = (patientId: string, days: number) =>
   queryOptions({
     queryKey: qk.doses(patientId, fetchedWindow(days)),
-    queryFn: async (): Promise<DoseRow[]> => {
+    queryFn: (): Promise<DoseRow[]> => {
       const sb = requireSupabase()
-      return unwrap(
-        await sb
+      const since = subDays(new Date(), fetchedWindow(days)).toISOString()
+      return allPages((from, to) =>
+        sb
           .from('doses')
           .select('*')
           .eq('patient_id', patientId)
-          .gte('administered_at', subDays(new Date(), fetchedWindow(days)).toISOString())
-          .order('administered_at', { ascending: false }),
+          .gte('administered_at', since)
+          .order('administered_at', { ascending: false })
+          .order('id')
+          .range(from, to),
       )
     },
     select: (rows: DoseRow[]) => sliceWindow<DoseRow>('administered_at', days)(rows),
@@ -257,15 +287,18 @@ export function useDeleteDoses(patientId: string) {
 export const symptomsOptions = (patientId: string, days: number) =>
   queryOptions({
     queryKey: qk.symptoms(patientId, fetchedWindow(days)),
-    queryFn: async (): Promise<SymptomRow[]> => {
+    queryFn: (): Promise<SymptomRow[]> => {
       const sb = requireSupabase()
-      return unwrap(
-        await sb
+      const since = subDays(new Date(), fetchedWindow(days)).toISOString()
+      return allPages((from, to) =>
+        sb
           .from('symptoms')
           .select('*')
           .eq('patient_id', patientId)
-          .gte('occurred_at', subDays(new Date(), fetchedWindow(days)).toISOString())
-          .order('occurred_at', { ascending: false }),
+          .gte('occurred_at', since)
+          .order('occurred_at', { ascending: false })
+          .order('id')
+          .range(from, to),
       )
     },
     select: (rows: SymptomRow[]) => sliceWindow<SymptomRow>('occurred_at', days)(rows),
@@ -301,25 +334,42 @@ export function useDeleteSymptom(patientId: string) {
 
 /* ------------------------------ Measurements ------------------------------ */
 
-export const measurementsOptions = (patientId: string, days: number) =>
+/** One row per tap or meal: they would crowd out the readings that matter from a year of rows. */
+const COUNTER_KINDS = ['hydration_ml', 'protein_g'] as const
+
+/**
+ * Measurements for the last `days`. Water and protein, which are logged many times a day, are
+ * left out unless `counters` is set (the export wants every row); the home panel reads them
+ * in its own small query.
+ */
+export const measurementsOptions = (patientId: string, days: number, counters = false) =>
   queryOptions({
-    queryKey: qk.measurements(patientId, fetchedWindow(days)),
-    queryFn: async (): Promise<MeasurementRow[]> => {
+    queryKey: counters
+      ? ([...qk.measurements(patientId, fetchedWindow(days)), 'counters'] as const)
+      : qk.measurements(patientId, fetchedWindow(days)),
+    queryFn: (): Promise<MeasurementRow[]> => {
       const sb = requireSupabase()
-      return unwrap(
-        await sb
+      const since = subDays(new Date(), fetchedWindow(days)).toISOString()
+      return allPages((from, to) => {
+        const query = sb
           .from('measurements')
           .select('*')
           .eq('patient_id', patientId)
-          .gte('measured_at', subDays(new Date(), fetchedWindow(days)).toISOString())
-          .order('measured_at', { ascending: false }),
-      )
+          .gte('measured_at', since)
+        return (counters ? query : query.not('kind', 'in', `(${COUNTER_KINDS.join(',')})`))
+          .order('measured_at', { ascending: false })
+          .order('id')
+          .range(from, to)
+      })
     },
     select: (rows: MeasurementRow[]) => sliceWindow<MeasurementRow>('measured_at', days)(rows),
   })
 
-export function useMeasurements(patientId: string | undefined, days = 365) {
-  const options = useMemo(() => measurementsOptions(patientId ?? '', days), [patientId, days])
+export function useMeasurements(patientId: string | undefined, days = 365, counters = false) {
+  const options = useMemo(
+    () => measurementsOptions(patientId ?? '', days, counters),
+    [patientId, days, counters],
+  )
   return useQuery({ ...options, enabled: Boolean(patientId) })
 }
 
@@ -755,26 +805,27 @@ export function useDismissAlert(userId: string) {
   })
 }
 
-/** Bring a dismissed alert back. */
+/** Bring one or more dismissed alerts back. */
 export function useRestoreAlert(userId: string) {
   const qc = useQueryClient()
   const key = qk.alertDismissals(userId)
   return useMutation({
-    mutationFn: async (alertKey: string) => {
+    mutationFn: async (alertKeys: string | string[]) => {
       const sb = requireSupabase()
       const { error } = await sb
         .from('alert_dismissals')
         .delete()
         .eq('user_id', userId)
-        .eq('alert_key', alertKey)
+        .in('alert_key', Array.isArray(alertKeys) ? alertKeys : [alertKeys])
       if (error) throw new Error(error.message)
     },
-    onMutate: async (alertKey) => {
+    onMutate: async (alertKeys) => {
       await qc.cancelQueries({ queryKey: key })
       const previous = qc.getQueryData<AlertDismissalRow[]>(key)
+      const gone = new Set(Array.isArray(alertKeys) ? alertKeys : [alertKeys])
       qc.setQueryData<AlertDismissalRow[]>(
         key,
-        (previous ?? []).filter((d) => d.alert_key !== alertKey),
+        (previous ?? []).filter((d) => !gone.has(d.alert_key)),
       )
       return { previous }
     },

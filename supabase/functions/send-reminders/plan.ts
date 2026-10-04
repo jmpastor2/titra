@@ -103,7 +103,12 @@ export function buildPayload(reminder: ReminderRow): PushPayload {
     title: reminder.title,
     body: reminder.body,
     url: reminder.url || '/',
-    tag: `titra-${reminder.protocol_id}`,
+    // A "go up or hold?" decision must not replace (or be replaced by) a dose reminder of the
+    // same protocol while either is still unread.
+    tag:
+      reminder.compound_id === 'cycle'
+        ? `titra-cycle-${reminder.protocol_id}`
+        : `titra-${reminder.protocol_id}`,
     occurrence_at: reminder.occurrence_at,
   }
 }

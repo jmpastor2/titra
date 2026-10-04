@@ -21,6 +21,9 @@ interface Result {
   count?: number | null
 }
 
+/** PostgREST's default `max-rows`: a request that matches more gets the first thousand. */
+export const MAX_ROWS = 1000
+
 const nowIso = () => new Date().toISOString()
 const uuid = () => crypto.randomUUID()
 
@@ -166,6 +169,22 @@ class Query implements PromiseLike<Result> {
     this.filters.push((r) => String(r[col] ?? '') < String(v))
     return this
   }
+  /** `not('kind', 'in', '(a,b)')`, `not('kind', 'eq', 'a')` and `not('col', 'is', null)`. */
+  not(col: string, op: string, v: unknown) {
+    const listed = () =>
+      String(v)
+        .replace(/^\(|\)$/g, '')
+        .split(',')
+        .map((x) => x.trim())
+    this.filters.push((r) =>
+      op === 'in'
+        ? !listed().includes(String(r[col]))
+        : op === 'is'
+          ? !(v === null ? r[col] == null : r[col] === v)
+          : r[col] !== v,
+    )
+    return this
+  }
   or() {
     // Only used for clinician views; the lab has none.
     return this
@@ -247,6 +266,8 @@ class Query implements PromiseLike<Result> {
       }
       if (this.rangeTo) out = out.slice(this.rangeTo[0], this.rangeTo[1] + 1)
       if (this.limitTo !== undefined) out = out.slice(0, this.limitTo)
+      // The API never answers with more than this many rows, however many match.
+      out = out.slice(0, MAX_ROWS)
     }
 
     const count = this.wantCount ? out.length : null

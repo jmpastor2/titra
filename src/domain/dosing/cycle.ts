@@ -88,7 +88,11 @@ const toStep = (w: StepWindow): CycleStep => ({
   weeks: w.step.durationWeeks ?? null,
 })
 
-function changeKind(current: CycleStep | null, next: CycleStep | undefined): ChangeKind {
+/** How a step differs from the one before it. */
+export function changeKind(
+  current: CycleStep | null | undefined,
+  next: CycleStep | undefined,
+): ChangeKind {
   if (!next) return 'end'
   if (next.pause) return 'rest'
   if (current?.pause) return 'resume'

@@ -1,148 +1,124 @@
-import { Plus, Syringe, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { addDays } from 'date-fns'
+import { Plus, Syringe } from 'lucide-react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Chip, EmptyState, Skeleton, SubstanceDot } from '@/components/ui/primitives'
-import { useToast } from '@/components/ui/Toast'
-import { compoundById, compoundName } from '@/content/compounds'
+import { Chip, EmptyState, Skeleton } from '@/components/ui/primitives'
+import { compoundName } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import type { DoseRow } from '@/data/database.types'
-import { useDeleteDose, useDoses, useInventory, useProtocols } from '@/data/hooks'
-import { roundUnits } from '@/domain/dosing/draw'
-import { mgToUnits } from '@/domain/dosing/reconstitution'
-import { concentrationOf, isBlend, vialHas } from '@/features/inventory/vials'
-import { fmtDoseList, fmtNumber, fmtRelativeDay } from '@/lib/format'
+import { useDoses, useInventory, useProtocols } from '@/data/hooks'
+import { fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { useNow } from '@/lib/useNow'
+import { AdministrationRow } from './AdministrationRow'
+import { AssignSlotSheet } from './AssignSlotSheet'
+import { DeleteDoseSheet } from './DeleteDoseSheet'
+import { DoseActionsSheet } from './DoseActionsSheet'
+import { EditDoseSheet } from './EditDoseSheet'
 import { LogDoseSheet } from './LogDoseSheet'
 import { WeekCard } from './WeekCard'
+import {
+  comboKey,
+  groupAdministrations,
+  groupByDay,
+  summariseDay,
+  type Administration,
+} from './administrations'
+import { fitOf, type Fit } from './delta'
+import { findExtras, type ExtraDose } from './extras'
+import { useAssignDose } from './useAssignDose'
+import { doseCells } from './week'
 
-/** One administration: a single row, or every row of a same-syringe stack. */
-interface Administration {
-  key: string
-  at: Date
-  rows: DoseRow[]
-}
+/** Days of the log shown at first, and added with each "show more". */
+const DAYS_PER_PAGE = 14
 
-function groupAdministrations(rows: readonly DoseRow[]): Administration[] {
-  const map = new Map<string, Administration>()
-  for (const r of rows) {
-    const key = r.batch_id ?? r.id
-    const a = map.get(key)
-    if (a) a.rows.push(r)
-    else map.set(key, { key, at: new Date(r.administered_at), rows: [r] })
-  }
-  // In a stack or blend, the row that drew from the vial (the protocol's own compound) first.
-  for (const a of map.values())
-    a.rows.sort((x, y) => Number(Boolean(y.inventory_id)) - Number(Boolean(x.inventory_id)))
-  return [...map.values()].toSorted((a, b) => b.at.getTime() - a.at.getTime())
-}
-
-const hhmm = (d: Date) =>
-  `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+type Overlay = { kind: 'actions' | 'edit' | 'delete' | 'assign'; key: string }
 
 export function DosesPage() {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { patientId, readOnly } = usePatientScope()
+  // Refreshed every few minutes and when the app comes back to the front.
+  const now = useNow(5 * 60_000)
   const doses = useDoses(patientId, 365)
   const protocols = useProtocols(patientId)
   const inventory = useInventory(patientId, true)
-  // Units drawn, from the vial each dose came out of.
-  const concById = useMemo(
-    () => new Map((inventory.data ?? []).map((v) => [v.id, concentrationOf(v)])),
-    [inventory.data],
-  )
-  /** "10 + 5 = 15 U" for a stack, "50 U" for a single dose; null when a vial is unknown. */
+  const assign = useAssignDose(patientId)
+
+  const doseRows = useMemo(() => doses.data ?? [], [doses.data])
+  const protocolRows = useMemo(() => protocols.data ?? [], [protocols.data])
   const vialById = useMemo(
     () => new Map((inventory.data ?? []).map((v) => [v.id, v])),
     [inventory.data],
   )
-  const drawnUnits = (rows: readonly DoseRow[]) => {
-    // A blend vial is one draw for all its compounds: count the row that took from it.
-    const blendRow = rows.find((r) => {
-      const v = r.inventory_id ? vialById.get(r.inventory_id) : undefined
-      return v && isBlend(v) && rows.every((x) => vialHas(v, x.compound_id))
-    })
-    if (blendRow) rows = [blendRow]
-    const units = rows.map((r) => {
-      const conc = r.inventory_id ? concById.get(r.inventory_id) : null
-      return conc ? roundUnits(mgToUnits(Number(r.dose_mg), conc)) : null
-    })
-    if (units.some((u) => u === null)) return null
-    const n = (x: number) => fmtNumber(x, locale, 1)
-    const total = units.reduce<number>((sum, u) => sum + u!, 0)
-    return units.length > 1
-      ? `${units.map((u) => n(u!)).join(' + ')} = ${n(total)} U`
-      : `${n(total)} U`
-  }
-  const del = useDeleteDose(patientId)
-  const { toast } = useToast()
-  const [open, setOpen] = useState(false)
-  const [target, setTarget] = useState<{ protocolId: string; plannedAt: Date } | null>(null)
-  const [filter, setFilter] = useState<string>('all')
+
+  const admins = useMemo(() => groupAdministrations(doseRows), [doseRows])
+  const adminByKey = useMemo(() => new Map(admins.map((a) => [a.key, a])), [admins])
+  // How each dose sits against the plan: the same matching as the week card and the Today ring.
+  const cells = useMemo(
+    () => doseCells(protocolRows, doseRows, addDays(now, -365), now),
+    [protocolRows, doseRows, now],
+  )
+  const extras = useMemo(() => findExtras(cells, doseRows, now), [cells, doseRows, now])
+  const fits = useMemo(
+    () => new Map<string, Fit>([...cells].map(([key, cell]) => [key, fitOf(cell)])),
+    [cells],
+  )
+
+  const [filter, setFilter] = useState('all')
+  const [shownDays, setShownDays] = useState(DAYS_PER_PAGE)
+  const [logging, setLogging] = useState<{ protocolId?: string; plannedAt?: Date } | null>(null)
+  const [overlay, setOverlay] = useState<Overlay | null>(null)
 
   // One filter per thing you inject: a blend or stack is one chip, not one per compound.
   const combos = useMemo(() => {
     const seen = new Map<string, string[]>()
-    for (const a of groupAdministrations(doses.data ?? [])) {
-      const ids = a.rows.map((r) => r.compound_id)
-      seen.set(ids.join('+'), ids)
-    }
+    for (const a of admins)
+      seen.set(
+        comboKey(a),
+        a.rows.map((r) => r.compound_id),
+      )
     return [...seen.entries()]
-  }, [doses.data])
+  }, [admins])
 
-  const days = useMemo(() => {
-    const admins = groupAdministrations(doses.data ?? []).filter(
-      (a) => filter === 'all' || a.rows.map((r) => r.compound_id).join('+') === filter,
-    )
-    const m = new Map<string, Administration[]>()
-    for (const a of admins) {
-      const k = a.at.toDateString()
-      m.set(k, [...(m.get(k) ?? []), a])
-    }
-    return [...m.entries()]
-  }, [doses.data, filter])
+  const filtered = useMemo(
+    () => (filter === 'all' ? admins : admins.filter((a) => comboKey(a) === filter)),
+    [admins, filter],
+  )
+  const days = useMemo(() => groupByDay(filtered), [filtered])
+  const visibleDays = days.slice(0, shownDays)
 
-  async function remove(a: Administration) {
-    if (!window.confirm(t('common.deleteConfirm'))) return
-    try {
-      await Promise.all(a.rows.map((r) => del.mutateAsync(r.id)))
-      toast(t('common.deleted'), 'success')
-    } catch {
-      toast(t('common.error'), 'error')
-    }
-  }
+  const openActions = useCallback((key: string) => setOverlay({ kind: 'actions', key }), [])
+  const assignExtra = useCallback(
+    async (extra: ExtraDose) => {
+      const admin = adminByKey.get(extra.key)
+      if (admin && extra.suggested) await assign(admin.rows, extra.suggested, extra.protocol.id)
+    },
+    [adminByKey, assign],
+  )
+
+  const target = overlay ? (adminByKey.get(overlay.key) ?? null) : null
+  const closeOverlay = () => setOverlay(null)
+  const switchTo = (kind: Overlay['kind']) => (a: Administration) =>
+    setOverlay({ kind, key: a.key })
 
   return (
     <div>
-      <PageHeader
-        eyebrow={t('doses.eyebrow')}
-        title={t('nav.log')}
-        large
-        action={
-          !readOnly && (
-            <Button size="sm" leading={<Plus className="size-4" />} onClick={() => setOpen(true)}>
-              {t('doses.logShort')}
-            </Button>
-          )
-        }
-      />
+      <PageHeader eyebrow={t('doses.eyebrow')} title={t('nav.log')} large />
 
-      {(protocols.data ?? []).length > 0 && doses.data && (
+      {protocolRows.length > 0 && doses.data && (
         <WeekCard
-          protocols={protocols.data ?? []}
-          doses={doses.data}
+          protocols={protocolRows}
+          doses={doseRows}
+          extras={extras}
           onLog={
-            readOnly
-              ? undefined
-              : (protocolId, plannedAt) => {
-                  setTarget({ protocolId, plannedAt })
-                  setOpen(true)
-                }
+            readOnly ? undefined : (protocolId, plannedAt) => setLogging({ protocolId, plannedAt })
           }
+          onEdit={readOnly ? undefined : (key) => setOverlay({ kind: 'actions', key })}
+          onAssign={readOnly ? undefined : (extra) => void assignExtra(extra)}
         />
       )}
 
@@ -155,7 +131,7 @@ export function DosesPage() {
             <Chip
               key={key}
               active={filter === key}
-              color={compoundColor(ids[0]!)}
+              color={compoundColor(ids[0] ?? '')}
               onClick={() => setFilter(key)}
             >
               {ids.map(compoundName).join(' + ')}
@@ -165,107 +141,154 @@ export function DosesPage() {
       )}
 
       {doses.isPending ? (
-        <Card>
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="mt-3 h-14 w-full" />
-        </Card>
-      ) : days.length === 0 ? (
+        <LogSkeleton />
+      ) : admins.length === 0 ? (
         <Card>
           <EmptyState
             icon={<Syringe className="size-7" />}
             title={t('doses.empty')}
             description={t('doses.emptyHint')}
-            action={!readOnly && <Button onClick={() => setOpen(true)}>{t('doses.log')}</Button>}
+            action={
+              !readOnly && (
+                <Button leading={<Plus className="size-4" />} onClick={() => setLogging({})}>
+                  {t('doses.emptyAction')}
+                </Button>
+              )
+            }
+          />
+        </Card>
+      ) : days.length === 0 ? (
+        <Card>
+          <EmptyState
+            title={t('doses.emptyFilter')}
+            action={
+              <Button variant="secondary" onClick={() => setFilter('all')}>
+                {t('doses.filterAll')}
+              </Button>
+            }
           />
         </Card>
       ) : (
         <div className="flex flex-col gap-4">
-          {days.map(([day, admins]) => (
-            <section key={day}>
-              <div className="mb-2 flex items-baseline justify-between px-1">
-                <h2 className="spec">{fmtRelativeDay(admins[0]!.at, locale)}</h2>
-                <span className="spec">{t('doses.count', { count: admins.length })}</span>
-              </div>
-              <Card padded={false} className="px-4">
-                <ul className="divide-y divide-line">
-                  {admins.map((a) => (
-                    <li key={a.key} className="flex items-center gap-3 py-3">
-                      <span className="readout w-11 shrink-0 text-[14px] font-semibold text-ink-2">
-                        {hhmm(a.at)}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        {/* One line per injection: a stack or blend reads "A + B · 100 + 100 mcg". */}
-                        <div className="flex items-center gap-2">
-                          {a.rows.map((r) => (
-                            <SubstanceDot key={r.id} color={compoundColor(r.compound_id)} />
-                          ))}
-                          <span className="min-w-0 truncate text-[14.5px] font-semibold">
-                            {a.rows.map((r) => compoundName(r.compound_id)).join(' + ')}
-                          </span>
-                          <span className="readout ml-auto shrink-0 text-[13.5px] text-ink-2">
-                            {fmtDoseList(
-                              a.rows.map((r) => ({
-                                valueMg: Number(r.dose_mg),
-                                unit: compoundById(r.compound_id)?.defaultUnit ?? 'mg',
-                              })),
-                              locale,
-                            )}
-                          </span>
-                        </div>
-                        <AdminMeta
-                          site={a.rows[0]!.site_id ? t(`sites.labels.${a.rows[0]!.site_id}`) : null}
-                          notes={a.rows[0]!.notes}
-                          units={drawnUnits(a.rows)}
-                        />
-                      </div>
-                      {!readOnly && (
-                        <button
-                          type="button"
-                          aria-label={t('doses.deleteDose')}
-                          onClick={() => void remove(a)}
-                          className="grid size-9 shrink-0 place-items-center rounded-full text-muted hover:bg-danger-soft hover:text-danger"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </section>
-          ))}
+          {visibleDays.map(({ key, day, items }) => {
+            const summary = summariseDay(items, fits)
+            return (
+              <section key={key}>
+                <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
+                  <h2 className="spec">{fmtRelativeDay(day, locale)}</h2>
+                  <span className="spec text-right">
+                    {[
+                      t('doses.count', { count: summary.count }),
+                      ...(summary.late ? [t('doses.summary.late', { count: summary.late })] : []),
+                      ...(summary.extras
+                        ? [t('doses.summary.extra', { count: summary.extras })]
+                        : []),
+                    ].join(' · ')}
+                  </span>
+                </div>
+                <Card padded={false} className="px-4">
+                  <ul className="divide-y divide-line">
+                    {items.map((a) => (
+                      <AdministrationRow
+                        key={a.key}
+                        administration={a}
+                        cell={cells.get(a.key)}
+                        extra={extras.get(a.key)}
+                        vials={vialById}
+                        readOnly={readOnly}
+                        onActions={openActions}
+                        onAssign={assignExtra}
+                      />
+                    ))}
+                  </ul>
+                </Card>
+              </section>
+            )
+          })}
+          {days.length > shownDays && (
+            <Button
+              variant="secondary"
+              className="self-center"
+              onClick={() => setShownDays((n) => n + DAYS_PER_PAGE)}
+            >
+              {t('common.showMore')}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Within thumb reach; an empty log has its own button. */}
+      {!readOnly && admins.length > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),10px)+86px)] z-30">
+          <div className="mx-auto flex max-w-2xl justify-end px-4">
+            <Button
+              className="pointer-events-auto shadow-xl"
+              leading={<Plus className="size-5" />}
+              onClick={() => setLogging({})}
+            >
+              {t('doses.logShort')}
+            </Button>
+          </div>
         </div>
       )}
 
       <LogDoseSheet
-        key={target ? `${target.protocolId}:${target.plannedAt.getTime()}` : 'free'}
-        open={open}
-        onClose={() => {
-          setOpen(false)
-          setTarget(null)
-        }}
-        protocolId={target?.protocolId}
-        plannedAt={target?.plannedAt}
+        key={logging?.protocolId ? `${logging.protocolId}:${logging.plannedAt?.getTime()}` : 'free'}
+        open={logging !== null}
+        onClose={() => setLogging(null)}
+        protocolId={logging?.protocolId}
+        plannedAt={logging?.plannedAt}
+      />
+      <DoseActionsSheet
+        open={overlay?.kind === 'actions'}
+        onClose={closeOverlay}
+        administration={target}
+        canAssign={Boolean(target && extras.get(target.key)?.missed.length)}
+        onEdit={switchTo('edit')}
+        onAssign={switchTo('assign')}
+        onDelete={switchTo('delete')}
+      />
+      <EditDoseSheet
+        open={overlay?.kind === 'edit'}
+        onClose={closeOverlay}
+        administration={target}
+        onDelete={switchTo('delete')}
+      />
+      <AssignSlotSheet
+        open={overlay?.kind === 'assign'}
+        onClose={closeOverlay}
+        administration={target}
+        suggested={target ? extras.get(target.key)?.suggested?.at : undefined}
+      />
+      <DeleteDoseSheet
+        open={overlay?.kind === 'delete'}
+        onClose={closeOverlay}
+        administration={target}
       />
     </div>
   )
 }
 
-function AdminMeta({
-  site,
-  notes,
-  units,
-}: {
-  site: string | null
-  notes: string | null
-  units: string | null
-}) {
-  const parts = [site, notes].filter(Boolean)
-  if (!parts.length && !units) return null
+function LogSkeleton() {
   return (
-    <div className="mt-0.5 flex items-center gap-2 text-[12px] text-muted">
-      {units && <span className="readout shrink-0 font-semibold text-signal">{units}</span>}
-      <span className="truncate">{parts.join(' · ')}</span>
+    <div className="flex flex-col gap-4" aria-hidden>
+      {[0, 1].map((i) => (
+        <section key={i}>
+          <Skeleton className="mb-2 ml-1 h-3 w-24" />
+          <Card padded={false} className="divide-y divide-line px-4">
+            {[0, 1].slice(0, i === 0 ? 2 : 1).map((j) => (
+              <div key={j} className="flex items-center gap-3 py-3.5">
+                <Skeleton className="h-4 w-11" />
+                <Skeleton className="h-10 w-1" />
+                <div className="flex flex-1 flex-col gap-2">
+                  <Skeleton className="h-4 w-3/5" />
+                  <Skeleton className="h-3 w-2/5" />
+                </div>
+              </div>
+            ))}
+          </Card>
+        </section>
+      ))}
     </div>
   )
 }

@@ -1,11 +1,17 @@
 /**
- * Common premixed vials. The first compound is the vial's primary (its mg is total_mg);
- * the rest go to `components`. Amounts are the usual label contents; edit if yours differ.
+ * Common vials to add in one tap. The first compound is the vial's primary (its mg is
+ * total_mg); the rest go to `components`. Amounts are the usual label contents; the form
+ * says so and every one of them can be edited when the vial in hand is different.
  */
 export interface BlendPreset {
   id: string
   name: string
   parts: { compoundId: string; mg: number }[]
+  /**
+   * Other contents (mg) the same single-substance vial is commonly sold in, offered as a
+   * choice next to the preset's own. Not for blends, whose ratio is fixed by the vendor.
+   */
+  sizes?: readonly number[]
 }
 
 export const BLEND_PRESETS: readonly BlendPreset[] = [
@@ -43,5 +49,11 @@ export const BLEND_PRESETS: readonly BlendPreset[] = [
       { compoundId: 'bpc-157', mg: 5 },
       { compoundId: 'tb-500', mg: 5 },
     ],
+  },
+  {
+    id: 'nad-plus-500',
+    name: 'NAD+ 500 mg',
+    parts: [{ compoundId: 'nad-plus', mg: 500 }],
+    sizes: [100, 500, 1000],
   },
 ]

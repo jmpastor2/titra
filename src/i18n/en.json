@@ -205,7 +205,44 @@
     "quickLast": "Last",
     "pickUnits": "Units",
     "atPlanned": "On time · {{time}}",
-    "nightOf": "{{day}} night"
+    "nightOf": "{{day}} night",
+    "undo": "Undo",
+    "undone": "Change undone",
+    "loggedAs": "Dose logged: it covers the {{slot}} one",
+    "assigned": "Done: it now covers the {{slot}} one",
+    "assignAsk": "Was it the {{slot}} one?",
+    "rowActions": "Actions for the {{what}} dose, {{when}}",
+    "chosen": {
+      "protocol": "Protocol",
+      "oneOff": "One-off dose"
+    },
+    "choose": {
+      "title": "What did you take?",
+      "hint": "Pick a protocol, a vial or a substance.",
+      "protocols": "Your protocols",
+      "vials": "Your vials",
+      "recent": "Recent",
+      "other": "Another substance…",
+      "change": "Change",
+      "resting": "Resting",
+      "left": "{{amount}} left",
+      "powder": "Not reconstituted"
+    },
+    "fit": {
+      "onTime": "on time",
+      "extra": "extra",
+      "lateDays": "{{days}} d late",
+      "earlyDays": "{{days}} d early",
+      "covers": "covers the {{slot}} one"
+    },
+    "summary": {
+      "late_one": "{{count}} late",
+      "late_other": "{{count}} late",
+      "extra_one": "{{count}} extra",
+      "extra_other": "{{count}} extras"
+    },
+    "emptyAction": "Log my first dose",
+    "emptyFilter": "No doses match this filter"
   },
   "protocols": {
     "title": "Protocols",
@@ -224,7 +261,7 @@
     "step": "Step",
     "doseMg": "Dose",
     "intervalDays": "Every (days)",
-    "durationWeeks": "Duration (weeks)",
+    "durationWeeks": "Duration",
     "openEnded": "Maintenance (open-ended)",
     "addStep": "Add step",
     "removeStep": "Remove",
@@ -298,7 +335,89 @@
     "adherenceValue": "{{taken}}/{{expected}} · {{pct}} %",
     "ladderPreview": "Dose ladder",
     "nightShift": "The night dose falls after midnight",
-    "nightShiftHint": "Times before 06:00 count for the day before: Saturday 01:00 is Friday's dose."
+    "nightShiftHint": "Times before 06:00 count for the day before: Saturday 01:00 is Friday's dose.",
+    "cycle": {
+      "notStarted": "Not started",
+      "finished": "Cycle ended on {{date}}",
+      "rest": "Rest · week {{n}} of {{total}}",
+      "restOpen": "Rest · week {{n}}",
+      "maintenance": "Maintenance · week {{n}}",
+      "weekOf": "Week {{n}} of {{total}}",
+      "week": "Week {{n}}",
+      "inDays_one": "tomorrow",
+      "inDays_other": "in {{count}} days",
+      "decision": "Time to decide: on {{date}} it steps up to {{dose}}. Step up, or hold one more week?",
+      "today": "today"
+    },
+    "next": {
+      "start": "Starts {{date}} at {{dose}}",
+      "increase": "On {{date}} it goes up to {{dose}}",
+      "decrease": "On {{date}} it goes down to {{dose}}",
+      "same": "On {{date}} step {{n}} starts ({{dose}})",
+      "rest": "The rest starts on {{date}}",
+      "resume": "On {{date}} you resume at {{dose}}",
+      "end": "The cycle ends on {{date}}"
+    },
+    "timeline": {
+      "rest": "Rest",
+      "here": "You are here",
+      "since": "from {{date}}",
+      "noEnd": "open-ended",
+      "weekOf": "Week {{n}} of {{total}}",
+      "weekOpen": "Week {{n}}"
+    },
+    "entry": {
+      "units": "Units",
+      "vialNote": "With vial “{{vial}}”: 1 U = {{per}}",
+      "noVial": "Without a {{name}} vial with its bacteriostatic water there is no way to work out how much one unit is: type mg or mcg.",
+      "addVial": "Add a vial"
+    },
+    "copySuffix": "copy",
+    "copyHint": "Copy of “{{name}}”: it starts today. If you no longer follow the original, archive it.",
+    "stackDose": "Dose in the first step",
+    "stackHint": "They go in the same syringe. In the following steps they scale in the same proportion as the main substance, like a premixed vial.",
+    "blendHint": "They are mixed in the same vial, so they are drawn with the same units: at {{primary}} of the main one, {{name}} is {{expected}}. This dose does not match the mix.",
+    "blendMatch": "Match the mix",
+    "syringeLine": "Syringe: {{line}}",
+    "past": {
+      "badge": "Past",
+      "weeks": "Changing past weeks moves the dates of every step after them. Your logged doses do not change.",
+      "dose": "This week is already over: the change only rewrites what the protocol said was due. Your logged doses do not change."
+    },
+    "fromWeek": {
+      "title": "Apply from this week",
+      "on_one": "The week already over stays at {{dose}}; the new dose counts from this week.",
+      "on_other": "The {{count}} weeks already over stay at {{dose}}; the new dose counts from this week.",
+      "off": "The whole step changes, including the weeks already over."
+    },
+    "guard": {
+      "title": "Leave without saving?",
+      "body": "You have unsaved changes in this protocol.",
+      "stay": "Keep editing",
+      "discard": "Discard changes"
+    },
+    "night": {
+      "optNight": "Night before",
+      "optSame": "Same day",
+      "exampleNight": "Example: {{day}}'s dose is taken at {{time}} on {{next}} and counts as {{day}}'s dose.",
+      "exampleSame": "Example: {{day}}'s dose is taken that same day at {{time}}, in the early hours.",
+      "mark": "After-midnight dose"
+    },
+    "plan": {
+      "eyebrow": "Calendar",
+      "title": "Plan dates",
+      "empty": "Type a step's dose to see the dates.",
+      "todayChanged": "With these changes today's dose would be different (it was {{before}}).",
+      "ends_one": "Ends {{date}} · {{count}} week",
+      "ends_other": "Ends {{date}} · {{count}} weeks",
+      "noEnd": "No end date",
+      "split": "The step in force is saved as two: what is already over keeps the earlier dose, the rest takes the new one."
+    },
+    "startMoves": "Changing the start date moves every step. Your logged doses do not change.",
+    "sticky": {
+      "dirty": "Unsaved changes",
+      "clean": "No changes"
+    }
   },
   "symptoms": {
     "title": "Symptoms",
@@ -330,7 +449,22 @@
       "other": "Other"
     },
     "last7": "Last 7 days",
-    "severe": "Severe"
+    "severe": "Severe",
+    "addNote": "Add a note",
+    "more": "More symptoms",
+    "sameAgo": "Same as {{when}}",
+    "sameYesterday": "Same as yesterday",
+    "saveValue": "Save {{kind}} · {{level}}/5",
+    "saved": "{{kind}} saved",
+    "severityHint": "Pick how much it bothers you.",
+    "severityOf10": "Saved as {{value}}/10.",
+    "level": {
+      "1": "Barely",
+      "2": "Mild",
+      "3": "Moderate",
+      "4": "Strong",
+      "5": "Severe"
+    }
   },
   "health": {
     "title": "Health",
@@ -362,7 +496,12 @@
       "recovery": "Recovery",
       "libido": "Libido",
       "appetite": "Appetite",
-      "focus": "Focus"
+      "focus": "Focus",
+      "hydration_ml": "Water",
+      "hip": "Hips",
+      "chest": "Chest",
+      "arm": "Arm",
+      "thigh": "Thigh"
     },
     "empty": "No measurements",
     "emptyHint": "Log weight, glucose or body composition to see trends.",
@@ -414,7 +553,7 @@
     "lot": "Lot",
     "storage": "Storage",
     "empty": "No inventory",
-    "emptyHint": "Add pens or vials to track remaining drug, expiry and storage.",
+    "emptyHint": "Add your vials, pens or tablets to track what is left, expiry and when to order more.",
     "expired": "Expired",
     "expiresSoon": "Expires in {{days}} d",
     "low": "Running low",
@@ -436,7 +575,7 @@
     "openedFor_other": "opened {{count}} days ago",
     "lyophilised": "Lyophilised",
     "expiresBeforeEmpty": "Expires before it runs out: have another ready by {{date}}",
-    "blendPresets": "Common blends",
+    "blendPresets": "Common shortcuts",
     "blendTitle": "Blend",
     "blendHint": "If the vial comes premixed with other substances, add them with their mg. They are drawn together, in one draw.",
     "blendAdd": "Add another substance in the vial",
@@ -446,13 +585,60 @@
     "restockTitle": "How long your stock lasts",
     "vialsCount_one": "{{count}} vial",
     "vialsCount_other": "{{count}} vials",
-    "reserveCount_one": "{{count}} not reconstituted",
-    "reserveCount_other": "{{count}} not reconstituted",
+    "reserveCount_one": "{{count}} in reserve",
+    "reserveCount_other": "{{count}} in reserve",
     "until": "until {{date}}",
     "orderNow": "Order now",
     "plenty": "8+ months",
     "reconstituteHint": "when you reconstitute it, tap the vial and enter the water you add.",
-    "expiresInUse": "+ Expires {{days}} days after reconstitution"
+    "expiresInUse": "+ Expires {{days}} days after reconstitution",
+    "startWith": "Start with a common one",
+    "addSame": "Add another like this",
+    "addSameAria": "Add another like this: {{label}}",
+    "addedSame": "Added another like it: {{label}}.",
+    "addVialOf": "Add a vial of {{names}}",
+    "archiveAria": "Archive {{label}}",
+    "archived": "Archived",
+    "archivedToast": "Archived: {{label}}. You can restore it under Finished.",
+    "restoredToast": "Restored: {{label}}",
+    "restore": "Restore",
+    "restoreAria": "Restore {{label}}",
+    "finished": "Finished",
+    "finishedCount": "Finished and archived ({{count}})",
+    "statusInUse": "In use",
+    "statusReserve": "Reserve",
+    "statusFinished": "Finished",
+    "strip": {
+      "inUse": "In use",
+      "reserve": "Reserve",
+      "finished": "Finished"
+    },
+    "sectionInUse": "In use",
+    "sectionReserve": "Reserve",
+    "fillAria": "{{pct}} % of the product left",
+    "content": "Content",
+    "labelExpiry": "Expires (label)",
+    "inWater": "in {{water}} mL",
+    "yourDoseShort": "Your dose",
+    "eachUnit": "Per U",
+    "left": "Left",
+    "dayOf": "Day {{day}} of {{of}}",
+    "noAlerts": "All clear: no pending alerts.",
+    "alertsTitle": "Inventory alerts",
+    "alertsCount_one": "{{count}} alert",
+    "alertsCount_other": "{{count}} alerts",
+    "markAllRead": "Mark all as read",
+    "readAlerts": "Read alerts ({{count}})",
+    "restoreAlert": "Bring back",
+    "restoreAll": "Bring all back",
+    "supplyAria": "How long {{names}} lasts",
+    "alreadyReconstituted": "Already reconstituted",
+    "lyophilisedHint": "If not, leave it lyophilised: you reconstitute it later in one tap.",
+    "reconstitutedHint": "Enter the water you added and Titra works out the concentration and your units.",
+    "reconstitutedAt": "Reconstituted on",
+    "needsWater": "Enter the water you added.",
+    "sizes": "Vial size",
+    "presetNote": "Usual amounts for {{name}}. Edit them if your vial is different."
   },
   "calculator": {
     "title": "Reconstitution calculator",
@@ -670,7 +856,14 @@
     "needProtocol": "You need an active protocol with logged doses.",
     "tabSkip": "Skip one",
     "tabStop": "Stop",
-    "tabSwitch": "Switch"
+    "tabSwitch": "Switch",
+    "chartTitle": "Exposure curve",
+    "chartHint": "Estimated amount in the body from your doses. Dashed line: projection.",
+    "chartAria": "Estimated level curve with the chosen scenario",
+    "days": "{{n}} d",
+    "skipped": "Skipped dose",
+    "versusPlan": "vs {{value}} following the regimen",
+    "onlyLongActing": "The simulator only works with long-acting substances that have pharmacokinetic data, such as weekly ones."
   },
   "clinic": {
     "title": "Patients",
@@ -882,7 +1075,17 @@
     "nothing": "Move at least one slider",
     "emptyTitle": "No check-ins yet",
     "emptyHint": "Energy, sleep, mood, recovery… One minute a day shows you what each protocol does.",
-    "deltaHint": "The arrow compares against your first week of entries."
+    "deltaHint": "The arrow compares against your first week of entries.",
+    "before": "was {{value}}",
+    "doneToday": "You already did it today: you can update it.",
+    "keep": "Keep {{what}} at {{value}}",
+    "same": "Same as last time",
+    "sameFrom": "From {{date}}. Adjust what changed.",
+    "saveCount": "Save ({{count}})",
+    "saved": "Check-in saved",
+    "streak_one": "{{count}} day in a row",
+    "streak_other": "{{count}} days in a row",
+    "unscored": "not scored"
   },
   "progress": {
     "eyebrow": "My improvements",
@@ -1000,7 +1203,17 @@
     "noProtocol": "Not in any protocol.",
     "vials": "Vials",
     "noVial": "No vials registered.",
-    "recent": "Recent doses"
+    "recent": "Recent doses",
+    "notInUse": {
+      "title": "Not in use right now",
+      "body": "Once you add it to a protocol or log a dose, you will see its doses and level here."
+    },
+    "partner": {
+      "title": "Part of “{{name}}”",
+      "body": "It is taken with the rest of the mix: its doses and schedule are those of that protocol.",
+      "open": "See levels and doses",
+      "protocol": "View protocol"
+    }
   },
   "draw": {
     "title": "Prepare the syringe",
@@ -1067,7 +1280,10 @@
       "unsupported": "Use Safari with the installed app on iPhone, or Chrome or Edge.",
       "local": "Once the reminder server is set up (migration 3) they also arrive with the app closed."
     },
-    "hourBefore": "1 h"
+    "hourBefore": "1 h",
+    "decisionTitle": "The dose goes up tomorrow",
+    "decisionBody": "{{name}}: from {{from}} to {{to}}. Go up, or hold one more week?",
+    "decisionsHint": "The evening before each dose increase, at 8 pm, we also remind you so you can decide whether to go up or hold one more week."
   },
   "charts": {
     "now": "Now",
@@ -1075,7 +1291,18 @@
     "legend": {
       "doses": "Dose · planned",
       "step": "Dose change",
-      "stable": "Steady range"
+      "stable": "Steady range",
+      "history": "History",
+      "projection": "Projection",
+      "takenPlanned": "Taken · planned",
+      "symptoms": "Symptoms",
+      "taken": "Taken",
+      "late": "Late",
+      "early": "Early",
+      "extra": "Extra",
+      "missed": "Missed",
+      "due": "Due now",
+      "planned": "Planned"
     },
     "level": {
       "nextIn": "Next in {{time}}",
@@ -1104,6 +1331,93 @@
       "monthlyHintBody": "Monthly average next to each protocol's dose.",
       "month": "Month",
       "deltaHint": "The change compares your first and last week of entries in the range. Vertical lines mark dose changes."
+    },
+    "projection": "projection",
+    "exposureAria": "Estimated level curve: solid line what you have taken, dashed what is planned",
+    "logDose": "Log dose",
+    "lastDose": "Last dose",
+    "ranges": {
+      "7d": "7 d",
+      "4w": "4 wk",
+      "12w": "12 wk",
+      "cycle": "Cycle"
+    },
+    "steady": {
+      "short": "Steady level",
+      "hint": "Estimated amount in the body right now",
+      "reached": "Reached · steady level of {{dose}}",
+      "toReach": "{{time}} to reach 90%"
+    },
+    "next": {
+      "title": "Next dose",
+      "in": "In {{time}}",
+      "due": "Due now",
+      "overdue": "Overdue by {{time}}"
+    },
+    "cycle": {
+      "title": "Titration",
+      "week": "Week {{n}} of {{total}}",
+      "weekOpen": "Week {{n}}",
+      "maintenanceWeek": "Maintenance · week {{n}}",
+      "maintenance": "Maintenance",
+      "resting": "Resting",
+      "before": "Starts {{date}}",
+      "finished": "Protocol finished",
+      "step": "Step {{n}} of {{total}}",
+      "next": {
+        "increase": "Up to {{dose}}",
+        "decrease": "Down to {{dose}}",
+        "same": "New step: {{dose}}",
+        "rest": "Rest",
+        "resume": "Back on {{dose}}",
+        "end": "End of the protocol"
+      },
+      "today": "today",
+      "tomorrow": "tomorrow",
+      "inDays_one": "in {{count}} day",
+      "inDays_other": "in {{count}} days",
+      "decide": "Time to decide",
+      "decideHint": "The change is near: decide whether to step up or hold one more week."
+    },
+    "adherence": {
+      "title": "Adherence 28 d",
+      "hint": "{{taken}} of {{expected}} doses"
+    },
+    "timeline": {
+      "state": {
+        "taken": "On time",
+        "late": "Late",
+        "early": "Early",
+        "extra": "Off schedule",
+        "missed": "Missed",
+        "due": "Due now",
+        "planned": "Planned"
+      },
+      "aria": "Dose timeline. Taken: {{taken}}, missed: {{missed}}, to come: {{planned}}",
+      "empty": "No doses in this range",
+      "next": "Next",
+      "last": "Last",
+      "planDose": "plan: {{dose}}",
+      "adherenceShort": "Adherence",
+      "noDoses": "No doses logged yet",
+      "taken": "{{taken}} of {{expected}} doses",
+      "missed_one": "{{count}} missed",
+      "missed_other": "{{count}} missed",
+      "offTime_one": "{{count}} off time",
+      "offTime_other": "{{count}} off time",
+      "extras_one": "{{count}} extra",
+      "extras_other": "{{count}} extras",
+      "allOnTime": "All on time",
+      "free_one": "{{count}} dose",
+      "free_other": "{{count}} doses",
+      "countsTitle": {
+        "7d": "Doses · 7 d",
+        "4w": "Doses · 4 wk",
+        "12w": "Doses · 12 wk",
+        "cycle": "Doses · cycle"
+      },
+      "whyShort": "Short-acting: a smooth level curve would mislead. Here you see every dose.",
+      "whyNoData": "No human pharmacokinetic data to draw a level. Here you see every dose."
     }
   },
   "week": {
@@ -1120,9 +1434,21 @@
       "missed": "Missed",
       "due": "Due",
       "upcoming": "Pending",
-      "extra": "Off schedule"
+      "extra": "Extra",
+      "onTime": "On time"
     },
-    "logIt": "log it"
+    "logIt": "log it",
+    "tapToLog": "tap to log",
+    "tapHint": "Tap a dose to edit or delete it.",
+    "legend": {
+      "onTime": "On time",
+      "late": "Late",
+      "missed": "Missed",
+      "extra": "Extra",
+      "upcoming": "Pending"
+    },
+    "extras_one": "extra",
+    "extras_other": "extras"
   },
   "fasting": {
     "ask": "Fasting for {{name}}: when did you eat?",
@@ -1133,7 +1459,18 @@
     "justAte": "I just ate",
     "ateAt": "I ate at…",
     "mealTime": "Meal time",
-    "clear": "Clear"
+    "clear": "Clear",
+    "title": "Fasting",
+    "ago30": "30 min ago",
+    "ago60": "1 h ago",
+    "askShort": "When was your last meal?",
+    "cleared": "Meal cleared",
+    "fasted": "Fasted",
+    "minLeft": "{{min}} min left",
+    "next": "Next fasted dose: {{name}} · {{time}}",
+    "noMeal": "No meal noted",
+    "notedReady": "Meal noted: you can inject now",
+    "notedWait": "Meal noted: fast ready at {{at}}"
   },
   "outlook": {
     "eyebrow": "Outlook",
@@ -1242,7 +1579,8 @@
       "expiresBeforeEmpty": "Will expire before it runs out",
       "runsOut": "Vial running out",
       "reconstitute": "Time to reconstitute",
-      "reorder": "Order more"
+      "reorder": "Order more",
+      "leftover": "Vial remainder"
     },
     "expired": "{{names}}: expired on {{date}}. Do not use it; open another.",
     "expiresSoon_one": "{{names}}: expires on {{date}}, tomorrow.",
@@ -1253,9 +1591,607 @@
     "reconstitute_one": "{{names}}: {{count}} dose left. Reconstitute the reserve vial before {{date}}.",
     "reconstitute_other": "{{names}}: {{count}} doses left. Reconstitute the reserve vial before {{date}}.",
     "reorder": "{{names}}: all your stock lasts until {{date}}. Order now so you do not run out.",
-    "estimated": "Estimated expiry: 28 days after reconstitution. Enter the label date on the vial.",
+    "estimated": "Estimated: {{days}} days after reconstitution.",
     "more_one": "See {{count}} more alert",
     "more_other": "See {{count}} more alerts",
-    "expiresSoon_zero": "{{names}}: expires today, {{date}}."
+    "expiresSoon_zero": "{{names}}: expires today, {{date}}.",
+    "leftover": "{{names}}: {{mg}} mg left in the vial, not enough for a dose. Finish it with another one or discard it.",
+    "dismiss": "Got it",
+    "dismissFailed": "Could not mark it as read. Try again."
+  },
+  "cycle": {
+    "eyebrow": "Cycles",
+    "headline": {
+      "week": "Week {{week}} of {{total}}",
+      "step": "Week {{week}} · step {{step}} of {{steps}}",
+      "rest": "Rest · week {{week}} of {{total}}",
+      "restOpen": "Rest · week {{week}}",
+      "maintenance": "Maintenance · week {{week}}",
+      "before": "Starts {{date}}",
+      "finished": "Cycle finished"
+    },
+    "doseNow": "Now",
+    "noDose": "No dose",
+    "inDays_one": "in {{count}} day",
+    "inDays_other": "in {{count}} days",
+    "when": {
+      "today": "today",
+      "tomorrow": "tomorrow"
+    },
+    "next": {
+      "increase": "On {{date}} it goes up to {{dose}}",
+      "decrease": "On {{date}} it goes down to {{dose}}",
+      "same": "On {{date}} step {{step}} begins with the same dose",
+      "rest": "On {{date}} the rest begins",
+      "resume": "On {{date}} the rest ends: {{dose}}",
+      "end": "The cycle ends on {{date}}",
+      "start": "Starts with {{dose}}",
+      "none": "No dose changes planned",
+      "ended": "Ended {{date}}"
+    },
+    "detail": {
+      "ladder": "Steps of the plan",
+      "here": "you are here",
+      "rest": "Rest",
+      "onwards": "{{from}} onwards",
+      "range": "{{from}} – {{to}}",
+      "adherence": "Doses this step",
+      "adherenceValue": "{{taken}} of {{planned}}",
+      "edit": "Edit protocol"
+    },
+    "decision": {
+      "eyebrow": "This week's decision",
+      "pending": "Decision pending",
+      "increase": "On {{date}} it goes up from {{from}} to {{to}}.",
+      "increaseDetail": "On {{date}} it goes up from {{from}} to {{to}} ({{detail}}).",
+      "increaseToday": "Today it goes up from {{from}} to {{to}}.",
+      "increaseTodayDetail": "Today it goes up from {{from}} to {{to}} ({{detail}}).",
+      "rest": "End of the dosing weeks: the rest begins on {{date}}.",
+      "restToday": "End of the dosing weeks: the rest begins today.",
+      "resume": "The rest ends on {{date}} and you go back to {{dose}}.",
+      "resumeToday": "The rest ends today and you go back to {{dose}}.",
+      "end": "The cycle ends on {{date}}. Starting a new one?",
+      "endRest": "The rest ends on {{date}}. Starting a new cycle?",
+      "finished": "Cycle finished: starting a new one?",
+      "finishedRest": "Rest finished: starting a new cycle?",
+      "rule": "No nausea or vomiting this week?",
+      "ruleHint": "Your rule: with nausea or vomiting, you do not go up.",
+      "eyebrowInfo": "Cycle",
+      "logged": "This week you logged: {{list}}."
+    },
+    "action": {
+      "up": "Go up as planned",
+      "hold": "Hold one more week",
+      "later": "Decide later",
+      "understood": "Got it",
+      "extend": "Extend one week",
+      "newCycle": "Start a new cycle",
+      "notNow": "Not now",
+      "undo": "Undo"
+    },
+    "drift": {
+      "eyebrow": "Plan and doses differ",
+      "body": "Your plan says {{planned}} this week, but your last {{n}} doses were {{actual}}.",
+      "since": "Since {{date}}.",
+      "nextStep": "That is the dose your plan sets from {{date}}.",
+      "update": "Update the plan",
+      "once": "It was a one-off"
+    },
+    "notice": {
+      "up": "Noted: on {{date}} you go up to {{dose}}.",
+      "upToday": "Noted: today you go up to {{dose}}.",
+      "seen": "Noted.",
+      "held": "No change until {{date}}",
+      "updated": "Plan updated: {{dose}} this week.",
+      "once": "Noted: a one-off."
+    }
+  },
+  "protocolMenu": {
+    "more": "More actions",
+    "undo": "Undo",
+    "edit": "Edit protocol",
+    "editHint": "Substances, days, times and steps",
+    "nextMoves": "The next change moves from {{from}} to {{to}}",
+    "row": {
+      "next": "Next change",
+      "end": "End of the cycle",
+      "weeks": "Length of the plan",
+      "dose": "Today's dose"
+    },
+    "hold": "Hold this week",
+    "holdRest": "Extend the rest by a week",
+    "holdConfirm": "Hold one more week",
+    "holdRestConfirm": "Extend by a week",
+    "holdNote": "This step lasts a week longer and the following ones shift. Your logged doses do not change.",
+    "holdDone": "Holding this week. The next change moves to {{date}}.",
+    "holdDoneNoDate": "Holding this week.",
+    "moveUp": "Step up a week early",
+    "moveUpRest": "Shorten the rest by a week",
+    "moveUpNote": "This step lasts a week less and the following ones come earlier. Your logged doses do not change.",
+    "moveUpStartsNow": "This would already be the last week of the step, so the next dose counts from this week.",
+    "moveUpDone": "Moved up a week. The next change moves to {{date}}.",
+    "moveUpDoneNoDate": "Step shortened by a week.",
+    "setDose": "Change this step's dose",
+    "setDoseHint": "Now {{dose}} · from this week",
+    "doseStepOf": "Step {{n}} · week {{week}}",
+    "doseNew": "New dose",
+    "doseConfirm": "Save dose",
+    "doseSame": "That is the dose you already have.",
+    "doseFromWeek_one": "Applies from this week. The previous week stays at {{dose}}.",
+    "doseFromWeek_other": "Applies from this week. The previous {{count}} weeks stay at {{dose}}.",
+    "doseWholeStep": "Applies to the whole step: this is its first week.",
+    "doseBelowNext": "Heads up: the next step is {{dose}}, below this dose.",
+    "doseDone": "Dose changed to {{dose}} from this week.",
+    "pauseHint": "Stops showing in Today and reminding you",
+    "resume": "Resume",
+    "resumeHint": "Shows in Today and reminds you again",
+    "restore": "Restore",
+    "restoreHint": "Back to your active protocols",
+    "pausedDone": "“{{name}}” paused.",
+    "resumedDone": "“{{name}}” resumed.",
+    "restoredDone": "“{{name}}” restored.",
+    "duplicate": "Duplicate",
+    "duplicateHint": "A new protocol with the same steps",
+    "saveHint": "Keep it at hand when creating another protocol",
+    "savedDone": "“{{name}}” saved as a reusable protocol.",
+    "archiveHint": "Leaves Today and the reminders. Your logged doses stay",
+    "archiveTitle": "Archive “{{name}}”?",
+    "archiveBody": "It will stop showing in Today and will not remind you. Your logged doses stay and you can restore it from the history.",
+    "archivedDone": "“{{name}}” archived."
+  },
+  "reconstitute": {
+    "title": "Reconstitute",
+    "fix": "Correct reconstitution",
+    "button": "Reconstitute",
+    "water": "Bacteriostatic water",
+    "waterHint": "With an insulin syringe: 100 U = 1 mL.",
+    "shortcuts": "Usual water amounts",
+    "date": "Reconstitution date",
+    "result": "Result",
+    "resultEmpty": "Enter the water to see the concentration and your units.",
+    "concentration": "Concentration",
+    "inWater": "in {{water}} of water",
+    "perUnit": "Each unit (U) holds",
+    "yourDose": "Your current dose",
+    "noDoses": "No active protocol uses this vial yet.",
+    "discard": "Discard it around",
+    "discardEstimated": "Usual in-use guidance: {{days}} days in the fridge after reconstitution. Guidance, not published stability data.",
+    "discardLabel": "It is the label date, earlier than the usual in-use period.",
+    "save": "Save reconstitution",
+    "saved": "Vial reconstituted",
+    "warn": {
+      "unitsAsMl": "{{amount}} mL is far too much water for a {{mg}} mg vial. Did you mean {{amount}} units (= {{ml}} mL)?",
+      "useUnits": "Yes, {{amount}} U",
+      "mlAsUnits": "{{amount}} U is only {{ml}} mL of water. Did you mean {{amount}} mL?",
+      "useMl": "Yes, {{amount}} mL",
+      "tooMuch": "{{ml}} mL is a lot of water for {{mg}} mg: the mix would be {{conc}} mg/mL. Check it is what you added.",
+      "doseTooSmall": "With this water your {{names}} dose would be {{units}} U: too little to measure precisely. More water means a larger volume to draw.",
+      "doseTooBig": "With this water your {{names}} dose would be {{units}} U: it does not fit a 1 mL syringe (100 U). Less water makes it fit.",
+      "overBarrel": "{{units}} U do not fit your {{ml}} mL syringe ({{capacity}} U)."
+    },
+    "unitLabel": "Water unit"
+  },
+  "cycles": {
+    "eyebrow": "Lab",
+    "title": "Cycles",
+    "menu": "Cycles",
+    "menuHint": "Which week you are in, the rest and the next cycle",
+    "cycleN": "Cycle {{n}}",
+    "now": "Now",
+    "decisionDue": "Step-up soon",
+    "pausedNote": "On hold: adherence is not counted.",
+    "noChange": "Maintenance: no changes planned",
+    "noneCurrent": "No cycle is running right now.",
+    "startsWith": "Starts {{date}} with {{dose}}",
+    "when_zero": "today · {{date}}",
+    "when_one": "tomorrow · {{date}}",
+    "when_other": "in {{count}} days · {{date}}",
+    "span": "{{total}} · {{dose}} dosing + {{rest}} rest",
+    "sections": {
+      "current": "In progress",
+      "past": "Previous cycles"
+    },
+    "phase": {
+      "before": "Not started",
+      "dosing": "Dosing",
+      "escalating": "Step-up",
+      "maintenance": "Maintenance",
+      "rest": "Rest",
+      "finished": "Finished"
+    },
+    "phrase": {
+      "before_zero": "starts today",
+      "before_one": "starts tomorrow",
+      "before_other": "starts in {{count}} days",
+      "dosing": "week {{week}} of {{of}}",
+      "week": "week {{week}}",
+      "maintenance": "maintenance · week {{week}}",
+      "restWeeks_one": "rest: {{count}} week left",
+      "restWeeks_other": "rest: {{count}} weeks left",
+      "restDays_one": "rest: {{count}} day left",
+      "restDays_other": "rest: {{count}} days left",
+      "restOpen": "rest with no end date",
+      "finished": "cycle finished"
+    },
+    "next": {
+      "increase": "Up to {{dose}}",
+      "decrease": "Down to {{dose}}",
+      "resume": "Back on {{dose}}",
+      "same": "Next step, same dose",
+      "rest": "Rest begins",
+      "end": "Cycle ends"
+    },
+    "weeks": {
+      "range": "Weeks {{from}}–{{to}}",
+      "one": "Week {{n}}",
+      "from": "From week {{from}}"
+    },
+    "timeline": {
+      "title": "Timeline",
+      "hint": "Tap a block for the details of that step.",
+      "goToday": "Go to today",
+      "today": "Today",
+      "aria": "Timeline of your cycles. Scroll sideways.",
+      "block": "{{name}}, {{dose}}, {{from}} to {{to}}",
+      "blockOpen": "{{name}}, {{dose}}, from {{from}}, no end date",
+      "blockRest": "{{name}}, rest, {{from}} to {{to}}",
+      "rest": "Rest",
+      "maintenance": "maintenance",
+      "legendRest": "Rest",
+      "legendDose": "Stronger colour, higher dose",
+      "legendPlanned": "Still to come",
+      "older_one": "{{count}} older cycle does not fit here: see its card.",
+      "older_other": "{{count}} older cycles do not fit here: see their cards.",
+      "endedAgo": "{{count}} wk ago"
+    },
+    "stat": {
+      "adherence": "Adherence",
+      "ofDoses": "{{taken}} of {{expected}} doses",
+      "doses": "Doses",
+      "logged": "logged",
+      "extras_one": "+{{count}} extra",
+      "extras_other": "+{{count}} extras",
+      "weight": "Weight",
+      "sinceStart": "since the cycle began",
+      "lastDose": "Last dose"
+    },
+    "rest": {
+      "title": "Rest",
+      "planned_one": "Planned: {{count}} week",
+      "planned_other": "Planned: {{count}} weeks",
+      "range": "{{from}} to {{to}}",
+      "shorter": "Shorten the rest by a week",
+      "longer": "Lengthen the rest by a week",
+      "saved_one": "Rest set to {{count}} week",
+      "saved_other": "Rest set to {{count}} weeks",
+      "guide": "Your reference: {{min}}–{{max}} weeks. Only a guide: you decide how long.",
+      "leftWeeks_one": "{{count}} week left",
+      "leftWeeks_other": "{{count}} weeks left",
+      "leftDays_one": "{{count}} day left",
+      "leftDays_other": "{{count}} days left"
+    },
+    "compare": {
+      "title": "Compare with the previous cycle",
+      "span_one": "The first week of each cycle",
+      "span_other": "The first {{count}} weeks of each cycle",
+      "before": "before {{value}}"
+    },
+    "past": {
+      "range": "{{from}} to {{to}}",
+      "early": "closed before the plan ended"
+    },
+    "new": {
+      "cta": "Start a new cycle",
+      "title": "New cycle",
+      "intro": "We copy the protocol as it is (substances, doses, days and times) so you type nothing. Pick when it starts and which dose to begin on.",
+      "start": "Starts on",
+      "startHint": "By default, next Monday.",
+      "badDate": "Pick a valid date",
+      "nextMonday": "Next Monday",
+      "today": "Today",
+      "first": "First dose",
+      "fromStart": "From the start",
+      "leftOff": "Where I left off",
+      "step": "Starting step",
+      "stepOption": "Step {{n}} · {{dose}}",
+      "preview": "How it would look",
+      "range": "{{from}} to {{to}} · {{span}}",
+      "rangeOpen": "From {{from}} · no end date",
+      "closes": "The current cycle becomes {{status}}.",
+      "keeps": "The previous cycle stays as it is.",
+      "editLater": "Nothing is deleted, and you can adjust the steps from Protocols.",
+      "confirm": "Start the cycle",
+      "started": "New cycle created",
+      "partial": "The new cycle was created, but the previous one could not be closed. Close it from Protocols.",
+      "finishedHint": "The plan has finished. Start the next one without typing it again."
+    },
+    "step": {
+      "of": "Step {{n}} of {{count}}",
+      "dose": "Dose per shot",
+      "noDoses": "No doses",
+      "dates": "Dates",
+      "range": "{{from}} → {{to}}",
+      "since": "From {{from}}",
+      "length": "Length",
+      "noEnd": "No end date",
+      "dosingWeeks": "Dosing weeks",
+      "adherence": "Adherence here",
+      "edit": "Edit protocol",
+      "notStarted": "It has not started yet.",
+      "skipped": "The cycle was closed before reaching this step.",
+      "state": {
+        "past": "Done",
+        "current": "Current",
+        "future": "Upcoming",
+        "skipped": "Not reached"
+      }
+    },
+    "summary": {
+      "title": "Cycles",
+      "all": "See all",
+      "more_one": "+{{count}} more",
+      "more_other": "+{{count}} more"
+    },
+    "empty": {
+      "title": "No cycles yet",
+      "hint": "Create a protocol with its steps and rests, and here you will see which week you are in and when each change is due.",
+      "cta": "Create a protocol"
+    },
+    "statsError": "Your doses could not be loaded."
+  },
+  "protocolDetail": {
+    "eyebrow": "Protocol",
+    "edit": "Edit protocol",
+    "moreActions": "More actions",
+    "seeCycles": "See cycles",
+    "doseNow": "Dose now",
+    "timeline": "Steps and dates",
+    "week": "This week",
+    "weekDose": "{{dose}} per dose",
+    "weekTaken": "Doses taken",
+    "weekNone": "No doses are planned this week.",
+    "night": "after midnight",
+    "status": {
+      "onTime": "Taken {{time}}",
+      "late": "Taken {{time}} · {{delta}}",
+      "early": "Taken {{time}} · {{delta}}",
+      "missed": "Missed",
+      "due": "Due now",
+      "upcoming": "Pending",
+      "extra": "Off plan · {{time}}"
+    },
+    "vials": "Vial in use",
+    "inventory": "Inventory",
+    "noVial": "No vial in use. Add the vial with its bacteriostatic water in Inventory and you will see doses in syringe units.",
+    "vialLeft": "{{left}} of {{total}} mg left",
+    "vialUnit": "1 U = {{per}}",
+    "vialPowder": "Not reconstituted",
+    "weekExtras_one": "+{{count}} extra",
+    "weekExtras_other": "+{{count}} extras"
+  },
+  "editDose": {
+    "title": "Edit dose",
+    "save": "Save changes",
+    "saved": "Dose updated",
+    "delete": "Delete this dose",
+    "deleteTitle": "Delete this dose?",
+    "deleteBody": "It will be removed from your log. This cannot be undone.",
+    "deleteRefund": "The vial “{{vial}}” gets {{amount}} back.",
+    "deleteConfirm": "Delete",
+    "deleted": "Dose deleted",
+    "actions": {
+      "edit": "Edit dose",
+      "editHint": "Time, dose, site, vial and notes",
+      "assign": "Assign to a missed dose",
+      "assignHint": "Make it count as the one you missed",
+      "delete": "Delete dose",
+      "deleteHint": "The vial gets its amount back"
+    },
+    "assign": {
+      "title": "Which dose does it cover?",
+      "save": "Assign"
+    },
+    "slot": {
+      "label": "Counts as",
+      "at": "{{day}} · {{time}}",
+      "atNight": "{{day}} night · {{time}}",
+      "onTime": "on time",
+      "auto": "Automatic: {{slot}}",
+      "missed": "{{slot}} · missed",
+      "current": "{{slot}} · what it covers now",
+      "extra": "None: an extra dose",
+      "extraWhy": "It matches no planned dose: it will count as an extra",
+      "recommended": "Suggested",
+      "then": {
+        "extra": "It will count as an extra and does not change your adherence.",
+        "auto": "Covers {{slot}} · {{delay}}.",
+        "makeUp": "Your adherence goes up: {{day}}'s dose goes from missed to taken late.",
+        "makeUpOnTime": "Your adherence goes up: {{day}}'s dose goes from missed to taken.",
+        "same": "No change: it already counts as {{day}}'s dose."
+      }
+    }
+  },
+  "quick": {
+    "title": "Quick log",
+    "pending_one": "{{count}} to do",
+    "pending_other": "{{count}} to do",
+    "tile": {
+      "dose": "Dose",
+      "water": "Water",
+      "weight": "Weight",
+      "waist": "Waist",
+      "checkin": "Check-in",
+      "fasting": "Fasting",
+      "symptom": "Symptom",
+      "protein": "Protein",
+      "strength": "Strength",
+      "more": "More"
+    },
+    "ago": {
+      "today": "today",
+      "yesterday": "yesterday",
+      "days_one": "{{count}} day ago",
+      "days_other": "{{count}} days ago",
+      "weeks_one": "{{count}} week ago",
+      "weeks_other": "{{count}} weeks ago",
+      "months_one": "{{count}} month ago",
+      "months_other": "{{count}} months ago"
+    },
+    "dose": {
+      "dueNow": "Due now",
+      "overdue": "Late by {{time}}",
+      "inTime": "In {{time}}",
+      "missed": "Missed",
+      "done": "Done today",
+      "none": "Nothing today",
+      "next": "Next: {{when}}",
+      "free": "Free dose",
+      "freeHint": "Log a dose"
+    },
+    "weight": {
+      "first": "Weigh in to start"
+    },
+    "waist": {
+      "first": "Measure your waist"
+    },
+    "checkin": {
+      "done": "Done",
+      "pending": "Due today",
+      "start": "Start today",
+      "startHint": "One minute is enough",
+      "streak": "{{count}} d streak"
+    },
+    "symptom": {
+      "none": "No symptoms",
+      "noneToday": "None today",
+      "hint": "Log how you feel",
+      "today": "Today · {{severity}}/10",
+      "many": "Today · {{count}} logged"
+    },
+    "fasting": {
+      "none": "Not noted",
+      "ask": "When did you eat?",
+      "since": "since {{at}}",
+      "readyAt": "Ready {{at}}"
+    },
+    "strength": {
+      "none": "None yet",
+      "title": "Strength session",
+      "week": "{{count}} in the last 7 days · target ≥ {{target}}",
+      "length": "Length",
+      "log": "Log a {{minutes}} min session",
+      "noLength": "Log without a length",
+      "saved": "Strength session saved",
+      "savedMinutes": "Strength session saved · {{minutes}} min"
+    },
+    "protein": {
+      "noTargetShort": "Needs your weight",
+      "tileDone": "Goal hit!",
+      "title": "Protein",
+      "targetNote": "Target: {{perKg}} g per kg × {{kg}} kg. Change it in Settings.",
+      "targetFromGoal": "Target: {{perKg}} g per kg of your goal weight, until you log your weight.",
+      "noTarget": "Log your weight to work out your daily target."
+    },
+    "water": {
+      "tileDone": "Goal hit!",
+      "tileHint": "Goal {{goal}}. Tap to add {{amount}}.",
+      "options": "More water options",
+      "title": "Water",
+      "goal": "Daily goal",
+      "goalHint": "On this device only",
+      "goalLess": "Lower the goal",
+      "goalMore": "Raise the goal",
+      "added": "Water: {{total}} of {{goal}}"
+    },
+    "counter": {
+      "of": "of {{goal}}",
+      "left": "{{amount}} to go",
+      "reached": "Goal reached",
+      "over": "{{amount}} over the goal",
+      "noGoal": "No goal",
+      "add": "Add {{amount}}",
+      "other": "Another amount",
+      "addButton": "Add",
+      "today": "Today",
+      "undo": "Undo",
+      "empty": "Nothing logged yet today.",
+      "remove": "Delete {{what}}",
+      "undoAmount": "Undo +{{amount}}"
+    },
+    "more": {
+      "title": "More records",
+      "panel": "From the panel",
+      "records": "Measurements and labs",
+      "other": "Other",
+      "lastLab": "Last: {{when}}",
+      "noLab": "No labs yet",
+      "girths": "Waist, hip, chest, arm and thigh",
+      "freeDoseHint": "A dose outside any protocol",
+      "tileValue": "More records",
+      "tileHint": "Labs, measurements…"
+    }
+  },
+  "bodyMeasures": {
+    "title": "Body measurements",
+    "intro": "Starts from your last reading. Only what you change is saved.",
+    "last": "last {{value}}",
+    "none": "No readings yet",
+    "save_one": "Save {{count}} measurement",
+    "save_other": "Save {{count}} measurements",
+    "saved_one": "{{count}} measurement saved",
+    "saved_other": "{{count}} measurements saved"
+  },
+  "measure": {
+    "less": "{{what}}: subtract {{step}} {{unit}}",
+    "more": "{{what}}: add {{step}} {{unit}}",
+    "same": "Same as last time",
+    "last": "Last: {{value}} · {{when}}",
+    "noLast": "Nothing logged yet: type the value.",
+    "saveValue": "Save {{value}}",
+    "saved": "{{what}} saved",
+    "savedDelta": "{{what}} saved · {{delta}}",
+    "outOfRange": "Check the value: it does not look right.",
+    "addNote": "Add a note",
+    "noLength": "No length",
+    "withLength": "Add a length",
+    "setValue": "Set {{value}}",
+    "when": "When",
+    "labUsual": "Usual tests",
+    "labYours": "Your tests",
+    "labMore": "More tests",
+    "labInRange": "In range"
+  },
+  "levels": {
+    "onBoard": "On board",
+    "steady": "Steady",
+    "steadyAria": "{{pct}} of the steady level of the current protocol",
+    "lastDose": "Last dose",
+    "noDoses": "No doses",
+    "nextIn": "Next in {{time}}",
+    "dueNow": "Due now",
+    "overdue": "Overdue by {{time}}",
+    "noPlan": "No active protocol",
+    "spark": {
+      "back": "{{n}} d",
+      "ahead": "+{{n}} d",
+      "real": "actual",
+      "planned": "planned",
+      "aria": "Level over the last {{past}} days and the planned next {{ahead}}"
+    },
+    "strip": {
+      "span": "{{n}} d",
+      "aria": "{{taken}} of {{planned}} planned doses in the last {{days}} days",
+      "missed": "missed",
+      "late": "off time",
+      "extra": "extra",
+      "planned": "pending",
+      "caption": "{{n}} d · {{taken}}/{{expected}}"
+    },
+    "vial": {
+      "none": "No vial",
+      "low": "Vial running low",
+      "left": "Vial: {{pct}} left"
+    },
+    "justNow": "just now"
   }
 }

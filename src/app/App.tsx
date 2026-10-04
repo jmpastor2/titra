@@ -22,10 +22,15 @@ const CompoundPage = named(() => import('@/features/wiki/CompoundPage'), 'Compou
 const SubstancePage = named(() => import('@/features/substance/SubstancePage'), 'SubstancePage')
 const MorePage = named(() => import('@/features/more/MorePage'), 'MorePage')
 const ProtocolsPage = named(() => import('@/features/protocols/ProtocolsPage'), 'ProtocolsPage')
+const ProtocolDetailPage = named(
+  () => import('@/features/protocols/ProtocolDetailPage'),
+  'ProtocolDetailPage',
+)
 const ProtocolEditorPage = named(
   () => import('@/features/protocols/ProtocolEditorPage'),
   'ProtocolEditorPage',
 )
+const CyclesPage = named(() => import('@/features/cycles/CyclesPage'), 'CyclesPage')
 const InventoryPage = named(() => import('@/features/inventory/InventoryPage'), 'InventoryPage')
 const CalculatorPage = named(() => import('@/features/calculator/CalculatorPage'), 'CalculatorPage')
 const SitesPage = named(() => import('@/features/sites/SitesPage'), 'SitesPage')
@@ -65,7 +70,9 @@ export const router = createHashRouter([
       { path: 'more', element: page(<MorePage />) },
       { path: 'protocols', element: page(<ProtocolsPage />) },
       { path: 'protocols/new', element: page(<ProtocolEditorPage />) },
-      { path: 'protocols/:protocolId', element: page(<ProtocolEditorPage />) },
+      { path: 'protocols/:protocolId', element: page(<ProtocolDetailPage />) },
+      { path: 'protocols/:protocolId/edit', element: page(<ProtocolEditorPage />) },
+      { path: 'cycles', element: page(<CyclesPage />) },
       { path: 'inventory', element: page(<InventoryPage />) },
       { path: 'calculator', element: page(<CalculatorPage />) },
       { path: 'sites', element: page(<SitesPage />) },

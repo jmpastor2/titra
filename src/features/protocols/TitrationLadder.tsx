@@ -6,11 +6,23 @@ import type { DoseUnit, ProtocolLike } from '@/domain/types'
 import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 
-/** Weeks an open-ended step is drawn as, so maintenance reads as "the rest". */
-const OPEN_WEEKS = 6
+/**
+ * Weeks an open-ended step is drawn as, so maintenance reads as "the rest" without
+ * squeezing the labels of the steps before it.
+ */
+const OPEN_WEEKS = 3
 
-const shortDose = (mg: number, unit: DoseUnit, locale: 'es' | 'en') =>
-  fmtNumber(unit === 'mcg' ? mg * 1000 : mg, locale, 2)
+/** How doses read on the ladder: the number under each step and the unit in the sentence. */
+export interface LadderDisplay {
+  /** The number shown for a primary dose in mg ("12" syringe units, "200" mcg). */
+  value: (mg: number) => number
+  unit: string
+}
+
+const shortDose = (mg: number, unit: DoseUnit, locale: 'es' | 'en', display?: LadderDisplay) =>
+  display
+    ? fmtNumber(display.value(mg), locale, 1)
+    : fmtNumber(unit === 'mcg' ? mg * 1000 : mg, locale, 2)
 
 /**
  * The protocol's dose steps as a staircase: width is duration, height is dose. The
@@ -23,12 +35,18 @@ export function TitrationLadder({
   color,
   now: nowProp,
   compact = false,
+  display,
+  summary: withSummary = true,
 }: {
   protocol: ProtocolLike
   unit: DoseUnit
   color: string
   now?: Date
   compact?: boolean
+  /** Read doses in syringe units (or anything else) instead of the compound's own unit. */
+  display?: LadderDisplay
+  /** The sentence under the ladder; off when the caller says it better. */
+  summary?: boolean
 }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
@@ -60,7 +78,7 @@ export function TitrationLadder({
             date: fmtDate(current.end, locale, 'EEE d MMM'),
           })
         : t('protocols.ladder.nextStep', {
-            dose: `${shortDose(next.step.doseMg, unit, locale)} ${t(`units.${unit}`)}`,
+            dose: `${shortDose(next.step.doseMg, unit, locale, display)} ${display?.unit ?? t(`units.${unit}`)}`,
             count: days,
             date: fmtDate(current.end, locale, 'EEE d MMM'),
           })
@@ -135,12 +153,14 @@ export function TitrationLadder({
               )}
               style={{ flexGrow: weeksOf(w) / totalWeeks, flexBasis: 0 }}
             >
-              {w.step.pause ? '—' : shortDose(w.step.doseMg, unit, locale)}
+              {w.step.pause ? '—' : shortDose(w.step.doseMg, unit, locale, display)}
             </span>
           ))}
         </div>
       )}
-      {summary && <p className="mt-1.5 text-[12px] font-medium text-ink-2">{summary}</p>}
+      {withSummary && summary && (
+        <p className="mt-1.5 text-[12px] font-medium text-ink-2">{summary}</p>
+      )}
     </div>
   )
 }

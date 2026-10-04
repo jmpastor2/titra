@@ -1,20 +1,107 @@
 import { clsx } from 'clsx'
 import { Utensils } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNow } from '@/lib/useNow'
-import { EAT_AFTER_MIN, FAST_BEFORE_MIN, fastingState, setLastMeal, useLastMeal } from './fasting'
+import {
+  clock,
+  EAT_AFTER_MIN,
+  fastingState,
+  fastProgress,
+  minutesAgo,
+  mostRecent,
+  setLastMeal,
+  useLastMeal,
+} from './fasting'
 
-const hhmm = (d: Date) =>
-  `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+function Pill({
+  onClick,
+  primary,
+  children,
+}: {
+  onClick: () => void
+  primary?: boolean
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        'h-11 touch-manipulation rounded-full border px-4 text-[13px] font-semibold transition active:scale-[0.97]',
+        primary
+          ? 'border-signal/40 bg-signal-soft text-signal'
+          : 'border-line-strong bg-panel text-ink',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
 
-/** A time typed as HH:MM means the most recent one: today, or yesterday if still ahead. */
-function mostRecent(time: string, now: Date): Date {
-  const [h, m] = time.split(':').map(Number)
-  const d = new Date(now)
-  d.setHours(h ?? 0, m ?? 0, 0, 0)
-  if (d > now) d.setDate(d.getDate() - 1)
-  return d
+/**
+ * The quick ways to say when you last ate: just now, a while ago, at a time. `onSet` runs
+ * after each one (a sheet closes itself with it).
+ */
+export function FastingControls({
+  lastMeal,
+  onSet,
+}: {
+  lastMeal: Date | null
+  onSet?: (at: Date | null) => void
+}) {
+  const { t } = useTranslation()
+  const [editing, setEditing] = useState(false)
+  const [time, setTime] = useState(() => clock(new Date()))
+
+  function set(at: Date | null) {
+    setLastMeal(at)
+    setEditing(false)
+    onSet?.(at)
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          aria-label={t('fasting.mealTime')}
+          className="readout h-11 rounded-full border border-line-strong bg-panel px-4 text-[15px]"
+        />
+        <Pill primary onClick={() => set(mostRecent(time, new Date()))}>
+          {t('common.save')}
+        </Pill>
+        <button
+          type="button"
+          onClick={() => setEditing(false)}
+          className="h-11 px-2 text-[13px] text-muted"
+        >
+          {t('common.cancel')}
+        </button>
+      </div>
+    )
+  }
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Pill primary onClick={() => set(new Date())}>
+        {t('fasting.justAte')}
+      </Pill>
+      <Pill onClick={() => set(minutesAgo(30, new Date()))}>{t('fasting.ago30')}</Pill>
+      <Pill onClick={() => set(minutesAgo(60, new Date()))}>{t('fasting.ago60')}</Pill>
+      <Pill onClick={() => setEditing(true)}>{t('fasting.ateAt')}</Pill>
+      {lastMeal && (
+        <button
+          type="button"
+          onClick={() => set(null)}
+          className="h-11 px-2 text-[13px] text-muted"
+        >
+          {t('fasting.clear')}
+        </button>
+      )}
+    </div>
+  )
 }
 
 /** Fasting window before a GH secretagogue: note the last meal, see when you can inject. */
@@ -22,96 +109,45 @@ export function FastingCard({ name, className }: { name: string; className?: str
   const { t } = useTranslation()
   const now = useNow(30_000)
   const lastMeal = useLastMeal(now)
-  const [editing, setEditing] = useState(false)
-  const [time, setTime] = useState(() => hhmm(new Date()))
   const s = fastingState(lastMeal, now)
-  const progress = lastMeal
-    ? Math.min(1, (now.getTime() - lastMeal.getTime()) / (FAST_BEFORE_MIN * 60_000))
-    : 0
+  const waiting = lastMeal !== null && !s.ready
 
   return (
     <div
       className={clsx(
         'rounded-control border px-3.5 py-3',
-        lastMeal && !s.ready ? 'border-warn/40 bg-warn-soft' : 'border-line bg-panel-2',
+        waiting ? 'border-warn/40 bg-warn-soft' : 'border-line bg-panel-2',
         className,
       )}
     >
       <div className="flex items-start gap-2.5">
         <Utensils
-          className={clsx(
-            'mt-0.5 size-4 shrink-0',
-            lastMeal && !s.ready ? 'text-warn' : 'text-signal',
-          )}
+          className={clsx('mt-0.5 size-4 shrink-0', waiting ? 'text-warn' : 'text-signal')}
         />
         <div className="min-w-0 flex-1">
           <div className="text-[13.5px] font-semibold">
             {!lastMeal
               ? t('fasting.ask', { name })
               : s.ready
-                ? t('fasting.ready', { since: hhmm(s.readyAt!) })
-                : t('fasting.wait', { at: hhmm(s.readyAt!), min: s.waitMin })}
+                ? t('fasting.ready', { since: clock(s.readyAt ?? now) })
+                : t('fasting.wait', { at: clock(s.readyAt ?? now), min: s.waitMin })}
           </div>
           <div className="mt-0.5 text-[12px] text-muted">
             {lastMeal
-              ? t('fasting.lastMeal', { at: hhmm(lastMeal), after: EAT_AFTER_MIN })
+              ? t('fasting.lastMeal', { at: clock(lastMeal), after: EAT_AFTER_MIN })
               : t('fasting.rule', { after: EAT_AFTER_MIN })}
           </div>
-          {lastMeal && !s.ready && (
+          {waiting && (
             <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-panel">
               <div
                 className="h-full rounded-full bg-warn"
-                style={{ width: `${progress * 100}%` }}
+                style={{ width: `${fastProgress(lastMeal, now) * 100}%` }}
               />
             </div>
           )}
-          {editing ? (
-            <div className="mt-2 flex items-center gap-2">
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                aria-label={t('fasting.mealTime')}
-                className="readout h-9 rounded-full border border-line-strong bg-panel px-3 text-[14px]"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setLastMeal(mostRecent(time, new Date()))
-                  setEditing(false)
-                }}
-                className="h-9 rounded-full bg-signal px-4 text-[13px] font-semibold text-signal-ink"
-              >
-                {t('common.save')}
-              </button>
-            </div>
-          ) : (
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setLastMeal(new Date())}
-                className="h-8 rounded-full border border-line-strong bg-panel px-3 text-[12.5px] font-semibold"
-              >
-                {t('fasting.justAte')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditing(true)}
-                className="h-8 rounded-full border border-line-strong bg-panel px-3 text-[12.5px] font-semibold"
-              >
-                {t('fasting.ateAt')}
-              </button>
-              {lastMeal && (
-                <button
-                  type="button"
-                  onClick={() => setLastMeal(null)}
-                  className="h-8 px-2 text-[12.5px] text-muted"
-                >
-                  {t('fasting.clear')}
-                </button>
-              )}
-            </div>
-          )}
+          <div className="mt-2.5">
+            <FastingControls lastMeal={lastMeal} />
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import {
   BellRing,
+  CalendarRange,
   TrendingUp,
   Calculator,
   ChevronRight,
@@ -40,6 +41,12 @@ export function MorePage() {
           label: t('more.protocols'),
           hint: t('more.protocolsHint'),
           to: '/protocols',
+        },
+        {
+          icon: <CalendarRange className="size-[18px]" />,
+          label: t('cycles.menu'),
+          hint: t('cycles.menuHint'),
+          to: '/cycles',
         },
         {
           icon: <Package className="size-[18px]" />,

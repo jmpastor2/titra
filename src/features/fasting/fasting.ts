@@ -24,8 +24,43 @@ export interface FastingState {
 export function fastingState(lastMeal: Date | null, now: Date): FastingState {
   if (!lastMeal) return { readyAt: null, ready: true, waitMin: 0 }
   const readyAt = new Date(lastMeal.getTime() + FAST_BEFORE_MIN * 60_000)
-  const waitMin = Math.max(0, Math.ceil((readyAt.getTime() - now.getTime()) / 60_000))
+  // Never more than the fast itself, even when a screen's clock is a few seconds behind.
+  const waitMin = Math.min(
+    FAST_BEFORE_MIN,
+    Math.max(0, Math.ceil((readyAt.getTime() - now.getTime()) / 60_000)),
+  )
   return { readyAt, ready: waitMin === 0, waitMin }
+}
+
+/** How far through the 2 h fast the person is, 0 to 1 (0 with no meal noted). */
+export function fastProgress(lastMeal: Date | null, now: Date): number {
+  if (!lastMeal) return 0
+  const elapsed = now.getTime() - lastMeal.getTime()
+  return Math.min(1, Math.max(0, elapsed / (FAST_BEFORE_MIN * 60_000)))
+}
+
+/**
+ * A time typed as HH:MM means the most recent one: today, or yesterday if still ahead. Text
+ * that is not a time (an emptied field) means now.
+ */
+export function mostRecent(time: string, now: Date): Date {
+  const [h, m] = time.split(':').map(Number)
+  if (h === undefined || m === undefined || !Number.isFinite(h) || !Number.isFinite(m)) {
+    return new Date(now)
+  }
+  const d = new Date(now)
+  d.setHours(h, m, 0, 0)
+  if (d > now) d.setDate(d.getDate() - 1)
+  return d
+}
+
+export function minutesAgo(minutes: number, now: Date): Date {
+  return new Date(now.getTime() - minutes * 60_000)
+}
+
+/** HH:MM on the clock. */
+export function clock(d: Date): string {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 /* ---------------------------------------------------------- last meal, per device */

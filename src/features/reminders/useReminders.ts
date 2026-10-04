@@ -1,12 +1,25 @@
-import { useEffect, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '@/components/ui/Toast'
-import { useDoses, useInventory, useProfile, useProtocols, useUpdateProfile } from '@/data/hooks'
+import {
+  useAlertDismissals,
+  useDoses,
+  useInventory,
+  useProfile,
+  useProtocols,
+  useUpdateProfile,
+} from '@/data/hooks'
 import { useSession } from '@/features/auth/SessionProvider'
 import { requireSupabase } from '@/lib/supabase'
 import { useLocale } from '@/lib/useLocale'
-import { reminderText, toReminderInput } from './format'
-import { fingerprint, upcomingAdministrations, type UpcomingAdministration } from './plan'
+import {
+  localAdministration,
+  localDecision,
+  toDecisionInput,
+  toReminderInput,
+  type LocalReminder,
+} from './format'
+import { fingerprint, upcomingAdministrations, upcomingDecisions } from './plan'
 import { showLocalNotification } from './push'
 
 const HOUR_MS = 3_600_000
@@ -145,7 +158,15 @@ function useReminderInputs() {
   const protocols = useProtocols(uid)
   const doses = useDoses(uid, 120)
   const inventory = useInventory(uid)
-  const ready = Boolean(protocols.data && doses.data && inventory.data && prefs.loaded)
+  const dismissals = useAlertDismissals(uid)
+  // The decisions already answered. Memoised so the effects below do not re-run for nothing.
+  const dismissed = useMemo(
+    () => new Set((dismissals.data ?? []).map((d) => d.alert_key)),
+    [dismissals.data],
+  )
+  const ready = Boolean(
+    protocols.data && doses.data && inventory.data && prefs.loaded && !dismissals.isPending,
+  )
   return {
     uid,
     ready,
@@ -155,6 +176,7 @@ function useReminderInputs() {
     protocols: protocols.data ?? [],
     doses: doses.data ?? [],
     vials: inventory.data ?? [],
+    dismissed,
   }
 }
 
@@ -162,12 +184,14 @@ function useReminderInputs() {
 
 /**
  * Keeps the server's reminder rows in step with the protocols, the doses already logged
- * and the vials in use. Runs on open and after any change, debounced; skips identical plans.
+ * and the vials in use: the doses to take, and the evening before each step-up the decision
+ * whether to go up. Runs on open and after any change, debounced; skips identical plans.
  */
 export function useReminderSync() {
   const { t } = useTranslation()
   const { locale } = useLocale()
-  const { uid, ready, serverReady, enabled, leadMin, protocols, doses, vials } = useReminderInputs()
+  const { uid, ready, serverReady, enabled, leadMin, protocols, doses, vials, dismissed } =
+    useReminderInputs()
 
   useEffect(() => {
     if (!uid || !ready) return
@@ -177,10 +201,16 @@ export function useReminderSync() {
     }
     const key = `titra.reminders.${uid}`
     const timer = setTimeout(() => {
+      const at = new Date()
       const rows = enabled
-        ? upcomingAdministrations(protocols, doses, vials, new Date(), { leadMin }).map((u) =>
-            toReminderInput(u, leadMin, t, locale),
-          )
+        ? [
+            ...upcomingAdministrations(protocols, doses, vials, at, { leadMin }).map((u) =>
+              toReminderInput(u, leadMin, t, locale),
+            ),
+            ...upcomingDecisions(protocols, vials, at, { dismissed, doses }).map((d) =>
+              toDecisionInput(d, t, locale),
+            ),
+          ]
         : []
       const fp = fingerprint(rows.map((r) => [r.protocol_id, r.fire_at, r.title, r.body]))
       const prev = readStamp(key)
@@ -201,7 +231,7 @@ export function useReminderSync() {
         })
     }, 1200)
     return () => clearTimeout(timer)
-  }, [uid, ready, serverReady, enabled, leadMin, protocols, doses, vials, t, locale])
+  }, [uid, ready, serverReady, enabled, leadMin, protocols, doses, vials, dismissed, t, locale])
 }
 
 /* ------------------------------------------------------------ while open */
@@ -214,14 +244,14 @@ export function useLocalReminders() {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { toast } = useToast()
-  const { ready, enabled, leadMin, protocols, doses, vials } = useReminderInputs()
+  const { ready, enabled, leadMin, protocols, doses, vials, dismissed } = useReminderInputs()
 
   useEffect(() => {
     if (!ready || !enabled) return
     let timer: ReturnType<typeof setTimeout> | undefined
 
-    const fire = (next: UpcomingAdministration) => {
-      const firedKey = `titra.fired.${next.protocol.id}.${next.at.getTime()}`
+    const fire = (next: LocalReminder) => {
+      const firedKey = `titra.fired.${next.id}`
       let fired = false
       try {
         fired = sessionStorage.getItem(firedKey) !== null
@@ -230,21 +260,26 @@ export function useLocalReminders() {
         // No session storage: at worst the same reminder shows twice.
       }
       if (fired) return
-      const { title, body } = reminderText(next, leadMin, t, locale)
-      void showLocalNotification(title, {
-        body,
-        tag: `titra-${next.protocol.id}`,
-        data: { url: `#/?log=${next.protocol.id}` },
+      void showLocalNotification(next.title, {
+        body: next.body,
+        tag: next.tag,
+        data: { url: next.url },
       })
-      if (document.visibilityState === 'visible') toast(`${title} · ${body}`, 'info')
+      if (document.visibilityState === 'visible') toast(`${next.title} · ${next.body}`, 'info')
     }
 
-    // One timer at a time: fire the next administration, then look for the one after.
+    // One timer at a time: fire the next reminder (a dose or a decision), then look for the one after.
     const scheduleNext = () => {
-      const next = upcomingAdministrations(protocols, doses, vials, new Date(), {
-        leadMin,
-        horizonDays: 2,
-      })[0]
+      const at = new Date()
+      const next = [
+        ...upcomingAdministrations(protocols, doses, vials, at, { leadMin, horizonDays: 2 })
+          .slice(0, 1)
+          .map((u) => localAdministration(u, leadMin, t, locale)),
+        // The decision asks the evening before a step that begins at midnight: look a day further.
+        ...upcomingDecisions(protocols, vials, at, { horizonDays: 3, dismissed, doses })
+          .slice(0, 1)
+          .map((d) => localDecision(d, t, locale)),
+      ].toSorted((a, b) => a.fireAt.getTime() - b.fireAt.getTime())[0]
       if (!next) return
       const delay = next.fireAt.getTime() - Date.now()
       if (delay > MAX_TIMEOUT_MS) return
@@ -258,7 +293,7 @@ export function useLocalReminders() {
     }
     scheduleNext()
     return () => clearTimeout(timer)
-  }, [ready, enabled, leadMin, protocols, doses, vials, t, locale, toast])
+  }, [ready, enabled, leadMin, protocols, doses, vials, dismissed, t, locale, toast])
 }
 
 /** A tap on a notification while the app is open arrives as a message from the worker. */

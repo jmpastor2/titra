@@ -1,43 +1,53 @@
+import { subDays } from 'date-fns'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { subDays } from 'date-fns'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Field'
-import { EmptyState, Segmented, Stat } from '@/components/ui/primitives'
-import { compoundById, PK_COMPOUNDS } from '@/content/compounds'
+import { EmptyState, Segmented, Skeleton, Stat } from '@/components/ui/primitives'
+import { PK_COMPOUNDS } from '@/content/compounds'
+import { compoundColor } from '@/content/substanceColor'
 import { templatesForCompound } from '@/content/protocols/templates'
-import { exposureCurve, washoutHours } from '@/domain/pk/engine'
+import { plannedDoses } from '@/domain/dosing/schedule'
+import { amountAt, exposureCurve, rateConstants } from '@/domain/pk/engine'
 import { projectPlanned, projectSkipNext, projectStop, projectSwitch } from '@/domain/pk/scenarios'
 import type { ProtocolLike } from '@/domain/types'
+import { amountIn } from '@/features/exposure/chartScale'
+import { curveStepH, curveToNow } from '@/features/exposure/curves'
+import { hasMeaningfulCurve } from '@/features/exposure/levelSummary'
 import { PkChart } from '@/features/exposure/PkChart'
 import { useExposure } from '@/features/exposure/useExposure'
 import { fmtHours, fmtNumber, toDateInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { useNow } from '@/lib/useNow'
+import { scenarioInsight, type Scenario } from './insight'
 
-type Scenario = 'planned' | 'skip_next' | 'stop' | 'switch'
+type Horizon = '30' | '60' | '90' | '180'
+const HORIZONS: readonly Horizon[] = ['30', '60', '90', '180']
+const HISTORY_DAYS = 28
 
 export function SimulatorPage() {
   const { t } = useTranslation()
   const { locale, pick } = useLocale()
   const { patientId } = usePatientScope()
-  const now = useMemo(() => new Date(), [])
-  const exposure = useExposure(patientId, now)
+  const clock = useNow()
+  const exposure = useExposure(patientId, clock)
+  const now = exposure.now
 
   const [compoundId, setCompoundId] = useState<string>('')
   const [scenario, setScenario] = useState<Scenario>('skip_next')
-  const [horizon, setHorizon] = useState<'30' | '60' | '90' | '180'>('60')
+  const [horizon, setHorizon] = useState<Horizon>('60')
   const horizonDays = Number(horizon)
   const [switchTo, setSwitchTo] = useState<string>('tirzepatide')
   const [switchTemplateId, setSwitchTemplateId] = useState<string>('')
 
-  // Only substances with human PK data can be simulated (MOTS-c or Mod GRF cannot);
-  // long-acting ones first, where skipping or stopping matters most.
+  // Only substances whose level is worth a curve can be simulated: long-acting injectables
+  // with human data. Short-acting pulses (ipamorelin) or MOTS-c have no level to project.
   const simulable = useMemo(
     () =>
       exposure.items
-        .filter((x) => x.pk)
+        .filter((x) => hasMeaningfulCurve(x.pk) && x.nowMg !== null && !x.partnerOf)
         .toSorted((a, b) => (b.pk?.halfLifeH ?? 0) - (a.pk?.halfLifeH ?? 0)),
     [exposure.items],
   )
@@ -46,21 +56,33 @@ export function SimulatorPage() {
     [simulable, compoundId],
   )
   const pk = current?.pk
+  const unit = current?.compound?.defaultUnit ?? 'mg'
+  const color = compoundColor(current?.compoundId ?? '')
+
+  const targets = useMemo(
+    () => PK_COMPOUNDS.filter((c) => c.id !== current?.compoundId && hasMeaningfulCurve(c.pk)),
+    [current?.compoundId],
+  )
+  const target = targets.find((c) => c.id === switchTo) ?? targets[0]
+  const switchTemplate = useMemo(() => {
+    const tpls = templatesForCompound(target?.id ?? '')
+    return tpls.find((x) => x.id === switchTemplateId) ?? tpls[0]
+  }, [target?.id, switchTemplateId])
 
   const history = useMemo(() => {
     if (!current || !pk) return []
-    return exposureCurve(current.history, pk, {
-      from: subDays(now, 28),
-      to: now,
-      stepH: 4,
-      refineAtDoses: true,
-    })
+    const from = subDays(now, HISTORY_DAYS)
+    return curveToNow(
+      exposureCurve(current.history, pk, {
+        from,
+        to: now,
+        stepH: curveStepH(HISTORY_DAYS),
+        refineAtDoses: true,
+      }),
+      now,
+      amountAt(current.history, now, rateConstants(pk)),
+    )
   }, [current, pk, now])
-
-  const switchTemplate = useMemo(() => {
-    const tpls = templatesForCompound(switchTo)
-    return tpls.find((x) => x.id === switchTemplateId) ?? tpls[0]
-  }, [switchTo, switchTemplateId])
 
   const result = useMemo(() => {
     if (!current || !pk) return null
@@ -71,67 +93,90 @@ export function SimulatorPage() {
       protocol: current.protocolLike,
       now,
       horizonDays,
-      stepH: 4,
+      stepH: curveStepH(horizonDays),
     }
     if (scenario === 'planned') return { main: projectPlanned(base), alt: null }
     if (scenario === 'skip_next') return { main: projectPlanned(base), alt: projectSkipNext(base) }
     if (scenario === 'stop') return { main: projectPlanned(base), alt: projectStop(base) }
 
-    const target = compoundById(switchTo)
     if (!target?.pk || !switchTemplate) return { main: projectPlanned(base), alt: null }
     const protocol: ProtocolLike = {
-      compoundId: switchTo,
+      compoundId: target.id,
       startDate: toDateInputValue(now),
       steps: switchTemplate.steps,
       times: ['09:00'],
     }
     const [from, to] = projectSwitch({
       from: { compoundId: current.compoundId, pk, history: current.history },
-      to: { compoundId: switchTo, pk: target.pk, protocol },
+      to: { compoundId: target.id, pk: target.pk, protocol },
       switchAt: now,
       now,
       horizonDays,
-      stepH: 4,
+      stepH: base.stepH,
     })
     return { main: from, alt: to }
-  }, [current, pk, scenario, horizonDays, now, switchTo, switchTemplate])
+  }, [current, pk, scenario, horizonDays, now, target, switchTemplate])
 
-  const insight = useMemo(() => {
-    if (!result || !pk) return null
-    if (scenario === 'skip_next' && result.alt) {
-      const min = Math.min(...result.alt.points.map((p) => p.mg))
-      return { label: t('simulator.levelAfterSkip'), value: `${fmtNumber(min, locale, 2)} mg` }
-    }
-    if (scenario === 'stop') {
-      return { label: t('simulator.washout'), value: fmtHours(washoutHours(0.1, pk), locale) }
-    }
-    return null
-  }, [result, scenario, pk, t, locale])
+  // The administrations the plan has ahead, and the one the "skip" tab leaves out.
+  const upcoming = useMemo(() => {
+    if (!current?.protocolLike || scenario === 'stop' || scenario === 'switch') return []
+    const to = new Date(now.getTime() + horizonDays * 86_400_000)
+    return plannedDoses(current.protocolLike, current.history, now, to).map((p) => ({
+      at: p.at,
+      mg: p.doseMg,
+    }))
+  }, [current, scenario, now, horizonDays])
 
-  if (exposure.isPending) return <div className="pt-6" />
+  const insight = useMemo(
+    () =>
+      result && pk
+        ? scenarioInsight(scenario, pk, result.main.points, result.alt?.points ?? null)
+        : null,
+    [result, scenario, pk],
+  )
+
+  if (exposure.isPending) {
+    // The shape of the page, so nothing moves when the data arrives.
+    return (
+      <div className="pb-6">
+        <PageHeader title={t('simulator.title')} subtitle={t('simulator.intro')} back="/more" />
+        <div className="flex flex-col gap-3" aria-hidden>
+          <Skeleton className="h-10 w-full rounded-full" />
+          <Skeleton className="h-[330px] w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </div>
+    )
+  }
 
   if (!current || !pk) {
+    const hasAny = exposure.items.length > 0
     return (
       <div>
         <PageHeader title={t('simulator.title')} back="/more" />
         <Card>
           <EmptyState
             title={t('simulator.needProtocol')}
-            description={t('dashboard.noProtocolHint')}
+            description={hasAny ? t('simulator.onlyLongActing') : t('dashboard.noProtocolHint')}
           />
         </Card>
       </div>
     )
   }
 
+  const altColor = scenario === 'switch' && target ? compoundColor(target.id) : 'var(--ink-2)'
   const altLabel =
     scenario === 'skip_next'
       ? t('simulator.skipNext')
       : scenario === 'stop'
         ? t('simulator.stop')
         : scenario === 'switch'
-          ? compoundById(switchTo)?.names.generic
+          ? target?.names.generic
           : undefined
+  const fmtAmount = (mg: number) => {
+    const a = amountIn(mg, unit)
+    return `${fmtNumber(a.value, locale, a.digits)} ${a.label}`
+  }
 
   return (
     <div className="pb-6">
@@ -151,7 +196,6 @@ export function SimulatorPage() {
         <Segmented<Scenario>
           value={scenario}
           onChange={setScenario}
-          size="sm"
           options={[
             { value: 'skip_next', label: t('simulator.tabSkip') },
             { value: 'stop', label: t('simulator.tabStop') },
@@ -166,28 +210,28 @@ export function SimulatorPage() {
                 {t('simulator.switchTo')}
               </label>
               <Select
-                value={switchTo}
+                value={target?.id ?? ''}
                 onChange={(e) => {
                   setSwitchTo(e.target.value)
                   setSwitchTemplateId('')
                 }}
               >
-                {PK_COMPOUNDS.filter((c) => c.id !== current.compoundId).map((c) => (
+                {targets.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.names.generic}
                   </option>
                 ))}
               </Select>
-              {templatesForCompound(switchTo).length > 0 && (
+              {templatesForCompound(target?.id ?? '').length > 0 && (
                 <>
                   <label className="text-[13px] font-medium text-ink-2">
                     {t('simulator.switchTemplate')}
                   </label>
                   <Select
-                    value={switchTemplateId}
+                    value={switchTemplate?.id ?? ''}
                     onChange={(e) => setSwitchTemplateId(e.target.value)}
                   >
-                    {templatesForCompound(switchTo).map((tpl) => (
+                    {templatesForCompound(target?.id ?? '').map((tpl) => (
                       <option key={tpl.id} value={tpl.id}>
                         {pick(tpl.name)}
                       </option>
@@ -199,49 +243,75 @@ export function SimulatorPage() {
           </Card>
         )}
 
-        <Card title={t('dashboard.curve')} subtitle={t('dashboard.curveHint')}>
+        <Card title={t('simulator.chartTitle')} subtitle={t('simulator.chartHint')}>
           {result && (
             <PkChart
               history={history}
               projection={result.main.points}
               alt={result.alt?.points}
               altLabel={altLabel}
+              altColor={altColor}
               doses={current.history}
+              planned={scenario === 'skip_next' ? upcoming.slice(1) : upcoming}
+              crossed={scenario === 'skip_next' ? upcoming.slice(0, 1) : undefined}
               now={now}
+              color={color}
+              unit={unit}
               height={250}
+              label={t('simulator.chartAria')}
             />
           )}
-          <div className="mt-1 flex flex-wrap items-center gap-4 px-2 text-[11.5px] text-muted">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="inline-block h-[2px] w-4 rounded bg-[var(--chart-1)]" />
+          <ul className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11.5px] text-muted">
+            <li className="inline-flex items-center gap-1.5">
+              <span className="inline-block h-[2px] w-4 rounded" style={{ background: color }} />
               {scenario === 'switch' ? current.compound?.names.generic : t('simulator.planned')}
-            </span>
+            </li>
             {result?.alt && (
-              <span className="inline-flex items-center gap-1.5">
-                <span className="inline-block h-[2px] w-4 rounded bg-[var(--chart-2)]" />
+              <li className="inline-flex items-center gap-1.5">
+                <span
+                  className="inline-block w-4 border-t-2 border-dotted"
+                  style={{ borderColor: altColor }}
+                />
                 {altLabel}
-              </span>
+              </li>
             )}
-          </div>
+            {scenario === 'skip_next' && upcoming.length > 0 && (
+              <li className="inline-flex items-center gap-1.5">
+                <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden>
+                  <path
+                    d="M1.5 1.5l7 7m-7 0l7-7"
+                    stroke={altColor}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                {t('simulator.skipped')}
+              </li>
+            )}
+          </ul>
         </Card>
 
         <Card title={t('simulator.horizon')}>
-          <Segmented<'30' | '60' | '90' | '180'>
+          <Segmented<Horizon>
             value={horizon}
             onChange={setHorizon}
-            size="sm"
-            options={[
-              { value: '30', label: t('common.range.30') },
-              { value: '60', label: '60 d' },
-              { value: '90', label: t('common.range.90') },
-              { value: '180', label: t('common.range.180') },
-            ]}
+            options={HORIZONS.map((h) => ({ value: h, label: t('simulator.days', { n: h }) }))}
           />
-          {insight && (
+          {insight?.kind === 'skip' && (
             <div className="mt-4">
               <Stat
-                label={insight.label}
-                value={insight.value}
+                label={t('simulator.levelAfterSkip')}
+                value={fmtAmount(insight.lowestMg)}
+                tone="accent"
+                hint={t('simulator.versusPlan', { value: fmtAmount(insight.planLowestMg) })}
+              />
+            </div>
+          )}
+          {insight?.kind === 'stop' && (
+            <div className="mt-4">
+              <Stat
+                label={t('simulator.washout')}
+                value={fmtHours(insight.washoutH, locale)}
                 tone="accent"
                 hint={t('simulator.washoutHint')}
               />

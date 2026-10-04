@@ -1,44 +1,100 @@
-import { differenceInCalendarDays } from 'date-fns'
-import { Archive, Package, Plus } from 'lucide-react'
+import { Package, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Badge, EmptyState, Skeleton, SubstanceDot, Vial } from '@/components/ui/primitives'
-import { compoundById } from '@/content/compounds'
+import { EmptyState, SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
+import { useToast } from '@/components/ui/Toast'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
-import { useArchiveInventory } from '@/data/hooks'
-import { roundUnits } from '@/domain/dosing/draw'
-import { mgToUnits } from '@/domain/dosing/reconstitution'
-import { fmtDate, fmtDose, fmtNumber } from '@/lib/format'
-import { useLocale } from '@/lib/useLocale'
-import { effectiveExpiry } from './alerts'
+import { useArchiveInventory, useInventory, useSaveInventory } from '@/data/hooks'
+import { useNow } from '@/lib/useNow'
+import { AlertsPanel } from './AlertsPanel'
+import { BLEND_PRESETS, type BlendPreset } from './blendPresets'
+import { FinishedVials } from './FinishedVials'
 import { InventorySheet } from './InventorySheet'
-import { StockAlerts } from './StockAlerts'
+import { RestockCard } from './RestockCard'
+import { StockStrip } from './StockStrip'
+import { useReconstituteSheet } from './useReconstituteSheet'
 import { useStock } from './useStock'
-import { concentrationOf, vialContents, vialLook, type RestockLine, type VialRunway } from './vials'
+import { VialCard } from './VialCard'
+import { latestVialOf, unopenedCopy, vialState, type RestockLine } from './vials'
+
+/** What to open the add sheet with: a common vial, or just a substance. */
+interface AddRequest {
+  preset?: BlendPreset
+  compoundId?: string
+}
 
 export function InventoryPage() {
   const { t } = useTranslation()
   const { patientId, readOnly } = usePatientScope()
-  const stock = useStock(patientId)
-  const { list, runways, restock, alerts } = stock
+  const { toast } = useToast()
+  const now = useNow()
+  const stock = useStock(patientId, now)
+  const { list, runways, restock } = stock
+  // Archived vials too: they are the history, and the best template for restocking.
+  const everything = useInventory(patientId, true)
+  const save = useSaveInventory(patientId)
+  const archive = useArchiveInventory(patientId)
   const [editing, setEditing] = useState<InventoryRow | null>(null)
-  const [open, setOpen] = useState(false)
+  const [adding, setAdding] = useState<AddRequest | null>(null)
+  const reconstitution = useReconstituteSheet(now)
 
-  // In use first, then reserve vials, then empty ones.
-  const sortedVials = useMemo(() => {
-    const rank = (v: InventoryRow) => (Number(v.remaining_mg) <= 0 ? 2 : concentrationOf(v) ? 0 : 1)
-    return list.toSorted((a, b) => rank(a) - rank(b))
-  }, [list])
+  const groups = useMemo(() => {
+    const byOpened = (a: InventoryRow, b: InventoryRow) =>
+      (a.opened_at ?? '').localeCompare(b.opened_at ?? '')
+    const archived = (everything.data ?? []).filter((v) => v.archived)
+    return {
+      // The oldest reconstituted vial first: it is the one drawn from.
+      inUse: list.filter((v) => vialState(v) === 'inUse').toSorted(byOpened),
+      reserve: list.filter((v) => vialState(v) === 'reserve'),
+      finished: [...list.filter((v) => vialState(v) === 'finished'), ...archived],
+    }
+  }, [list, everything.data])
 
-  const add = () => {
-    setEditing(null)
-    setOpen(true)
+  // The next dose of each compound, for the units shown on vials that are not the one in use.
+  const nextDose = useMemo(
+    () => new Map(restock.map((l) => [l.compoundId, l.runway.nextDoseMg])),
+    [restock],
+  )
+
+  async function addSame(vial: InventoryRow) {
+    if (save.isPending) return
+    try {
+      await save.mutateAsync(unopenedCopy(vial))
+      toast(t('inventory.addedSame', { label: vial.label }), 'success')
+    } catch {
+      toast(t('common.error'), 'error')
+    }
   }
+
+  function setArchived(vial: InventoryRow, archived: boolean) {
+    archive.mutate(
+      { id: vial.id, archived },
+      {
+        onSuccess: () =>
+          toast(
+            t(archived ? 'inventory.archivedToast' : 'inventory.restoredToast', {
+              label: vial.label,
+            }),
+            'info',
+          ),
+        onError: () => toast(t('common.error'), 'error'),
+      },
+    )
+  }
+
+  // A substance running short: another vial like the last one, or pick one if there was none.
+  function restockLine(line: RestockLine) {
+    const template = latestVialOf(everything.data ?? list, line.compoundId)
+    if (template) void addSame(template)
+    else setAdding({ compoundId: line.compoundId })
+  }
+
+  const nothing = list.length === 0 && groups.finished.length === 0
 
   return (
     <div className="pb-6">
@@ -49,7 +105,7 @@ export function InventoryPage() {
         back="/more"
         action={
           !readOnly && (
-            <Button size="sm" leading={<Plus className="size-4" />} onClick={add}>
+            <Button leading={<Plus className="size-4" />} onClick={() => setAdding({})}>
               {t('common.add')}
             </Button>
           )
@@ -57,268 +113,104 @@ export function InventoryPage() {
       />
 
       {stock.pending ? (
-        <Card>
-          <Skeleton className="h-24 w-full" />
-        </Card>
-      ) : list.length === 0 ? (
+        <div className="flex flex-col gap-3" aria-busy>
+          <Skeleton className="h-[76px] w-full rounded-card" />
+          <Skeleton className="h-[200px] w-full rounded-card" />
+          <Skeleton className="h-[200px] w-full rounded-card" />
+        </div>
+      ) : nothing ? (
         <Card>
           <EmptyState
             icon={<Package className="size-7" />}
             title={t('inventory.empty')}
             description={t('inventory.emptyHint')}
-            action={!readOnly && <Button onClick={add}>{t('inventory.add')}</Button>}
+            action={
+              !readOnly && <Button onClick={() => setAdding({})}>{t('inventory.add')}</Button>
+            }
           />
+          {!readOnly && (
+            <div className="border-t border-line px-1 pt-4">
+              <div className="spec mb-2 px-1">{t('inventory.startWith')}</div>
+              <div className="flex flex-wrap gap-2">
+                {BLEND_PRESETS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => setAdding({ preset: p })}
+                    className="flex min-h-11 items-center gap-1.5 rounded-full border border-line-strong bg-panel-2 px-3.5 text-[12.5px] font-semibold outline-none transition hover:border-signal/40 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-signal/60"
+                  >
+                    {p.parts.map((x) => (
+                      <SubstanceDot key={x.compoundId} color={compoundColor(x.compoundId)} />
+                    ))}
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </Card>
       ) : (
         <>
-          {alerts.length > 0 && <StockAlerts alerts={alerts} className="mb-3" />}
-          {restock.length > 0 && <RestockCard lines={restock} />}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {sortedVials.map((item) => (
-              <VialCard
-                key={item.id}
-                item={item}
-                runway={runways.get(item.id)}
-                readOnly={readOnly}
-                onEdit={() => {
-                  setEditing(item)
-                  setOpen(true)
-                }}
-              />
-            ))}
-          </div>
+          <StockStrip
+            inUse={groups.inUse.length}
+            reserve={groups.reserve.length}
+            finished={groups.finished.length}
+          />
+          <AlertsPanel alerts={stock.alerts} read={stock.dismissedAlerts} />
+          {restock.length > 0 && (
+            <RestockCard lines={restock} now={now} readOnly={readOnly} onAdd={restockLine} />
+          )}
+
+          {[
+            { key: 'inUse', title: t('inventory.sectionInUse'), vials: groups.inUse },
+            { key: 'reserve', title: t('inventory.sectionReserve'), vials: groups.reserve },
+          ].map(
+            (g) =>
+              g.vials.length > 0 && (
+                <section key={g.key} className="mb-3">
+                  <SectionTitle>
+                    {g.title} · {g.vials.length}
+                  </SectionTitle>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {g.vials.map((item) => (
+                      <VialCard
+                        key={item.id}
+                        item={item}
+                        runway={runways.get(item.id)}
+                        nextDoseMg={nextDose.get(item.compound_id)}
+                        now={now}
+                        readOnly={readOnly}
+                        onEdit={() => setEditing(item)}
+                        onReconstitute={() => reconstitution.reconstitute(item)}
+                        onAddSame={() => void addSame(item)}
+                        onArchive={() => setArchived(item, true)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ),
+          )}
+
+          <FinishedVials
+            vials={groups.finished}
+            readOnly={readOnly}
+            onArchive={(v) => setArchived(v, true)}
+            onRestore={(v) => setArchived(v, false)}
+          />
         </>
       )}
 
-      <InventorySheet open={open} onClose={() => setOpen(false)} editing={editing} />
+      <InventorySheet
+        open={adding !== null || editing !== null}
+        onClose={() => {
+          setAdding(null)
+          setEditing(null)
+        }}
+        editing={editing}
+        {...(adding?.compoundId ? { defaultCompoundId: adding.compoundId } : {})}
+        {...(adding?.preset ? { preset: adding.preset } : {})}
+      />
+      {reconstitution.sheet}
     </div>
-  )
-}
-
-function VialCard({
-  item,
-  runway,
-  readOnly,
-  onEdit,
-}: {
-  item: InventoryRow
-  /** Present for the vial currently drawn from, when a protocol uses it. */
-  runway?: VialRunway
-  readOnly: boolean
-  onEdit: () => void
-}) {
-  const { t } = useTranslation()
-  const { locale } = useLocale()
-  const { patientId } = usePatientScope()
-  const archive = useArchiveInventory(patientId)
-  const compound = compoundById(item.compound_id)
-  const color = compoundColor(item.compound_id)
-  const total = Number(item.total_mg)
-  const remaining = Number(item.remaining_mg)
-  const fill = total > 0 ? remaining / total : 0
-  const conc = concentrationOf(item)
-  // Label expiry, or 28 days after reconstitution as an estimate.
-  const expiry = effectiveExpiry(item)
-  const expiryDays = expiry ? differenceInCalendarDays(expiry.date, new Date()) : null
-  const openDays = item.opened_at
-    ? differenceInCalendarDays(new Date(), new Date(item.opened_at))
-    : null
-  const unit = compound?.defaultUnit ?? 'mg'
-  // Your next dose when a protocol uses this vial; otherwise a typical 100 mcg / 0.25 mg.
-  const doseMg = runway?.nextDoseMg ?? (unit === 'mcg' ? 0.1 : 0.25)
-  // It expires before it runs out: the expiry date is what forces the next vial.
-  const expiresFirst =
-    runway && expiry ? !runway.runsOutAt || expiry.date < runway.runsOutAt : false
-  const needBy = expiresFirst && expiry ? expiry.date : (runway?.runsOutAt ?? null)
-  const short =
-    (runway ? runway.runsOutAt !== null && runway.doses <= 2 : false) ||
-    (expiresFirst && expiryDays !== null && expiryDays <= 7)
-
-  return (
-    <Card
-      padded={false}
-      className="overflow-hidden"
-      style={{ borderColor: `color-mix(in oklab, ${color} 28%, var(--line))` }}
-    >
-      <button
-        type="button"
-        disabled={readOnly}
-        onClick={onEdit}
-        className="flex w-full gap-4 p-4 text-left"
-      >
-        <Vial {...vialLook(item)} size={64} low={short} />
-        <div className="min-w-0 flex-1">
-          <div className="spec truncate">
-            {vialContents(item)
-              .map((c) => compoundById(c.compoundId)?.names.generic ?? c.compoundId)
-              .join(' + ')}
-          </div>
-          <div className="mt-0.5 truncate text-[15px] font-semibold">{item.label}</div>
-          <div className="readout mt-2 text-[22px] font-semibold leading-none" style={{ color }}>
-            {fmtNumber(remaining, locale, 2)}
-            <span className="ml-1 text-[12px] text-muted">/ {fmtNumber(total, locale, 2)} mg</span>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {(short || (!runway && fill <= 0.2)) && <Badge tone="warn">{t('inventory.low')}</Badge>}
-            {expiryDays !== null && expiryDays < 0 && (
-              <Badge tone="danger">{t('inventory.expired')}</Badge>
-            )}
-            {expiryDays !== null && expiryDays >= 0 && expiryDays <= 30 && (
-              <Badge tone="warn">
-                {expiry?.estimated ? '≈ ' : ''}
-                {t('inventory.expiresSoon', { days: expiryDays })}
-              </Badge>
-            )}
-          </div>
-        </div>
-      </button>
-      {!conc ? (
-        <div className="border-t border-line px-4 py-2.5 text-[12.5px] text-muted">
-          <span className="font-semibold text-ink-2">{t('inventory.lyophilised')}</span> ·{' '}
-          {t('inventory.reconstituteHint')}
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-px border-t border-line bg-line text-center">
-          <Spec
-            label={t('calculator.concentration')}
-            value={conc ? `${fmtNumber(conc, locale, 2)} mg/mL` : '—'}
-          />
-          <Spec
-            label={
-              runway
-                ? t('inventory.yourDose', { dose: fmtDose(doseMg, unit, locale) })
-                : fmtDose(doseMg, unit, locale)
-            }
-            value={conc ? `${fmtNumber(roundUnits(mgToUnits(doseMg, conc)), locale, 1)} U` : '—'}
-            accent={Boolean(runway && conc)}
-          />
-          {runway ? (
-            <Spec
-              label={t('inventory.covers')}
-              value={t('inventory.dosesLeft', { count: runway.doses })}
-              warn={short}
-            />
-          ) : (
-            <Spec
-              label={openDays !== null ? t('inventory.openedShort') : t('inventory.expiresShort')}
-              value={
-                openDays !== null
-                  ? t('common.days', { count: openDays })
-                  : item.expires_at
-                    ? fmtDate(new Date(item.expires_at), locale, 'd MMM')
-                    : '—'
-              }
-            />
-          )}
-        </div>
-      )}
-      {runway && needBy && (
-        <div
-          className={
-            short
-              ? 'border-t border-line bg-warn-soft px-4 py-2 text-[12px] font-semibold text-warn'
-              : 'border-t border-line px-4 py-2 text-[12px] text-muted'
-          }
-        >
-          {t(expiresFirst ? 'inventory.expiresBeforeEmpty' : 'inventory.nextVialBy', {
-            date: fmtDate(needBy, locale, 'EEE d MMM'),
-          })}
-          {openDays !== null && ` · ${t('inventory.openedFor', { count: openDays })}`}
-        </div>
-      )}
-      {!readOnly && (
-        <button
-          type="button"
-          aria-label={t('inventory.archive')}
-          onClick={() => archive.mutate({ id: item.id, archived: true })}
-          className="absolute right-3 top-3 grid size-8 place-items-center rounded-full text-muted hover:bg-panel-2 hover:text-ink"
-        >
-          <Archive className="size-4" />
-        </button>
-      )}
-    </Card>
-  )
-}
-
-function Spec({
-  label,
-  value,
-  accent,
-  warn,
-}: {
-  label: string
-  value: string
-  accent?: boolean
-  warn?: boolean
-}) {
-  return (
-    <div className="bg-panel px-2 py-2.5">
-      <div className="spec truncate text-[9.5px]">{label}</div>
-      <div
-        className={`readout mt-0.5 truncate text-[12.5px] font-semibold ${
-          warn ? 'text-warn' : accent ? 'text-signal' : ''
-        }`}
-      >
-        {value}
-      </div>
-    </div>
-  )
-}
-
-/** Supply per substance in use, across every vial: when to order more. */
-function RestockCard({ lines }: { lines: RestockLine[] }) {
-  const { t } = useTranslation()
-  const { locale } = useLocale()
-  const now = new Date()
-  return (
-    <Card
-      instrument
-      eyebrow={t('inventory.restockEyebrow')}
-      title={t('inventory.restockTitle')}
-      className="mb-3"
-    >
-      <ul className="flex flex-col divide-y divide-line">
-        {lines.map((l) => {
-          const days = l.runway.runsOutAt ? differenceInCalendarDays(l.runway.runsOutAt, now) : null
-          const urgent = days !== null && days <= 14
-          const soon = days !== null && days <= 30
-          return (
-            <li key={l.compoundId} className="flex items-center gap-3 py-2.5">
-              <SubstanceDot color={compoundColor(l.compoundId)} />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] font-semibold">
-                  {l.partners.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')}
-                </span>
-                <span className="readout block text-[11.5px] text-muted">
-                  {fmtNumber(l.availableMg, locale, 2)} mg ·{' '}
-                  {t('inventory.vialsCount', { count: l.vials })}
-                  {l.reserve > 0 && ` · ${t('inventory.reserveCount', { count: l.reserve })}`}
-                </span>
-              </span>
-              <span className="shrink-0 text-right">
-                {l.runway.runsOutAt ? (
-                  <>
-                    <span
-                      className={`readout block text-[13px] font-semibold ${urgent ? 'text-danger' : soon ? 'text-warn' : 'text-ink'}`}
-                    >
-                      {t('inventory.until', { date: fmtDate(l.runway.runsOutAt, locale, 'd MMM') })}
-                    </span>
-                    <span className={`spec block text-[9.5px] ${urgent ? 'text-danger' : ''}`}>
-                      {urgent
-                        ? t('inventory.orderNow')
-                        : t('inventory.dosesLeft', { count: l.runway.doses })}
-                    </span>
-                  </>
-                ) : (
-                  <span className="readout block text-[13px] font-semibold text-signal">
-                    {t('inventory.plenty')}
-                  </span>
-                )}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </Card>
   )
 }

@@ -16,6 +16,7 @@ import { setSupabaseClient } from '@/lib/supabase'
 import { bootTheme } from '@/lib/theme'
 import { createFakeSupabase } from './fakeSupabase'
 import { buildStore, LAB_USER } from './fixtures'
+import { loadRealAccount } from './snapshot'
 
 bootTheme()
 
@@ -44,8 +45,11 @@ function installClock(at: string | null) {
 installClock(new URLSearchParams(window.location.search).get('now'))
 
 const params = new URLSearchParams(window.location.search)
-const store = buildStore(new Date(), { empty: params.has('empty') })
-setSupabaseClient(createFakeSupabase(store, LAB_USER))
+const real = params.has('real') ? loadRealAccount() : null
+if (params.has('real') && !real) document.title = 'Titra · laboratorio · sin real-snapshot.json'
+const labUser = real?.user ?? LAB_USER
+const store = real?.store ?? buildStore(new Date(), { empty: params.has('empty') })
+setSupabaseClient(createFakeSupabase(store, labUser))
 
 // Handy in the browser console: inspect or tweak the data, then reload the screen.
 Object.assign(window, { lab: { store } })
@@ -53,7 +57,7 @@ Object.assign(window, { lab: { store } })
 const session: SessionState = {
   status: 'signed_in',
   session: null,
-  user: { id: LAB_USER.id, email: LAB_USER.email } as SessionState['user'],
+  user: { id: labUser.id, email: labUser.email } as SessionState['user'],
 }
 const client = createQueryClient()
 

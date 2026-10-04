@@ -4,10 +4,17 @@
  */
 import { addDays, addMonths, startOfDay, startOfMonth } from 'date-fns'
 import { stepWindows } from '@/domain/dosing/schedule'
-import type { ProtocolLike } from '@/domain/types'
+import type { DoseUnit, ProtocolLike } from '@/domain/types'
 
 const DAY_MS = 86_400_000
 const NICE = [1, 2, 2.5, 5, 10] as const
+const UNIT_LABEL: Record<DoseUnit, string> = {
+  mg: 'mg',
+  mcg: 'mcg',
+  iu: 'UI',
+  units: 'U',
+  ml: 'mL',
+}
 
 /** Smallest "nice" number (1, 2, 2.5, 5 × 10ⁿ) that is ≥ v. */
 export function niceStep(v: number): number {
@@ -36,6 +43,15 @@ export function niceYAxis(maxValue: number, targetSteps = 3): { max: number; tic
   return { max, ticks }
 }
 
+/** Fewest fraction digits that write every tick exactly: [0, 0.2, 0.4] → 1, [0, 50, 100] → 0. */
+export function tickDecimals(ticks: readonly number[]): number {
+  for (let d = 0; d <= 3; d++) {
+    const k = 10 ** d
+    if (ticks.every((t) => Math.abs(t * k - Math.round(t * k)) < 1e-6)) return d
+  }
+  return 3
+}
+
 /** Small amounts (short-acting peptides dosed in mcg) read better in mcg. */
 export function amountScale(maxMg: number): { factor: number; unit: 'mg' | 'mcg' } {
   return maxMg > 0 && maxMg < 0.5 ? { factor: 1000, unit: 'mcg' } : { factor: 1, unit: 'mg' }
@@ -51,7 +67,36 @@ export function scaledAmount(
 ): { value: number; unit: 'mg' | 'mcg'; digits: number } {
   const { factor, unit } = amountScale(Math.max(mg, referenceMg))
   const value = mg * factor
-  return { value, unit, digits: value >= 10 ? 0 : value >= 1 ? 1 : 2 }
+  return { value, unit, digits: readoutDigits(value) }
+}
+
+/** Fraction digits a readout needs: 85 mcg, 4.2 mg, 0.62 mg. */
+export function readoutDigits(value: number): number {
+  const v = Math.abs(value)
+  return v >= 10 ? 0 : v >= 1 ? 1 : 2
+}
+
+/**
+ * How amounts read on a chart or card: in the unit the person doses in (ipamorelin and
+ * CJC in mcg, retatrutide and MOTS-c in mg). The engine works in mg, so only mcg converts.
+ */
+export function unitScale(unit: DoseUnit | undefined): {
+  factor: number
+  unit: DoseUnit
+  label: string
+} {
+  const u = unit ?? 'mg'
+  return { factor: u === 'mcg' ? 1000 : 1, unit: u, label: UNIT_LABEL[u] }
+}
+
+/** An engine amount (mg) in the person's unit, with the fraction digits a readout needs. */
+export function amountIn(
+  mg: number,
+  unit: DoseUnit | undefined,
+): { value: number; label: string; digits: number } {
+  const { factor, label } = unitScale(unit)
+  const value = mg * factor
+  return { value, label, digits: readoutDigits(value) }
 }
 
 export type TickPattern = 'EEE d' | 'd MMM' | 'MMM'

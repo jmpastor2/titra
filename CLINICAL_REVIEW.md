@@ -187,3 +187,18 @@ línea: todo lo que sigue está sin verificar.
 - Las líneas nuevas sobre su parte en KLOW y GLOW son aritmética sobre la composición típica.
 - TB-500 en blends: se da por hecho que es el fragmento 17-23; la etiqueta no suele aclarar si es
   el fragmento o la timosina β4 completa.
+
+## Inventario y reconstitución (octubre 2026)
+
+- Tamaños de vial de NAD+ del formulario (100, 500 y 1000 mg): son los que circulan en el mercado
+  comunitario, no un dato de ficha. El formulario lo dice y deja editarlos.
+- Fecha de descarte estimada: la menor entre la caducidad de la etiqueta y 28 días desde que se
+  reconstituye. Los 28 días son la pauta habitual de uso tras reconstituir con agua
+  bacteriostática refrigerada; es orientativa y cada péptido tiene su propia estabilidad (ver
+  "Estabilidad tras reconstituir" más arriba). La app lo etiqueta como orientativo.
+- Avisos de reconstitución: Titra pregunta (sin bloquear) cuando el agua parece un error de
+  unidades, por ejemplo 100 escrito en mL en lugar de 100 U (= 1 mL). No es un criterio clínico,
+  solo una comprobación de la aritmética de la jeringa.
+- Regla propia del usuario en las decisiones de ciclo: con náuseas o vómitos esa semana, no sube
+  la dosis; y descanso de referencia de 4–8 semanas tras un ciclo con descanso programado. Son
+  reglas personales que la app recuerda; no son recomendaciones de la app.

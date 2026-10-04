@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import type { ProtocolLike } from '@/domain/types'
 import {
+  amountIn,
   amountScale,
   niceStep,
   niceYAxis,
+  readoutDigits,
   scaledAmount,
   stepChanges,
+  tickDecimals,
   timeTicks,
+  unitScale,
 } from './chartScale'
 
 const DAY = 86_400_000
@@ -33,6 +37,17 @@ describe('niceStep / niceYAxis', () => {
   })
 })
 
+describe('tickDecimals', () => {
+  it('writes ticks with as few decimals as they need', () => {
+    expect(tickDecimals([0, 50, 100, 150])).toBe(0)
+    expect(tickDecimals([0, 0.5, 1])).toBe(1)
+    expect(tickDecimals([0, 0.2, 0.4])).toBe(1)
+    expect(tickDecimals([0, 0.25, 0.5])).toBe(2)
+    expect(tickDecimals([0, 2, 4, 6])).toBe(0)
+    expect(tickDecimals([0, 0.025, 0.05])).toBe(3)
+  })
+})
+
 describe('amountScale', () => {
   it('switches to mcg for small amounts only', () => {
     expect(amountScale(0.1)).toEqual({ factor: 1000, unit: 'mcg' })
@@ -44,6 +59,32 @@ describe('amountScale', () => {
     expect(scaledAmount(0.62)).toEqual({ value: 0.62, unit: 'mg', digits: 2 })
     expect(scaledAmount(0.002, 0.1)).toMatchObject({ unit: 'mcg', digits: 1 })
     expect(scaledAmount(0.2, 3)).toMatchObject({ unit: 'mg', value: 0.2 })
+  })
+})
+
+describe('units the person doses in', () => {
+  it('reads mcg compounds in mcg and mg compounds in mg, whatever the magnitude', () => {
+    expect(unitScale('mcg')).toEqual({ factor: 1000, unit: 'mcg', label: 'mcg' })
+    expect(unitScale('mg')).toEqual({ factor: 1, unit: 'mg', label: 'mg' })
+    expect(unitScale(undefined)).toEqual({ factor: 1, unit: 'mg', label: 'mg' })
+    expect(unitScale('iu').label).toBe('UI')
+    expect(unitScale('units').label).toBe('U')
+    expect(unitScale('ml').label).toBe('mL')
+  })
+  it('converts engine mg into that unit with the digits a readout needs', () => {
+    // Ipamorelin 100 mcg and a tail of 0.0004 mg; retatrutide 0.2 mg stays in mg.
+    expect(amountIn(0.1, 'mcg')).toEqual({ value: 100, label: 'mcg', digits: 0 })
+    expect(amountIn(0.0004, 'mcg')).toMatchObject({ label: 'mcg', digits: 2 })
+    expect(amountIn(0.0004, 'mcg').value).toBeCloseTo(0.4, 10)
+    expect(amountIn(0.2, 'mg')).toEqual({ value: 0.2, label: 'mg', digits: 2 })
+    expect(amountIn(4.23, 'mg')).toEqual({ value: 4.23, label: 'mg', digits: 1 })
+  })
+  it('picks fraction digits by magnitude', () => {
+    expect(readoutDigits(85)).toBe(0)
+    expect(readoutDigits(10)).toBe(0)
+    expect(readoutDigits(4.2)).toBe(1)
+    expect(readoutDigits(0.62)).toBe(2)
+    expect(readoutDigits(0)).toBe(2)
   })
 })
 

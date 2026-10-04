@@ -30,6 +30,7 @@ import type { DoseUnit } from '@/domain/types'
 import { compositionTrend, proteinTarget, rateFlag } from '@/domain/lean/leanMass'
 import { TREND_INSET } from '@/features/exposure/chartScale'
 import { TrendChart } from '@/features/exposure/TrendChart'
+import { useCounterMeasurements } from '@/features/quicklog/data'
 import { LogSymptomSheet } from '@/features/symptoms/LogSymptomSheet'
 import { OutlookCard } from '@/features/outlook/OutlookPage'
 import { fmtDate, fmtDateTime, fmtDose, fmtNumber, fmtRelativeDay } from '@/lib/format'
@@ -422,10 +423,13 @@ function LeanTab() {
   const { locale } = useLocale()
   const { patientId, patient, readOnly } = usePatientScope()
   const measurements = useMeasurements(patientId, 120)
+  // Protein and strength sessions are counters: read from their own small query.
+  const counters = useCounterMeasurements(patientId)
   const [sheet, setSheet] = useState<MeasurementKind | null>(null)
   const [now] = useState(() => new Date())
 
   const rows = measurements.data ?? []
+  const counterRows = counters.data ?? []
   const weights = rows
     .filter((m) => m.kind === 'weight')
     .map((m) => ({ at: new Date(m.measured_at), kg: Number(m.value) }))
@@ -441,12 +445,12 @@ function LeanTab() {
   const target = proteinTarget(currentKg, patient?.protein_g_per_kg ?? 1.6)
 
   const today = now.toDateString()
-  const proteinToday = rows
+  const proteinToday = counterRows
     .filter((m) => m.kind === 'protein_g' && new Date(m.measured_at).toDateString() === today)
     .reduce((s, m) => s + Number(m.value), 0)
 
   const weekAgo = now.getTime() - 7 * 86_400_000
-  const sessions = rows.filter(
+  const sessions = counterRows.filter(
     (m) => m.kind === 'resistance_session' && new Date(m.measured_at).getTime() > weekAgo,
   ).length
 

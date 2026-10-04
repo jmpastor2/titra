@@ -1,42 +1,27 @@
-import { Bookmark, FlaskConical, Pause, Play, Plus, Trash2 } from 'lucide-react'
+import { Bookmark, FlaskConical, Plus, Trash2 } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Badge, EmptyState, SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
+import { EmptyState, SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
-import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import type { DoseRow, ProtocolRow, ProtocolStatus } from '@/data/database.types'
 import {
   useDeleteSavedProtocol,
   useDoses,
+  useInventory,
   useProtocols,
   useSavedProtocols,
-  useSetProtocolStatus,
 } from '@/data/hooks'
-import {
-  parseComponents,
-  parseSteps,
-  protocolCompoundIds,
-  toDoseEvent,
-  toProtocolLike,
-} from '@/data/mappers'
-import { adherence, componentsAt, titrationStatus } from '@/domain/dosing/schedule'
+import { parseComponents, parseSteps } from '@/data/mappers'
 import { useSession } from '@/features/auth/SessionProvider'
-import { fmtDoseList } from '@/lib/format'
-import { useLocale } from '@/lib/useLocale'
+import { useNow } from '@/lib/useNow'
+import { ProtocolCard } from './ProtocolCard'
 import { useScheduleLabel } from './scheduleLabel'
-import { TitrationLadder } from './TitrationLadder'
-
-const STATUS_TONE: Record<ProtocolStatus, 'ok' | 'warn' | 'neutral'> = {
-  active: 'ok',
-  paused: 'warn',
-  completed: 'neutral',
-  archived: 'neutral',
-}
+import { useUndoOffer } from './useUndoOffer'
 
 export function ProtocolsPage() {
   const { t } = useTranslation()
@@ -46,10 +31,14 @@ export function ProtocolsPage() {
   const { patientId, readOnly, canPrescribe } = usePatientScope()
   const protocols = useProtocols(patientId)
   const doses = useDoses(patientId, 60)
+  const inventory = useInventory(patientId)
   const saved = useSavedProtocols(user?.id)
   const delSaved = useDeleteSavedProtocol(user?.id ?? '')
   const scheduleLabel = useScheduleLabel()
+  const now = useNow()
+  const undo = useUndoOffer()
   const canEdit = !readOnly || canPrescribe
+  const vials = useMemo(() => inventory.data ?? [], [inventory.data])
 
   const list = protocols.data ?? []
   const current = list.filter((p) => p.status === 'active' || p.status === 'paused')
@@ -97,15 +86,24 @@ export function ProtocolsPage() {
               key={p.id}
               p={p}
               doses={doses.data}
+              vials={vials}
+              now={now}
               canEdit={canEdit}
-              scheduleLabel={scheduleLabel}
+              offerUndo={undo.show}
             />
           ))}
           {past.length > 0 && (
             <>
               <SectionTitle>{t('protocols.history')}</SectionTitle>
               {past.map((p) => (
-                <ProtocolCard key={p.id} p={p} canEdit={canEdit} scheduleLabel={scheduleLabel} />
+                <ProtocolCard
+                  key={p.id}
+                  p={p}
+                  vials={vials}
+                  now={now}
+                  canEdit={canEdit}
+                  offerUndo={undo.show}
+                />
               ))}
             </>
           )}
@@ -154,7 +152,7 @@ export function ProtocolsPage() {
                             toast(t('common.error'), 'error')
                           }
                         }}
-                        className="grid size-8 place-items-center rounded-full text-muted hover:text-danger"
+                        className="grid size-11 place-items-center rounded-full text-muted hover:text-danger"
                       >
                         <Trash2 className="size-4" />
                       </button>
@@ -167,159 +165,5 @@ export function ProtocolsPage() {
         </section>
       )}
     </div>
-  )
-}
-
-function ProtocolCard({
-  p,
-  doses,
-  canEdit,
-  scheduleLabel,
-}: {
-  p: ProtocolRow
-  /** Recent doses, for adherence; omitted for past protocols. */
-  doses?: readonly DoseRow[]
-  canEdit: boolean
-  scheduleLabel: ReturnType<typeof useScheduleLabel>
-}) {
-  const { t } = useTranslation()
-  const { locale } = useLocale()
-  const nav = useNavigate()
-  const { toast } = useToast()
-  const { patientId } = usePatientScope()
-  const setStatus = useSetProtocolStatus(patientId)
-  const pl = toProtocolLike(p)
-  const tit = titrationStatus(pl, new Date())
-  const ids = protocolCompoundIds(p)
-  const primaryColor = compoundColor(p.compound_id)
-  const unit = compoundById(p.compound_id)?.defaultUnit ?? 'mg'
-  const adh =
-    doses && p.status === 'active'
-      ? adherence(
-          pl,
-          doses
-            .filter(
-              (d) => d.compound_id === p.compound_id && (!d.protocol_id || d.protocol_id === p.id),
-            )
-            .map(toDoseEvent),
-          new Date(),
-        )
-      : null
-
-  async function change(status: ProtocolStatus) {
-    try {
-      await setStatus.mutateAsync({ id: p.id, status })
-    } catch {
-      toast(t('common.error'), 'error')
-    }
-  }
-
-  return (
-    <Card
-      padded={false}
-      className="overflow-hidden"
-      style={{ borderColor: `color-mix(in oklab, ${primaryColor} 28%, var(--line))` }}
-    >
-      <button
-        type="button"
-        disabled={!canEdit}
-        onClick={() => nav(`/protocols/${p.id}`)}
-        className="block w-full p-4 text-left"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              {ids.map((id) => (
-                <SubstanceDot key={id} color={compoundColor(id)} />
-              ))}
-              <span className="truncate font-display text-[17px] font-semibold">{p.name}</span>
-            </div>
-            <div className="readout mt-1 text-[12.5px] text-muted">
-              {scheduleLabel(pl.steps, pl.times)}
-            </div>
-          </div>
-          <Badge tone={STATUS_TONE[p.status]}>{t(`protocols.statuses.${p.status}`)}</Badge>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-          {(() => {
-            // One entry for the whole syringe: "CJC-1295 + Ipamorelina 100 + 100 mcg".
-            const primaryMg = tit?.doseMg ?? pl.steps[0]?.doseMg ?? 0
-            const parts = [
-              { compoundId: p.compound_id, doseMg: primaryMg },
-              ...componentsAt(pl, primaryMg),
-            ]
-            return (
-              <span className="spec">
-                {parts.map((d) => compoundById(d.compoundId)?.names.generic).join(' + ')}{' '}
-                <span className="readout text-ink">
-                  {tit?.isPaused
-                    ? t('protocols.pause')
-                    : fmtDoseList(
-                        parts.map((d) => ({
-                          valueMg: d.doseMg,
-                          unit: compoundById(d.compoundId)?.defaultUnit ?? 'mg',
-                        })),
-                        locale,
-                      )}
-                </span>
-              </span>
-            )
-          })()}
-          {tit && tit.totalSteps > 1 && (
-            <span className="spec">
-              {t('protocols.step')}{' '}
-              <span className="readout text-ink">
-                {tit.stepIndex + 1}/{tit.totalSteps}
-              </span>
-            </span>
-          )}
-          {adh && adh.expected > 0 && (
-            <span className="spec">
-              {t('protocols.adherence')}{' '}
-              <span className={adh.ratio >= 0.9 ? 'readout text-signal' : 'readout text-warn'}>
-                {t('protocols.adherenceValue', {
-                  taken: adh.taken,
-                  expected: adh.expected,
-                  pct: Math.round(adh.ratio * 100),
-                })}
-              </span>
-            </span>
-          )}
-        </div>
-        {pl.steps.length > 1 && (
-          <div className="mt-3.5">
-            <TitrationLadder protocol={pl} unit={unit} color={primaryColor} />
-          </div>
-        )}
-      </button>
-      {canEdit && (
-        <div className="flex gap-2 border-t border-line px-4 py-2.5">
-          {p.status === 'active' ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              leading={<Pause className="size-4" />}
-              onClick={() => void change('paused')}
-            >
-              {t('protocols.pause')}
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="soft"
-              leading={<Play className="size-4" />}
-              onClick={() => void change('active')}
-            >
-              {t('protocols.activate')}
-            </Button>
-          )}
-          {p.status !== 'archived' && (
-            <Button size="sm" variant="ghost" onClick={() => void change('archived')}>
-              {t('protocols.archive')}
-            </Button>
-          )}
-        </div>
-      )}
-    </Card>
   )
 }
