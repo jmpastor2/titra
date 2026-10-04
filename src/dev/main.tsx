@@ -19,6 +19,30 @@ import { buildStore, LAB_USER } from './fixtures'
 
 bootTheme()
 
+/**
+ * `?now=2026-10-04T20:30` makes the lab behave as if it were that moment (the clock keeps
+ * ticking from there): handy for the Sunday evening before a dose step-up, the small hours
+ * after a night shot, a vial about to expire…
+ */
+function installClock(at: string | null) {
+  const target = at ? new Date(at).getTime() : Number.NaN
+  if (Number.isNaN(target)) return
+  const offset = target - Date.now()
+  const Real = Date
+  class LabDate extends Real {
+    constructor(...args: [] | [number | string | Date] | number[]) {
+      if (args.length === 0) super(Real.now() + offset)
+      else if (args.length === 1) super(args[0] as number)
+      else super(...(args as [number, number]))
+    }
+    static override now() {
+      return Real.now() + offset
+    }
+  }
+  globalThis.Date = LabDate as DateConstructor
+}
+installClock(new URLSearchParams(window.location.search).get('now'))
+
 const params = new URLSearchParams(window.location.search)
 const store = buildStore(new Date(), { empty: params.has('empty') })
 setSupabaseClient(createFakeSupabase(store, LAB_USER))

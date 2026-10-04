@@ -1,8 +1,14 @@
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { Button } from '@/components/ui/Button'
 
-/** Service-worker update banner. `registerType: 'prompt'` never reloads under the user. */
+/**
+ * Service-worker updates. A new version never reloads the page under someone who is
+ * using it. It is applied silently when nothing has been touched yet (the app has just
+ * been opened) or the moment the app goes to the background, so the next time it is
+ * opened it is already the new one. The banner stays for the person who is mid-task.
+ */
 export function UpdatePrompt() {
   const { t } = useTranslation()
   const {
@@ -13,6 +19,28 @@ export function UpdatePrompt() {
       console.warn('Service worker registration failed', error)
     },
   })
+
+  const touched = useRef(false)
+  useEffect(() => {
+    const mark = () => {
+      touched.current = true
+    }
+    window.addEventListener('pointerdown', mark, { once: true, capture: true })
+    return () => window.removeEventListener('pointerdown', mark, { capture: true })
+  }, [])
+
+  useEffect(() => {
+    if (!needRefresh) return
+    if (!touched.current) {
+      void updateServiceWorker(true)
+      return
+    }
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') void updateServiceWorker(true)
+    }
+    document.addEventListener('visibilitychange', onHide)
+    return () => document.removeEventListener('visibilitychange', onHide)
+  }, [needRefresh, updateServiceWorker])
 
   if (!needRefresh) return null
 
