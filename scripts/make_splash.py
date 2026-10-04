@@ -103,7 +103,6 @@ def main() -> None:
         )
         links.append(f'    <link rel="apple-touch-startup-image" media="{media}" href="./splash/{name}" />')
         print(f"{name}  {(OUT / name).stat().st_size // 1024} kB")
-    (OUT / "links.html.txt").write_text("\n".join(links) + "\n", encoding="utf-8")
     print("\n".join(links))
 
 
