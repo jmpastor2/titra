@@ -4,6 +4,7 @@
  * patient's own view and the clinician's read-only view.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import { subDays } from 'date-fns'
 import { requireSupabase } from '@/lib/supabase'
 import type {
@@ -32,9 +33,9 @@ export const qk = {
   profile: (id: string) => ['profile', id] as const,
   profiles: (ids: string[]) => ['profiles', ...ids] as const,
   protocols: (pid: string) => ['protocols', pid] as const,
-  doses: (pid: string, days: number) => ['doses', pid, days] as const,
-  symptoms: (pid: string, days: number) => ['symptoms', pid, days] as const,
-  measurements: (pid: string, days: number) => ['measurements', pid, days] as const,
+  doses: (pid: string, window: number) => ['doses', pid, window] as const,
+  symptoms: (pid: string, window: number) => ['symptoms', pid, window] as const,
+  measurements: (pid: string, window: number) => ['measurements', pid, window] as const,
   labs: (pid: string) => ['labs', pid] as const,
   inventory: (pid: string) => ['inventory', pid] as const,
   careLinks: (uid: string) => ['care_links', uid] as const,
@@ -43,6 +44,27 @@ export const qk = {
   clinicBundle: (uid: string) => ['clinic_bundle', uid] as const,
   savedProtocols: (uid: string) => ['saved_protocols', uid] as const,
   alertDismissals: (uid: string) => ['alert_dismissals', uid] as const,
+}
+
+/**
+ * Screens ask for the last 60, 120, 180 or 365 days of the same table. Rather than one
+ * request per window, every window up to this many days shares ONE request and cache
+ * entry, and each screen slices what it needs. Longer asks (exports) get their own.
+ */
+const SHARED_WINDOW_DAYS = 400
+
+/** The window actually fetched for a screen asking for `days`. */
+const fetchedWindow = (days: number) => Math.max(days, SHARED_WINDOW_DAYS)
+
+/** Keeps rows from the last `days`, judged on their timestamp column. */
+function sliceWindow<R extends object>(column: string, days: number) {
+  return (rows: R[]): R[] => {
+    if (days >= fetchedWindow(days)) return rows
+    const cutoff = subDays(new Date(), days).getTime()
+    return rows.filter(
+      (r) => new Date(String((r as Record<string, unknown>)[column])).getTime() >= cutoff,
+    )
+  }
 }
 
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -123,8 +145,12 @@ export function useSetProtocolStatus(patientId: string) {
 /* ------------------------------ Doses ------------------------------ */
 
 export function useDoses(patientId: string | undefined, days = 365) {
+  const select = useCallback(
+    (rows: DoseRow[]) => sliceWindow<DoseRow>('administered_at', days)(rows),
+    [days],
+  )
   return useQuery({
-    queryKey: qk.doses(patientId ?? '', days),
+    queryKey: qk.doses(patientId ?? '', fetchedWindow(days)),
     enabled: Boolean(patientId),
     queryFn: async (): Promise<DoseRow[]> => {
       const sb = requireSupabase()
@@ -133,10 +159,11 @@ export function useDoses(patientId: string | undefined, days = 365) {
           .from('doses')
           .select('*')
           .eq('patient_id', patientId!)
-          .gte('administered_at', subDays(new Date(), days).toISOString())
+          .gte('administered_at', subDays(new Date(), fetchedWindow(days)).toISOString())
           .order('administered_at', { ascending: false }),
       )
     },
+    select,
   })
 }
 
@@ -221,8 +248,12 @@ export function useDeleteDoses(patientId: string) {
 /* ------------------------------ Symptoms ------------------------------ */
 
 export function useSymptoms(patientId: string | undefined, days = 180) {
+  const select = useCallback(
+    (rows: SymptomRow[]) => sliceWindow<SymptomRow>('occurred_at', days)(rows),
+    [days],
+  )
   return useQuery({
-    queryKey: qk.symptoms(patientId ?? '', days),
+    queryKey: qk.symptoms(patientId ?? '', fetchedWindow(days)),
     enabled: Boolean(patientId),
     queryFn: async (): Promise<SymptomRow[]> => {
       const sb = requireSupabase()
@@ -231,10 +262,11 @@ export function useSymptoms(patientId: string | undefined, days = 180) {
           .from('symptoms')
           .select('*')
           .eq('patient_id', patientId!)
-          .gte('occurred_at', subDays(new Date(), days).toISOString())
+          .gte('occurred_at', subDays(new Date(), fetchedWindow(days)).toISOString())
           .order('occurred_at', { ascending: false }),
       )
     },
+    select,
   })
 }
 
@@ -264,8 +296,12 @@ export function useDeleteSymptom(patientId: string) {
 /* ------------------------------ Measurements ------------------------------ */
 
 export function useMeasurements(patientId: string | undefined, days = 365) {
+  const select = useCallback(
+    (rows: MeasurementRow[]) => sliceWindow<MeasurementRow>('measured_at', days)(rows),
+    [days],
+  )
   return useQuery({
-    queryKey: qk.measurements(patientId ?? '', days),
+    queryKey: qk.measurements(patientId ?? '', fetchedWindow(days)),
     enabled: Boolean(patientId),
     queryFn: async (): Promise<MeasurementRow[]> => {
       const sb = requireSupabase()
@@ -274,10 +310,11 @@ export function useMeasurements(patientId: string | undefined, days = 365) {
           .from('measurements')
           .select('*')
           .eq('patient_id', patientId!)
-          .gte('measured_at', subDays(new Date(), days).toISOString())
+          .gte('measured_at', subDays(new Date(), fetchedWindow(days)).toISOString())
           .order('measured_at', { ascending: false }),
       )
     },
+    select,
   })
 }
 

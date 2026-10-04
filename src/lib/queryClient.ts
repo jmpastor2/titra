@@ -44,4 +44,4 @@ export function createQueryClient(): QueryClient {
 }
 
 /** Bump when the persisted shape changes so stale caches are discarded. */
-export const CACHE_BUSTER = 'v1'
+export const CACHE_BUSTER = 'v2'
