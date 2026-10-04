@@ -213,7 +213,7 @@ class Query implements PromiseLike<Result> {
         const row: Row = {
           id: uuid(),
           created_at: nowIso(),
-          ...(DEFAULTS[this.table]?.() ?? {}),
+          ...DEFAULTS[this.table]?.(),
           ...raw,
         }
         if (this.table === 'protocols' && !row.times)
@@ -269,6 +269,8 @@ class Query implements PromiseLike<Result> {
     return { data, error: null, count }
   }
 
+  // The real query builder is awaitable the same way.
+  // oxlint-disable-next-line unicorn/no-thenable
   then<A = Result, B = never>(
     ok?: ((v: Result) => A | PromiseLike<A>) | null,
     fail?: ((e: unknown) => B | PromiseLike<B>) | null,
