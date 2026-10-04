@@ -3,8 +3,14 @@
  * Every hook takes an explicit patientId so the same components serve the
  * patient's own view and the clinician's read-only view.
  */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback } from 'react'
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+} from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { subDays } from 'date-fns'
 import { requireSupabase } from '@/lib/supabase'
 import type {
@@ -99,21 +105,23 @@ export function useUpdateProfile(userId: string) {
 
 /* ------------------------------ Protocols ------------------------------ */
 
-export function useProtocols(patientId: string | undefined) {
-  return useQuery({
-    queryKey: qk.protocols(patientId ?? ''),
-    enabled: Boolean(patientId),
+export const protocolsOptions = (patientId: string) =>
+  queryOptions({
+    queryKey: qk.protocols(patientId),
     queryFn: async (): Promise<ProtocolRow[]> => {
       const sb = requireSupabase()
       return unwrap(
         await sb
           .from('protocols')
           .select('*')
-          .eq('patient_id', patientId!)
+          .eq('patient_id', patientId)
           .order('created_at', { ascending: false }),
       )
     },
   })
+
+export function useProtocols(patientId: string | undefined) {
+  return useQuery({ ...protocolsOptions(patientId ?? ''), enabled: Boolean(patientId) })
 }
 
 export function useSaveProtocol(patientId: string) {
@@ -144,27 +152,26 @@ export function useSetProtocolStatus(patientId: string) {
 
 /* ------------------------------ Doses ------------------------------ */
 
-export function useDoses(patientId: string | undefined, days = 365) {
-  const select = useCallback(
-    (rows: DoseRow[]) => sliceWindow<DoseRow>('administered_at', days)(rows),
-    [days],
-  )
-  return useQuery({
-    queryKey: qk.doses(patientId ?? '', fetchedWindow(days)),
-    enabled: Boolean(patientId),
+export const dosesOptions = (patientId: string, days: number) =>
+  queryOptions({
+    queryKey: qk.doses(patientId, fetchedWindow(days)),
     queryFn: async (): Promise<DoseRow[]> => {
       const sb = requireSupabase()
       return unwrap(
         await sb
           .from('doses')
           .select('*')
-          .eq('patient_id', patientId!)
+          .eq('patient_id', patientId)
           .gte('administered_at', subDays(new Date(), fetchedWindow(days)).toISOString())
           .order('administered_at', { ascending: false }),
       )
     },
-    select,
+    select: (rows: DoseRow[]) => sliceWindow<DoseRow>('administered_at', days)(rows),
   })
+
+export function useDoses(patientId: string | undefined, days = 365) {
+  const options = useMemo(() => dosesOptions(patientId ?? '', days), [patientId, days])
+  return useQuery({ ...options, enabled: Boolean(patientId) })
 }
 
 /**
@@ -247,27 +254,26 @@ export function useDeleteDoses(patientId: string) {
 
 /* ------------------------------ Symptoms ------------------------------ */
 
-export function useSymptoms(patientId: string | undefined, days = 180) {
-  const select = useCallback(
-    (rows: SymptomRow[]) => sliceWindow<SymptomRow>('occurred_at', days)(rows),
-    [days],
-  )
-  return useQuery({
-    queryKey: qk.symptoms(patientId ?? '', fetchedWindow(days)),
-    enabled: Boolean(patientId),
+export const symptomsOptions = (patientId: string, days: number) =>
+  queryOptions({
+    queryKey: qk.symptoms(patientId, fetchedWindow(days)),
     queryFn: async (): Promise<SymptomRow[]> => {
       const sb = requireSupabase()
       return unwrap(
         await sb
           .from('symptoms')
           .select('*')
-          .eq('patient_id', patientId!)
+          .eq('patient_id', patientId)
           .gte('occurred_at', subDays(new Date(), fetchedWindow(days)).toISOString())
           .order('occurred_at', { ascending: false }),
       )
     },
-    select,
+    select: (rows: SymptomRow[]) => sliceWindow<SymptomRow>('occurred_at', days)(rows),
   })
+
+export function useSymptoms(patientId: string | undefined, days = 180) {
+  const options = useMemo(() => symptomsOptions(patientId ?? '', days), [patientId, days])
+  return useQuery({ ...options, enabled: Boolean(patientId) })
 }
 
 export function useAddSymptom(patientId: string) {
@@ -295,27 +301,26 @@ export function useDeleteSymptom(patientId: string) {
 
 /* ------------------------------ Measurements ------------------------------ */
 
-export function useMeasurements(patientId: string | undefined, days = 365) {
-  const select = useCallback(
-    (rows: MeasurementRow[]) => sliceWindow<MeasurementRow>('measured_at', days)(rows),
-    [days],
-  )
-  return useQuery({
-    queryKey: qk.measurements(patientId ?? '', fetchedWindow(days)),
-    enabled: Boolean(patientId),
+export const measurementsOptions = (patientId: string, days: number) =>
+  queryOptions({
+    queryKey: qk.measurements(patientId, fetchedWindow(days)),
     queryFn: async (): Promise<MeasurementRow[]> => {
       const sb = requireSupabase()
       return unwrap(
         await sb
           .from('measurements')
           .select('*')
-          .eq('patient_id', patientId!)
+          .eq('patient_id', patientId)
           .gte('measured_at', subDays(new Date(), fetchedWindow(days)).toISOString())
           .order('measured_at', { ascending: false }),
       )
     },
-    select,
+    select: (rows: MeasurementRow[]) => sliceWindow<MeasurementRow>('measured_at', days)(rows),
   })
+
+export function useMeasurements(patientId: string | undefined, days = 365) {
+  const options = useMemo(() => measurementsOptions(patientId ?? '', days), [patientId, days])
+  return useQuery({ ...options, enabled: Boolean(patientId) })
 }
 
 export function useAddMeasurement(patientId: string) {
@@ -390,16 +395,21 @@ export function useDeleteLab(patientId: string) {
 
 /* ------------------------------ Inventory ------------------------------ */
 
-export function useInventory(patientId: string | undefined, includeArchived = false) {
-  return useQuery({
-    queryKey: [...qk.inventory(patientId ?? ''), includeArchived],
-    enabled: Boolean(patientId),
+export const inventoryOptions = (patientId: string, includeArchived = false) =>
+  queryOptions({
+    queryKey: [...qk.inventory(patientId), includeArchived] as const,
     queryFn: async (): Promise<InventoryRow[]> => {
       const sb = requireSupabase()
-      let q = sb.from('inventory').select('*').eq('patient_id', patientId!)
+      let q = sb.from('inventory').select('*').eq('patient_id', patientId)
       if (!includeArchived) q = q.eq('archived', false)
       return unwrap(await q.order('created_at', { ascending: false }))
     },
+  })
+
+export function useInventory(patientId: string | undefined, includeArchived = false) {
+  return useQuery({
+    ...inventoryOptions(patientId ?? '', includeArchived),
+    enabled: Boolean(patientId),
   })
 }
 
@@ -697,10 +707,9 @@ export function useDeleteSavedProtocol(userId: string) {
 /* --------------------------- Alerts marked as read --------------------------- */
 
 /** Alerts (and decisions) the user already dealt with; their keys never show up again. */
-export function useAlertDismissals(userId: string | undefined) {
-  return useQuery({
-    queryKey: qk.alertDismissals(userId ?? ''),
-    enabled: Boolean(userId),
+export const alertDismissalsOptions = (userId: string) =>
+  queryOptions({
+    queryKey: qk.alertDismissals(userId),
     queryFn: async (): Promise<AlertDismissalRow[]> => {
       const sb = requireSupabase()
       return unwrap(
@@ -708,6 +717,9 @@ export function useAlertDismissals(userId: string | undefined) {
       )
     },
   })
+
+export function useAlertDismissals(userId: string | undefined) {
+  return useQuery({ ...alertDismissalsOptions(userId ?? ''), enabled: Boolean(userId) })
 }
 
 /** Mark one or more alerts as read. Optimistic: the alert disappears at once. */
@@ -769,4 +781,19 @@ export function useRestoreAlert(userId: string) {
     onError: (_e, _k, ctx) => qc.setQueryData(key, ctx?.previous),
     onSettled: () => qc.invalidateQueries({ queryKey: key }),
   })
+}
+
+/**
+ * Start everything the home screen needs at once, alongside the profile, instead of asking
+ * for each table after the previous one answers. Data already in the (persisted) cache and
+ * still fresh is not asked for again; a failed prefetch is left for the screen to retry.
+ */
+export function prefetchCore(qc: QueryClient, userId: string): Promise<unknown> {
+  return Promise.allSettled([
+    qc.prefetchQuery(protocolsOptions(userId)),
+    qc.prefetchQuery(dosesOptions(userId, SHARED_WINDOW_DAYS)),
+    qc.prefetchQuery(inventoryOptions(userId)),
+    qc.prefetchQuery(measurementsOptions(userId, SHARED_WINDOW_DAYS)),
+    qc.prefetchQuery(alertDismissalsOptions(userId)),
+  ])
 }

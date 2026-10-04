@@ -1,9 +1,10 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { WifiOff } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { PatientScopeProvider } from '@/app/scope'
-import { useProfile } from '@/data/hooks'
+import { prefetchCore, useProfile } from '@/data/hooks'
 import { useSession } from '@/features/auth/SessionProvider'
 import { ReminderAgent } from '@/features/reminders/useReminders'
 import { useOnline } from '@/lib/useOnline'
@@ -17,7 +18,13 @@ import { TabBar } from './TabBar'
 export function AppShell() {
   useScrollMemory()
   const { status, user } = useSession()
-  const profile = useProfile(user?.id)
+  const qc = useQueryClient()
+  const userId = user?.id
+  // The home screen's data starts loading with the profile instead of after it.
+  useEffect(() => {
+    if (userId) void prefetchCore(qc, userId)
+  }, [qc, userId])
+  const profile = useProfile(userId)
   const online = useOnline()
   const { t } = useTranslation()
 
