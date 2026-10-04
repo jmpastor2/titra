@@ -33,6 +33,7 @@ const dose = (compound: string, iso: string, protocolId = 'p'): DoseRow => ({
   site_id: null,
   inventory_id: null,
   batch_id: 'b',
+  planned_at: null,
   notes: null,
   created_at: '',
 })

@@ -268,35 +268,97 @@ export interface MatchedOccurrence extends PlannedDose {
   takenAt: Date | null
 }
 
+/** An explicit "this dose covers that slot" may differ from the slot's time by this much. */
+const EXPLICIT_TOL_MS = 2 * HOUR_MS
+
+export interface DoseMatching {
+  /** Every planned administration with the dose that covers it, if any. */
+  slots: MatchedOccurrence[]
+  /** Doses that cover no planned administration: extras taken outside the plan. */
+  extras: DoseEvent[]
+}
+
 /**
- * Greedy one-to-one matching of doses to occurrences: each dose satisfies at most
- * one occurrence, the closest unmatched one within tolerance.
+ * One-to-one matching of doses to planned administrations.
+ *
+ * 1. A dose the user assigned to a slot (`plannedAt`) covers exactly that slot, however
+ *    late it was taken: a make-up dose counts as the one that was missed.
+ * 2. The rest are matched greedily by time: each takes the closest free slot within
+ *    `toleranceH`.
+ *
+ * What is left over are the extras. A dose assigned to a slot outside the window being
+ * matched is accounted for in that other window, so it is not an extra here.
  */
+export function matchDoses(
+  occurrences: readonly PlannedDose[],
+  doses: readonly DoseEvent[],
+  toleranceH: number,
+): DoseMatching {
+  const tol = toleranceH * HOUR_MS
+  const slots = occurrences.toSorted((a, b) => a.at.getTime() - b.at.getTime())
+  const events = doses.toSorted((a, b) => a.at.getTime() - b.at.getTime())
+  const coveredBy: (number | null)[] = slots.map(() => null)
+  const handled = events.map(() => false)
+  const first = slots[0]?.at.getTime() ?? Number.POSITIVE_INFINITY
+  const last = slots.at(-1)?.at.getTime() ?? Number.NEGATIVE_INFINITY
+
+  events.forEach((d, i) => {
+    if (!d.plannedAt) return
+    const target = d.plannedAt.getTime()
+    let best = -1
+    let bestGap = Number.POSITIVE_INFINITY
+    slots.forEach((s, j) => {
+      if (coveredBy[j] !== null) return
+      const gap = Math.abs(s.at.getTime() - target)
+      if (gap <= EXPLICIT_TOL_MS && gap < bestGap) {
+        best = j
+        bestGap = gap
+      }
+    })
+    if (best >= 0) {
+      coveredBy[best] = i
+      handled[i] = true
+    } else if (target < first - EXPLICIT_TOL_MS || target > last + EXPLICIT_TOL_MS) {
+      // Its slot lies outside this window: nothing to match here, and not an extra.
+      handled[i] = true
+    }
+  })
+
+  slots.forEach((s, j) => {
+    if (coveredBy[j] !== null) return
+    const target = s.at.getTime()
+    let best = -1
+    let bestGap = Number.POSITIVE_INFINITY
+    events.forEach((d, i) => {
+      if (handled[i]) return
+      const gap = Math.abs(d.at.getTime() - target)
+      if (gap <= tol && gap < bestGap) {
+        best = i
+        bestGap = gap
+      }
+    })
+    if (best >= 0) {
+      coveredBy[j] = best
+      handled[best] = true
+    }
+  })
+
+  return {
+    slots: slots.map((s, j) => {
+      const i = coveredBy[j]
+      return { ...s, takenAt: i === null || i === undefined ? null : events[i]!.at }
+    }),
+    extras: events.filter((_, i) => !handled[i]),
+  }
+}
+
+/** Each planned administration with the dose that covers it. See `matchDoses`. */
 export function matchOccurrences(
   occurrences: readonly PlannedDose[],
   doses: readonly DoseEvent[],
   toleranceH: number,
 ): MatchedOccurrence[] {
-  const tol = toleranceH * HOUR_MS
-  const pool = doses.map((d) => d.at.getTime()).toSorted((a, b) => a - b)
-  const used = Array.from({ length: pool.length }, () => false)
-  return occurrences
-    .toSorted((a, b) => a.at.getTime() - b.at.getTime())
-    .map((o) => {
-      const target = o.at.getTime()
-      let best = -1
-      let bestGap = Number.POSITIVE_INFINITY
-      for (let i = 0; i < pool.length; i++) {
-        if (used[i]) continue
-        const gap = Math.abs(pool[i]! - target)
-        if (gap <= tol && gap < bestGap) {
-          best = i
-          bestGap = gap
-        }
-      }
-      if (best >= 0) used[best] = true
-      return { ...o, takenAt: best >= 0 ? new Date(pool[best]!) : null }
-    })
+  return matchDoses(occurrences, doses, toleranceH).slots
 }
 
 /* ------------------------------------------------------------------ next dose */

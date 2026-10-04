@@ -48,7 +48,7 @@ const page = (el: ReactNode) => <Lazy>{el}</Lazy>
 
 // HashRouter: GitHub Pages has no server-side rewrite, and a hash route also
 // survives being installed to the iOS home screen from any deep link.
-const router = createHashRouter([
+export const router = createHashRouter([
   { path: '/auth', element: <LoginPage /> },
   { path: '/onboarding', element: <OnboardingPage /> },
   {

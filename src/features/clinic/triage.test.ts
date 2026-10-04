@@ -62,6 +62,7 @@ const dose = (patientId: string, iso: string): DoseRow => ({
   site_id: 'abd_ul',
   inventory_id: null,
   batch_id: null,
+  planned_at: null,
   notes: null,
   created_at: iso,
 })

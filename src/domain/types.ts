@@ -61,6 +61,12 @@ export interface DoseEvent {
   at: Date
   /** Dose amount in mg (unit-normalised by the caller). */
   mg: number
+  /**
+   * The planned administration this dose covers, when the user said so explicitly
+   * (a late dose, or an "extra" taken to make up a missed one). Otherwise the dose is
+   * matched to the nearest planned administration by time.
+   */
+  plannedAt?: Date
 }
 
 export interface ScheduleStep {

@@ -50,6 +50,7 @@ function dose(compound: string, at: Date, protocolId: string | null = null): Dos
     site_id: null,
     inventory_id: null,
     batch_id: null,
+    planned_at: null,
     notes: null,
     created_at: '',
   }

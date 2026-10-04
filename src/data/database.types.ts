@@ -29,6 +29,11 @@ export type MeasurementKind =
   | 'libido'
   | 'appetite'
   | 'focus'
+  | 'hydration_ml'
+  | 'hip'
+  | 'chest'
+  | 'arm'
+  | 'thigh'
 export type SymptomKind =
   | 'nausea'
   | 'vomiting'
@@ -135,7 +140,17 @@ export type DoseRow = {
   inventory_id: string | null
   /** Groups the rows of one administration (e.g. a Mod GRF + ipamorelin syringe). */
   batch_id: string | null
+  /** The planned administration this dose covers; null = matched by time (migration 5). */
+  planned_at: string | null
   notes: string | null
+  created_at: string
+}
+
+/** An alert the user marked as read; its key never shows up again (migration 5). */
+export type AlertDismissalRow = {
+  id: string
+  user_id: string
+  alert_key: string
   created_at: string
 }
 
@@ -309,8 +324,16 @@ export type Database = {
       >
       doses: Table<
         DoseRow,
-        'id' | 'protocol_id' | 'site_id' | 'inventory_id' | 'batch_id' | 'notes' | 'created_at'
+        | 'id'
+        | 'protocol_id'
+        | 'site_id'
+        | 'inventory_id'
+        | 'batch_id'
+        | 'planned_at'
+        | 'notes'
+        | 'created_at'
       >
+      alert_dismissals: Table<AlertDismissalRow, 'id' | 'created_at'>
       symptoms: Table<SymptomRow, 'id' | 'notes' | 'created_at'>
       measurements: Table<MeasurementRow, 'id' | 'notes' | 'source' | 'created_at'>
       lab_results: Table<LabResultRow, 'id' | 'ref_low' | 'ref_high' | 'notes' | 'created_at'>

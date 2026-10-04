@@ -8,7 +8,11 @@ import type { DoseEvent, ProtocolLike, ScheduleStep, StackComponent } from '@/do
 import type { DoseRow, ProtocolRow, SavedProtocolRow } from './database.types'
 
 export function toDoseEvent(row: DoseRow): DoseEvent {
-  return { at: new Date(row.administered_at), mg: Number(row.dose_mg) }
+  return {
+    at: new Date(row.administered_at),
+    mg: Number(row.dose_mg),
+    ...(row.planned_at ? { plannedAt: new Date(row.planned_at) } : {}),
+  }
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {

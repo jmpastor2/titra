@@ -23,6 +23,11 @@ export const KIND_UNIT: Record<MeasurementKind, string> = {
   libido: 'score',
   appetite: 'score',
   focus: 'score',
+  hydration_ml: 'ml',
+  hip: 'cm',
+  chest: 'cm',
+  arm: 'cm',
+  thigh: 'cm',
 }
 
 /** Fraction digits used when displaying each kind. */
@@ -48,6 +53,11 @@ export const KIND_DIGITS: Record<MeasurementKind, number> = {
   libido: 0,
   appetite: 0,
   focus: 0,
+  hydration_ml: 0,
+  hip: 1,
+  chest: 1,
+  arm: 1,
+  thigh: 1,
 }
 
 /** Kinds offered in the "log measurement" picker (diastolic is captured with systolic). */
@@ -65,7 +75,20 @@ export const LOGGABLE_KINDS: readonly MeasurementKind[] = [
   'resistance_session',
   'sleep_hours',
   'steps',
+  'hip',
+  'chest',
+  'arm',
+  'thigh',
 ]
+
+/** Body circumferences: centimetres, or inches for imperial users. */
+export const LENGTH_KINDS: ReadonlySet<MeasurementKind> = new Set([
+  'waist',
+  'hip',
+  'chest',
+  'arm',
+  'thigh',
+])
 
 const LB_PER_KG = 1 / 0.45359237
 const IN_PER_CM = 1 / 2.54
@@ -73,7 +96,7 @@ const IN_PER_CM = 1 / 2.54
 /** Unit shown to the user for a kind given their unit system. */
 export function displayUnit(kind: MeasurementKind, imperial: boolean): string {
   if (kind === 'weight' || kind === 'lean_mass') return imperial ? 'lb' : 'kg'
-  if (kind === 'waist') return imperial ? 'in' : 'cm'
+  if (LENGTH_KINDS.has(kind)) return imperial ? 'in' : 'cm'
   if (kind === 'resistance_session') return 'min'
   return KIND_UNIT[kind]
 }
@@ -82,6 +105,6 @@ export function displayUnit(kind: MeasurementKind, imperial: boolean): string {
 export function toCanonical(kind: MeasurementKind, value: number, imperial: boolean): number {
   if (!imperial) return value
   if (kind === 'weight' || kind === 'lean_mass') return value / LB_PER_KG
-  if (kind === 'waist') return value / IN_PER_CM
+  if (LENGTH_KINDS.has(kind)) return value / IN_PER_CM
   return value
 }

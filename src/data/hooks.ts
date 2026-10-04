@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { subDays } from 'date-fns'
 import { requireSupabase } from '@/lib/supabase'
 import type {
+  AlertDismissalRow,
   CareLinkRow,
   ClinicalNoteRow,
   CompoundNoteRow,
@@ -41,6 +42,7 @@ export const qk = {
   compoundNotes: (cid: string) => ['compound_notes', cid] as const,
   clinicBundle: (uid: string) => ['clinic_bundle', uid] as const,
   savedProtocols: (uid: string) => ['saved_protocols', uid] as const,
+  alertDismissals: (uid: string) => ['alert_dismissals', uid] as const,
 }
 
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -172,6 +174,45 @@ export function useDeleteDose(patientId: string) {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['doses', patientId] })
       // Deleting a dose gives its amount back to the vial (migration 3 trigger).
+      void qc.invalidateQueries({ queryKey: qk.inventory(patientId) })
+    },
+  })
+}
+
+/**
+ * Edit one or several dose rows in one go (a stack or blend is one row per compound).
+ * Changing the amount or the vial gives the old amount back to its vial and takes the
+ * new one (migration 5 trigger), so stock stays right.
+ */
+export function useUpdateDoses(patientId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (updates: { id: string; patch: Update<'doses'> }[]) => {
+      const sb = requireSupabase()
+      return Promise.all(
+        updates.map(async (u) =>
+          unwrap(await sb.from('doses').update(u.patch).eq('id', u.id).select('*').single()),
+        ),
+      )
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['doses', patientId] })
+      void qc.invalidateQueries({ queryKey: qk.inventory(patientId) })
+    },
+  })
+}
+
+/** Remove every row of one administration (all compounds of a stack or blend). */
+export function useDeleteDoses(patientId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const sb = requireSupabase()
+      const { error } = await sb.from('doses').delete().in('id', ids)
+      if (error) throw new Error(error.message)
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['doses', patientId] })
       void qc.invalidateQueries({ queryKey: qk.inventory(patientId) })
     },
   })
@@ -322,6 +363,18 @@ export function useInventory(patientId: string | undefined, includeArchived = fa
       if (!includeArchived) q = q.eq('archived', false)
       return unwrap(await q.order('created_at', { ascending: false }))
     },
+  })
+}
+
+/** Change some fields of a vial without rewriting the rest (e.g. reconstitute it). */
+export function useUpdateInventory(patientId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Update<'inventory'> }) => {
+      const sb = requireSupabase()
+      return unwrap(await sb.from('inventory').update(patch).eq('id', id).select('*').single())
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.inventory(patientId) }),
   })
 }
 
@@ -601,5 +654,82 @@ export function useDeleteSavedProtocol(userId: string) {
       if (error) throw new Error(error.message)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.savedProtocols(userId) }),
+  })
+}
+
+/* --------------------------- Alerts marked as read --------------------------- */
+
+/** Alerts (and decisions) the user already dealt with; their keys never show up again. */
+export function useAlertDismissals(userId: string | undefined) {
+  return useQuery({
+    queryKey: qk.alertDismissals(userId ?? ''),
+    enabled: Boolean(userId),
+    queryFn: async (): Promise<AlertDismissalRow[]> => {
+      const sb = requireSupabase()
+      return unwrap(
+        await sb.from('alert_dismissals').select('*').order('created_at', { ascending: false }),
+      )
+    },
+  })
+}
+
+/** Mark one or more alerts as read. Optimistic: the alert disappears at once. */
+export function useDismissAlert(userId: string) {
+  const qc = useQueryClient()
+  const key = qk.alertDismissals(userId)
+  return useMutation({
+    mutationFn: async (keys: string | string[]) => {
+      const sb = requireSupabase()
+      const rows = (Array.isArray(keys) ? keys : [keys]).map((alert_key) => ({
+        user_id: userId,
+        alert_key,
+      }))
+      const { error } = await sb
+        .from('alert_dismissals')
+        .upsert(rows, { onConflict: 'user_id,alert_key', ignoreDuplicates: true })
+      if (error) throw new Error(error.message)
+    },
+    onMutate: async (keys) => {
+      await qc.cancelQueries({ queryKey: key })
+      const previous = qc.getQueryData<AlertDismissalRow[]>(key)
+      const added = (Array.isArray(keys) ? keys : [keys]).map((alert_key): AlertDismissalRow => ({
+        id: `local-${alert_key}`,
+        user_id: userId,
+        alert_key,
+        created_at: new Date().toISOString(),
+      }))
+      qc.setQueryData<AlertDismissalRow[]>(key, [...added, ...(previous ?? [])])
+      return { previous }
+    },
+    onError: (_e, _keys, ctx) => qc.setQueryData(key, ctx?.previous),
+    onSettled: () => qc.invalidateQueries({ queryKey: key }),
+  })
+}
+
+/** Bring a dismissed alert back. */
+export function useRestoreAlert(userId: string) {
+  const qc = useQueryClient()
+  const key = qk.alertDismissals(userId)
+  return useMutation({
+    mutationFn: async (alertKey: string) => {
+      const sb = requireSupabase()
+      const { error } = await sb
+        .from('alert_dismissals')
+        .delete()
+        .eq('user_id', userId)
+        .eq('alert_key', alertKey)
+      if (error) throw new Error(error.message)
+    },
+    onMutate: async (alertKey) => {
+      await qc.cancelQueries({ queryKey: key })
+      const previous = qc.getQueryData<AlertDismissalRow[]>(key)
+      qc.setQueryData<AlertDismissalRow[]>(
+        key,
+        (previous ?? []).filter((d) => d.alert_key !== alertKey),
+      )
+      return { previous }
+    },
+    onError: (_e, _k, ctx) => qc.setQueryData(key, ctx?.previous),
+    onSettled: () => qc.invalidateQueries({ queryKey: key }),
   })
 }

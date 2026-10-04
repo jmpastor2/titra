@@ -7,7 +7,7 @@ import type { DoseRow, ProtocolRow } from '@/data/database.types'
 import { toDoseEvent, toProtocolLike } from '@/data/mappers'
 import {
   currentStep,
-  matchOccurrences,
+  matchDoses,
   matchToleranceH,
   normaliseTimes,
   ownerDay,
@@ -66,14 +66,13 @@ export function weekPlanVsActual(
       )
       .map(toDoseEvent)
     // Match against a day either side so a shot after midnight lands on its evening.
-    const matched = matchOccurrences(
+    const { slots: matched, extras } = matchDoses(
       scheduledDoses(pl, addDays(from, -1), addDays(to, 1)),
       history,
       tolH,
     )
-    const accounted = new Set(matched.flatMap((o) => (o.takenAt ? [o.takenAt.getTime()] : [])))
-    for (const d of history) {
-      if (d.at < from || d.at >= to || accounted.has(d.at.getTime())) continue
+    for (const d of extras) {
+      if (d.at < from || d.at >= to) continue
       days[Math.floor((startOfDay(d.at).getTime() - from.getTime()) / 86_400_000)]?.cells.push({
         protocol,
         plannedAt: d.at,

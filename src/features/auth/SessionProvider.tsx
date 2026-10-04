@@ -16,6 +16,17 @@ const SessionContext = createContext<SessionState>({
   user: null,
 })
 
+/** A fixed session, for the development lab (lab.html). The app itself never uses it. */
+export function FixedSessionProvider({
+  value,
+  children,
+}: {
+  value: SessionState
+  children: ReactNode
+}) {
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
+}
+
 export function SessionProvider({ children }: { children: ReactNode }) {
   const supabase = getSupabase()
   const [state, setState] = useState<SessionState>(() =>

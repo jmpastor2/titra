@@ -220,6 +220,7 @@ export function polarity(kind: string): 'higher' | 'lower' | 'neutral' {
       return 'higher'
     case 'weight':
     case 'waist':
+    case 'hip':
     case 'body_fat_pct':
     case 'glucose_fasting':
     case 'hba1c':

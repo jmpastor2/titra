@@ -25,6 +25,11 @@ export function getSupabase(): TypedSupabase | null {
   return client
 }
 
+/** Development lab only: swap in an in-memory client. The app never calls this. */
+export function setSupabaseClient(next: TypedSupabase | null): void {
+  client = next
+}
+
 /** Throwing accessor for data hooks that only run once the app is configured and signed in. */
 export function requireSupabase(): TypedSupabase {
   const c = getSupabase()

@@ -58,6 +58,10 @@ type Tab = 'wellbeing' | 'body' | 'symptoms' | 'labs'
 const CHARTABLE: MeasurementKind[] = [
   'weight',
   'waist',
+  'hip',
+  'chest',
+  'arm',
+  'thigh',
   'body_fat_pct',
   'lean_mass',
   'glucose_fasting',

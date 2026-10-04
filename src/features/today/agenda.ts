@@ -9,7 +9,7 @@ import {
   componentsAt,
   currentStep,
   dayAgenda,
-  matchOccurrences,
+  matchDoses,
   matchToleranceH,
   normaliseTimes,
   scheduledDoses,
@@ -78,18 +78,14 @@ export function buildToday(
     const dayStart = startOfDay(now)
     const dayEnd = addDays(dayStart, 1)
     const tolH = matchToleranceH(currentStep(pl, now)?.step, normaliseTimes(pl.times))
-    const around = matchOccurrences(
+    const { extras } = matchDoses(
       scheduledDoses(pl, addDays(dayStart, -1), addDays(dayEnd, 1)),
       history,
       tolH,
     )
-    const accounted = new Set(
-      [...around.map((o) => o.takenAt), ...agenda.map((a) => a.takenAt)]
-        .filter((d): d is Date => d !== null)
-        .map((d) => d.getTime()),
-    )
-    for (const d of history) {
-      if (d.at < dayStart || d.at >= dayEnd || accounted.has(d.at.getTime())) continue
+    const inAgenda = new Set(agenda.flatMap((a) => (a.takenAt ? [a.takenAt.getTime()] : [])))
+    for (const d of extras) {
+      if (d.at < dayStart || d.at >= dayEnd || inAgenda.has(d.at.getTime())) continue
       items.push({
         key: `${protocol.id}:extra:${d.at.getTime()}`,
         protocol,
