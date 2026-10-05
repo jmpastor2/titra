@@ -99,7 +99,8 @@ export function ProgressRing({
       className="relative grid shrink-0 place-items-center"
       style={{ width: size, height: size }}
     >
-      <svg width={size} height={size} className="-rotate-90" aria-hidden>
+      {/* overflow visible: the glow of the arc is not cut off at the edge of the box */}
+      <svg width={size} height={size} className="-rotate-90 overflow-visible" aria-hidden>
         {ticks &&
           Array.from({ length: 40 }, (_, i) => {
             const a = (i / 40) * 2 * Math.PI
@@ -139,8 +140,27 @@ export function ProgressRing({
   )
 }
 
-/* ---------- Segmented control ---------- */
-/** iOS-style on/off switch. */
+/* ---------- Switch ---------- */
+/** The track and thumb of a switch, 50 x 30. */
+function SwitchTrack({ checked }: { checked: boolean }) {
+  return (
+    <span
+      className={clsx(
+        'relative block h-[30px] w-[50px] shrink-0 rounded-full border transition',
+        checked ? 'glow border-signal/60 bg-signal' : 'border-line-strong bg-panel-3',
+      )}
+    >
+      <span
+        className={clsx(
+          'absolute top-[3px] size-[22px] rounded-full shadow transition-all',
+          checked ? 'left-[23px] bg-signal-ink' : 'left-[3px] bg-ink-2',
+        )}
+      />
+    </span>
+  )
+}
+
+/** iOS-style on/off switch. The 50 x 30 track sits in a 44 px target. */
 export function Switch({
   checked,
   onChange,
@@ -160,21 +180,58 @@ export function Switch({
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={clsx(
-        'relative h-[30px] w-[50px] shrink-0 rounded-full border transition disabled:opacity-50',
-        checked ? 'glow border-signal/60 bg-signal' : 'border-line-strong bg-panel-3',
-      )}
+      className="group grid h-11 w-[54px] shrink-0 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-signal/60 disabled:opacity-50"
     >
-      <span
-        className={clsx(
-          'absolute top-[3px] size-[22px] rounded-full shadow transition-all',
-          checked ? 'left-[23px] bg-signal-ink' : 'left-[3px] bg-ink-2',
-        )}
-      />
+      <SwitchTrack checked={checked} />
     </button>
   )
 }
 
+/**
+ * A setting with a name, a line that explains it and a switch. The whole row is the control
+ * (and the target), so the words can be tapped as well as the track.
+ */
+export function ToggleRow({
+  checked,
+  onChange,
+  label,
+  hint,
+  tone = 'default',
+  className,
+}: {
+  checked: boolean
+  onChange: (next: boolean) => void
+  label: ReactNode
+  hint?: ReactNode
+  tone?: 'default' | 'signal'
+  className?: string
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={clsx(
+        'flex min-h-[60px] w-full items-center justify-between gap-3 rounded-control border px-3.5 py-2.5 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60',
+        tone === 'signal' ? 'border-signal/30 bg-signal-soft' : 'border-line bg-panel-2',
+        className,
+      )}
+    >
+      <span className="min-w-0">
+        <span className="block text-[14px] font-semibold">{label}</span>
+        {hint && <span className="block text-[12px] leading-snug text-muted">{hint}</span>}
+      </span>
+      <SwitchTrack checked={checked} />
+    </button>
+  )
+}
+
+/* ---------- Segmented control ---------- */
+/**
+ * Pill with two to four choices. Each option is a full 44 px target that fills the height of
+ * the track; the lit pill inside keeps the size it always had.
+ */
 export function Segmented<T extends string>({
   value,
   onChange,
@@ -192,8 +249,7 @@ export function Segmented<T extends string>({
     <div
       role="tablist"
       className={clsx(
-        'inline-flex w-full rounded-full border border-line bg-panel-2 p-1',
-        size === 'sm' ? 'h-10' : 'h-11',
+        'inline-flex h-[46px] w-full items-stretch rounded-full border border-line bg-panel-2',
         className,
       )}
     >
@@ -206,15 +262,19 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(o.value)}
-            className={clsx(
-              'min-w-0 flex-1 truncate rounded-full px-2 font-semibold transition',
-              size === 'sm' ? 'text-[12.5px]' : 'text-[14px]',
-              active
-                ? 'bg-panel text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'
-                : 'text-muted hover:text-ink-2',
-            )}
+            className="group flex min-w-0 flex-1 items-center justify-center px-0.5 outline-none"
           >
-            {o.label}
+            <span
+              className={clsx(
+                'flex w-full min-w-0 items-center justify-center rounded-full px-2 font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60',
+                size === 'sm' ? 'h-[34px] text-[12.5px]' : 'h-[38px] text-[14px]',
+                active
+                  ? 'bg-panel text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'
+                  : 'text-muted group-hover:text-ink-2',
+              )}
+            >
+              <span className="min-w-0 truncate">{o.label}</span>
+            </span>
           </button>
         )
       })}
@@ -223,6 +283,7 @@ export function Segmented<T extends string>({
 }
 
 /* ---------- Chip (filter / toggle) ---------- */
+/** A pill that filters or toggles. The pill is 33 px; the button around it is a 44 px target. */
 export function Chip({
   active,
   onClick,
@@ -242,16 +303,19 @@ export function Chip({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={clsx(
-        'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-semibold transition',
-        active
-          ? 'border-signal/40 bg-signal-soft text-ink'
-          : 'border-line bg-panel text-ink-2 hover:border-line-strong',
-        className,
-      )}
+      className={clsx('group inline-flex min-h-11 shrink-0 items-center outline-none', className)}
     >
-      {color && <SubstanceDot color={color} />}
-      {children}
+      <span
+        className={clsx(
+          'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60',
+          active
+            ? 'border-signal/40 bg-signal-soft text-ink'
+            : 'border-line bg-panel text-ink-2 group-hover:border-line-strong',
+        )}
+      >
+        {color && <SubstanceDot color={color} />}
+        {children}
+      </span>
     </button>
   )
 }

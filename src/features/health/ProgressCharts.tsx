@@ -9,13 +9,15 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
-import type { DoseUnit } from '@/domain/types'
-import { fmtDate, fmtDose, fmtNumber } from '@/lib/format'
+import { fmtDate, fmtDose } from '@/lib/format'
+import { fmtFixed } from '@/features/quicklog/text'
 import { useLocale } from '@/lib/useLocale'
 import {
+  asDoseUnit,
   changeTone,
   dominantSegment,
   fmtSigned,
+  fmtSignedFixed,
   fractionOf,
   monthDelta,
   type MonthMean,
@@ -23,12 +25,6 @@ import {
   type ProtocolLane,
   type TimeWindow,
 } from './progress'
-
-const DOSE_UNITS: readonly DoseUnit[] = ['mg', 'mcg', 'iu', 'units', 'ml']
-
-function asDoseUnit(unit: string): DoseUnit {
-  return (DOSE_UNITS as readonly string[]).includes(unit) ? (unit as DoseUnit) : 'mg'
-}
 
 /* ------------------------------------------------------------ range picker */
 
@@ -50,25 +46,30 @@ export function RangePicker({
       <div
         role="radiogroup"
         aria-label={t('charts.range.label')}
-        className="inline-flex rounded-full border border-line bg-panel-2 p-0.5"
+        className="inline-flex items-center rounded-full border border-line bg-panel-2 p-0.5"
       >
         {RANGES.filter((r) => r !== 'cycle' || hasCycle).map((r) => {
           const active = r === value
           return (
+            // The button is 44 px tall to be easy to hit; the pill inside keeps the compact look.
             <button
               key={r}
               type="button"
               role="radio"
               aria-checked={active}
               onClick={() => onChange(r)}
-              className={clsx(
-                'h-8 min-w-11 rounded-full px-3 font-mono text-[12px] font-semibold transition',
-                active
-                  ? 'bg-panel text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'
-                  : 'text-muted hover:text-ink-2',
-              )}
+              className="group -my-1.5 flex h-11 items-center px-px outline-none"
             >
-              {t(`charts.range.${r}`)}
+              <span
+                className={clsx(
+                  'flex h-8 min-w-11 items-center justify-center rounded-full px-3 font-mono text-[12px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60',
+                  active
+                    ? 'bg-panel text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'
+                    : 'text-muted group-hover:text-ink-2',
+                )}
+              >
+                {t(`charts.range.${r}`)}
+              </span>
             </button>
           )
         })}
@@ -189,13 +190,14 @@ export function ProtocolStrip({
 
 const TONE_CLASS = { good: 'text-ok', bad: 'text-danger', neutral: 'text-ink-2' } as const
 
-/** "Energía ▲ +2,1" — arrow + sign + tone, so the change never relies on colour alone. */
+/** "Energía ▲ +2,1": arrow + sign + tone, so the change never relies on colour alone. */
 export function ChangeValue({
   kind,
   delta,
   digits,
   unit,
   threshold,
+  trim = false,
   className,
 }: {
   kind: string
@@ -203,15 +205,18 @@ export function ChangeValue({
   digits: number
   unit?: string
   threshold: number
+  /** Drop the trailing zeros ("+2", "+1,5"): for scores, which move in whole points or halves. */
+  trim?: boolean
   className?: string
 }) {
   const { locale } = useLocale()
   const tone = changeTone(kind, delta, threshold)
   const flat = Math.abs(delta) < threshold
+  const text = trim ? fmtSigned(delta, locale, digits) : fmtSignedFixed(delta, locale, digits)
   return (
     <span className={clsx('readout whitespace-nowrap font-semibold', TONE_CLASS[tone], className)}>
-      {flat ? '=' : delta > 0 ? '▲' : '▼'} {fmtSigned(delta, locale, digits)}
-      {unit && <span className="ml-0.5 text-[0.85em] font-medium text-muted">{unit}</span>}
+      {flat ? '=' : delta > 0 ? '▲' : '▼'} {text}
+      {unit && <span className="ml-1 text-[0.85em] font-medium text-muted">{unit}</span>}
     </span>
   )
 }
@@ -280,9 +285,9 @@ export function MonthTable({
                   scope="row"
                   className="sticky left-0 z-10 bg-panel py-1 pr-2 text-left font-normal"
                 >
-                  <span className="flex w-24 min-w-0 items-center gap-1.5 text-[11px] text-muted">
+                  <span className="flex w-28 min-w-0 items-center gap-1.5 text-[11px] leading-tight text-muted">
                     <SubstanceDot color={compoundColor(lane.compoundId)} size={6} />
-                    <span className="truncate">{lane.name}</span>
+                    <span className="line-clamp-2">{lane.name}</span>
                   </span>
                 </th>
                 {months.map((m) => {
@@ -290,7 +295,7 @@ export function MonthTable({
                   return (
                     <td
                       key={m.month.getTime()}
-                      className="readout py-1 text-right text-[10.5px] text-muted"
+                      className="readout py-1 text-right text-[11px] text-muted"
                     >
                       {seg
                         ? seg.pause
@@ -316,7 +321,7 @@ export function MonthTable({
                     i === 0 && lanes.length > 0 && 'border-t border-line',
                   )}
                 >
-                  <span className="line-clamp-2 block w-24 leading-tight">{r.label}</span>
+                  <span className="line-clamp-2 block w-28 leading-tight">{r.label}</span>
                 </th>
                 {ms.map((m) => (
                   <td
@@ -341,7 +346,7 @@ export function MonthTable({
                             : undefined
                         }
                       >
-                        {fmtNumber(m.mean, locale, r.digits)}
+                        {fmtFixed(m.mean, locale, r.digits)}
                       </span>
                     )}
                   </td>

@@ -146,7 +146,7 @@ describe('dose tile', () => {
 
   it('becomes the free dose on a new account and on a quiet day', () => {
     expect(view('dose')).toMatchObject({
-      value: { text: 'Dosis libre' },
+      value: { text: 'Toma suelta' },
       caption: 'Registra una toma',
     })
     const quiet = view('dose', {

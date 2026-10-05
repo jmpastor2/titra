@@ -80,14 +80,19 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
             <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-line-strong sm:hidden" />
             <header className="flex items-start justify-between gap-3 px-5 pb-2 pt-3">
               <div className="min-w-0">
-                {title && <h2 className="text-[19px] font-semibold">{title}</h2>}
-                {description && <p className="mt-0.5 text-[13px] text-muted">{description}</p>}
+                {title && (
+                  <h2 className="break-words text-[19px] font-semibold leading-snug">{title}</h2>
+                )}
+                {description && (
+                  <p className="mt-0.5 break-words text-[13px] text-muted">{description}</p>
+                )}
               </div>
+              {/* A 44 px target that takes the room of the 36 px it looks like. */}
               <button
                 type="button"
                 onClick={onClose}
                 aria-label={t('common.close')}
-                className="-mr-1 grid size-9 shrink-0 place-items-center rounded-full text-muted hover:bg-panel-2"
+                className="-mr-2.5 -my-1 grid size-11 shrink-0 place-items-center rounded-full text-muted outline-none hover:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60 active:bg-panel-2"
               >
                 <X className="size-5" />
               </button>

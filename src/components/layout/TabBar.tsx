@@ -27,7 +27,7 @@ export function TabBar() {
               end={end}
               className={({ isActive }) =>
                 clsx(
-                  'flex flex-col items-center gap-1 rounded-[20px] py-2 font-mono text-[9.5px] font-semibold uppercase tracking-[0.1em] transition-colors',
+                  'flex flex-col items-center gap-1 rounded-[20px] py-2 font-mono text-[9.5px] font-semibold uppercase tracking-[0.07em] transition-colors',
                   isActive ? 'bg-signal-soft text-signal' : 'text-muted hover:text-ink-2',
                 )
               }

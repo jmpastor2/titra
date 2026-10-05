@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { SectionTitle } from '@/components/ui/primitives'
@@ -29,7 +29,6 @@ interface Item {
 
 export function MorePage() {
   const { t } = useTranslation()
-  const nav = useNavigate()
 
   const groups: { title: string; index: string; items: Item[] }[] = [
     {
@@ -130,20 +129,24 @@ export function MorePage() {
               <ul className="divide-y divide-line">
                 {g.items.map((item) => (
                   <li key={item.to}>
-                    <button
-                      type="button"
-                      onClick={() => nav(item.to)}
-                      className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition active:bg-panel-2"
+                    <Link
+                      to={item.to}
+                      className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
                     >
-                      <span className="grid size-10 shrink-0 place-items-center rounded-[14px] border border-signal/20 bg-signal-soft text-signal">
+                      <span
+                        aria-hidden
+                        className="grid size-10 shrink-0 place-items-center rounded-[14px] border border-signal/20 bg-signal-soft text-signal"
+                      >
                         {item.icon}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-[15px] font-semibold">{item.label}</span>
-                        <span className="block truncate text-[12.5px] text-muted">{item.hint}</span>
+                        <span className="line-clamp-2 block text-[12.5px] leading-snug text-muted">
+                          {item.hint}
+                        </span>
                       </span>
-                      <ChevronRight className="size-4 shrink-0 text-muted" />
-                    </button>
+                      <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+                    </Link>
                   </li>
                 ))}
               </ul>

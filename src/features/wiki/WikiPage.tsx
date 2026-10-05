@@ -1,7 +1,8 @@
 import { FlaskConical, Search, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { whenIdle } from '@/app/idle'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
@@ -13,9 +14,10 @@ import {
   COMPOUNDS,
   compoundById,
   compoundName,
+  preloadCompoundDetails,
   searchWiki,
 } from '@/content/compounds'
-import type { CompoundEntry } from '@/content/schema'
+import type { CompoundMeta } from '@/content/schema'
 import { categoryColor } from '@/content/substanceColor'
 import { useProtocols } from '@/data/hooks'
 import { protocolCompoundIds } from '@/data/mappers'
@@ -53,6 +55,9 @@ export function WikiPage() {
   }, [protocols.data])
 
   const browsing = category === 'all' && !query
+
+  // Most visits open an entry next: fetch its (cached, precached) chunk once the list has painted.
+  useEffect(() => whenIdle(() => void preloadCompoundDetails().catch(() => {})), [])
 
   return (
     <div>
@@ -154,7 +159,7 @@ function CompoundList({
   items,
   showBrands = false,
 }: {
-  items: readonly CompoundEntry[]
+  items: readonly CompoundMeta[]
   showBrands?: boolean
 }) {
   const { t } = useTranslation()

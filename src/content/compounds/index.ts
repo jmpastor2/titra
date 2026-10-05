@@ -1,50 +1,30 @@
 import type { CompoundCategory } from '@/domain/types'
-import type { CompoundEntry } from '../schema'
-import { BLENDS } from './blends'
-import { COGNITIVE_LONGEVITY } from './cognitive-longevity'
-import { GH_AXIS_EXTRA } from './gh-axis-extra'
-import { GH_REPAIR_IMMUNE } from './gh-repair-immune'
-import { GH_REPAIR_IMMUNE_2 } from './gh-repair-immune-2'
-import { HORMONAL } from './hormonal'
-import { INCRETINS } from './incretins'
-import { INCRETINS_INVESTIGATIONAL } from './incretins-investigational'
-import { INSULINS } from './insulins'
-import { METABOLIC_SEXUAL_COGNITIVE_LONGEVITY } from './metabolic-sexual-cognitive-longevity'
-import { METABOLIC_SEXUAL_OTHER } from './metabolic-sexual-other'
-import { semaglutide } from './semaglutide'
-import { tirzepatide } from './tirzepatide'
+import type { CompoundMeta } from '../schema'
+import { BLEND_META, SUBSTANCE_META } from './meta.generated'
+
+export { EVIDENCE_ORDER, weakestEvidence } from './evidence'
+export { cachedCompoundDetail, loadCompoundDetail, preloadCompoundDetails } from './detail'
 
 /**
- * Registry of all wiki entries. Category files are authored separately and
- * merged here; `byId` is the lookup used across the app.
+ * Registry of all wiki entries, in the light form every screen reads synchronously. It is
+ * generated from the full entries (npm run content:meta, see toMeta.ts); the long texts, trials
+ * and references load on demand with `loadCompoundDetail`.
  */
-export const COMPOUNDS: readonly CompoundEntry[] = [
-  semaglutide,
-  tirzepatide,
-  ...INCRETINS,
-  ...INCRETINS_INVESTIGATIONAL,
-  ...INSULINS,
-  ...HORMONAL,
-  ...GH_REPAIR_IMMUNE,
-  ...GH_REPAIR_IMMUNE_2,
-  ...GH_AXIS_EXTRA,
-  ...METABOLIC_SEXUAL_COGNITIVE_LONGEVITY,
-  ...COGNITIVE_LONGEVITY,
-  ...METABOLIC_SEXUAL_OTHER,
-]
+export const COMPOUNDS: readonly CompoundMeta[] = SUBSTANCE_META
 
-export { BLENDS, EVIDENCE_ORDER, weakestEvidence } from './blends'
+/** Premixed blend vials: wiki pages in their own right, but not substances. */
+export const BLENDS: readonly CompoundMeta[] = BLEND_META
 
 /**
  * Everything with a wiki page: substances plus premixed blends. Blends stay out of
  * COMPOUNDS (and so out of the substance pickers) because protocols and inventory
  * store their components, not the blend.
  */
-export const WIKI_ENTRIES: readonly CompoundEntry[] = [...COMPOUNDS, ...BLENDS]
+export const WIKI_ENTRIES: readonly CompoundMeta[] = [...COMPOUNDS, ...BLENDS]
 
 const index = new Map(WIKI_ENTRIES.map((c) => [c.id, c]))
 
-export function compoundById(id: string): CompoundEntry | undefined {
+export function compoundById(id: string): CompoundMeta | undefined {
   return index.get(id)
 }
 
@@ -67,29 +47,29 @@ export const CATEGORY_ORDER: readonly CompoundCategory[] = [
 ]
 
 /** Compounds whose PK can drive the exposure engine. */
-export const PK_COMPOUNDS: readonly CompoundEntry[] = COMPOUNDS.filter((c) => c.pk)
+export const PK_COMPOUNDS: readonly CompoundMeta[] = COMPOUNDS.filter((c) => c.pk)
 
 /** Blends that contain this compound, in registry order. */
-export function blendsContaining(compoundId: string): CompoundEntry[] {
+export function blendsContaining(compoundId: string): CompoundMeta[] {
   return BLENDS.filter((b) => b.blend?.components.some((p) => p.compoundId === compoundId))
 }
 
 /** Case/diacritic-insensitive search over names, brands, aliases, class and tags. */
-export function searchCompounds(query: string, category?: CompoundCategory): CompoundEntry[] {
+export function searchCompounds(query: string, category?: CompoundCategory): CompoundMeta[] {
   return search(COMPOUNDS, query, category)
 }
 
 /** Wiki search: substances and blends; `'blends'` narrows to blends only. */
-export function searchWiki(query: string, filter?: CompoundCategory | 'blends'): CompoundEntry[] {
+export function searchWiki(query: string, filter?: CompoundCategory | 'blends'): CompoundMeta[] {
   if (filter === 'blends') return search(BLENDS, query)
   return search(WIKI_ENTRIES, query, filter)
 }
 
 function search(
-  entries: readonly CompoundEntry[],
+  entries: readonly CompoundMeta[],
   query: string,
   category?: CompoundCategory,
-): CompoundEntry[] {
+): CompoundMeta[] {
   const q = normalize(query)
   return entries
     .filter((c) => {

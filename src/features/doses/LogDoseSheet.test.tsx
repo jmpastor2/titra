@@ -91,7 +91,7 @@ describe('LogDoseSheet, a free dose', () => {
     // The stock drops once, on the vial's own compound.
     expect(added.map((r) => r.inventory_id)).toEqual([blendVial.id, null])
     expect(Number(store.inventory[0]?.remaining_mg)).toBeCloseTo(4.5 - 0.1, 6)
-    expect(await screen.findByText('Dosis registrada')).toBeInTheDocument()
+    expect(await screen.findByText('Toma registrada')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Deshacer' })).toBeInTheDocument()
   })
 

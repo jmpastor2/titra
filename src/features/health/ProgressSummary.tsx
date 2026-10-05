@@ -15,11 +15,10 @@ import { SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives
 import { compoundColor } from '@/content/substanceColor'
 import type { MeasurementKind } from '@/data/database.types'
 import { useDoses, useMeasurements, useProtocols, useSymptoms } from '@/data/hooks'
-import type { DoseUnit } from '@/domain/types'
 import { CheckInSheet } from '@/features/checkin/CheckInSheet'
 import { WELLBEING } from '@/features/checkin/wellbeing'
 import { summariseWeek, weekPlanVsActual } from '@/features/doses/week'
-import { fmtDate, fmtDose, fmtNumber, fmtPercent, type Locale } from '@/lib/format'
+import { fmtDate, fmtDose, fmtPercent, type Locale } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
 import {
@@ -37,19 +36,20 @@ import {
   type DayCell,
 } from './consistency'
 import { LogMeasurementSheet } from './LogMeasurementSheet'
-import { cycleStart, fmtSigned, sortPoints, type TimePoint } from './progress'
+import { asDoseUnit, cycleStart, fmtSignedFixed, sortPoints, type TimePoint } from './progress'
 import { ChangeValue } from './ProgressCharts'
 import { DayStrip, Sparkline } from './Spark'
 import { baselineChange, ema, weeklyRate } from './trend'
+import { KIND_DIGITS } from './kinds'
+import { fmtReading, useBodyUnits, type BodyUnits } from './units'
 import { weekChanges, type WeekItem } from './weekly'
 
 const STRIP_DAYS = 14
 const SPARK_DAYS = 60
-const DOSE_UNITS: readonly DoseUnit[] = ['mg', 'mcg', 'iu', 'units', 'ml']
-
-function asDoseUnit(unit: string): DoseUnit {
-  return (DOSE_UNITS as readonly string[]).includes(unit) ? (unit as DoseUnit) : 'mg'
-}
+/** The least a body sparkline zooms in to, in kg or cm: two of them are a clear change. */
+const SPARK_MIN_SPAN = 2
+/** A weekly rate comes from a fit over a few weigh-ins: a tenth is as fine as it gets. */
+const RATE_DIGITS = 1
 
 function adherenceTone(a: AdherenceTotal): 'ok' | 'warn' | 'danger' | null {
   if (a.ratio === null) return null
@@ -67,20 +67,24 @@ export function ProgressSummary() {
   const protocols = useProtocols(patientId)
   const symptoms = useSymptoms(patientId, 180)
   const now = useNow(5 * 60_000)
+  const units = useBodyUnits()
   const [sheet, setSheet] = useState<'checkin' | MeasurementKind | null>(null)
 
+  // Body readings are kept in the unit the person uses from here on, so every number, trend
+  // and change on the screen agrees.
   const records = useMemo(() => {
     const weight: TimePoint[] = []
     const waist: TimePoint[] = []
     const scores = new Map<MeasurementKind, TimePoint[]>()
     const checkIns: Date[] = []
     for (const row of measurements.data ?? []) {
-      const p = { at: new Date(row.measured_at), value: Number(row.value) }
-      if (row.kind === 'weight') weight.push(p)
-      else if (row.kind === 'waist') waist.push(p)
+      const at = new Date(row.measured_at)
+      const stored = Number(row.value)
+      if (row.kind === 'weight') weight.push({ at, value: units.show('weight', stored) })
+      else if (row.kind === 'waist') waist.push({ at, value: units.show('waist', stored) })
       else if (WELLBEING.includes(row.kind)) {
-        scores.set(row.kind, [...(scores.get(row.kind) ?? []), p])
-        checkIns.push(p.at)
+        scores.set(row.kind, [...(scores.get(row.kind) ?? []), { at, value: stored }])
+        checkIns.push(at)
       }
     }
     return {
@@ -90,7 +94,7 @@ export function ProgressSummary() {
       checkInDays: daySet(checkIns),
       weighInDays: daySet(weight.map((p) => p.at)),
     }
-  }, [measurements.data])
+  }, [measurements.data, units])
 
   const body = useMemo(() => {
     const rows = protocols.data ?? []
@@ -161,22 +165,26 @@ export function ProgressSummary() {
 
   return (
     <section aria-labelledby="progress-summary" className="mb-4">
-      <SectionTitle index="00">
+      <SectionTitle index="01">
         <span id="progress-summary">{t('progress.summary.title')}</span>
       </SectionTitle>
 
       {pending ? (
-        <div className="grid grid-cols-2 gap-2.5">
-          <Skeleton className="col-span-2 h-[118px]" />
-          <Skeleton className="h-[104px]" />
-          <Skeleton className="h-[104px]" />
+        // The shape of the tiles, so nothing jumps when the numbers arrive.
+        <div className="grid grid-cols-2 gap-2.5" aria-busy>
+          <Skeleton className="col-span-2 h-[148px]" />
+          <Skeleton className="h-[112px]" />
+          <Skeleton className="h-[112px]" />
+          <Skeleton className="h-[112px]" />
+          <Skeleton className="h-[112px]" />
+          <Skeleton className="col-span-2 h-[132px]" />
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2.5">
           <BodyTile
             wide
             kind="weight"
-            unit="kg"
+            units={units}
             label={t('progress.summary.weight')}
             empty={t('progress.summary.noWeight')}
             data={body.weight}
@@ -186,7 +194,7 @@ export function ProgressSummary() {
           />
           <BodyTile
             kind="waist"
-            unit="cm"
+            units={units}
             label={t('progress.summary.waist')}
             empty={t('progress.summary.noWaist')}
             data={body.waist}
@@ -194,7 +202,7 @@ export function ProgressSummary() {
             onLog={readOnly ? undefined : () => setSheet('waist')}
           />
           <Tile label={t('progress.summary.weighIns')}>
-            <Readout value={String(logging.weighIns)} unit={`/${STRIP_DAYS} d`} />
+            <Readout value={String(logging.weighIns)} unit={`/${STRIP_DAYS}`} tight />
             <p className="mt-1 truncate text-[11.5px] text-muted">{lastAgo(logging.weighInAgo)}</p>
             <DayStrip
               className="mt-auto pt-2.5"
@@ -296,11 +304,26 @@ function Tile({
   )
 }
 
-function Readout({ value, unit, className }: { value: string; unit?: string; className?: string }) {
+function Readout({
+  value,
+  unit,
+  tight = false,
+  className,
+}: {
+  value: string
+  unit?: string
+  /** The unit continues the number ("4/14") instead of naming it ("77,0 kg"). */
+  tight?: boolean
+  className?: string
+}) {
   return (
     <div className={clsx('readout mt-1.5 text-[22px] font-semibold leading-none', className)}>
       {value}
-      {unit && <span className="ml-1 text-[11.5px] font-medium text-muted">{unit}</span>}
+      {unit && (
+        <span className={clsx('text-[11.5px] font-medium text-muted', !tight && 'ml-1')}>
+          {unit}
+        </span>
+      )}
     </div>
   )
 }
@@ -313,7 +336,7 @@ interface BodyData {
 
 function BodyTile({
   kind,
-  unit,
+  units,
   label,
   empty,
   data,
@@ -323,7 +346,7 @@ function BodyTile({
   rateHint,
 }: {
   kind: 'weight' | 'waist'
-  unit: string
+  units: BodyUnits
   label: string
   empty: string
   data: BodyData
@@ -334,13 +357,15 @@ function BodyTile({
 }) {
   const { t } = useTranslation()
   const { change, rate } = data
+  const unit = units.unit(kind)
   const color = 'var(--sub-mint)'
   const action = onLog && (
+    // 44 px to hit, drawn as before: the tile's padding is taken back with the margin.
     <button
       type="button"
       onClick={onLog}
       aria-label={t('progress.summary.log', { what: label.toLowerCase() })}
-      className="-m-1.5 grid size-8 place-items-center rounded-full text-muted hover:bg-panel-2 hover:text-ink"
+      className="-m-3 grid size-11 place-items-center rounded-full text-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-signal/60"
     >
       <Plus className="size-4" />
     </button>
@@ -363,14 +388,14 @@ function BodyTile({
           <ChangeValue
             kind={kind}
             delta={delta}
-            digits={1}
+            digits={KIND_DIGITS[kind]}
             unit={unit}
             threshold={0.2}
             className="text-[13px]"
           />
           {change.pct !== null && (
             <span className="readout text-[11.5px] text-muted">
-              {fmtSigned(change.pct * 100, locale, 1)} %
+              {fmtSignedFixed(change.pct * 100, locale, 1)}&nbsp;%
             </span>
           )}
         </div>
@@ -389,8 +414,9 @@ function BodyTile({
       {rate ? (
         <>
           {t('progress.trend.rateLabel')}{' '}
-          <span className="readout font-semibold text-ink-2">
-            {fmtSigned(rate.perWeek, locale, 2)} {unit}/{t('progress.trend.weekShort')}
+          <span className="readout whitespace-nowrap font-semibold text-ink-2">
+            {fmtSignedFixed(rate.perWeek, locale, RATE_DIGITS)}&nbsp;{unit}/
+            {t('progress.trend.weekShort')}
           </span>
         </>
       ) : (
@@ -399,27 +425,38 @@ function BodyTile({
     </p>
   )
 
+  const minSpan = units.show(kind, SPARK_MIN_SPAN)
+  const value = fmtReading(kind, change.latest.value, locale)
+
   return (
     <Tile label={label} wide={wide} color={color} action={action}>
       {wide ? (
         <div className="flex items-end gap-3">
           <div className="min-w-0 flex-1">
-            <Readout
-              value={fmtNumber(change.latest.value, locale, 1)}
-              unit={unit}
-              className="text-[28px]"
-            />
+            <Readout value={value} unit={unit} className="text-[28px]" />
             {detail}
             {rateLine}
           </div>
-          <Sparkline values={data.spark} color={color} height={52} className="w-[42%] shrink-0" />
+          <Sparkline
+            values={data.spark}
+            color={color}
+            height={52}
+            minSpan={minSpan}
+            className="w-[42%] shrink-0"
+          />
         </div>
       ) : (
         <>
-          <Readout value={fmtNumber(change.latest.value, locale, 1)} unit={unit} />
+          <Readout value={value} unit={unit} />
           {detail}
           {data.spark.length > 1 && (
-            <Sparkline values={data.spark} color={color} height={22} className="mt-auto pt-2" />
+            <Sparkline
+              values={data.spark}
+              color={color}
+              height={22}
+              minSpan={minSpan}
+              className="mt-auto pt-2"
+            />
           )}
         </>
       )}
@@ -483,6 +520,7 @@ const DOT_TONE: Record<Tone, string> = {
 
 function WeekCard({ items }: { items: readonly WeekItem[] }) {
   const { t } = useTranslation()
+  const units = useBodyUnits()
   return (
     <Card className="mt-2.5" eyebrow={t('progress.week.eyebrow')} title={t('progress.week.title')}>
       {items.length === 0 ? (
@@ -490,7 +528,7 @@ function WeekCard({ items }: { items: readonly WeekItem[] }) {
       ) : (
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
-            <WeekLine key={weekItemKey(item)} item={item} />
+            <WeekLine key={weekItemKey(item)} item={item} units={units} />
           ))}
         </ul>
       )}
@@ -512,7 +550,7 @@ function dayKey(at: Date): 'today' | 'tomorrow' | 'yesterday' | 'weekday' {
   return 'weekday'
 }
 
-function WeekLine({ item }: { item: WeekItem }) {
+function WeekLine({ item, units }: { item: WeekItem; units: BodyUnits }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   let tone: Tone = 'info'
@@ -521,7 +559,6 @@ function WeekLine({ item }: { item: WeekItem }) {
 
   switch (item.kind) {
     case 'body': {
-      const unit = item.metric === 'weight' ? 'kg' : 'cm'
       tone = Math.abs(item.delta) < 0.2 ? 'info' : item.delta < 0 ? 'good' : 'bad'
       content = (
         <>
@@ -529,8 +566,8 @@ function WeekLine({ item }: { item: WeekItem }) {
           <ChangeValue
             kind={item.metric}
             delta={item.delta}
-            digits={1}
-            unit={unit}
+            digits={KIND_DIGITS[item.metric]}
+            unit={units.unit(item.metric)}
             threshold={0.2}
           />{' '}
           {t('progress.week.vsLast')}
@@ -564,7 +601,7 @@ function WeekLine({ item }: { item: WeekItem }) {
       content = (
         <>
           {t(`health.kinds.${item.metric}`)}{' '}
-          <ChangeValue kind={item.metric} delta={item.delta} digits={1} threshold={0.5} />{' '}
+          <ChangeValue kind={item.metric} delta={item.delta} digits={1} threshold={0.5} trim />{' '}
           {t('progress.week.vsLast')}
         </>
       )

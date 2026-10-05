@@ -102,7 +102,9 @@ function ProtocolDetail({
   const { pl, summary } = actions
   const ids = protocolCompoundIds(p)
   const color = compoundColor(p.compound_id)
-  const names = ids.map((id) => compoundById(id)?.names.generic ?? id)
+  const names = ids.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
+  const subtitle =
+    names.toLocaleLowerCase(locale) === p.name.trim().toLocaleLowerCase(locale) ? undefined : names
 
   const mine = useMemo(
     () =>
@@ -123,7 +125,8 @@ function ProtocolDetail({
       <PageHeader
         eyebrow={t('protocolDetail.eyebrow')}
         title={p.name}
-        subtitle={names.join(' + ')}
+        // The substances, unless the name already says exactly that.
+        subtitle={subtitle}
         back="/protocols"
         action={<Badge tone={STATUS_TONE[p.status]}>{t(`protocols.statuses.${p.status}`)}</Badge>}
       />

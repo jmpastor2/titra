@@ -77,7 +77,7 @@ describe('WeekCard', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(now)
     render(<WeekCard protocols={[cjcProtocol]} doses={blendDose('2026-09-30T01:02')} />)
-    for (const label of ['A su hora', 'Con retraso', 'Perdida', 'Extra', 'Pendiente'])
+    for (const label of ['A su hora', 'Fuera de hora', 'Perdida', 'Extra', 'Pendiente'])
       expect(screen.getAllByText(label).length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: /toca para registrar/ })).not.toBeInTheDocument()
   })

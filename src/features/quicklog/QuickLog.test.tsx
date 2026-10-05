@@ -161,7 +161,7 @@ describe('QuickLog', () => {
     expect(view.container.textContent).not.toMatch(/undefined|NaN/)
     expect(await tile(/^Peso\./)).toHaveAccessibleName(/Pésate para empezar/)
     expect(await tile(/^Check-in\./)).toHaveAccessibleName(/Empieza hoy/)
-    expect(await tile(/^Toma\./)).toHaveAccessibleName(/Dosis libre/)
+    expect(await tile(/^Toma\./)).toHaveAccessibleName(/Toma suelta/)
     expect(await tile(/^Proteína\./)).toHaveAccessibleName(/Falta tu peso|Faltan/)
     expect(tileNames().some((n) => n.startsWith('Ayuno'))).toBe(false)
   })
@@ -389,7 +389,7 @@ describe('QuickLog', () => {
       const sheet = await screen.findByRole('dialog')
       expect(within(sheet).getByText('Cintura')).toBeInTheDocument()
       expect(within(sheet).getByText(/91,0 cm · hace 10 días/)).toBeInTheDocument()
-      for (const name of ['Añadir analítica', 'Medidas corporales', 'Pasos', 'Dosis libre']) {
+      for (const name of ['Añadir analítica', 'Medidas corporales', 'Pasos', 'Toma suelta']) {
         expect(within(sheet).getByText(name)).toBeInTheDocument()
       }
     })
@@ -406,7 +406,7 @@ describe('QuickLog', () => {
     it('opens a free dose, with nothing chosen yet', async () => {
       renderQuick()
       fireEvent.click(await tile(/^Más\./))
-      fireEvent.click(await screen.findByText('Dosis libre'))
+      fireEvent.click(await screen.findByText('Toma suelta'))
       expect(await screen.findByRole('dialog')).toHaveTextContent('Registrar toma')
     })
 

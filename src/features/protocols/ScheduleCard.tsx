@@ -98,8 +98,9 @@ export function ScheduleCard({
           <span className="text-[14px] text-ink-2">{t('protocols.days')}</span>
         </div>
       ) : (
+        // Seven 44 px targets across a phone: the row takes the card's padding for itself.
         <div
-          className="mt-3 grid grid-cols-7 gap-1.5"
+          className="-mx-2.5 mt-3 grid grid-cols-7 gap-[3px]"
           role="group"
           aria-label={t('protocols.onWeekdays')}
         >
@@ -136,7 +137,7 @@ export function ScheduleCard({
               // The value changes while the user edits it, so the position is the identity.
               // oxlint-disable-next-line react/no-array-index-key
               key={i}
-              className="flex items-center gap-1 rounded-full border border-line-strong bg-panel-2 py-1 pl-3 pr-1"
+              className="flex min-h-11 items-center gap-1 rounded-full border border-line-strong bg-panel-2 pl-3 pr-1"
             >
               {draft.nightShift && Number(tm.split(':')[0]) < 6 ? (
                 <Moon aria-hidden className="size-3.5 text-accent" />
@@ -150,14 +151,14 @@ export function ScheduleCard({
                 onChange={(e) =>
                   onChange({ times: draft.times.map((x, j) => (j === i ? e.target.value : x)) })
                 }
-                className="readout w-[74px] bg-transparent text-[14px] font-semibold outline-none"
+                className="readout h-11 w-[74px] bg-transparent text-[14px] font-semibold outline-none"
               />
               {draft.times.length > 1 && (
                 <button
                   type="button"
                   aria-label={t('common.delete')}
                   onClick={() => onChange({ times: draft.times.filter((_, j) => j !== i) })}
-                  className="-my-1 grid size-11 place-items-center rounded-full text-muted hover:text-danger"
+                  className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:text-danger"
                 >
                   <X className="size-3.5" />
                 </button>

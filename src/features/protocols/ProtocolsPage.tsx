@@ -126,7 +126,7 @@ export function ProtocolsPage() {
                     <Bookmark className="size-4 shrink-0 text-muted" />
                     <button
                       type="button"
-                      className="min-w-0 flex-1 text-left"
+                      className="min-h-11 min-w-0 flex-1 text-left"
                       onClick={() => nav(`/protocols/new?saved=${s.id}`)}
                     >
                       <div className="flex items-center gap-1.5">

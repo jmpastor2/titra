@@ -1,4 +1,4 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * Investigational incretin-class agents: multi-agonists, amylin analogues,
@@ -12,7 +12,7 @@ import { t, type CompoundEntry } from '../schema'
 // Triple and dual agonists
 // ---------------------------------------------------------------------------
 
-const retatrutide: CompoundEntry = {
+const retatrutide: CompoundDetail = {
   id: 'retatrutide',
   names: {
     generic: 'Retatrutida',
@@ -226,7 +226,7 @@ const retatrutide: CompoundEntry = {
   lastReviewed: '2026-09-30',
 }
 
-const survodutide: CompoundEntry = {
+const survodutide: CompoundDetail = {
   id: 'survodutide',
   names: {
     generic: 'Survodutida',
@@ -393,7 +393,7 @@ const survodutide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const mazdutide: CompoundEntry = {
+const mazdutide: CompoundDetail = {
   id: 'mazdutide',
   names: {
     generic: 'Mazdutida',
@@ -543,7 +543,7 @@ const mazdutide: CompoundEntry = {
 // Amylin analogues and fixed-dose combinations
 // ---------------------------------------------------------------------------
 
-const cagrilintide: CompoundEntry = {
+const cagrilintide: CompoundDetail = {
   id: 'cagrilintide',
   names: {
     generic: 'Cagrilintida',
@@ -690,7 +690,7 @@ const cagrilintide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const cagrisema: CompoundEntry = {
+const cagrisema: CompoundDetail = {
   id: 'cagrisema',
   names: {
     generic: 'CagriSema (cagrilintida + semaglutida)',
@@ -865,7 +865,7 @@ const cagrisema: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const amycretin: CompoundEntry = {
+const amycretin: CompoundDetail = {
   id: 'amycretin',
   names: {
     generic: 'Amicretina',
@@ -1022,7 +1022,7 @@ const amycretin: CompoundEntry = {
 // Oral non-peptide GLP-1 receptor agonists
 // ---------------------------------------------------------------------------
 
-const orforglipron: CompoundEntry = {
+const orforglipron: CompoundDetail = {
   id: 'orforglipron',
   names: {
     generic: 'Orforglipron',
@@ -1198,7 +1198,7 @@ const orforglipron: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const danuglipron: CompoundEntry = {
+const danuglipron: CompoundDetail = {
   id: 'danuglipron',
   names: {
     generic: 'Danuglipron',
@@ -1366,7 +1366,7 @@ const danuglipron: CompoundEntry = {
 // Long-acting conjugates and other weekly GLP-1 RAs
 // ---------------------------------------------------------------------------
 
-const efpeglenatide: CompoundEntry = {
+const efpeglenatide: CompoundDetail = {
   id: 'efpeglenatide',
   names: {
     generic: 'Efpeglenatida',
@@ -1504,7 +1504,7 @@ const efpeglenatide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const maridebartCafraglutide: CompoundEntry = {
+const maridebartCafraglutide: CompoundDetail = {
   id: 'maridebart-cafraglutide',
   names: {
     generic: 'Maridebart cafraglutida',
@@ -1686,7 +1686,7 @@ const maridebartCafraglutide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const ecnoglutide: CompoundEntry = {
+const ecnoglutide: CompoundDetail = {
   id: 'ecnoglutide',
   names: {
     generic: 'Ecnoglutida',
@@ -1821,7 +1821,7 @@ const ecnoglutide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-export const INCRETINS_INVESTIGATIONAL: CompoundEntry[] = [
+export const INCRETINS_INVESTIGATIONAL: CompoundDetail[] = [
   retatrutide,
   cagrilintide,
   cagrisema,

@@ -46,15 +46,22 @@ interface QuickLogProps {
   className?: string
   /** Section number in the silkscreen style of the other sections of the screen ("04"). */
   index?: string
+  /**
+   * Tiles the screen already says in its own way (the next dose has its card, an open fast
+   * has its own): left out of the grid, so nothing is said twice.
+   */
+  omit?: readonly TileId[]
 }
+
+const OMIT_NONE: readonly TileId[] = []
 
 /** The panel; nothing at all in a shared, read-only view. */
-export function QuickLog({ className, index }: QuickLogProps) {
+export function QuickLog({ className, index, omit }: QuickLogProps) {
   const { readOnly } = usePatientScope()
-  return readOnly ? null : <QuickLogPanel className={className} index={index} />
+  return readOnly ? null : <QuickLogPanel className={className} index={index} omit={omit} />
 }
 
-function QuickLogPanel({ className, index }: QuickLogProps) {
+function QuickLogPanel({ className, index, omit = OMIT_NONE }: QuickLogProps) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { patientId, patient } = usePatientScope()
@@ -91,8 +98,8 @@ function QuickLogPanel({ className, index }: QuickLogProps) {
 
   // Which tiles, and in what order: the pressing first, steady while a finger is on them.
   const ranks = useMemo(
-    () => buildRanks({ data, glance, goalMl, now }),
-    [data, glance, goalMl, now],
+    () => buildRanks({ data, glance, goalMl, now }).filter((r) => !omit.includes(r.id)),
+    [data, glance, goalMl, now, omit],
   )
   const ranked = useMemo(() => rankTiles(ranks), [ranks])
   const { order, touch } = useStableOrder(ranked.shown, ready)

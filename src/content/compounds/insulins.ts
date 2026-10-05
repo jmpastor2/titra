@@ -1,4 +1,4 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * Insulin analogues and human insulins.
@@ -119,7 +119,7 @@ const insulinReferences = (brand: string, url?: string) => [
   { label: 'ADA Standards of Care in Diabetes — Pharmacologic Approaches to Glycemic Treatment' },
 ]
 
-export const INSULINS: CompoundEntry[] = [
+export const INSULINS: CompoundDetail[] = [
   {
     id: 'insulin-lispro',
     names: {

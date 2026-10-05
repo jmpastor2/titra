@@ -81,13 +81,18 @@ export function DetailActions({ actions: a }: { actions: ProtocolActions }) {
   const { t } = useTranslation()
   const status = a.protocol.status
   const rest = Boolean(a.summary?.info.step?.pause)
+  // With a decision due, the card above already offers "keep one more week": not twice.
+  const asked = Boolean(a.summary?.info.decisionDue && a.summary.next)
+  const showHold = a.hold && !asked
+  // Two or four tiles sit in pairs; three share one row.
+  const tiles = [showHold, true, true, status !== 'archived'].filter(Boolean).length
   return (
     <div className="flex flex-col gap-2.5">
       <Button size="lg" block leading={<Pencil className="size-5" />} onClick={a.edit}>
         {t('protocolDetail.edit')}
       </Button>
-      <div className="grid grid-cols-2 gap-2.5">
-        {a.hold && (
+      <div className={clsx('grid gap-2.5', tiles === 3 ? 'grid-cols-3' : 'grid-cols-2')}>
+        {showHold && (
           <Tile
             icon={CalendarPlus}
             label={rest ? t('protocolMenu.holdRest') : t('protocolMenu.hold')}

@@ -71,14 +71,15 @@ export function BaselineCard({ rows }: { rows: readonly DimensionBaseline[] }) {
               </span>
               <span className="flex min-w-[4.5rem] items-baseline justify-end gap-1.5">
                 <span className="readout text-[13px] font-semibold text-ink">
-                  {fmtNumber(value, locale, 0)}
+                  {fmtNumber(value, locale, 1)}
                 </span>
                 {r.delta !== null ? (
                   <ChangeValue
                     kind={r.kind}
                     delta={r.delta}
-                    digits={0}
+                    digits={1}
                     threshold={SCORE_THRESHOLD}
+                    trim
                     className="text-[11.5px]"
                   />
                 ) : (
@@ -88,8 +89,8 @@ export function BaselineCard({ rows }: { rows: readonly DimensionBaseline[] }) {
               {r.delta !== null && (
                 <span className="sr-only">
                   {t('progress.baseline.srCompare', {
-                    base: fmtNumber(r.baseline, locale, 0),
-                    latest: fmtNumber(r.latest, locale, 0),
+                    base: fmtNumber(r.baseline, locale, 1),
+                    latest: fmtNumber(r.latest, locale, 1),
                   })}
                 </span>
               )}

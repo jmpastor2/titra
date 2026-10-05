@@ -9,26 +9,33 @@ se puede compartir en solo lectura con quien tú decidas, por ejemplo tu médico
 
 ## Qué hace
 
-- **Hoy.** Agenda del día con todas las tomas de todas tus pautas, un toque para registrar cada una,
-  tira de 24 horas y el estado de cada sustancia.
-- **Pautas completas.** Cada N días o por días de la semana (de lunes a viernes para CJC con
-  ipamorelina), varias tomas al día, escalones de dosis, pausas para ciclar y mezclas en la misma
-  jeringa. Se guardan como pautas reutilizables y se pueden compartir.
+- **Hoy.** Lo que toca ahora (siguiente toma con las unidades a cargar), la semana de cada ciclo
+  ("semana 3 de 12") con la decisión de la semana ("¿subes o mantienes una semana más?"), avisos de
+  stock, agenda del día con todas tus pautas, niveles de cada sustancia y un panel de registro
+  rápido (toma, agua, peso, check-in, ayuno, síntoma, proteína).
+- **Registro que se corrige.** Cada toma se puede editar o borrar (el stock del vial se ajusta solo).
+  Si te pones una toma de más para compensar una retrasada, Titra te ofrece asignarla a la toma
+  perdida: así la adherencia y el progreso cuentan lo que de verdad hiciste.
+- **Ciclos.** Línea de tiempo de todas tus pautas con sus escalones, semana por semana, descansos,
+  cómo va cada ciclo (adherencia, tomas, peso) y empezar uno nuevo desde donde lo dejaste.
+- **Pautas completas y editables.** Cada N días o por días de la semana (de lunes a viernes para CJC
+  con ipamorelina), varias tomas al día, tomas de noche pasada la medianoche, escalones de dosis,
+  pausas para ciclar y mezclas en la misma jeringa. Se editan en U, mg o mcg; "mantener una semana
+  más", adelantar un escalón, pausar, duplicar y guardar como pauta reutilizable.
 - **Jeringa a escala.** Con el vial y su agua bacteriostática, Titra dibuja la jeringa U-100
   (0,3, 0,5 o 1 mL según la carga) con las unidades exactas. En una mezcla (CJC con ipamorelina)
-  marca cada carga en orden: 10 U de Mod GRF y hasta 15 U con ipamorelina. Descuenta del vial y
-  sugiere la zona menos usada.
-- **Avisos cuando toca.** Notificación con la dosis y las unidades a cargar, a la hora o hasta 1 h
-  antes. Si ya registraste la toma, no avisa. En iPhone requiere la app instalada (iOS 16.4+).
-- **Dosis graduales.** Cada pauta muestra su escalera de dosis, el escalón actual, cuándo sube la
-  dosis y la adherencia de los últimos 28 días.
-- **Viales con autonomía.** Cuántas tomas cubre cada vial, contando las subidas de dosis, y cuándo
-  tener listo el siguiente o si caduca antes.
+  marca cada carga en orden. Descuenta del vial y sugiere la zona menos usada.
+- **Avisos cuando toca.** Notificación con la dosis y las unidades a cargar, y la víspera de una
+  subida de dosis para que decidas. Si ya registraste la toma, no avisa. En iPhone requiere la app
+  instalada (iOS 16.4+).
+- **Viales con autonomía.** Pasa un vial de liofilizado a reconstituido sin reescribirlo todo, cuántas
+  tomas cubre cada vial (contando las subidas de dosis), cuándo pedir otro y cuándo caduca. Las
+  alertas se marcan como leídas y no vuelven.
 - **Niveles.** Modelo farmacocinético de un compartimento con fármaco a bordo, estado estacionario,
   proyección y simulador de "¿y si me salto una dosis?" o cambio de fármaco. Solo para sustancias con
-  datos farmacocinéticos en humanos.
-- **Progreso.** Check-in de bienestar (energía, sueño, ánimo, recuperación, concentración, apetito,
-  libido), cuerpo y masa magra, síntomas y analíticas con rangos.
+  datos farmacocinéticos en humanos; el resto muestra su línea de tomas.
+- **Progreso.** Resumen con tus cifras clave, cuerpo y masa magra, check-in de bienestar, síntomas y
+  analíticas con rangos, y una proyección a futuro basada en ensayos publicados.
 - **Aprende.** Wiki bilingüe con mecanismo, farmacocinética con fuente, dosificación separada en ficha
   técnica, ensayos y uso no aprobado, efectos adversos, interacciones y referencias. Integrada en cada
   sustancia que usas.
@@ -41,9 +48,12 @@ se puede compartir en solo lectura con quien tú decidas, por ejemplo tu médico
 
 1. Crea un proyecto en [supabase.com](https://supabase.com).
 2. **SQL Editor → New query**: pega y ejecuta, en orden, los ficheros de `supabase/migrations/`:
-   `20260919000000_init.sql`, `20260925000000_personal_tracking.sql` y
-   `20260926000000_reminders.sql`. Crean las tablas, los disparadores, la Row Level Security y
-   la tarea programada de avisos.
+   `20260919000000_init.sql`, `20260925000000_personal_tracking.sql`,
+   `20260926000000_reminders.sql`, `20260927000000_blend_vials.sql` y
+   `20261004000000_edit_doses_dismissals.sql`. Crean las tablas, los disparadores, la Row Level
+   Security, la tarea programada de avisos, los viales con mezcla, la edición de tomas con ajuste de
+   stock y las alertas marcadas como leídas. Con el CLI de Supabase ya enlazado también valen
+   `npx supabase db query --linked -f supabase/migrations/<archivo>.sql`.
 3. **Avisos push**: sigue [docs/notificaciones.md](docs/notificaciones.md) para subir la Edge
    Function `send-reminders` y sus secretos. Sin este paso, Titra avisa solo con la app abierta.
 4. **Authentication → URL Configuration**:
@@ -79,8 +89,9 @@ Para compartir, **Más → Compartir**.
 
 ```
 src/
-  domain/      Lógica pura y testeada: motor PK, escenarios, pautas, reconstitución,
-               rotación de puntos, masa magra. Sin React ni red.
+  domain/      Lógica pura y testeada: motor PK, escenarios, pautas (calendario, casación de
+               tomas con su toma prevista, ciclos y escalones), reconstitución, rotación de
+               puntos, masa magra. Sin React ni red.
   content/     Wiki y plantillas en TypeScript tipado, bilingüe. Viaja en el bundle
                para funcionar sin conexión.
   data/        Tipos de la base de datos, mapeadores y hooks de TanStack Query.
@@ -88,6 +99,7 @@ src/
                avisos, compartir, simulador, calculadora, ajustes.
   components/  Sistema de diseño: botones, hojas inferiores, campos, tarjetas.
   i18n/        es.json y en.json con las mismas claves (un test lo verifica).
+  dev/         Laboratorio de desarrollo (ver más abajo). No viaja en la app publicada.
 supabase/      Migraciones SQL con RLS y la Edge Function send-reminders.
 public/push-sw.js  Avisos push y clic en la notificación, importado por el service worker.
 ```
@@ -102,6 +114,21 @@ public/push-sw.js  Avisos push y clic en la notificación, importado por el serv
 - **Avisos**: el dispositivo calcula las próximas tomas en su zona horaria y las guarda con
   `replace_reminders()`. Cada 5 minutos pg_cron llama a `send-reminders`, que envía Web Push
   (VAPID) y descarta los avisos cuya toma ya está registrada.
+
+## Laboratorio de desarrollo
+
+`npm run dev` y abre `http://localhost:5173/lab.html`: la app real (mismas rutas y pantallas) sobre una
+base de datos falsa en memoria, sembrada respecto a hoy con una cuenta de la semana 4. Lo que haces en
+ella solo vive en memoria; recargar la reinicia. Sirve para ver y probar sin tocar Supabase.
+
+- `?empty=1` abre una cuenta nueva sin datos.
+- `?now=2026-10-04T20:30` hace que la app crea que es ese momento (el reloj sigue avanzando): el domingo
+  por la noche antes de una subida de dosis, la madrugada tras una toma de noche...
+- `?real=1` abre una copia de una cuenta real si existe `src/dev/real-snapshot.json` (se exporta con el
+  CLI de Supabase; está en `.gitignore` y nunca se sube).
+
+`src/dev/smoke.test.tsx` recorre todas las rutas contra esa base de datos, con cuenta real y con cuenta
+nueva, y falla ante un error de ejecución, una traducción que falta o un `undefined` en pantalla.
 
 ## Modelo farmacocinético
 

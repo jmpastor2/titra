@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
-import { Skeleton } from '@/components/ui/primitives'
+import { Skeleton, ToggleRow } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { compoundById } from '@/content/compounds'
 import { PROTOCOL_TEMPLATES, templateById } from '@/content/protocols/templates'
@@ -622,22 +622,12 @@ function ProtocolForm({
                 />
               )}
             </Field>
-            <label className="flex items-center justify-between gap-3 rounded-control border border-line bg-panel-2 px-3.5 py-3">
-              <span>
-                <span className="block text-[14px] font-semibold">
-                  {t('protocols.saveAsTemplate')}
-                </span>
-                <span className="block text-[12px] text-muted">
-                  {t('protocols.saveAsTemplateHint')}
-                </span>
-              </span>
-              <input
-                type="checkbox"
-                checked={draft.saveAsTemplate}
-                onChange={(e) => patch({ saveAsTemplate: e.target.checked })}
-                className="size-5 accent-[var(--signal)]"
-              />
-            </label>
+            <ToggleRow
+              checked={draft.saveAsTemplate}
+              onChange={(saveAsTemplate) => patch({ saveAsTemplate })}
+              label={t('protocols.saveAsTemplate')}
+              hint={t('protocols.saveAsTemplateHint')}
+            />
           </div>
         </Card>
 

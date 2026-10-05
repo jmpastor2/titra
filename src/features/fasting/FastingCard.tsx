@@ -111,12 +111,18 @@ export function FastingCard({ name, className }: { name: string; className?: str
   const lastMeal = useLastMeal(now)
   const s = fastingState(lastMeal, now)
   const waiting = lastMeal !== null && !s.ready
+  // A meal noted and the two hours up: the card says so in the colour of what is done.
+  const fasted = lastMeal !== null && s.ready
 
   return (
     <div
       className={clsx(
         'rounded-control border px-3.5 py-3',
-        waiting ? 'border-warn/40 bg-warn-soft' : 'border-line bg-panel-2',
+        waiting
+          ? 'border-warn/40 bg-warn-soft'
+          : fasted
+            ? 'border-signal/30 bg-signal-soft'
+            : 'border-line bg-panel-2',
         className,
       )}
     >

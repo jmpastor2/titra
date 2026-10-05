@@ -1,4 +1,4 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * Metabolic, sexual-health, cognitive and longevity compounds.
@@ -6,7 +6,7 @@ import { t, type CompoundEntry } from '../schema'
  * tiers and regulatory status are stated conservatively. Dosing labelled
  * "anecdotal" is community usage reproduced for harm-reduction context only.
  */
-export const METABOLIC_SEXUAL_COGNITIVE_LONGEVITY: CompoundEntry[] = [
+export const METABOLIC_SEXUAL_COGNITIVE_LONGEVITY: CompoundDetail[] = [
   // ───────────────────────────── METABOLIC ─────────────────────────────
   {
     id: 'mots-c',

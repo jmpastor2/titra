@@ -6,6 +6,7 @@ import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { FloatingAction } from '@/components/ui/FloatingAction'
 import { Chip, EmptyState, Skeleton } from '@/components/ui/primitives'
 import { compoundName } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
@@ -106,7 +107,8 @@ export function DosesPage() {
     setOverlay({ kind, key: a.key })
 
   return (
-    <div>
+    // The bottom padding clears the floating button, so the last row is never under it.
+    <div className="pb-8">
       <PageHeader eyebrow={t('doses.eyebrow')} title={t('nav.log')} large />
 
       {protocolRows.length > 0 && doses.data && (
@@ -123,7 +125,7 @@ export function DosesPage() {
       )}
 
       {combos.length > 1 && (
-        <div className="hide-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4">
+        <div className="hide-scrollbar -mx-4 -mt-1 mb-1.5 flex gap-2 overflow-x-auto px-4">
           <Chip active={filter === 'all'} onClick={() => setFilter('all')}>
             {t('doses.filterAll')}
           </Chip>
@@ -219,17 +221,15 @@ export function DosesPage() {
 
       {/* Within thumb reach; an empty log has its own button. */}
       {!readOnly && admins.length > 0 && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),10px)+86px)] z-30">
-          <div className="mx-auto flex max-w-2xl justify-end px-4">
-            <Button
-              className="pointer-events-auto shadow-xl"
-              leading={<Plus className="size-5" />}
-              onClick={() => setLogging({})}
-            >
-              {t('doses.logShort')}
-            </Button>
-          </div>
-        </div>
+        <FloatingAction>
+          <Button
+            className="pointer-events-auto shadow-xl"
+            leading={<Plus className="size-5" />}
+            onClick={() => setLogging({})}
+          >
+            {t('doses.logShort')}
+          </Button>
+        </FloatingAction>
       )}
 
       <LogDoseSheet

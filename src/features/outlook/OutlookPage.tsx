@@ -8,19 +8,7 @@
 import { parseISO, startOfDay } from 'date-fns'
 import { ChevronRight, FlaskConical, Scale, Telescope } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
-import {
-  Area,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ReferenceLine,
-  ResponsiveContainer,
-  Scatter,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { Link, useNavigate } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -50,15 +38,13 @@ import type { DoseUnit, ProtocolLike } from '@/domain/types'
 import { CheckInSheet } from '@/features/checkin/CheckInSheet'
 import { AddLabSheet } from '@/features/health/AddLabSheet'
 import { LogMeasurementSheet } from '@/features/health/LogMeasurementSheet'
-import { cycleStart, fmtSigned } from '@/features/health/progress'
-import { fmtDate, fmtDose, fmtNumber } from '@/lib/format'
-import { useLocale } from '@/lib/useLocale'
+import { cycleStart } from '@/features/health/progress'
+import { fmtDate, fmtDose } from '@/lib/format'
 import { useNow } from '@/lib/useNow'
 import {
   asCompoundProtocol,
   bandInKg,
   bandSeries,
-  chartWeeks,
   HORIZONS,
   horizonDate,
   isProjection,
@@ -79,6 +65,8 @@ import {
   type Projection,
   type WeightPoint,
 } from './outlook'
+import { OutlookChart, type AxisPoint } from './OutlookChart'
+import { bandText, useFormat, type Fmt } from './outlookFormat'
 
 /* ------------------------------------------------------------------ model */
 
@@ -167,38 +155,10 @@ function wikiMonitoring(compoundId: string): MeasureItem[] {
 
 /* ------------------------------------------------------------------ formatting */
 
-const LB_PER_KG = 1 / 0.45359237
 const DOSE_UNITS: readonly DoseUnit[] = ['mg', 'mcg', 'iu', 'units', 'ml']
 
 function asDoseUnit(unit: string): DoseUnit {
   return (DOSE_UNITS as readonly string[]).includes(unit) ? (unit as DoseUnit) : 'mg'
-}
-
-function useFormat() {
-  const { t } = useTranslation()
-  const { locale, pick } = useLocale()
-  const { patient } = usePatientScope()
-  const imperial = patient?.unit_system === 'imperial'
-  const pctSign = locale === 'es' ? ' %' : '%'
-  const weightUnit = imperial ? 'lb' : 'kg'
-  const toUnit = (kg: number) => (imperial ? kg * LB_PER_KG : kg)
-  return {
-    t,
-    locale,
-    pick,
-    pct: (v: number, digits = 1) => `${fmtSigned(v, locale, digits)}${pctSign}`,
-    weight: (kg: number) => `${fmtNumber(toUnit(kg), locale, 1)} ${weightUnit}`,
-    weightDelta: (kg: number) => `${fmtSigned(toUnit(kg), locale, 1)} ${weightUnit}`,
-    range: (a: string, b: string) => (a === b ? a : t('outlook.range', { a, b })),
-    date: (d: Date) => fmtDate(d, locale, 'd MMM yyyy'),
-  }
-}
-
-type Fmt = ReturnType<typeof useFormat>
-
-/** "−7 % a −13 %", rounded for headlines, exact in details. */
-function bandText(f: Fmt, lower: number, upper: number, digits: number) {
-  return f.range(f.pct(lower, digits), f.pct(upper, digits))
 }
 
 /* ------------------------------------------------------------------ page */
@@ -209,6 +169,7 @@ type SheetState =
 export function OutlookPage() {
   const f = useFormat()
   const { t } = f
+  const navigate = useNavigate()
   const { patientId, readOnly } = usePatientScope()
   const protocols = useProtocols(patientId)
   const measurements = useMeasurements(patientId, 730)
@@ -257,9 +218,9 @@ export function OutlookPage() {
             description={t('outlook.empty.body')}
             action={
               !readOnly && (
-                <Link to="/protocols/new">
-                  <Button size="sm">{t('outlook.empty.action')}</Button>
-                </Link>
+                <Button size="sm" onClick={() => navigate('/protocols/new')}>
+                  {t('outlook.empty.action')}
+                </Button>
               )
             }
           />
@@ -492,10 +453,33 @@ function TrialCard({
   const reference = outlook.reference
   const color = compoundColor(trial.compoundId)
   const unit = asDoseUnit(item.row.unit)
-  const trend = personalTrend(weights, item.since, now)
-  const projection = projectTrend(trend, ref.targetDate)
+  const trend = useMemo(() => personalTrend(weights, item.since, now), [weights, item.since, now])
+  const projection = useMemo(() => projectTrend(trend, ref.targetDate), [trend, ref.targetDate])
   const band = ref.band
   const weightForBand = trend?.baseline.kg ?? null
+  // The person's weigh-ins and the line drawn on from them, as the chart wants them.
+  const chartMe = useMemo<AxisPoint[]>(
+    () =>
+      trend
+        ? trendOnTreatmentAxis(trend, trial.like).map((p, i) => ({
+            week: p.week,
+            pct: p.pct,
+            at: trend.points[i]?.at,
+            kg: trend.points[i]?.kg,
+          }))
+        : [],
+    [trend, trial.like],
+  )
+  const chartProjection = useMemo<AxisPoint[]>(
+    () =>
+      trend && isProjection(projection)
+        ? [
+            { week: treatmentWeeks(trial.like, trend.latest.at), pct: trend.changePct },
+            { week: ref.weeksAtTarget, pct: projection.deltaPct, kg: projection.kg },
+          ]
+        : [],
+    [trend, projection, trial.like, ref.weeksAtTarget],
+  )
 
   return (
     <Card className="p-4" style={{ borderColor: `color-mix(in oklab, ${color} 30%, var(--line))` }}>
@@ -581,18 +565,8 @@ function TrialCard({
             todayWeeks={trial.todayWeeks}
             targetWeeks={ref.weeksAtTarget}
             horizon={horizon}
-            me={trend ? trendOnTreatmentAxis(trend, trial.like) : []}
-            projection={
-              trend && isProjection(projection)
-                ? [
-                    {
-                      week: treatmentWeeks(trial.like, trend.latest.at),
-                      pct: trend.changePct,
-                    },
-                    { week: ref.weeksAtTarget, pct: projection.deltaPct },
-                  ]
-                : []
-            }
+            me={chartMe}
+            projection={chartProjection}
           />
         </div>
       )}
@@ -677,7 +651,10 @@ function PersonalReadout({
           {f.pct(projection.deltaPct)} · ≈ {f.weight(projection.kg)}
         </div>
         <div className="mt-1.5 flex flex-wrap gap-1">
-          <Badge tone={projection.reliability === 'weak' ? 'warn' : 'neutral'}>
+          <Badge
+            tone={projection.reliability === 'weak' ? 'warn' : 'neutral'}
+            className="whitespace-normal! text-left leading-snug"
+          >
             {projection.reliability === 'weak'
               ? t('outlook.personal.badgeWeak')
               : t('outlook.personal.badge')}
@@ -766,241 +743,6 @@ function PersonalBlock({
   )
 }
 
-/* ------------------------------------------------------------------ chart */
-
-interface AxisPoint {
-  week: number
-  pct: number
-}
-
-const CHART_MARGIN = { top: 12, right: 12, bottom: 0, left: 0 }
-
-function OutlookChart({
-  f,
-  color,
-  series,
-  todayWeeks,
-  targetWeeks,
-  horizon,
-  me,
-  projection,
-}: {
-  f: Fmt
-  color: string
-  series: readonly BandPoint[]
-  todayWeeks: number
-  targetWeeks: number
-  horizon: Horizon
-  me: readonly AxisPoint[]
-  projection: readonly AxisPoint[]
-}) {
-  const { t, locale } = f
-  const data = series.map((p) => ({
-    week: p.week,
-    range: [p.lowerPct, p.upperPct] as [number, number],
-    lower: p.lowerPct,
-    upper: p.upperPct,
-    placebo: p.placeboPct,
-  }))
-  const observed = series.flatMap((p) =>
-    p.observed
-      ? [
-          { week: p.week, pct: p.lowerPct },
-          { week: p.week, pct: p.upperPct },
-        ]
-      : [],
-  )
-  const maxWeek = chartWeeks(
-    series.at(-1)?.week ?? 48,
-    targetWeeks,
-    todayWeeks,
-    ...me.map((p) => p.week),
-  )
-  const ticks = Array.from({ length: maxWeek / 12 + 1 }, (_, i) => i * 12)
-  const values = [
-    ...series.flatMap((p) => [p.lowerPct, p.upperPct]),
-    ...me.map((p) => p.pct),
-    ...projection.map((p) => p.pct),
-    0,
-  ]
-  // Whole 5-point ticks, with headroom above zero for the "today" and horizon labels.
-  const lo = Math.floor((Math.min(...values) - 1) / 5) * 5
-  const top = Math.max(...values)
-  const hi = top > 0 ? Math.ceil((top + 1) / 5) * 5 : 3
-  const step = hi - lo > 30 ? 10 : 5
-  const yTicks = Array.from(
-    { length: Math.floor((Math.min(hi, 100) - lo) / step) + 1 },
-    (_, i) => lo + i * step,
-  )
-  const summary = t('outlook.chart.summary', {
-    today: fmtNumber(todayWeeks, locale, 0),
-    week: series.at(-1)?.week ?? 0,
-    band: bandText(f, series.at(-1)?.lowerPct ?? 0, series.at(-1)?.upperPct ?? 0, 1),
-  })
-
-  return (
-    <figure>
-      <div className="h-[200px]" role="img" aria-label={summary}>
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={CHART_MARGIN}>
-            <CartesianGrid vertical={false} stroke="var(--line)" strokeDasharray="2 4" />
-            <XAxis
-              dataKey="week"
-              type="number"
-              domain={[0, maxWeek]}
-              ticks={ticks}
-              interval={0}
-              tickFormatter={(v: number) => t('outlook.chart.weekTick', { n: v })}
-              tick={{ fill: 'var(--muted)', fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              domain={[lo, hi]}
-              ticks={yTicks}
-              tick={{ fill: 'var(--muted)', fontSize: 11 }}
-              axisLine={false}
-              tickLine={false}
-              tickFormatter={(v: number) => `${fmtSigned(v, locale, 0)}`}
-              width={34}
-            />
-            <ReferenceLine y={0} stroke="var(--line-strong)" />
-            <Area
-              dataKey="range"
-              type="linear"
-              stroke="none"
-              fill={color}
-              fillOpacity={0.18}
-              isAnimationActive={false}
-            />
-            <Line
-              dataKey="lower"
-              type="linear"
-              stroke={color}
-              strokeWidth={1.5}
-              strokeDasharray="4 3"
-              dot={false}
-              isAnimationActive={false}
-            />
-            <Line
-              dataKey="upper"
-              type="linear"
-              stroke={color}
-              strokeWidth={1.5}
-              strokeDasharray="4 3"
-              dot={false}
-              isAnimationActive={false}
-            />
-            <Line
-              dataKey="placebo"
-              type="linear"
-              stroke="var(--muted)"
-              strokeWidth={1}
-              strokeDasharray="2 3"
-              dot={false}
-              isAnimationActive={false}
-            />
-            <Scatter
-              data={observed}
-              dataKey="pct"
-              fill={color}
-              stroke="var(--panel)"
-              strokeWidth={2}
-              isAnimationActive={false}
-            />
-            {projection.length === 2 && (
-              <Line
-                data={[...projection]}
-                dataKey="pct"
-                type="linear"
-                stroke="var(--ink-2)"
-                strokeWidth={1.5}
-                strokeDasharray="1 3"
-                strokeLinecap="round"
-                dot={false}
-                isAnimationActive={false}
-              />
-            )}
-            {me.length > 0 && (
-              <Scatter
-                data={[...me]}
-                dataKey="pct"
-                fill="var(--ink)"
-                stroke="var(--panel)"
-                strokeWidth={1.5}
-                isAnimationActive={false}
-              />
-            )}
-            <ReferenceLine
-              x={Math.min(todayWeeks, maxWeek)}
-              stroke="var(--signal)"
-              strokeWidth={1.5}
-              label={{
-                value: t('outlook.chart.today'),
-                position: 'insideTopRight',
-                fill: 'var(--signal)',
-                fontSize: 10,
-              }}
-            />
-            {targetWeeks > todayWeeks && (
-              <ReferenceLine
-                x={Math.min(targetWeeks, maxWeek)}
-                stroke="var(--ink-2)"
-                strokeDasharray="3 3"
-                label={{
-                  value: t('outlook.horizon.months', { n: horizon }),
-                  position: 'insideTopLeft',
-                  fill: 'var(--ink-2)',
-                  fontSize: 10,
-                }}
-              />
-            )}
-          </ComposedChart>
-        </ResponsiveContainer>
-      </div>
-      <figcaption className="mt-2 flex flex-col gap-1 text-[11px] text-muted">
-        <span className="flex flex-wrap gap-x-3 gap-y-1">
-          <Legend
-            swatch={
-              <span
-                className="h-2.5 w-4 rounded-sm"
-                style={{ background: `color-mix(in oklab, ${color} 35%, transparent)` }}
-              />
-            }
-          >
-            {t('outlook.chart.band')}
-          </Legend>
-          <Legend swatch={<span className="w-4 border-t border-dashed border-muted" />}>
-            {t('outlook.chart.placebo')}
-          </Legend>
-          {me.length > 0 && (
-            <Legend swatch={<span className="size-2 rounded-full bg-ink" />}>
-              {t('outlook.chart.you')}
-            </Legend>
-          )}
-          {projection.length === 2 && (
-            <Legend swatch={<span className="w-4 border-t-2 border-dotted border-ink-2" />}>
-              {t('outlook.chart.projection')}
-            </Legend>
-          )}
-        </span>
-        <span>{t('outlook.chart.observedOnly')}</span>
-      </figcaption>
-    </figure>
-  )
-}
-
-function Legend({ swatch, children }: { swatch: ReactNode; children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span aria-hidden className="inline-flex w-4 items-center justify-center">
-        {swatch}
-      </span>
-      {children}
-    </span>
-  )
-}
-
 /* ------------------------------------------------------------------ trial details */
 
 function TrialDetails({
@@ -1044,7 +786,7 @@ function TrialDetails({
   ]
   return (
     <details className="group mt-4 rounded-[14px] border border-line bg-panel-2">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-[13px] font-semibold text-ink-2">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-[13px] font-semibold text-ink-2">
         <span className="flex items-center gap-2">
           <FlaskConical className="size-4 text-muted" />
           {t('outlook.trial.open')}
@@ -1174,12 +916,10 @@ function NoDataCard({
           const entry = compoundById(compoundId)
           return (
             <li key={compoundId}>
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                 <span className="flex min-w-0 items-center gap-1.5">
                   <SubstanceDot color={compoundColor(compoundId)} />
-                  <span className="truncate text-[14px] font-semibold">
-                    {compoundName(compoundId)}
-                  </span>
+                  <span className="text-[14px] font-semibold">{compoundName(compoundId)}</span>
                 </span>
                 {entry && (
                   <Badge tone="neutral">
@@ -1235,7 +975,12 @@ function MeasureList({
     rows.filter((r) => r.kind === kind && new Date(r.measured_at) >= since).length
   return (
     <div className="mt-4">
-      <div className="spec mb-1.5">{t('outlook.measure.title')}</div>
+      <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+        <div className="spec">{t('outlook.measure.title')}</div>
+        <div className="text-[11px] text-muted">
+          {t('outlook.measure.since', { date: fmtDate(since, f.locale, 'd MMM') })}
+        </div>
+      </div>
       <ul className="divide-y divide-line overflow-hidden rounded-[14px] border border-line">
         {items.map((m) => {
           const kind =
@@ -1270,12 +1015,12 @@ function MeasureList({
                 <button
                   type="button"
                   onClick={() => onPick(m)}
-                  className="flex w-full items-center gap-3 bg-panel px-3 py-2.5 text-left transition active:bg-panel-2"
+                  className="flex min-h-11 w-full items-center gap-3 bg-panel px-3 py-2.5 text-left transition active:bg-panel-2"
                 >
                   {body}
                 </button>
               ) : (
-                <div className="flex items-center gap-3 bg-panel px-3 py-2.5">{body}</div>
+                <div className="flex min-h-11 items-center gap-3 bg-panel px-3 py-2.5">{body}</div>
               )}
             </li>
           )

@@ -1,4 +1,4 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * Incretin-class compounds other than semaglutide and tirzepatide (which live in
@@ -12,7 +12,7 @@ import { t, type CompoundEntry } from '../schema'
 // Approved GLP-1 receptor agonists
 // ---------------------------------------------------------------------------
 
-const liraglutide: CompoundEntry = {
+const liraglutide: CompoundDetail = {
   id: 'liraglutide',
   names: {
     generic: 'Liraglutida',
@@ -250,7 +250,7 @@ const liraglutide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const dulaglutide: CompoundEntry = {
+const dulaglutide: CompoundDetail = {
   id: 'dulaglutide',
   names: {
     generic: 'Dulaglutida',
@@ -456,7 +456,7 @@ const dulaglutide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const exenatide: CompoundEntry = {
+const exenatide: CompoundDetail = {
   id: 'exenatide',
   names: {
     generic: 'Exenatida',
@@ -683,7 +683,7 @@ const exenatide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const lixisenatide: CompoundEntry = {
+const lixisenatide: CompoundDetail = {
   id: 'lixisenatide',
   names: {
     generic: 'Lixisenatida',
@@ -862,7 +862,7 @@ const lixisenatide: CompoundEntry = {
 // Amylin analogue (approved), withdrawn GLP-1 RA, MC4R agonist
 // ---------------------------------------------------------------------------
 
-const pramlintide: CompoundEntry = {
+const pramlintide: CompoundDetail = {
   id: 'pramlintide',
   names: {
     generic: 'Pramlintida',
@@ -1030,7 +1030,7 @@ const pramlintide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const albiglutide: CompoundEntry = {
+const albiglutide: CompoundDetail = {
   id: 'albiglutide',
   names: {
     generic: 'Albiglutida',
@@ -1181,7 +1181,7 @@ const albiglutide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const setmelanotide: CompoundEntry = {
+const setmelanotide: CompoundDetail = {
   id: 'setmelanotide',
   names: {
     generic: 'Setmelanotida',
@@ -1389,7 +1389,7 @@ const setmelanotide: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-export const INCRETINS: CompoundEntry[] = [
+export const INCRETINS: CompoundDetail[] = [
   liraglutide,
   dulaglutide,
   exenatide,

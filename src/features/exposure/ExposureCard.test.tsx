@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
 import { ExposureCard, ExposureCardSkeleton } from './ExposureCard'
 import { deriveExposure } from './useExposure'
@@ -11,7 +11,12 @@ const lab = labAccount(now)
 
 beforeAll(async () => {
   await i18n.changeLanguage('es')
+  // Everything below is derived from `now` and the card reads its own clock (`x.asOf`). The wall
+  // clock is pinned somewhere else entirely, so a read of the real time would fail here at any
+  // hour instead of passing only when the real day happens to look like the test's.
+  vi.useFakeTimers({ toFake: ['Date'], now: new Date(2031, 2, 15, 13, 0) })
 })
+afterAll(() => vi.useRealTimers())
 afterEach(cleanup)
 
 describe('ExposureCard · long-acting (retatrutide)', () => {
@@ -39,7 +44,7 @@ describe('ExposureCard · long-acting (retatrutide)', () => {
     expect(screen.getByText(/\(17,5 U\)/)).toBeInTheDocument()
     expect(screen.getByText(/lun 12 oct · en 7 días/)).toBeInTheDocument()
     expect(screen.getByText('100 %')).toBeInTheDocument()
-    expect(screen.getByText('3 de 3 dosis')).toBeInTheDocument()
+    expect(screen.getByText('3 de 3 tomas')).toBeInTheDocument()
   })
 
   it('draws the curve with a legend that matches what is drawn', () => {

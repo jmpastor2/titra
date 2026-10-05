@@ -101,6 +101,14 @@ export function displayUnit(kind: MeasurementKind, imperial: boolean): string {
   return KIND_UNIT[kind]
 }
 
+/** A stored (metric) value as the person reads it, unrounded: kg to lb, cm to in. */
+export function fromCanonical(kind: MeasurementKind, stored: number, imperial: boolean): number {
+  if (!imperial) return stored
+  if (kind === 'weight' || kind === 'lean_mass') return stored * LB_PER_KG
+  if (LENGTH_KINDS.has(kind)) return stored * IN_PER_CM
+  return stored
+}
+
 /** Convert a user-entered value into the canonical metric unit for storage. */
 export function toCanonical(kind: MeasurementKind, value: number, imperial: boolean): number {
   if (!imperial) return value

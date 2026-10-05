@@ -4,40 +4,39 @@
  */
 import { clsx } from 'clsx'
 import type { DayCell, DayMark } from './consistency'
+import { SPARK_H, sparkY } from './sparkline'
 
-/** Line of values scaled to its own range; the last value gets a dot. */
+/** Line of values; the last value gets a dot. */
 export function Sparkline({
   values,
   color = 'var(--signal)',
   height = 28,
+  minSpan = 0,
   className,
 }: {
   values: readonly number[]
   color?: string
   height?: number
+  /** The least range the height stands for, in the unit of `values`. */
+  minSpan?: number
   className?: string
 }) {
   if (values.length < 2) {
     return <div className={className} style={{ height }} aria-hidden />
   }
-  const lo = Math.min(...values)
-  const hi = Math.max(...values)
-  const span = hi - lo || 1
-  const pad = 3
-  const h = 100
   const xs = values.map((_, i) => (i / (values.length - 1)) * 100)
-  const ys = values.map((v) => pad + (1 - (v - lo) / span) * (h - 2 * pad))
+  const ys = sparkY(values, minSpan)
   const d = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${ys[i]!.toFixed(2)}`).join(' ')
   const lastY = ys[ys.length - 1]!
   return (
     <div className={clsx('relative', className)} style={{ height }} aria-hidden>
       <svg
-        viewBox={`0 0 100 ${h}`}
+        viewBox={`0 0 100 ${SPARK_H}`}
         preserveAspectRatio="none"
         className="absolute inset-0 size-full overflow-visible"
       >
         <path
-          d={`${d} L100,${h} L0,${h} Z`}
+          d={`${d} L100,${SPARK_H} L0,${SPARK_H} Z`}
           fill={`color-mix(in oklab, ${color} 12%, transparent)`}
           stroke="none"
         />

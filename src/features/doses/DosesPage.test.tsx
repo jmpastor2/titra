@@ -149,7 +149,7 @@ describe('DosesPage', () => {
 
   it('welcomes a first dose', async () => {
     renderWithStore(<DosesPage />, makeStore({ protocols: [cjcProtocol], inventory: [blendVial] }))
-    expect(await screen.findByText('Sin dosis registradas')).toBeInTheDocument()
+    expect(await screen.findByText('Sin tomas registradas')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Registrar mi primera toma' })).toBeInTheDocument()
   })
 })

@@ -15,10 +15,19 @@ import {
 import type { ProtocolRow } from '@/data/database.types'
 import { toProtocolLike } from '@/data/mappers'
 import { stepWindows } from '@/domain/dosing/schedule'
+import type { DoseUnit } from '@/domain/types'
 import { stepChanges, type StepChange } from '@/features/exposure/chartScale'
+import { fmtFixed } from '@/features/quicklog/text'
 import { fmtNumber, type Locale } from '@/lib/format'
 
 const DAY_MS = 86_400_000
+
+const DOSE_UNITS: readonly DoseUnit[] = ['mg', 'mcg', 'iu', 'units', 'ml']
+
+/** A protocol's unit column as a dose unit, mg when it is something else. */
+export function asDoseUnit(unit: string): DoseUnit {
+  return (DOSE_UNITS as readonly string[]).includes(unit) ? (unit as DoseUnit) : 'mg'
+}
 
 export type ProgressRange = '1m' | '3m' | '6m' | 'cycle'
 
@@ -310,5 +319,15 @@ export function monthDelta(months: readonly MonthMean[]): number | null {
 export function fmtSigned(v: number, locale: Locale, digits: number): string {
   const s = fmtNumber(Math.abs(v), locale, digits)
   if (s === fmtNumber(0, locale, digits)) return s
+  return `${v > 0 ? '+' : '−'}${s}`
+}
+
+/**
+ * Like fmtSigned, but with the digits always showing ("−0,5", "+1,0", never "+1"), so a
+ * column of changes reads at one precision.
+ */
+export function fmtSignedFixed(v: number, locale: Locale, digits: number): string {
+  const s = fmtFixed(Math.abs(v), locale, digits)
+  if (s === fmtFixed(0, locale, digits)) return s
   return `${v > 0 ? '+' : '−'}${s}`
 }

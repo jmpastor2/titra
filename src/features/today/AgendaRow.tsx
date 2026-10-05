@@ -4,12 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import { fmtDoseList, fmtHours, fmtNumber } from '@/lib/format'
+import { fmtDoseList, fmtHours, fmtNumber, toTimeInputValue as hhmm } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import type { TodayItem } from './agenda'
-
-const hhmm = (d: Date) =>
-  `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+import { isNightSlot, type TodayItem } from './agenda'
 
 export function AgendaRow({
   item,
@@ -61,65 +58,63 @@ export function AgendaRow({
   return (
     <li
       className={clsx(
-        'flex items-center gap-3 rounded-[18px] border px-3 py-3 transition',
+        'flex items-center gap-3 rounded-[18px] border px-3 py-2.5 transition',
         alert ? 'border-warn/40 bg-warn-soft' : 'border-line bg-panel-2',
         taken && 'opacity-80',
       )}
     >
-      <div className="w-[46px] shrink-0 text-center">
+      <div className="w-14 shrink-0 text-center">
         <div
           className={clsx('readout text-[15px] font-semibold', alert ? 'text-warn' : 'text-ink')}
         >
           {hhmm(item.at)}
         </div>
-        {!item.extra && item.at.getDate() !== now.getDate() && item.at > now && (
-          <div className="spec text-[8.5px]">{t('today.afterMidnight')}</div>
+        {isNightSlot(item.at) && (
+          <div className="mt-0.5 font-mono text-[9px] leading-none text-muted">
+            {t('today.night')}
+          </div>
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          {item.doses.map((d) => (
-            <SubstanceDot key={d.compoundId} color={compoundColor(d.compoundId)} />
-          ))}
-          <span className="truncate text-[14.5px] font-semibold">{name}</span>
+        <div className="flex items-start gap-1.5">
+          <span className="mt-[6px] flex shrink-0 items-center gap-1" aria-hidden>
+            {item.doses.map((d) => (
+              <SubstanceDot key={d.compoundId} color={compoundColor(d.compoundId)} />
+            ))}
+          </span>
+          <span className="line-clamp-2 min-w-0 break-words text-[14.5px] font-semibold leading-snug">
+            {name}
+          </span>
         </div>
-        <div className="mt-0.5 flex items-center gap-2 text-[12.5px] text-muted">
-          <span className="readout truncate">{doseText}</span>
+        <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[12.5px] text-muted">
+          <span className="readout">{doseText}</span>
           {units != null && !taken && (
-            <span className="readout shrink-0 font-semibold text-signal">
+            <span className="readout font-semibold text-signal">
               {fmtNumber(units, locale, 1)} U
             </span>
           )}
-          <span aria-hidden>·</span>
-          <span
-            className={clsx(
-              'shrink-0',
-              alert && 'font-semibold text-warn',
-              missed && 'text-danger',
-            )}
-          >
+          <span className={clsx(alert && 'font-semibold text-warn', missed && 'text-danger')}>
             {status}
           </span>
         </div>
       </div>
       {taken ? (
-        <span
-          className="grid size-10 shrink-0 place-items-center rounded-full bg-signal text-signal-ink glow"
-          aria-label={t('today.taken')}
-        >
-          <Check className="size-5" strokeWidth={3} />
+        <span className="grid size-11 shrink-0 place-items-center" aria-label={t('today.taken')}>
+          <span className="glow grid size-10 place-items-center rounded-full bg-signal text-signal-ink">
+            <Check className="size-5" strokeWidth={3} />
+          </span>
         </span>
       ) : readOnly ? (
-        missed && <AlertTriangle className="size-5 shrink-0 text-danger" />
+        missed && <AlertTriangle aria-hidden className="size-5 shrink-0 text-danger" />
       ) : (
         <button
           type="button"
           onClick={onLog}
           aria-label={t('doses.log')}
           className={clsx(
-            'grid size-10 shrink-0 place-items-center rounded-full border transition active:scale-95',
+            'grid size-11 shrink-0 place-items-center rounded-full border transition active:scale-95',
             alert
-              ? 'pulse-ring border-warn bg-warn text-[#1a1000]'
+              ? 'pulse-ring border-warn bg-warn text-canvas'
               : missed
                 ? 'border-danger/40 bg-danger-soft text-danger'
                 : 'border-line-strong bg-panel text-signal',

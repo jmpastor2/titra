@@ -1,4 +1,4 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * Additional GH-axis entries.
@@ -8,7 +8,7 @@ import { t, type CompoundEntry } from '../schema'
  * `pk` is deliberately omitted: the exposure engine must not model it.
  */
 
-const modGrf: CompoundEntry = {
+const modGrf: CompoundDetail = {
   id: 'mod-grf-1-29',
   names: {
     // Sold and dosed as "CJC-1295" in the CJC/ipamorelin blends: that is the name users know.
@@ -171,4 +171,4 @@ const modGrf: CompoundEntry = {
   lastReviewed: '2026-09-30',
 }
 
-export const GH_AXIS_EXTRA: CompoundEntry[] = [modGrf]
+export const GH_AXIS_EXTRA: CompoundDetail[] = [modGrf]

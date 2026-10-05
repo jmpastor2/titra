@@ -8,34 +8,71 @@ import { Card } from '@/components/ui/Card'
 import { Field, Input } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
+import type { ProfileRow } from '@/data/database.types'
 import { useUpdateProfile } from '@/data/hooks'
 import { setLocale, type AppLocale } from '@/i18n'
 import { RemindersCard } from '@/features/reminders/RemindersCard'
-import { env } from '@/lib/env'
+import { fmtNumber } from '@/lib/format'
 import { getSupabase } from '@/lib/supabase'
 import { setSyringePref, useSyringePref, type SyringePref } from '@/lib/syringePref'
 import { useTheme, type ThemePref } from '@/lib/theme'
+import { useLocale } from '@/lib/useLocale'
+import { goalText, parseGoal, parseProtein } from './profileForm'
+import { UpdatesCard } from './UpdatesCard'
+
+/** The barrels the app can draw, in mL (the preference stores their capacity in units). */
+const BARRELS = [
+  { value: '30', ml: 0.3 },
+  { value: '50', ml: 0.5 },
+  { value: '100', ml: 1 },
+] as const
 
 export function SettingsPage() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { locale } = useLocale()
   const { patient } = usePatientScope()
   const { toast } = useToast()
   const update = useUpdateProfile(patient?.id ?? '')
   const [theme, setTheme] = useTheme()
   const syringe = useSyringePref()
+  const imperial = patient?.unit_system === 'imperial'
   const [name, setName] = useState(patient?.display_name ?? '')
-  const [protein, setProtein] = useState(String(patient?.protein_g_per_kg ?? 1.6))
-  const [goal, setGoal] = useState(patient?.goal_weight_kg?.toString() ?? '')
+  const [protein, setProtein] = useState(fmtNumber(patient?.protein_g_per_kg ?? 1.6, locale, 1))
+  const [goal, setGoal] = useState(goalText(patient?.goal_weight_kg ?? null, imperial, locale))
+  const [invalid, setInvalid] = useState({ protein: false, goal: false })
 
-  const locale: AppLocale = i18n.language.startsWith('en') ? 'en' : 'es'
+  // The goal is typed in the unit in use: when that changes (or a save lands), the field shows
+  // the stored weight again in it. Adjusted while rendering, not in an effect, so there is no
+  // frame with the old text.
+  const savedGoalKg = patient?.goal_weight_kg ?? null
+  const [shownFor, setShownFor] = useState({ imperial, savedGoalKg, locale })
+  if (
+    shownFor.imperial !== imperial ||
+    shownFor.savedGoalKg !== savedGoalKg ||
+    shownFor.locale !== locale
+  ) {
+    setShownFor({ imperial, savedGoalKg, locale })
+    setGoal(goalText(savedGoalKg, imperial, locale))
+    setInvalid((v) => ({ ...v, goal: false }))
+  }
+
   const isClinician = patient?.role === 'clinician'
 
   async function saveProfile() {
+    const goalKg = parseGoal(goal, imperial)
+    const gPerKg = parseProtein(protein)
+    const problems = {
+      protein: !isClinician && gPerKg === null,
+      goal: !isClinician && !goalKg.ok,
+    }
+    setInvalid(problems)
+    if (problems.protein || problems.goal) return
     try {
       await update.mutateAsync({
         display_name: name.trim() || patient?.display_name,
-        protein_g_per_kg: Number(protein.replace(',', '.')) || 1.6,
-        goal_weight_kg: goal ? Number(goal.replace(',', '.')) : null,
+        ...(isClinician
+          ? {}
+          : { protein_g_per_kg: gPerKg ?? 1.6, goal_weight_kg: goalKg.ok ? goalKg.kg : null }),
       })
       toast(t('common.saved'), 'success')
     } catch {
@@ -43,13 +80,18 @@ export function SettingsPage() {
     }
   }
 
-  async function changeLocale(next: AppLocale) {
-    setLocale(next)
-    if (patient) await update.mutateAsync({ locale: next })
+  async function change(patch: Partial<ProfileRow>) {
+    if (!patient) return
+    try {
+      await update.mutateAsync(patch)
+    } catch {
+      toast(t('common.error'), 'error')
+    }
   }
 
-  async function changeUnits(next: 'metric' | 'imperial') {
-    if (patient) await update.mutateAsync({ unit_system: next })
+  function changeLocale(next: AppLocale) {
+    setLocale(next)
+    void change({ locale: next })
   }
 
   return (
@@ -65,26 +107,36 @@ export function SettingsPage() {
               {(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} />}
             </Field>
             {!isClinician && (
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={t('settings.proteinGPerKg')}>
-                  {(id) => (
+              <div className="grid grid-cols-2 items-start gap-3">
+                <Field
+                  label={t('settings.proteinGPerKg')}
+                  error={invalid.protein ? t('settings.invalidNumber') : undefined}
+                >
+                  {(id, describedBy) => (
                     <Input
                       id={id}
+                      aria-describedby={describedBy}
                       inputMode="decimal"
                       value={protein}
                       onChange={(e) => setProtein(e.target.value)}
+                      invalid={invalid.protein}
                       suffix="g/kg"
                     />
                   )}
                 </Field>
-                <Field label={t('onboarding.goalWeight')}>
-                  {(id) => (
+                <Field
+                  label={t('onboarding.goalWeight')}
+                  error={invalid.goal ? t('settings.invalidNumber') : undefined}
+                >
+                  {(id, describedBy) => (
                     <Input
                       id={id}
+                      aria-describedby={describedBy}
                       inputMode="decimal"
                       value={goal}
                       onChange={(e) => setGoal(e.target.value)}
-                      suffix="kg"
+                      invalid={invalid.goal}
+                      suffix={imperial ? 'lb' : 'kg'}
                     />
                   )}
                 </Field>
@@ -120,9 +172,10 @@ export function SettingsPage() {
                   }
                   options={[
                     { value: 'auto', label: t('settings.syringeAuto') },
-                    { value: '30', label: '0,3 mL' },
-                    { value: '50', label: '0,5 mL' },
-                    { value: '100', label: '1 mL' },
+                    ...BARRELS.map((b) => ({
+                      value: b.value,
+                      label: `${fmtNumber(b.ml, locale, 1)} mL`,
+                    })),
                   ]}
                 />
               )}
@@ -131,7 +184,7 @@ export function SettingsPage() {
               {() => (
                 <Segmented<AppLocale>
                   value={locale}
-                  onChange={(l) => void changeLocale(l)}
+                  onChange={changeLocale}
                   options={[
                     { value: 'es', label: 'Español' },
                     { value: 'en', label: 'English' },
@@ -144,7 +197,7 @@ export function SettingsPage() {
                 {() => (
                   <Segmented<'metric' | 'imperial'>
                     value={patient?.unit_system ?? 'metric'}
-                    onChange={(u) => void changeUnits(u)}
+                    onChange={(u) => void change({ unit_system: u })}
                     options={[
                       { value: 'metric', label: t('onboarding.metric') },
                       { value: 'imperial', label: t('onboarding.imperial') },
@@ -156,15 +209,14 @@ export function SettingsPage() {
           </div>
         </Card>
 
+        <UpdatesCard />
+
         <Card title={t('settings.about')}>
           <div className="flex items-start gap-2.5 rounded-control bg-panel-2 p-3">
             <Share className="mt-0.5 size-4 shrink-0 text-signal" />
             <p className="text-[13px] leading-relaxed">{t('settings.installHint')}</p>
           </div>
-          <p className="mt-3 text-[12.5px] text-muted">
-            {t('settings.version', { v: env.appVersion })}
-          </p>
-          <p className="mt-2 text-[11.5px] leading-relaxed text-muted">{t('app.disclaimer')}</p>
+          <p className="mt-3 text-[11.5px] leading-relaxed text-muted">{t('app.disclaimer')}</p>
         </Card>
 
         <Button

@@ -1,31 +1,12 @@
-import { addDays, isSameDay, startOfDay } from 'date-fns'
+import { isSameDay } from 'date-fns'
 import { clsx } from 'clsx'
-import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ProgressRing } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
-import type { DoseRow, ProtocolRow } from '@/data/database.types'
-import { summariseWeek, weekPlanVsActual, type WeekCell } from '@/features/doses/week'
-import { fmtDate } from '@/lib/format'
+import type { ProtocolRow } from '@/data/database.types'
+import type { summariseWeek, weekPlanVsActual, WeekCell } from '@/features/doses/week'
 import { useLocale } from '@/lib/useLocale'
-
-/** The last seven days at a glance: one row per protocol, one column per day. */
-export function useLastSevenDays(
-  protocols: readonly ProtocolRow[],
-  doses: readonly DoseRow[],
-  now: Date,
-) {
-  return useMemo(() => {
-    const from = addDays(startOfDay(now), -6)
-    const days = weekPlanVsActual(
-      protocols.filter((p) => p.status === 'active'),
-      doses,
-      from,
-      now,
-    )
-    return { days, summary: summariseWeek(days) }
-  }, [protocols, doses, now])
-}
+import { weekdayInitial } from './agenda'
 
 export function WeekRing({
   summary,
@@ -87,6 +68,15 @@ function Mark({ cell }: { cell: WeekCell }) {
   }
 }
 
+/** The legend entries, in reading order: which statuses of the grid each one explains. */
+const LEGEND = [
+  { key: 'onTime', statuses: ['onTime'] },
+  { key: 'late', statuses: ['late', 'early'] },
+  { key: 'missed', statuses: ['missed'] },
+  { key: 'upcoming', statuses: ['upcoming', 'due'] },
+  { key: 'extra', statuses: ['extra'] },
+] as const satisfies readonly { key: string; statuses: readonly WeekCell['status'][] }[]
+
 export function WeekGrid({
   days,
   protocols,
@@ -101,10 +91,14 @@ export function WeekGrid({
   const rows = protocols.filter((p) => p.status === 'active')
   if (!rows.length) return null
 
+  // Only what needs explaining: the marks that are actually on the grid.
+  const present = new Set(days.flatMap((d) => d.cells.map((c) => c.status)))
+  const legend = LEGEND.filter((l) => l.statuses.some((s) => present.has(s)))
+
   return (
-    <div className="mt-4">
+    <div role="group" aria-label={t('today.week')}>
       <div
-        className="grid items-center gap-y-2"
+        className="grid items-center gap-y-1.5"
         style={{ gridTemplateColumns: `minmax(0, 1fr) repeat(7, 26px)` }}
       >
         <span />
@@ -116,29 +110,33 @@ export function WeekGrid({
               isSameDay(day, now) && 'rounded-full bg-signal-soft py-0.5 text-signal',
             )}
           >
-            {fmtDate(day, locale, 'EEEEE')}
+            {weekdayInitial(day, locale)}
           </span>
         ))}
         {rows.map((p) => (
           <Row key={p.id} protocol={p} days={days} now={now} />
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10.5px] text-muted">
-        {(['onTime', 'late', 'missed', 'upcoming', 'extra'] as const).map((s) => (
-          <span key={s} className="inline-flex items-center gap-1">
-            <Mark
-              cell={{
-                protocol: rows[0]!,
-                plannedAt: now,
-                takenAt: null,
-                deltaMin: null,
-                status: s,
-              }}
-            />
-            {t(`today.legend.${s}`)}
-          </span>
-        ))}
-      </div>
+      {legend.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 text-[11px] text-muted">
+          {legend.map(({ key, statuses }) => (
+            <span key={key} className="inline-flex items-center gap-1.5">
+              <span className="grid size-4 place-items-center">
+                <Mark
+                  cell={{
+                    protocol: rows[0]!,
+                    plannedAt: now,
+                    takenAt: null,
+                    deltaMin: null,
+                    status: statuses[0],
+                  }}
+                />
+              </span>
+              {t(`today.legend.${key}`)}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -154,12 +152,14 @@ function Row({
 }) {
   return (
     <>
-      <span className="flex min-w-0 items-center gap-1.5 pr-2">
+      <span className="flex min-h-7 min-w-0 items-center gap-1.5 pr-2">
         <span
           className="size-1.5 shrink-0 rounded-full"
           style={{ background: compoundColor(protocol.compound_id) }}
         />
-        <span className="truncate text-[12px] font-semibold text-ink-2">{protocol.name}</span>
+        <span className="line-clamp-2 hyphens-auto break-words text-[12px] font-semibold leading-tight text-ink-2">
+          {protocol.name}
+        </span>
       </span>
       {days.map(({ day, cells }) => {
         const mine = cells.filter((c) => c.protocol.id === protocol.id)
@@ -167,7 +167,7 @@ function Row({
           <span
             key={day.getTime()}
             className={clsx(
-              'flex h-6 items-center justify-center gap-0.5 rounded-md',
+              'flex h-7 items-center justify-center gap-0.5 rounded-md',
               isSameDay(day, now) && 'bg-signal-soft',
             )}
           >

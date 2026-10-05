@@ -23,7 +23,11 @@ export function Splash({ error }: { error?: string }) {
             </Button>
           </>
         ) : (
-          <div className="mt-2 size-5 animate-spin rounded-full border-2 border-signal border-t-transparent" />
+          <div
+            role="status"
+            aria-label={t('common.loading')}
+            className="mt-2 size-5 animate-spin rounded-full border-2 border-signal border-t-transparent"
+          />
         )}
       </div>
     </div>

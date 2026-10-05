@@ -1,19 +1,17 @@
 import { differenceInCalendarDays, getDayOfYear } from 'date-fns'
-import { BellRing, BookOpen, ChevronRight, FlaskConical, Syringe } from 'lucide-react'
+import { BellRing, ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
-import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
-import { compoundById } from '@/content/compounds'
-import { compoundColor } from '@/content/substanceColor'
+import { SectionTitle, Skeleton } from '@/components/ui/primitives'
 import type { InventoryRow } from '@/data/database.types'
 import { planDraw } from '@/domain/dosing/draw'
 import type { StackComponent } from '@/domain/types'
 import { useInventory } from '@/data/hooks'
-import { CycleCard } from '@/features/cycle/CycleCard'
+import { CycleDecisions } from '@/features/cycle/CycleDecisions'
+import { CycleOverview } from '@/features/cycle/CycleOverview'
 import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
 import { StockAlerts } from '@/features/inventory/StockAlerts'
 import { useStock } from '@/features/inventory/useStock'
@@ -24,12 +22,17 @@ import { upcomingAdministrations } from '@/features/reminders/plan'
 import { needsFasting } from '@/features/fasting/fasting'
 import { useReminderPrefs } from '@/features/reminders/useReminders'
 import { QuickLog } from '@/features/quicklog/QuickLog'
-import { fmtDate, fmtHours, fmtNumber } from '@/lib/format'
+import { FAST_WINDOW_H, type TileId } from '@/features/quicklog/tiles'
+import { fmtDate } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
 import { AgendaRow } from './AgendaRow'
-import { useLastSevenDays, WeekGrid, WeekRing } from './WeekPulse'
-import { buildToday, focusItem, summarise } from './agenda'
+import { LearnCard } from './LearnCard'
+import { NextDoseCard } from './NextDoseCard'
+import { SetupLab } from './SetupLab'
+import { useLastSevenDays } from './useLastSevenDays'
+import { WeekGrid } from './WeekPulse'
+import { agendaAddsToHero, buildToday, focusItem, summarise } from './agenda'
 import { LevelCard, LevelCardSkeleton } from './LevelCard'
 
 type SheetState = {
@@ -39,11 +42,15 @@ type SheetState = {
   plannedAt?: Date
 } | null
 
-/** `embedded` renders the page inside another screen (a shared, read-only view) without its header. */
+/**
+ * Hoy, in the order of what needs the person: the next dose, then what the cycles ask, today's
+ * agenda and the last seven days; after that the cycles, stock and levels to look at, and the
+ * quick log. `embedded` renders the page inside another screen (a shared, read-only view)
+ * without its header.
+ */
 export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation()
-  const { locale, pick } = useLocale()
-  const nav = useNavigate()
+  const { locale } = useLocale()
   const { patientId, patient, readOnly } = usePatientScope()
   const now = useNow()
   const exposure = useExposure(patientId, now)
@@ -53,6 +60,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const [openSheet, setSheet] = useState<SheetState>(null)
   const [params, setParams] = useSearchParams()
   const logParam = params.get('log')
+  const cycleFocus = params.get('cycle')
   // A reminder links to /#/?log=<protocolId>: the log sheet for it opens straight away.
   const sheet: SheetState =
     openSheet ?? (logParam && !readOnly ? { kind: 'dose', protocolId: logParam } : null)
@@ -86,7 +94,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const dayN = firstStart ? differenceInCalendarDays(now, firstStart) + 1 : null
 
   // One substance to learn about today, rotating through the ones in use.
-  const learn = tracked.length ? tracked[getDayOfYear(now) % tracked.length]!.compound : undefined
+  const learn = tracked.length ? tracked[getDayOfYear(now) % tracked.length]?.compound : undefined
 
   const hasProtocols = exposure.protocols.some((p) => p.status === 'active')
   const vials = inventory.data ?? []
@@ -97,14 +105,33 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
     : (upcomingAdministrations(exposure.protocols, exposure.doses, vials, now, {
         horizonDays: 14,
       })[0] ?? null)
-  // The next GH-secretagogue shot in the coming hours asks for a fasting window.
+  const nothingLeft = summary.total
+    ? t('today.allDone')
+    : items.length
+      ? t('today.onlyExtra', { count: items.length })
+      : t('today.nothingToday')
+
+  // The next GH-secretagogue shot within the fast window asks for a fasting window (the same
+  // window the quick log's Ayuno tile counts to, so the two always agree).
   const fastFor = items.find(
     (i) =>
       (i.status === 'due' ||
         i.status === 'overdue' ||
-        (i.status === 'upcoming' && i.at.getTime() - now.getTime() < 8 * 3_600_000)) &&
+        (i.status === 'upcoming' && i.at.getTime() - now.getTime() < FAST_WINDOW_H * 3_600_000)) &&
       needsFasting(i.doses.map((d) => d.compoundId)),
   )
+  const fastingShown = !readOnly && Boolean(fastFor)
+
+  // The quick log leaves out what this screen already says: the next dose has its card, and
+  // an open fast has its own.
+  const omit = useMemo<TileId[]>(
+    () => [
+      ...(hasProtocols ? (['dose'] as const) : []),
+      ...(fastingShown ? (['fasting'] as const) : []),
+    ],
+    [hasProtocols, fastingShown],
+  )
+
   // Section numbers follow what is actually on screen.
   let section = 0
   const nextIndex = () => String(++section).padStart(2, '0')
@@ -113,8 +140,8 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
     <div
       className={
         embedded
-          ? 'flex flex-col gap-5 pt-2'
-          : 'flex flex-col gap-5 pt-[max(env(safe-area-inset-top),18px)]'
+          ? 'flex flex-col gap-4 pt-2'
+          : 'flex flex-col gap-4 pt-[max(env(safe-area-inset-top),18px)]'
       }
     >
       {!embedded && (
@@ -142,107 +169,32 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 
       {exposure.isPending ? (
         <Card>
-          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-[120px] w-full" />
         </Card>
       ) : !hasProtocols && tracked.length === 0 ? (
         <SetupLab readOnly={readOnly} onFreeDose={() => setSheet({ kind: 'dose' })} />
       ) : (
-        <Card instrument className="overflow-hidden p-5">
-          <div className="flex items-center gap-5">
-            <WeekRing summary={week.summary} extras={weekExtras} />
-            <div className="min-w-0 flex-1">
-              <div className="spec">{t('today.next')}</div>
-              {focus ? (
-                <>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    {focus.doses.map((d) => (
-                      <SubstanceDot key={d.compoundId} color={compoundColor(d.compoundId)} />
-                    ))}
-                    <span className="truncate text-[16px] font-semibold">
-                      {focus.protocol.name ||
-                        focus.doses
-                          .map((d) => compoundById(d.compoundId)?.names.generic)
-                          .join(' + ')}
-                    </span>
-                  </div>
-                  <div className="readout mt-1 text-[13px] text-muted">
-                    {focus.status === 'due' || focus.status === 'overdue'
-                      ? t('today.dueNow')
-                      : t('today.inTime', {
-                          time: fmtHours((focus.at.getTime() - now.getTime()) / 3_600_000, locale),
-                        })}
-                  </div>
-                  {!readOnly && (
-                    <div className="mt-3 flex items-center gap-3">
-                      <Button
-                        size="sm"
-                        leading={<Syringe className="size-4" />}
-                        onClick={() =>
-                          setSheet({
-                            kind: 'dose',
-                            protocolId: focus.protocol.id,
-                            plannedAt: focus.at,
-                          })
-                        }
-                      >
-                        {t('today.logNow')}
-                      </Button>
-                      {focusUnits !== null && (
-                        <span className="readout text-[15px] font-semibold text-signal">
-                          {fmtNumber(focusUnits, locale, 1)}
-                          <span className="ml-0.5 text-[11px]">U</span>
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : nextUp ? (
-                <>
-                  <div className="mt-1 flex items-center gap-1.5">
-                    {nextUp.doses.map((d) => (
-                      <SubstanceDot key={d.compoundId} color={compoundColor(d.compoundId)} />
-                    ))}
-                    <span className="truncate text-[16px] font-semibold">
-                      {nextUp.protocol.name}
-                    </span>
-                  </div>
-                  <div className="readout mt-1 text-[13px] text-muted">
-                    {fmtDate(nextUp.at, locale, 'EEE d')} ·{' '}
-                    {String(nextUp.at.getHours()).padStart(2, '0')}:
-                    {String(nextUp.at.getMinutes()).padStart(2, '0')} ·{' '}
-                    {t('today.inTime', {
-                      time: fmtHours((nextUp.at.getTime() - now.getTime()) / 3_600_000, locale),
-                    })}
-                  </div>
-                  <p className="mt-2 text-[12.5px] text-ink-2">
-                    {summary.total
-                      ? t('today.allDone')
-                      : items.length
-                        ? t('today.onlyExtra', { count: items.length })
-                        : t('today.nothingToday')}
-                  </p>
-                </>
-              ) : (
-                <p className="mt-1 text-[14px] text-ink-2">{t('today.nothingToday')}</p>
-              )}
-            </div>
-          </div>
-          <WeekGrid days={week.days} protocols={exposure.protocols} now={now} />
-        </Card>
+        <NextDoseCard
+          focus={focus}
+          nextUp={nextUp}
+          units={focusUnits}
+          message={nothingLeft}
+          week={week}
+          weekExtras={weekExtras}
+          now={now}
+          readOnly={readOnly}
+          onLog={() =>
+            focus && setSheet({ kind: 'dose', protocolId: focus.protocol.id, plannedAt: focus.at })
+          }
+          onLogOther={() => setSheet({ kind: 'dose' })}
+        />
       )}
 
-      {hasProtocols && <CycleCard focusProtocolId={params.get('cycle')} />}
+      {fastingShown && fastFor && <FastingCard name={fastFor.protocol.name} />}
 
-      {!readOnly && fastFor && <FastingCard name={fastFor.protocol.name} />}
+      {hasProtocols && <CycleDecisions focusProtocolId={cycleFocus} />}
 
-      {!readOnly && stock.alerts.length > 0 && (
-        <section>
-          <SectionTitle index={nextIndex()}>{t('today.stock')}</SectionTitle>
-          <StockAlerts alerts={stock.alerts} limit={2} linkTo="/inventory" />
-        </section>
-      )}
-
-      {items.length > 0 && (
+      {items.length > 0 && agendaAddsToHero(items, focus) && (
         <section>
           <SectionTitle index={nextIndex()}>{t('today.agenda')}</SectionTitle>
           <ul className="flex flex-col gap-2">
@@ -260,19 +212,48 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         </section>
       )}
 
+      {hasProtocols && !exposure.isPending && (
+        <section>
+          <SectionTitle
+            index={nextIndex()}
+            action={
+              !readOnly && (
+                <Link to="/log" className="spec text-signal">
+                  {t('nav.log')}
+                </Link>
+              )
+            }
+          >
+            {t('today.week')}
+          </SectionTitle>
+          <Card>
+            <WeekGrid days={week.days} protocols={exposure.protocols} now={now} />
+          </Card>
+        </section>
+      )}
+
+      {hasProtocols && <CycleOverview focusProtocolId={cycleFocus} index={nextIndex()} />}
+
+      {!readOnly && stock.alerts.length > 0 && (
+        <section>
+          <SectionTitle index={nextIndex()}>{t('today.stock')}</SectionTitle>
+          <StockAlerts alerts={stock.alerts} limit={2} linkTo="/inventory" />
+        </section>
+      )}
+
       {!readOnly && hasProtocols && reminders.loaded && !reminders.enabled && (
         <Link
           to="/reminders"
           className="card flex items-center gap-3 px-4 py-3 transition active:scale-[0.99]"
         >
           <span className="grid size-9 shrink-0 place-items-center rounded-full border border-signal/30 bg-signal-soft text-signal">
-            <BellRing className="size-[18px]" />
+            <BellRing aria-hidden className="size-[18px]" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[14px] font-semibold">{t('today.remindersOff')}</span>
             <span className="block text-[12px] text-muted">{t('today.remindersOffHint')}</span>
           </span>
-          <ChevronRight className="size-4 shrink-0 text-muted" />
+          <ChevronRight aria-hidden className="size-4 shrink-0 text-muted" />
         </Link>
       )}
 
@@ -314,40 +295,12 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         </section>
       )}
 
-      {!readOnly && <QuickLog index={nextIndex()} />}
+      {!readOnly && <QuickLog index={nextIndex()} omit={omit} />}
 
       {learn && (
         <section>
           <SectionTitle index={nextIndex()}>{t('today.learn')}</SectionTitle>
-          <Card
-            className="cursor-pointer"
-            onClick={() => nav(`/wiki/${learn.id}`)}
-            style={{
-              borderColor: `color-mix(in oklab, ${compoundColor(learn.id)} 30%, var(--line))`,
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <SubstanceDot color={compoundColor(learn.id)} />
-              <span className="font-display text-[17px] font-semibold">{learn.names.generic}</span>
-            </div>
-            <p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-ink-2">
-              {pick(learn.summary)}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-              {learn.pk && (
-                <span className="spec">
-                  T½ <span className="text-ink">{fmtHours(learn.pk.halfLifeH, locale)}</span>
-                </span>
-              )}
-              <span className="spec">
-                {t('wiki.evidence')}{' '}
-                <span className="text-ink">{t(`wiki.evidenceTiers.${learn.evidence}`)}</span>
-              </span>
-              <span className="spec flex items-center gap-1 text-signal">
-                <BookOpen className="size-3" /> {t('today.readMore')}
-              </span>
-            </div>
-          </Card>
+          <LearnCard compound={learn} />
         </section>
       )}
 
@@ -372,57 +325,4 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 function unitsToDraw(doses: readonly StackComponent[], vials: readonly InventoryRow[]) {
   const plan = planDraw(doses.map((d) => drawPartFor(vials, d.compoundId, d.doseMg)))
   return plan && plan.unknown.length === 0 ? plan.totalUnits : null
-}
-
-/** First run: three steps to a working lab. */
-function SetupLab({ readOnly, onFreeDose }: { readOnly?: boolean; onFreeDose: () => void }) {
-  const { t } = useTranslation()
-  const nav = useNavigate()
-  const steps = [
-    {
-      n: '01',
-      title: t('setupLab.protocol'),
-      body: t('setupLab.protocolHint'),
-      to: '/protocols/new',
-    },
-    { n: '02', title: t('setupLab.vial'), body: t('setupLab.vialHint'), to: '/inventory' },
-    { n: '03', title: t('setupLab.learn'), body: t('setupLab.learnHint'), to: '/wiki' },
-  ]
-  return (
-    <Card instrument className="p-5">
-      <div className="flex items-center gap-3">
-        <span className="glow grid size-12 place-items-center rounded-2xl border border-signal/30 bg-signal-soft text-signal">
-          <FlaskConical className="size-6" />
-        </span>
-        <div>
-          <h2 className="font-display text-[20px] font-bold">{t('setupLab.title')}</h2>
-          <p className="text-[13px] text-muted">{t('setupLab.intro')}</p>
-        </div>
-      </div>
-      {!readOnly && (
-        <ol className="mt-5 flex flex-col gap-2">
-          {steps.map((s) => (
-            <li key={s.n}>
-              <button
-                type="button"
-                onClick={() => nav(s.to)}
-                className="flex w-full items-start gap-3 rounded-[16px] border border-line bg-panel-2 p-3 text-left transition active:scale-[0.99]"
-              >
-                <span className="readout pt-0.5 text-[13px] font-semibold text-signal">{s.n}</span>
-                <span>
-                  <span className="block text-[14.5px] font-semibold">{s.title}</span>
-                  <span className="block text-[12.5px] text-muted">{s.body}</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ol>
-      )}
-      {!readOnly && (
-        <Button variant="ghost" size="sm" className="mt-3" onClick={onFreeDose}>
-          {t('setupLab.freeDose')}
-        </Button>
-      )}
-    </Card>
-  )
 }

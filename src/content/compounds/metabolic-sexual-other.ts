@@ -1,4 +1,4 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * Metabolic, sexual-health and miscellaneous compounds (second batch).
@@ -8,7 +8,7 @@ import { t, type CompoundEntry } from '../schema'
  * labelled "anecdotal" is community usage reproduced for harm-reduction
  * context only and is never a recommendation.
  */
-export const METABOLIC_SEXUAL_OTHER: CompoundEntry[] = [
+export const METABOLIC_SEXUAL_OTHER: CompoundDetail[] = [
   // ───────────────────────────── METABOLIC ─────────────────────────────
   {
     id: 'aod-9604',

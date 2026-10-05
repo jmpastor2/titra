@@ -180,15 +180,15 @@
     "noInventory": "No descontar",
     "when": "Cuándo",
     "now": "Ahora",
-    "logged": "Dosis registrada",
-    "empty": "Sin dosis registradas",
-    "emptyHint": "Registra tu primera dosis para empezar a ver la curva.",
+    "logged": "Toma registrada",
+    "empty": "Sin tomas registradas",
+    "emptyHint": "Registra tu primera toma para empezar a ver la curva.",
     "skipped": "Omitida",
     "planned": "Planificada",
     "taken": "Administrada",
     "history": "Historial",
     "filterAll": "Todos",
-    "deleteDose": "Eliminar dosis",
+    "deleteDose": "Eliminar toma",
     "confirm": "Registrar toma",
     "otherTime": "Otra hora",
     "sameSyringe": "Misma jeringa",
@@ -513,7 +513,12 @@
     "drawnAt": "Fecha de extracción",
     "outOfRange": "Fuera de rango",
     "bp": "Tensión arterial",
-    "unit": "Unidad"
+    "unit": "Unidad",
+    "removed": "{{what}}: eliminado",
+    "deleteAria": "Eliminar {{what}}, {{when}}",
+    "previous": "Anterior: {{value}} · {{date}}",
+    "belowRange": "Por debajo del rango",
+    "aboveRange": "Por encima del rango"
   },
   "lean": {
     "title": "Guardián de masa magra",
@@ -521,16 +526,20 @@
     "proteinTarget": "Objetivo de proteína",
     "proteinHint": "{{gPerKg}} g/kg · ajustable en Ajustes",
     "proteinToday": "Proteína hoy",
-    "sessionsWeek": "Sesiones de fuerza (7 d)",
-    "sessionsTarget": "objetivo ≥ {{n}}",
+    "sessionsWeek": "Sesiones de fuerza",
+    "sessionsTarget": "Objetivo: {{n}} por semana",
     "logProtein": "Registrar proteína",
     "logSession": "Registrar sesión de fuerza",
     "rate": "Ritmo de pérdida",
     "rateOk": "Ritmo adecuado",
-    "rateFast": "Ritmo rápido (> 1 %/semana): vigila la masa magra",
+    "rateFast": "Ritmo rápido",
     "rateGaining": "Peso en ascenso",
     "leanShare": "{{pct}} de lo perdido fue masa magra",
-    "needTwoWeights": "Registra al menos dos pesos para ver la tendencia"
+    "needTwoWeights": "Registra al menos dos pesos para ver la tendencia",
+    "proteinDone": "Objetivo cumplido",
+    "proteinLeft": "Te faltan {{n}} g",
+    "last7": "Últimos 7 días",
+    "rateFastHint": "Más de un 1 % de tu peso por semana: vigila la masa magra."
   },
   "inventory": {
     "title": "Inventario",
@@ -836,7 +845,8 @@
     "blendDiluent": "Agua bacteriostática añadida",
     "blendUnits": "Unidades cargadas",
     "blendPerDraw": "{{units}} U = {{ml}} mL. Comprueba siempre la etiqueta de tu vial.",
-    "inBlends": "También en estos blends"
+    "inBlends": "También en estos blends",
+    "loadFailed": "No se ha podido cargar la ficha. Comprueba la conexión e inténtalo de nuevo."
   },
   "simulator": {
     "title": "Simulador",
@@ -944,8 +954,25 @@
     "signOut": "Cerrar sesión",
     "role": "Rol",
     "syringe": "Tu jeringa de pinchar",
-    "syringeHint": "La app dibuja esta jeringa, con sus mismas marcas. U-100: 1 ud = 0,01 mL.",
-    "syringeAuto": "Auto"
+    "syringeHint": "La app dibuja esta jeringa, con sus mismas marcas. U‑100: 1 U = 0,01 mL.",
+    "syringeAuto": "Auto",
+    "invalidNumber": "Revisa el número",
+    "updates": {
+      "title": "Versión y actualizaciones",
+      "hint": "Titra busca actualizaciones sola; aquí puedes comprobarlo ahora.",
+      "version": "Versión",
+      "build": "compilación {{build}}",
+      "dev": "Desarrollo",
+      "check": "Buscar actualización",
+      "checking": "Buscando…",
+      "upToDate": "Estás al día",
+      "checkedAt": "comprobado a las {{time}}",
+      "available": "Hay una versión nueva: aplícala",
+      "apply": "Aplicar actualización",
+      "applying": "Aplicando…",
+      "unsupported": "Aquí no hay service worker (servidor de desarrollo, modo privado o un navegador sin soporte), así que no hay actualizaciones que buscar.",
+      "error": "No se ha podido comprobar. Revisa tu conexión e inténtalo de nuevo."
+    }
   },
   "more": {
     "title": "Más",
@@ -1030,7 +1057,7 @@
     "levels": "Niveles",
     "manage": "Gestionar",
     "quick": "Registro rápido",
-    "freeDose": "Dosis libre",
+    "freeDose": "Toma suelta",
     "checkin": "Check-in",
     "learn": "Aprende",
     "readMore": "Leer ficha",
@@ -1052,7 +1079,9 @@
       "extra": "extra"
     },
     "afterMidnight": "☾ madrugada",
-    "stock": "Stock"
+    "stock": "Stock",
+    "week": "Últimos 7 días",
+    "night": "madrugada"
   },
   "setupLab": {
     "title": "Monta tu laboratorio",
@@ -1063,7 +1092,7 @@
     "vialHint": "Contenido y agua bacteriostática: Titra calcula las unidades de jeringa.",
     "learn": "Aprende qué te pones",
     "learnHint": "Fichas de 99 compuestos con mecanismo, vida media y evidencia.",
-    "freeDose": "Registrar una dosis suelta"
+    "freeDose": "Registrar una toma suelta"
   },
   "picker": {
     "title": "Elige sustancia",
@@ -1179,6 +1208,16 @@
       "title_other": "Tu último check-in fue hace {{count}} días",
       "body": "Un minuto basta para ver cómo te sienta cada pauta.",
       "action": "Check-in"
+    },
+    "evolution": "Evolución",
+    "bodyView": {
+      "change": "Cambio",
+      "goal": "Objetivo",
+      "goalGap": "A {{n}} del objetivo",
+      "goalReached": "Objetivo alcanzado",
+      "paceWindow": "últimas 4 semanas",
+      "records": "Registros",
+      "showingLast": "Se muestran los {{count}} últimos."
     }
   },
   "share": {
@@ -1226,7 +1265,7 @@
     "aria": "Jeringa de {{capacity}} unidades cargada hasta {{units}} U",
     "blendHint": "{{names}} vienen mezclados en el mismo vial: una sola carga.",
     "offRatio": "{{names}}: la dosis de la pauta no cuadra con la proporción del blend; se registra lo que sale del vial.",
-    "overflowsYours": "No cabe en tu jeringa de {{units}} ud: usa una más grande o reparte en dos pinchazos."
+    "overflowsYours": "No cabe en tu jeringa de {{units}} U: usa una más grande o reparte en dos pinchazos."
   },
   "reminders": {
     "eyebrow": "Avisos",
@@ -1381,7 +1420,7 @@
     },
     "adherence": {
       "title": "Adherencia 28 d",
-      "hint": "{{taken}} de {{expected}} dosis"
+      "hint": "{{taken}} de {{expected}} tomas"
     },
     "timeline": {
       "state": {
@@ -1421,7 +1460,7 @@
     }
   },
   "week": {
-    "eyebrow": "Planificado vs puesto",
+    "eyebrow": "Plan y tomas",
     "thisWeek": "Esta semana",
     "previous": "Semana anterior",
     "next": "Semana siguiente",
@@ -1442,7 +1481,7 @@
     "tapHint": "Toca una toma para editarla o borrarla.",
     "legend": {
       "onTime": "A su hora",
-      "late": "Con retraso",
+      "late": "Fuera de hora",
       "missed": "Perdida",
       "extra": "Extra",
       "upcoming": "Pendiente"
@@ -1530,7 +1569,15 @@
       "placebo": "Placebo",
       "you": "Tus pesajes",
       "projection": "Tu tendencia",
-      "observedOnly": "Los puntos son datos publicados; las líneas solo los unen."
+      "observedOnly": "Los puntos son datos publicados; las líneas solo los unen.",
+      "summaryYou": "Tu último pesaje: {{pct}} desde el inicio.",
+      "summaryProjection": "Tu tendencia, prolongada en línea recta, llegaría a {{pct}} en la semana {{week}}: es una extrapolación.",
+      "readout": {
+        "trial": "Ensayo · semana {{week}}",
+        "placebo": "placebo {{pct}}",
+        "you": "Tu pesaje · semana {{week}}",
+        "projection": "Tu tendencia · semana {{week}}"
+      }
     },
     "trial": {
       "open": "Ver el ensayo",
@@ -1555,7 +1602,8 @@
       "count_other": "{{count}} registros",
       "none": "Sin registros",
       "lab": "Analítica",
-      "note": "Notas"
+      "note": "Notas",
+      "since": "Registros desde el {{date}}"
     },
     "empty": {
       "title": "Sin pautas activas",
@@ -1626,7 +1674,7 @@
       "resume": "El {{date}} termina el descanso: {{dose}}",
       "end": "El ciclo termina el {{date}}",
       "start": "Empieza con {{dose}}",
-      "none": "Sin cambios de dosis previstos",
+      "none": "Sin cambios previstos",
       "ended": "Terminó el {{date}}"
     },
     "detail": {
@@ -1698,7 +1746,7 @@
       "weeks": "Duración del plan",
       "dose": "Dosis de hoy"
     },
-    "hold": "Mantener esta semana",
+    "hold": "Mantener una semana más",
     "holdRest": "Alargar el descanso una semana",
     "holdConfirm": "Mantener una semana más",
     "holdRestConfirm": "Alargar una semana",
@@ -1780,7 +1828,7 @@
     "now": "Ahora",
     "decisionDue": "Subida próxima",
     "pausedNote": "En pausa: no se cuenta la adherencia.",
-    "noChange": "Mantenimiento: sin cambios previstos",
+    "noChange": "Sin cambios previstos",
     "noneCurrent": "Ahora mismo no hay ningún ciclo en marcha.",
     "startsWith": "Empieza el {{date}} con {{dose}}",
     "when_zero": "hoy · {{date}}",
@@ -2045,7 +2093,7 @@
       "done": "Hecha hoy",
       "none": "Hoy no toca",
       "next": "Próxima: {{when}}",
-      "free": "Dosis libre",
+      "free": "Toma suelta",
       "freeHint": "Registra una toma"
     },
     "weight": {
@@ -2193,5 +2241,17 @@
       "left": "Vial: queda el {{pct}}"
     },
     "justNow": "ahora mismo"
+  },
+  "trend": {
+    "title": "Evolución",
+    "aria_one": "{{count}} registro: {{last}} el {{to}}.",
+    "aria_other": "{{count}} registros del {{from}} al {{to}}. Primero {{first}}, último {{last}}, mínimo {{min}}, máximo {{max}}.",
+    "ariaRange": "Rango de referencia: de {{low}} a {{high}}.",
+    "ariaRangeLow": "Rango de referencia: desde {{low}}.",
+    "ariaRangeHigh": "Rango de referencia: hasta {{high}}.",
+    "ariaTarget": "Objetivo: {{target}}.",
+    "ariaSmooth": "Incluye la línea de tendencia.",
+    "empty": "Sin registros en este periodo",
+    "target": "Objetivo"
   }
 }

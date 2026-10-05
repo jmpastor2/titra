@@ -1,6 +1,6 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
-export const semaglutide: CompoundEntry = {
+export const semaglutide: CompoundDetail = {
   id: 'semaglutide',
   names: {
     generic: 'Semaglutida',

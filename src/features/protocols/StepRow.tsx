@@ -2,7 +2,7 @@ import { clsx } from 'clsx'
 import { Pause, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Field, Input } from '@/components/ui/Field'
-import { Badge } from '@/components/ui/primitives'
+import { Badge, ToggleRow } from '@/components/ui/primitives'
 import type { DoseUnit } from '@/domain/types'
 import { useCycleText } from './cycleText'
 import { blurOnEnter } from './blurOnEnter'
@@ -169,27 +169,21 @@ export function StepRow({
       )}
 
       {fromWeek && (
-        <label className="mt-2.5 flex items-start gap-3 rounded-control border border-signal/30 bg-signal-soft px-3 py-2.5">
-          <input
-            type="checkbox"
-            checked={fromWeek.apply}
-            onChange={(e) => fromWeek.onApply(e.target.checked)}
-            className="mt-0.5 size-5 shrink-0 accent-[var(--signal)]"
-          />
-          <span className="min-w-0">
-            <span className="block text-[13.5px] font-semibold">
-              {t('protocols.fromWeek.title')}
-            </span>
-            <span className="block text-[12px] leading-snug text-ink-2">
-              {fromWeek.apply
-                ? t('protocols.fromWeek.on', {
-                    count: fromWeek.weeksBehind,
-                    dose: fromWeek.fromText,
-                  })
-                : t('protocols.fromWeek.off')}
-            </span>
-          </span>
-        </label>
+        <ToggleRow
+          className="mt-2.5"
+          tone="signal"
+          checked={fromWeek.apply}
+          onChange={fromWeek.onApply}
+          label={t('protocols.fromWeek.title')}
+          hint={
+            fromWeek.apply
+              ? t('protocols.fromWeek.on', {
+                  count: fromWeek.weeksBehind,
+                  dose: fromWeek.fromText,
+                })
+              : t('protocols.fromWeek.off')
+          }
+        />
       )}
     </li>
   )

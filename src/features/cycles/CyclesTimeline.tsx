@@ -90,13 +90,7 @@ export function CyclesTimeline({
           <h2 className="text-[16px] font-semibold text-ink">{t('cycles.timeline.title')}</h2>
           <p className="mt-0.5 text-[13px] text-muted">{t('cycles.timeline.hint')}</p>
         </div>
-        <Button
-          size="sm"
-          variant="soft"
-          // The pill stays slim; its touch area is a full 44 px.
-          className="relative shrink-0 whitespace-nowrap before:absolute before:-inset-y-1 before:inset-x-0 before:content-['']"
-          onClick={goToday}
-        >
+        <Button size="sm" variant="soft" className="shrink-0" onClick={goToday}>
           {t('cycles.timeline.goToday')}
         </Button>
       </header>
@@ -208,32 +202,35 @@ function Lane({
   const color = compoundColor(lane.compoundId)
   return (
     <div className={clsx('relative mt-2', !isCurrent(lane.status) && 'opacity-80')}>
+      {/* The pill is 36 px; the button around it is the 44 px target, and gives the room back. */}
       <button
         type="button"
         onClick={() => onSelect(lane.id, lane.focusStep)}
-        className="sticky left-3 z-10 flex min-h-9 w-fit max-w-[min(22rem,calc(100vw-2.75rem))] items-center gap-1.5 rounded-full border border-line bg-panel/90 px-2.5 backdrop-blur-sm outline-none before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] focus-visible:ring-2 focus-visible:ring-signal/60"
+        className="group sticky left-3 z-10 -my-1 flex min-h-11 w-fit max-w-[min(22rem,calc(100vw-2.75rem))] items-center outline-none"
       >
-        {lane.compoundIds.map((id) => (
-          <SubstanceDot key={id} color={compoundColor(id)} />
-        ))}
-        <span className="truncate text-[12.5px] font-semibold">{lane.name}</span>
-        {(lane.siblings > 1 || lane.endedWeeksAgo !== null) && (
-          <span className="spec shrink-0">
-            {[
-              lane.siblings > 1 ? t('cycles.cycleN', { n: lane.ordinal }) : null,
-              lane.endedWeeksAgo !== null && lane.endedWeeksAgo >= 2
-                ? t('cycles.timeline.endedAgo', { count: lane.endedWeeksAgo })
-                : null,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </span>
-        )}
-        {lane.status === 'paused' && (
-          <Badge tone="warn" className="shrink-0">
-            {t('protocols.statuses.paused')}
-          </Badge>
-        )}
+        <span className="flex min-h-9 min-w-0 items-center gap-1.5 rounded-full border border-line bg-panel/90 px-2.5 backdrop-blur-sm group-focus-visible:ring-2 group-focus-visible:ring-signal/60">
+          {lane.compoundIds.map((id) => (
+            <SubstanceDot key={id} color={compoundColor(id)} />
+          ))}
+          <span className="truncate text-[12.5px] font-semibold">{lane.name}</span>
+          {(lane.siblings > 1 || lane.endedWeeksAgo !== null) && (
+            <span className="spec shrink-0">
+              {[
+                lane.siblings > 1 ? t('cycles.cycleN', { n: lane.ordinal }) : null,
+                lane.endedWeeksAgo !== null && lane.endedWeeksAgo >= 2
+                  ? t('cycles.timeline.endedAgo', { count: lane.endedWeeksAgo })
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            </span>
+          )}
+          {lane.status === 'paused' && (
+            <Badge tone="warn" className="shrink-0">
+              {t('protocols.statuses.paused')}
+            </Badge>
+          )}
+        </span>
       </button>
 
       <div className="relative mt-1.5" style={{ height: BAR_H }}>

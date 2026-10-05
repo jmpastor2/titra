@@ -8,6 +8,7 @@ import {
   fractionOf,
   monthlyMeans,
   fmtSigned,
+  fmtSignedFixed,
   laneMarks,
   monthDelta,
   progressScope,
@@ -201,5 +202,12 @@ describe('monthDelta / fmtSigned', () => {
     expect(fmtSigned(2.14, 'es', 1)).toBe('+2,1')
     expect(fmtSigned(-3.4, 'es', 1)).toBe('−3,4')
     expect(fmtSigned(-0.01, 'en', 1)).toBe('0')
+  })
+  it('keeps every digit when asked, so changes read at one precision', () => {
+    expect(fmtSignedFixed(2, 'es', 1)).toBe('+2,0')
+    expect(fmtSignedFixed(-0.5, 'es', 1)).toBe('−0,5')
+    expect(fmtSignedFixed(-3.449, 'en', 1)).toBe('−3.4')
+    expect(fmtSignedFixed(0.04, 'es', 1)).toBe('0,0')
+    expect(fmtSignedFixed(-0.004, 'es', 2)).toBe('0,00')
   })
 })

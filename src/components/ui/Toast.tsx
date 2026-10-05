@@ -48,11 +48,13 @@ const icons: Record<ToastTone, ReactNode> = {
   warn: <AlertTriangle className="size-4 shrink-0" />,
   error: <XCircle className="size-4 shrink-0" />,
 }
+// Canvas ink reads on every tone in both themes (dark ink on the bright night tones, light
+// ink on the deep clean-bench ones); white did not on mint, amber and pink.
 const tones: Record<ToastTone, string> = {
   info: 'bg-ink text-canvas',
-  success: 'bg-ok text-white',
-  warn: 'bg-warn text-white',
-  error: 'bg-danger text-white',
+  success: 'bg-ok text-canvas',
+  warn: 'bg-warn text-canvas',
+  error: 'bg-danger text-canvas',
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -100,7 +102,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       </div>
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),10px)+88px)] z-[100] flex justify-center px-4"
+        // A screen with a floating button above the dock sets --float-clearance (see
+        // FloatingAction) so the undo stacks above it instead of covering it.
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),10px)+88px+var(--float-clearance,0px))] z-[100] flex justify-center px-4"
       >
         {withAction?.action && (
           <ActionToast
@@ -135,7 +139,7 @@ function ActionToast({
       className="fade-up pointer-events-auto flex w-full max-w-md items-center gap-2.5 rounded-[24px] bg-ink py-1.5 pl-4 pr-1.5 text-[13.5px] font-medium text-canvas shadow-lg"
     >
       {icons[toast.tone === 'info' ? 'success' : toast.tone]}
-      <span className="min-w-0 flex-1 py-1 leading-snug">{toast.message}</span>
+      <span className="min-w-0 flex-1 text-balance py-1 leading-snug">{toast.message}</span>
       <button
         type="button"
         onClick={run}

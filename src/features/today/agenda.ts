@@ -4,7 +4,8 @@
  */
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
 import { toDoseEvent, toProtocolLike } from '@/data/mappers'
-import { addDays, startOfDay } from 'date-fns'
+import { fmtDate, toTimeInputValue, type Locale } from '@/lib/format'
+import { addDays, isSameDay, startOfDay } from 'date-fns'
 import {
   componentsAt,
   currentStep,
@@ -128,4 +129,33 @@ export function summarise(items: readonly TodayItem[]): DaySummary {
     ).length,
     missed: items.filter((i) => i.status === 'missed').length,
   }
+}
+
+/** Before this hour a planned time is "madrugada": a night shot, which belongs to the evening before. */
+export const NIGHT_UNTIL_H = 6
+
+/** After midnight and before 06:00. */
+export function isNightSlot(at: Date): boolean {
+  return at.getHours() < NIGHT_UNTIL_H
+}
+
+/** How a planned time reads next to the clock: "09:00", or "mar 6 · 01:00" on another day. */
+export function slotWhen(at: Date, now: Date, locale: Locale): string {
+  const clock = toTimeInputValue(at)
+  return isSameDay(at, now) ? clock : `${fmtDate(at, locale, 'EEE d')} · ${clock}`
+}
+
+/**
+ * Whether the agenda adds anything to the "next dose" card: not when its only row is the dose
+ * that card already shows.
+ */
+export function agendaAddsToHero(items: readonly TodayItem[], focus: TodayItem | null): boolean {
+  return items.length > 1 || (items.length === 1 && items[0] !== focus)
+}
+
+/** "L M X J V S D": the weekday's initial as the protocol screens write it (Wednesday is X). */
+export function weekdayInitial(day: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'en-US', {
+    weekday: 'narrow',
+  }).format(day)
 }

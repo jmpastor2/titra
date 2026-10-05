@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
-import { buildToday, focusItem, summarise } from './agenda'
+import { agendaAddsToHero, buildToday, focusItem, isNightSlot, slotWhen, summarise } from './agenda'
 
 const protocol = (over: Partial<ProtocolRow>): ProtocolRow => ({
   id: 'p',
@@ -108,5 +108,42 @@ describe('night shots after midnight', () => {
     const taken = buildToday([NIGHT], [dose('mod-grf-1-29', '2026-03-04T01:45')], at)
     expect(taken[0]!.status).toBe('taken')
     expect(taken.some((i) => i.extra)).toBe(false)
+  })
+})
+
+describe('how a planned time reads', () => {
+  const now = new Date('2026-03-03T12:00')
+
+  it('is just the clock today and carries the day when it is not', () => {
+    expect(slotWhen(new Date('2026-03-03T22:00'), now, 'es')).toBe('22:00')
+    expect(slotWhen(new Date('2026-03-04T01:00'), now, 'es')).toBe('mié 4 · 01:00')
+    expect(slotWhen(new Date('2026-03-04T01:00'), now, 'en')).toBe('Wed 4 · 01:00')
+  })
+
+  it('calls the small hours "madrugada": before 06:00, and only then', () => {
+    expect(isNightSlot(new Date('2026-03-04T00:00'))).toBe(true)
+    expect(isNightSlot(new Date('2026-03-04T05:59'))).toBe(true)
+    expect(isNightSlot(new Date('2026-03-04T06:00'))).toBe(false)
+    expect(isNightSlot(new Date('2026-03-04T22:00'))).toBe(false)
+  })
+})
+
+describe('agendaAddsToHero', () => {
+  const at = new Date('2026-03-03T12:00')
+  it('is false when the only row is the dose the hero already shows', () => {
+    const items = buildToday([BPC], [dose('bpc-157', '2026-03-03T08:05', 'bpc')], at)
+    const focus = focusItem(items)
+    expect(items).toHaveLength(2)
+    expect(agendaAddsToHero(items, focus)).toBe(true)
+    const one = items.filter((i) => i.at.getHours() === 20)
+    expect(agendaAddsToHero(one, focusItem(one))).toBe(false)
+  })
+
+  it('is true for a lone row that is not the focus (a dose already taken) and for none at all', () => {
+    const taken = buildToday([BPC], [dose('bpc-157', '2026-03-03T08:05', 'bpc')], at).filter(
+      (i) => i.status === 'taken',
+    )
+    expect(agendaAddsToHero(taken, focusItem(taken))).toBe(true)
+    expect(agendaAddsToHero([], null)).toBe(false)
   })
 })

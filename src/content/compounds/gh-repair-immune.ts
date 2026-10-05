@@ -1,4 +1,4 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * GH axis, tissue-repair and immune peptides.
@@ -12,7 +12,7 @@ import { t, type CompoundEntry } from '../schema'
 // GH AXIS
 // ---------------------------------------------------------------------------
 
-const cjc1295: CompoundEntry = {
+const cjc1295: CompoundDetail = {
   id: 'cjc-1295',
   names: {
     generic: 'CJC-1295 con DAC',
@@ -187,7 +187,7 @@ const cjc1295: CompoundEntry = {
   lastReviewed: '2026-09-25',
 }
 
-const ipamorelin: CompoundEntry = {
+const ipamorelin: CompoundDetail = {
   id: 'ipamorelin',
   names: {
     generic: 'Ipamorelina',
@@ -364,7 +364,7 @@ const ipamorelin: CompoundEntry = {
   lastReviewed: '2026-09-30',
 }
 
-const sermorelin: CompoundEntry = {
+const sermorelin: CompoundDetail = {
   id: 'sermorelin',
   names: {
     generic: 'Sermorelina',
@@ -538,7 +538,7 @@ const sermorelin: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const tesamorelin: CompoundEntry = {
+const tesamorelin: CompoundDetail = {
   id: 'tesamorelin',
   names: {
     generic: 'Tesamorelina',
@@ -747,4 +747,4 @@ const tesamorelin: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-export const GH_REPAIR_IMMUNE: CompoundEntry[] = [cjc1295, ipamorelin, sermorelin, tesamorelin]
+export const GH_REPAIR_IMMUNE: CompoundDetail[] = [cjc1295, ipamorelin, sermorelin, tesamorelin]

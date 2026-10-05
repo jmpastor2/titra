@@ -1,6 +1,6 @@
 import { addDays, isSameDay, startOfWeek } from 'date-fns'
 import { clsx } from 'clsx'
-import { CalendarCheck, Check, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarCheck, Check, ChevronLeft, ChevronRight, Moon } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
@@ -8,8 +8,10 @@ import { Badge, SubstanceDot } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
 import { protocolCompoundIds } from '@/data/mappers'
+import { isNightSlot } from '@/features/today/agenda'
 import { fmtDate, toTimeInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { useNow } from '@/lib/useNow'
 import { fitOf, fmtDeltaMin } from './delta'
 import type { ExtraDose } from './extras'
 import { slotDayText } from './slotText'
@@ -44,7 +46,8 @@ export function WeekCard({
   const { t } = useTranslation()
   const { locale } = useLocale()
   const [offset, setOffset] = useState(0)
-  const now = useMemo(() => new Date(), [])
+  // Refreshed every few minutes: a screen left open overnight still lights the right day.
+  const now = useNow(5 * 60_000)
   const weekStart = useMemo(
     () => addDays(startOfWeek(now, { weekStartsOn: 1 }), offset * 7),
     [now, offset],
@@ -224,6 +227,13 @@ function Cell({
         ) : (
           <>
             {toTimeInputValue(c.plannedAt)}
+            {isNightSlot(c.plannedAt) && (
+              <Moon
+                role="img"
+                aria-label={t('today.night')}
+                className="ml-1 inline size-3 align-[-1px] text-muted"
+              />
+            )}
             {c.takenAt && (
               <>
                 {' → '}

@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
 import { weekPlanVsActual, summariseWeek } from '@/features/doses/week'
-import '@/i18n'
+import i18n from '@/i18n'
+import { weekdayInitial } from './agenda'
 import { WeekGrid, WeekRing } from './WeekPulse'
 
 const cjc: ProtocolRow = {
@@ -40,6 +41,10 @@ const dose = (iso: string): DoseRow => ({
 })
 
 describe('WeekPulse', () => {
+  beforeAll(async () => {
+    await i18n.changeLanguage('es')
+  })
+
   it('renders the last seven days with an extra dose', () => {
     const now = new Date('2026-09-26T03:00')
     const days = weekPlanVsActual(
@@ -63,5 +68,29 @@ describe('WeekPulse', () => {
     )
     expect(screen.getByText('CJC-1295 + Ipamorelina')).toBeTruthy()
     expect(screen.getByText(/\+1/)).toBeTruthy()
+  })
+
+  it('explains only the marks that are on the grid', () => {
+    const now = new Date('2026-09-26T03:00')
+    const days = weekPlanVsActual(
+      [cjc],
+      ['2026-09-21T22:05', '2026-09-22T22:10', '2026-09-26T02:40'].map(dose),
+      new Date('2026-09-20T00:00'),
+      now,
+    )
+    render(<WeekGrid days={days} protocols={[cjc]} now={now} />)
+    expect(screen.getByText('a su hora')).toBeTruthy()
+    expect(screen.getByText('perdida')).toBeTruthy()
+    expect(screen.getByText('extra')).toBeTruthy()
+    // Nothing late and nothing pending in this week.
+    expect(screen.queryByText('fuera de hora')).toBeNull()
+    expect(screen.queryByText('pendiente')).toBeNull()
+  })
+
+  it('writes Wednesday as X, the way the protocol screens do', () => {
+    const wednesday = new Date('2026-09-23T12:00')
+    expect(weekdayInitial(wednesday, 'es')).toBe('X')
+    expect(weekdayInitial(new Date('2026-09-22T12:00'), 'es')).toBe('M')
+    expect(weekdayInitial(wednesday, 'en')).toBe('W')
   })
 })

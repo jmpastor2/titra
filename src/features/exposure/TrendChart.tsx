@@ -1,60 +1,63 @@
-import { format } from 'date-fns'
+/**
+ * A value over time: raw readings and, optionally, a smoothed trend; a target, a reference
+ * range, dose-change guides and shaded pauses. Plain SVG on the same primitives as the level
+ * charts (axes, label rail, pointer); the maths lives in trend*.ts. What the finger picks shows
+ * in a small card beside the cursor, as before, so the chart keeps its height.
+ */
 import { enUS, es } from 'date-fns/locale'
-import { useMemo } from 'react'
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ReferenceArea,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
-import { fmtNumber, type Locale } from '@/lib/format'
+import { useCallback, useId, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useLocale } from '@/lib/useLocale'
-import { TREND_MARGIN as MARGIN, TREND_Y_AXIS_WIDTH as Y_AXIS_WIDTH, timeTicks } from './chartScale'
+import { nearestIndex } from './chartLayout'
+import { layoutTrend } from './trendLayout'
+import { TrendCursor, TrendLayers, TrendTip } from './trendLayers'
+import {
+  buildTrendModel,
+  describeReading,
+  describeTrend,
+  readoutPattern,
+  type TrendGuide,
+  type TrendModel,
+  type TrendPoint,
+  type TrendRow,
+  type TrendShade,
+} from './trendModel'
+import { useChartPointer } from './useChartPointer'
+import { useChartWidth } from './useChartWidth'
 
-export interface TrendPoint {
-  at: Date
-  value: number
-}
+export type { TrendGuide, TrendPoint, TrendShade }
 
-/** A vertical guide, e.g. where a protocol changes dose, optionally labelled ("1,5 mg"). */
-export interface TrendGuide {
-  at: number
-  color: string
-  label?: string
-}
-
-/** A shaded time span, e.g. a protocol pause. */
-export interface TrendShade {
-  from: number
-  to: number
-  color: string
-}
-
-const DAY_MS = 86_400_000
+/** Below this height (the small multiples) the readout card is a single line. */
+const COMPACT_HEIGHT = 120
 
 const NO_GUIDES: TrendGuide[] = []
 const NO_SHADES: TrendShade[] = []
 
-/** One row per instant: the raw reading (v) and/or the smoothed trend (s). */
-interface Row {
-  t: number
-  v?: number
-  s?: number
-}
-
-function mergeSeries(raw: readonly TrendPoint[], smooth: readonly TrendPoint[] | undefined): Row[] {
-  const rows = new Map<number, Row>()
-  for (const p of raw) rows.set(p.at.getTime(), { t: p.at.getTime(), v: p.value })
-  for (const p of smooth ?? []) {
-    const t = p.at.getTime()
-    rows.set(t, { ...rows.get(t), t, s: p.value })
-  }
-  return [...rows.values()].toSorted((a, b) => a.t - b.t)
+export interface TrendChartProps {
+  points: TrendPoint[]
+  unit: string
+  /** Height of the chart, time axis included. */
+  height?: number
+  target?: number
+  refRange?: { low?: number | null; high?: number | null }
+  color?: string
+  /** Fraction digits of the readings. */
+  digits?: number
+  /** Fixed y domain, e.g. [0, 10] for scores, so small multiples share a scale. */
+  range?: [number, number]
+  /** Fixed time window (epoch ms) so charts share an x scale with the protocol strip. */
+  xDomain?: [number, number]
+  guides?: TrendGuide[]
+  shades?: TrendShade[]
+  /**
+   * A smoothed trend drawn as the main line; the raw readings then show as dots on a
+   * faint line, so the day-to-day noise stays visible but does not steal the story.
+   */
+  smooth?: TrendPoint[]
+  /** Label of the smoothed value in the readout, e.g. "Tendencia". */
+  smoothLabel?: string
+  /** What the chart is about, for screen readers: "Peso". */
+  label?: string
 }
 
 export function TrendChart({
@@ -71,228 +74,133 @@ export function TrendChart({
   shades = NO_SHADES,
   smooth,
   smoothLabel = '~',
-}: {
-  points: TrendPoint[]
-  unit: string
-  height?: number
-  target?: number
-  refRange?: { low?: number | null; high?: number | null }
-  color?: string
-  digits?: number
-  /** Fixed y domain, e.g. [0, 10] for scores, so small multiples share a scale. */
-  range?: [number, number]
-  /** Fixed time window (epoch ms) so charts share an x scale with the protocol strip. */
-  xDomain?: [number, number]
-  guides?: TrendGuide[]
-  shades?: TrendShade[]
-  /**
-   * A smoothed trend drawn as the main line; the raw readings then show as dots on a
-   * faint line, so the day-to-day noise stays visible but does not steal the story.
-   */
-  smooth?: TrendPoint[]
-  /** Tooltip label for the smoothed value, e.g. "Tendencia". */
-  smoothLabel?: string
-}) {
-  const { locale } = useLocale()
-  const dfl = locale === 'es' ? es : enUS
+  label,
+}: TrendChartProps) {
+  const { t } = useTranslation()
+  // Callers often pass fresh arrays and objects for these: depend on what is inside.
+  const [x0, x1] = xDomain ?? []
+  const [r0, r1] = range ?? []
+  const low = refRange?.low
+  const high = refRange?.high
+  const model = useMemo(
+    () =>
+      buildTrendModel({
+        points,
+        smooth,
+        xDomain: x0 === undefined || x1 === undefined ? undefined : [x0, x1],
+        target,
+        refRange: { low, high },
+        range: r0 === undefined || r1 === undefined ? undefined : [r0, r1],
+        guides,
+        shades,
+      }),
+    [points, smooth, x0, x1, target, low, high, r0, r1, guides, shades],
+  )
 
-  const model = useMemo(() => {
-    const inDomain = (p: TrendPoint) =>
-      !xDomain || (p.at.getTime() >= xDomain[0] && p.at.getTime() <= xDomain[1])
-    const data = mergeSeries(points.filter(inDomain), smooth?.filter(inDomain))
-    if (data.length === 0) return null
-    const vals = data.flatMap((d) => [d.v, d.s].filter((x): x is number => x !== undefined))
-    const lo = Math.min(...vals, target ?? Infinity, refRange?.low ?? Infinity)
-    const hi = Math.max(...vals, target ?? -Infinity, refRange?.high ?? -Infinity)
-    const pad = (hi - lo) * 0.15 || 1
-    const domain: [number, number] = xDomain ?? [data[0]!.t, data[data.length - 1]!.t]
-    const x = timeTicks(domain[0], domain[1], 4)
-    const span = (domain[1] - domain[0]) / DAY_MS
-    const pattern = x.pattern === 'MMM' && span > 300 ? 'MMM yy' : x.pattern
-    return {
-      data,
-      yDomain: range ?? ([lo - pad, hi + pad] as [number, number]),
-      domain,
-      x,
-      pattern,
-    }
-  }, [points, smooth, xDomain, target, refRange?.low, refRange?.high, range])
-
-  if (!model) return null
-  const { data, domain } = model
-  const hasSmooth = data.some((d) => d.s !== undefined)
-  const rawCount = data.filter((d) => d.v !== undefined).length
-  const visibleGuides = guides.filter((g) => g.at > domain[0] && g.at < domain[1])
-  const visibleShades = shades.filter((s) => s.to > domain[0] && s.from < domain[1])
-
+  if (!model) {
+    return (
+      <div className="grid place-items-center text-[12.5px] text-muted" style={{ height }}>
+        {t('trend.empty')}
+      </div>
+    )
+  }
   return (
-    <div style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={MARGIN}>
-          <CartesianGrid vertical={false} stroke="var(--line)" strokeDasharray="2 4" />
-          {visibleShades.map((s) => (
-            <ReferenceArea
-              key={`sh${s.from}-${s.color}`}
-              x1={Math.max(s.from, domain[0])}
-              x2={Math.min(s.to, domain[1])}
-              fill={s.color}
-              fillOpacity={0.08}
-              stroke="none"
-              ifOverflow="hidden"
-            />
-          ))}
-          {visibleGuides.map((g) => (
-            <ReferenceLine
-              key={`g${g.at}-${g.color}`}
-              x={g.at}
-              stroke={g.color}
-              strokeOpacity={0.6}
-              strokeDasharray="2 3"
-              label={
-                g.label
-                  ? {
-                      value: g.label,
-                      position: 'insideTopLeft',
-                      fill: 'var(--muted)',
-                      fontSize: 9.5,
-                      fontFamily: 'var(--font-mono)',
-                    }
-                  : undefined
-              }
-            />
-          ))}
-          <XAxis
-            dataKey="t"
-            type="number"
-            domain={domain}
-            scale="time"
-            ticks={model.x.ticks}
-            interval={0}
-            tickFormatter={(v: number) => format(new Date(v), model.pattern, { locale: dfl })}
-            tick={{ fill: 'var(--muted)', fontSize: 11 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis
-            domain={model.yDomain}
-            ticks={range ? [range[0], (range[0] + range[1]) / 2, range[1]] : undefined}
-            tick={{ fill: 'var(--muted)', fontSize: 11 }}
-            axisLine={false}
-            tickLine={false}
-            tickFormatter={(v: number) => fmtNumber(v, locale, digits)}
-            width={Y_AXIS_WIDTH}
-          />
-          {refRange?.low != null && (
-            <ReferenceLine
-              y={refRange.low}
-              stroke="var(--chart-5)"
-              strokeDasharray="3 3"
-              strokeOpacity={0.6}
-            />
-          )}
-          {refRange?.high != null && (
-            <ReferenceLine
-              y={refRange.high}
-              stroke="var(--chart-5)"
-              strokeDasharray="3 3"
-              strokeOpacity={0.6}
-            />
-          )}
-          {target != null && (
-            <ReferenceLine y={target} stroke="var(--chart-2)" strokeDasharray="4 4" />
-          )}
-          <Tooltip
-            cursor={{ stroke: 'var(--muted)', strokeWidth: 1 }}
-            content={
-              <TrendTooltip unit={unit} digits={digits} locale={locale} smoothLabel={smoothLabel} />
-            }
-          />
-          <Line
-            dataKey="v"
-            type="monotone"
-            stroke={color}
-            strokeWidth={hasSmooth ? 1 : 2}
-            strokeOpacity={hasSmooth ? 0.35 : 1}
-            connectNulls
-            style={
-              hasSmooth
-                ? undefined
-                : { filter: `drop-shadow(0 0 4px color-mix(in oklab, ${color} 60%, transparent))` }
-            }
-            dot={
-              rawCount <= 40 || hasSmooth
-                ? {
-                    r: hasSmooth ? 2.5 : 3,
-                    strokeWidth: hasSmooth ? 1.5 : 2,
-                    stroke: 'var(--panel)',
-                    fill: color,
-                    fillOpacity: hasSmooth ? 0.7 : 1,
-                  }
-                : false
-            }
-            activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--panel)', fill: color }}
-            isAnimationActive={false}
-          />
-          {hasSmooth && (
-            <Line
-              dataKey="s"
-              type="monotone"
-              stroke={color}
-              strokeWidth={2.25}
-              connectNulls
-              style={{
-                filter: `drop-shadow(0 0 4px color-mix(in oklab, ${color} 60%, transparent))`,
-              }}
-              dot={false}
-              activeDot={false}
-              isAnimationActive={false}
-            />
-          )}
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <TrendPlot
+      model={model}
+      unit={unit}
+      height={height}
+      color={color}
+      digits={digits}
+      smoothLabel={smoothLabel}
+      label={label}
+    />
   )
 }
 
-interface TooltipInjected {
-  active?: boolean
-  payload?: ReadonlyArray<{ value?: unknown; dataKey?: unknown }>
-  label?: unknown
-}
-
-/** Recharts clones this element and injects active/payload/label. */
-function TrendTooltip({
-  active,
-  payload,
-  label,
+function TrendPlot({
+  model,
   unit,
+  height,
+  color,
   digits,
-  locale,
   smoothLabel,
-}: TooltipInjected & { unit: string; digits: number; locale: Locale; smoothLabel: string }) {
-  if (!active || !payload?.length) return null
-  const pick = (key: string) => {
-    const v = payload.find((p) => p.dataKey === key)?.value
-    return typeof v === 'number' ? v : null
-  }
-  const v = pick('v')
-  const s = pick('s')
-  if (v === null && s === null) return null
+  label,
+}: {
+  model: TrendModel
+  unit: string
+  height: number
+  color: string
+  digits: number
+  smoothLabel: string
+  label: string | undefined
+}) {
+  const { t } = useTranslation()
+  const { locale } = useLocale()
+  const dateLocale = locale === 'es' ? es : enUS
+  const clipId = `trend-clip-${useId().replace(/\W/g, '')}`
+  const [ref, width] = useChartWidth()
+
+  // Everything that depends on the data and the width, once; the finger changes none of it.
+  const layout = useMemo(
+    () => layoutTrend({ model, width, height, digits, locale, dateLocale }),
+    [model, width, height, digits, locale, dateLocale],
+  )
+  const aria = useMemo(
+    () => describeTrend({ model, t, locale, unit, digits, label }),
+    [model, t, locale, unit, digits, label],
+  )
+  const pattern = useMemo(() => readoutPattern(model), [model])
+
+  const { rows } = model
+  const indexAt = useCallback((px: number) => nearestIndex(layout.rowX, px), [layout.rowX])
+  const { svgRef, selected, handlers } = useChartPointer({
+    count: rows.length,
+    box: layout.box,
+    indexAt,
+    // The arrow keys begin at the latest reading.
+    start: rows.length - 1,
+  })
+  const picked: TrendRow | undefined = selected === null ? undefined : rows[selected]
+  const lines = picked
+    ? describeReading(picked, { pattern, dateLocale, locale, unit, digits, smoothLabel })
+    : []
+
   return (
-    <div className="rounded-control border border-line bg-panel px-2.5 py-1.5 text-[11.5px] shadow-lg">
-      <div className="text-muted">
-        {format(new Date(label as number), 'd MMM yyyy', { locale: locale === 'es' ? es : enUS })}
-      </div>
-      {v !== null && (
-        <div className="readout font-semibold text-ink">
-          {fmtNumber(v, locale, digits)} {unit}
-        </div>
+    <div ref={ref} className="relative">
+      <svg
+        ref={svgRef}
+        width={width}
+        height={height}
+        role="img"
+        aria-label={aria}
+        tabIndex={0}
+        className="block touch-pan-y select-none outline-none focus-visible:ring-1 focus-visible:ring-signal/50"
+        {...handlers}
+      >
+        <TrendLayers
+          model={model}
+          layout={layout}
+          width={width}
+          color={color}
+          clipId={clipId}
+          locale={locale}
+          dateLocale={dateLocale}
+          targetLabel={t('trend.target')}
+        />
+        {picked && <TrendCursor row={picked} layout={layout} color={color} />}
+      </svg>
+      {picked && (
+        <TrendTip
+          lines={lines}
+          compact={height < COMPACT_HEIGHT}
+          cursorX={layout.x(picked.t)}
+          width={width}
+        />
       )}
-      {s !== null && (
-        <div className="readout text-muted">
-          {smoothLabel} {fmtNumber(s, locale, digits)} {unit}
-        </div>
-      )}
+      {/* Said aloud when the arrow keys move the cursor; the card is only for the eyes. */}
+      <span className="sr-only" aria-live="polite">
+        {lines.join(', ')}
+      </span>
     </div>
   )
 }

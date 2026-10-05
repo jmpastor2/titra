@@ -10,6 +10,7 @@ import {
   searchWiki,
   weakestEvidence,
 } from './compounds'
+import { BLEND_DETAILS, DETAILS_BY_ID, SUBSTANCE_DETAILS } from './compounds/entries'
 import { OUTLOOK } from './outlook'
 import { PROTOCOL_TEMPLATES } from './protocols/templates'
 
@@ -19,8 +20,13 @@ describe('compound registry', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
+  it('lists the same entries, in the same order, as the full catalog', () => {
+    expect(COMPOUNDS.map((c) => c.id)).toEqual(SUBSTANCE_DETAILS.map((c) => c.id))
+    expect(BLENDS.map((c) => c.id)).toEqual(BLEND_DETAILS.map((c) => c.id))
+  })
+
   it('every entry has both languages and the required fields', () => {
-    for (const c of WIKI_ENTRIES) {
+    for (const c of [...SUBSTANCE_DETAILS, ...BLEND_DETAILS]) {
       expect(c.summary.es.length, c.id).toBeGreaterThan(20)
       expect(c.summary.en.length, c.id).toBeGreaterThan(20)
       expect(c.mechanism.es.length, c.id).toBeGreaterThan(20)
@@ -75,8 +81,8 @@ describe('blend entries', () => {
   })
 
   it('declare at least two known, non-blend components with positive mg', () => {
-    expect(BLENDS.length).toBeGreaterThanOrEqual(3)
-    for (const b of BLENDS) {
+    expect(BLEND_DETAILS.length).toBeGreaterThanOrEqual(3)
+    for (const b of BLEND_DETAILS) {
       expect(b.blend, b.id).toBeDefined()
       const parts = b.blend!.components
       expect(parts.length, b.id).toBeGreaterThanOrEqual(2)
@@ -96,7 +102,7 @@ describe('blend entries', () => {
   })
 
   it('rate evidence as the weakest component and cite no combination trials', () => {
-    for (const b of BLENDS) {
+    for (const b of BLEND_DETAILS) {
       const tiers = b.blend!.components.map((p) => compoundById(p.compoundId)!.evidence)
       expect(b.evidence, b.id).toBe(weakestEvidence(tiers))
       expect(b.keyTrials, b.id).toEqual([])
@@ -140,7 +146,7 @@ describe('blend entries', () => {
 })
 
 describe('retatrutide consistency', () => {
-  const reta = compoundById('retatrutide')!
+  const reta = DETAILS_BY_ID.get('retatrutide')!
   const outlook = OUTLOOK.retatrutide
   const pct = (v: number, locale: 'es' | 'en') =>
     `−${Math.abs(v)

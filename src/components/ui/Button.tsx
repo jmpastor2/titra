@@ -26,8 +26,9 @@ const variants: Record<Variant, string> = {
     'bg-danger-soft text-danger border border-danger/30 active:scale-[0.98] disabled:opacity-60',
 }
 
+// Every size is at least a 44 px target: "sm" differs in type size and padding, not in height.
 const sizes: Record<Size, string> = {
-  sm: 'h-9 px-3.5 text-[13px] gap-1.5 rounded-full',
+  sm: 'h-11 px-4 text-[13px] gap-1.5 rounded-full',
   md: 'h-11 px-5 text-[15px] gap-2 rounded-full',
   lg: 'h-14 px-6 text-[16px] gap-2 rounded-full',
 }
@@ -51,7 +52,7 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={clsx(
-        'inline-flex select-none items-center justify-center font-semibold tracking-[-0.01em] outline-none transition-[transform,background-color,color,filter,border-color] duration-150 focus-visible:ring-2 focus-visible:ring-signal/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed',
+        'inline-flex select-none items-center justify-center whitespace-nowrap font-semibold tracking-[-0.01em] outline-none transition-[transform,background-color,color,filter,border-color] duration-150 focus-visible:ring-2 focus-visible:ring-signal/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed',
         variants[variant],
         sizes[size],
         block && 'w-full',

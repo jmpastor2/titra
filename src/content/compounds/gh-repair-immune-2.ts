@@ -1,4 +1,4 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * GH axis (GHRPs, somatropin, IGF-1 LR3, ibutamoren), tissue-repair and
@@ -15,7 +15,7 @@ import { t, type CompoundEntry } from '../schema'
 // GH AXIS
 // ---------------------------------------------------------------------------
 
-const ghrp2: CompoundEntry = {
+const ghrp2: CompoundDetail = {
   id: 'ghrp-2',
   names: {
     generic: 'GHRP-2',
@@ -179,7 +179,7 @@ const ghrp2: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const ghrp6: CompoundEntry = {
+const ghrp6: CompoundDetail = {
   id: 'ghrp-6',
   names: {
     generic: 'GHRP-6',
@@ -343,7 +343,7 @@ const ghrp6: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const hexarelin: CompoundEntry = {
+const hexarelin: CompoundDetail = {
   id: 'hexarelin',
   names: {
     generic: 'Hexarelina',
@@ -516,7 +516,7 @@ const hexarelin: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const somatropin: CompoundEntry = {
+const somatropin: CompoundDetail = {
   id: 'somatropin',
   names: {
     generic: 'Somatropina',
@@ -793,7 +793,7 @@ const somatropin: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const igf1Lr3: CompoundEntry = {
+const igf1Lr3: CompoundDetail = {
   id: 'igf-1-lr3',
   names: {
     generic: 'IGF-1 LR3',
@@ -939,7 +939,7 @@ const igf1Lr3: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const mk677: CompoundEntry = {
+const mk677: CompoundDetail = {
   id: 'mk-677',
   names: {
     generic: 'Ibutamoren',
@@ -1149,7 +1149,7 @@ const REPAIR_503A_NOTE_ES =
 const REPAIR_503A_NOTE_EN =
   'According to the published lists, around 2023–2024 FDA placed several peptides (BPC-157, thymosin β4 fragments/TB-500, injectable GHK-Cu, KPV, ipamorelin-type GHRPs, among others) in 503A bulk-substance Category 2 (“significant safety risks”), restricting lawful compounding.'
 
-const bpc157: CompoundEntry = {
+const bpc157: CompoundDetail = {
   id: 'bpc-157',
   names: {
     generic: 'BPC-157',
@@ -1288,7 +1288,7 @@ const bpc157: CompoundEntry = {
   lastReviewed: '2026-09-30',
 }
 
-const tb500: CompoundEntry = {
+const tb500: CompoundDetail = {
   id: 'tb-500',
   names: {
     generic: 'TB-500',
@@ -1430,7 +1430,7 @@ const tb500: CompoundEntry = {
   lastReviewed: '2026-09-30',
 }
 
-const ghkCu: CompoundEntry = {
+const ghkCu: CompoundDetail = {
   id: 'ghk-cu',
   names: {
     generic: 'GHK-Cu',
@@ -1574,7 +1574,7 @@ const ghkCu: CompoundEntry = {
   lastReviewed: '2026-09-30',
 }
 
-const kpv: CompoundEntry = {
+const kpv: CompoundDetail = {
   id: 'kpv',
   names: {
     generic: 'KPV',
@@ -1699,7 +1699,7 @@ const kpv: CompoundEntry = {
   lastReviewed: '2026-09-30',
 }
 
-const pentadecaArginate: CompoundEntry = {
+const pentadecaArginate: CompoundDetail = {
   id: 'pentadeca-arginate',
   names: {
     generic: 'Pentadeca-arginato',
@@ -1810,7 +1810,7 @@ const pentadecaArginate: CompoundEntry = {
 // IMMUNE
 // ---------------------------------------------------------------------------
 
-const thymosinAlpha1: CompoundEntry = {
+const thymosinAlpha1: CompoundDetail = {
   id: 'thymosin-alpha-1',
   names: {
     generic: 'Timosina alfa-1',
@@ -1987,7 +1987,7 @@ const thymosinAlpha1: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const ll37: CompoundEntry = {
+const ll37: CompoundDetail = {
   id: 'll-37',
   names: {
     generic: 'LL-37',
@@ -2151,7 +2151,7 @@ const ll37: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-const thymalin: CompoundEntry = {
+const thymalin: CompoundDetail = {
   id: 'thymalin',
   names: {
     generic: 'Timalina',
@@ -2282,7 +2282,7 @@ const thymalin: CompoundEntry = {
   lastReviewed: '2026-09-19',
 }
 
-export const GH_REPAIR_IMMUNE_2: CompoundEntry[] = [
+export const GH_REPAIR_IMMUNE_2: CompoundDetail[] = [
   ghrp2,
   ghrp6,
   hexarelin,

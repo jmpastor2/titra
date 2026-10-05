@@ -9,6 +9,7 @@ import { RouterProvider } from 'react-router-dom'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
 import { router } from '@/app/App'
+import { preloadCompoundDetails } from '@/content/compounds'
 import { ToastProvider } from '@/components/ui/Toast'
 import { FixedSessionProvider, type SessionState } from '@/features/auth/SessionProvider'
 import { createQueryClient } from '@/lib/queryClient'
@@ -51,6 +52,10 @@ beforeAll(() => {
     this.removeAttribute('open')
   }
 })
+
+// The wiki loads the long texts of an entry on demand (a lazy chunk the service worker precaches).
+// Load it up front so the wiki routes below render their whole page, translations included.
+beforeAll(() => preloadCompoundDetails())
 
 const missing: string[] = []
 const errors: string[] = []

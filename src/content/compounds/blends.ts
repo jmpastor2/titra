@@ -1,5 +1,4 @@
-import type { EvidenceTier } from '@/domain/types'
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * Premixed blend vials. They get a wiki page so the user can read what is in the vial,
@@ -11,24 +10,6 @@ import { t, type CompoundEntry } from '../schema'
  * insulin syringe (1 U = 0.01 mL); in-use stability is labelled as guidance, not data.
  */
 
-/** Strongest first. `withdrawn` sits below phase 1: it had human data but was pulled. */
-export const EVIDENCE_ORDER: readonly EvidenceTier[] = [
-  'fda_approved',
-  'phase3',
-  'phase2',
-  'phase1',
-  'withdrawn',
-  'preclinical',
-  'anecdotal',
-]
-
-export function weakestEvidence(tiers: readonly EvidenceTier[]): EvidenceTier {
-  return tiers.reduce<EvidenceTier>(
-    (worst, e) => (EVIDENCE_ORDER.indexOf(e) > EVIDENCE_ORDER.indexOf(worst) ? e : worst),
-    'fda_approved',
-  )
-}
-
 const IN_USE_ES =
   'Una vez reconstituido, habitualmente se indica usarlo en 28–30 días guardado en nevera (2–8 °C). Es orientación de fabricantes y de la comunidad: no hay datos de estabilidad publicados para la mezcla. El límite de 28 días viene de la norma USP <797> para viales multidosis abiertos, que se refiere a la esterilidad y no a la potencia del péptido.'
 const IN_USE_EN =
@@ -39,7 +20,7 @@ const NO_TRIALS_ES =
 const NO_TRIALS_EN =
   'No human trial has studied this combination. What is known about each component comes from separate studies; mixing them in one vial has not been evaluated for efficacy, safety or stability.'
 
-const cjcIpamorelin: CompoundEntry = {
+const cjcIpamorelin: CompoundDetail = {
   id: 'blend-cjc-ipamorelin',
   names: {
     generic: 'CJC-1295 + Ipamorelina (blend)',
@@ -197,7 +178,7 @@ const KLOW_GLOW_REG_ES =
 const KLOW_GLOW_REG_EN =
   'No component is approved for injection. FDA placed BPC-157, thymosin β4 fragments, injectable GHK-Cu and KPV in 503A bulk-substance Category 2, which bars lawful compounding in the US. BPC-157 (S0) and TB-500 (S2) are WADA prohibited. Sold as research chemicals; the trade name guarantees neither the composition nor the ratio.'
 
-const repairAdverse: CompoundEntry['adverseEffects'] = {
+const repairAdverse: CompoundDetail['adverseEffects'] = {
   common: [
     t(
       'Escozor o dolor al inyectar, sobre todo por el GHK-Cu (la solución es azul)',
@@ -274,7 +255,7 @@ const repairReferences = [
   { label: 'USP <797> — beyond-use date of opened multiple-dose containers (28 days)' },
 ]
 
-const klow: CompoundEntry = {
+const klow: CompoundDetail = {
   id: 'blend-klow',
   names: {
     generic: 'KLOW',
@@ -372,7 +353,7 @@ const klow: CompoundEntry = {
   },
 }
 
-const glow: CompoundEntry = {
+const glow: CompoundDetail = {
   id: 'blend-glow',
   names: {
     generic: 'GLOW',
@@ -453,4 +434,4 @@ const glow: CompoundEntry = {
   },
 }
 
-export const BLENDS: CompoundEntry[] = [cjcIpamorelin, klow, glow]
+export const BLENDS: CompoundDetail[] = [cjcIpamorelin, klow, glow]

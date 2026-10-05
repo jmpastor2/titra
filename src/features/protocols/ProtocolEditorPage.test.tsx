@@ -181,7 +181,7 @@ describe('ProtocolEditorPage · editing what already happened', () => {
     const { store, router } = open()
     await screen.findByText('Escalones')
     type(doses()[2]!, '15')
-    const offer = screen.getByLabelText(/Aplicar desde esta semana/)
+    const offer = screen.getByRole('switch', { name: /Aplicar desde esta semana/ })
     expect(offer).toBeChecked()
     expect(
       screen.getByText(/Las 2 semanas que ya pasaron se quedan con 12 U \(200 \+ 200 mcg\)/),
@@ -206,7 +206,7 @@ describe('ProtocolEditorPage · editing what already happened', () => {
     const { store } = open()
     await screen.findByText('Escalones')
     type(doses()[2]!, '15')
-    fireEvent.click(screen.getByLabelText(/Aplicar desde esta semana/))
+    fireEvent.click(screen.getByRole('switch', { name: /Aplicar desde esta semana/ }))
     expect(screen.getByText(/Se cambia todo el escalón/)).toBeInTheDocument()
     save()
     await waitFor(() => expect(steps(store.protocols[0])[2]?.doseMg).toBe(0.25))
@@ -218,7 +218,7 @@ describe('ProtocolEditorPage · editing what already happened', () => {
     await screen.findByText('Escalones')
     fireEvent.click(screen.getByRole('button', { name: 'Añadir escalón' }))
     type(doses()[3]!, '14')
-    expect(screen.queryByLabelText(/Aplicar desde esta semana/)).toBeNull()
+    expect(screen.queryByRole('switch', { name: /Aplicar desde esta semana/ })).toBeNull()
   })
 })
 

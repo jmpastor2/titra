@@ -18,7 +18,7 @@ import { useNow } from '@/lib/useNow'
 import { wellbeingBaseline } from './baseline'
 import { BaselineCard, CheckInNudge } from './BaselineCard'
 import { CHECKIN_STALE_DAYS, daySet, daysSinceLast } from './consistency'
-import { KIND_DIGITS, KIND_UNIT } from './kinds'
+import { KIND_DIGITS } from './kinds'
 import {
   changeSince,
   inWindow,
@@ -29,6 +29,8 @@ import {
   type TimePoint,
 } from './progress'
 import { ChangeValue, MonthTable, ProtocolStrip, type MonthRow } from './ProgressCharts'
+import { baselineChange } from './trend'
+import { useBodyUnits } from './units'
 
 /** Score changes smaller than this read as "no change". */
 const SCORE_THRESHOLD = 0.5
@@ -45,20 +47,27 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
   const { locale } = useLocale()
   const { patientId, readOnly } = usePatientScope()
   const measurements = useMeasurements(patientId, 365)
+  const units = useBodyUnits()
   const [open, setOpen] = useState(false)
   const now = useNow(5 * 60_000)
   const { window: win, lanes, since } = scope
 
+  // Body readings are converted to the person's unit here, scores are left as they are.
   const all = useMemo(() => {
     const m = new Map<MeasurementKind, TimePoint[]>()
     for (const row of measurements.data ?? []) {
-      if (!WELLBEING.includes(row.kind) && !BODY_SUMMARY.includes(row.kind)) continue
+      const body = BODY_SUMMARY.includes(row.kind)
+      if (!WELLBEING.includes(row.kind) && !body) continue
       const list = m.get(row.kind) ?? []
-      list.push({ at: new Date(row.measured_at), value: Number(row.value) })
+      const stored = Number(row.value)
+      list.push({
+        at: new Date(row.measured_at),
+        value: body ? units.show(row.kind, stored) : stored,
+      })
       m.set(row.kind, list)
     }
     return m
-  }, [measurements.data])
+  }, [measurements.data, units])
 
   // The first check-in ever is the baseline, whatever range is in view.
   const baseline = useMemo(() => wellbeingBaseline(all, WELLBEING), [all])
@@ -102,16 +111,18 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
   )
 
   const changes = useMemo(() => {
+    // Weight and waist read as in the summary: the latest reading against where the range starts.
     const body = BODY_SUMMARY.flatMap((kind) => {
-      const c = changeSince(inWindow(all.get(kind) ?? [], win), since)
-      return c
+      const c = baselineChange(all.get(kind) ?? [], since)
+      return c?.delta != null
         ? [
             {
               kind,
               delta: c.delta,
               digits: KIND_DIGITS[kind],
-              unit: KIND_UNIT[kind],
+              unit: units.unit(kind),
               threshold: 0.2,
+              trim: false,
             },
           ]
         : []
@@ -125,19 +136,22 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
               digits: 1,
               unit: undefined,
               threshold: SCORE_THRESHOLD,
+              trim: true,
             },
           ]
         : [],
     )
     return [...scores, ...body]
-  }, [all, series, win, since])
+  }, [all, series, since, units])
   const hasScores = series.length > 0
   const hasHistory = baseline.some((b) => b.delta !== null)
   const sinceLabel =
     scope.range === 'cycle' && scope.cycle
       ? t('charts.progress.sinceCycle', { date: fmtDate(since, locale, 'd MMM') })
       : t('charts.progress.sinceDate', { date: fmtDate(since, locale, 'd MMM') })
-  const checkInButton = !readOnly && (
+  // The nudge already carries the button: showing a second one under it is just noise.
+  const nudged = !readOnly && checkInAgo !== null && checkInAgo >= CHECKIN_STALE_DAYS
+  const checkInButton = !readOnly && !nudged && (
     <Button variant="soft" leading={<Gauge className="size-4" />} onClick={() => setOpen(true)}>
       {t('checkin.title')}
     </Button>
@@ -162,6 +176,7 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
                       digits={s.digits}
                       unit={s.unit}
                       threshold={s.threshold}
+                      trim={s.trim}
                     />
                   </li>
                 ))}
@@ -173,9 +188,7 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
         )}
       </Card>
 
-      {!readOnly && checkInAgo !== null && checkInAgo >= CHECKIN_STALE_DAYS && (
-        <CheckInNudge days={checkInAgo} onCheckIn={() => setOpen(true)} />
-      )}
+      {nudged && <CheckInNudge days={checkInAgo} onCheckIn={() => setOpen(true)} />}
       {baseline.length > 0 && <BaselineCard rows={baseline} />}
 
       {measurements.isPending ? (
@@ -221,6 +234,7 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
                         delta={s.change.delta}
                         digits={1}
                         threshold={SCORE_THRESHOLD}
+                        trim
                         className="text-[13px]"
                       />
                     )}

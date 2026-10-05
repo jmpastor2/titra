@@ -513,7 +513,12 @@
     "drawnAt": "Draw date",
     "outOfRange": "Out of range",
     "bp": "Blood pressure",
-    "unit": "Unit"
+    "unit": "Unit",
+    "removed": "{{what}} deleted",
+    "deleteAria": "Delete {{what}}, {{when}}",
+    "previous": "Previous: {{value}} · {{date}}",
+    "belowRange": "Below range",
+    "aboveRange": "Above range"
   },
   "lean": {
     "title": "Lean mass guard",
@@ -521,16 +526,20 @@
     "proteinTarget": "Protein target",
     "proteinHint": "{{gPerKg}} g/kg · adjustable in Settings",
     "proteinToday": "Protein today",
-    "sessionsWeek": "Resistance sessions (7 d)",
-    "sessionsTarget": "target ≥ {{n}}",
+    "sessionsWeek": "Strength sessions",
+    "sessionsTarget": "Target: {{n}} a week",
     "logProtein": "Log protein",
     "logSession": "Log resistance session",
     "rate": "Rate of loss",
     "rateOk": "Healthy pace",
-    "rateFast": "Fast pace (> 1%/week): watch lean mass",
+    "rateFast": "Fast pace",
     "rateGaining": "Weight trending up",
     "leanShare": "{{pct}} of weight lost was lean mass",
-    "needTwoWeights": "Log at least two weights to see the trend"
+    "needTwoWeights": "Log at least two weights to see the trend",
+    "proteinDone": "Target reached",
+    "proteinLeft": "{{n}} g to go",
+    "last7": "Last 7 days",
+    "rateFastHint": "More than 1% of your weight a week: keep an eye on lean mass."
   },
   "inventory": {
     "title": "Inventory",
@@ -836,7 +845,8 @@
     "blendDiluent": "Bacteriostatic water added",
     "blendUnits": "Units drawn",
     "blendPerDraw": "{{units}} U = {{ml}} mL. Always check your vial's label.",
-    "inBlends": "Also in these blends"
+    "inBlends": "Also in these blends",
+    "loadFailed": "Couldn't load this entry. Check your connection and try again."
   },
   "simulator": {
     "title": "Simulator",
@@ -944,8 +954,25 @@
     "signOut": "Sign out",
     "role": "Role",
     "syringe": "Your injection syringe",
-    "syringeHint": "The app draws this syringe, with the same marks. U-100: 1 U = 0.01 mL.",
-    "syringeAuto": "Auto"
+    "syringeHint": "The app draws this syringe with its own marks. U‑100: 1 U = 0.01 mL.",
+    "syringeAuto": "Auto",
+    "invalidNumber": "Check the number",
+    "updates": {
+      "title": "Version and updates",
+      "hint": "Titra checks for updates by itself; here you can check right now.",
+      "version": "Version",
+      "build": "build {{build}}",
+      "dev": "Development",
+      "check": "Check for updates",
+      "checking": "Checking…",
+      "upToDate": "You are up to date",
+      "checkedAt": "checked at {{time}}",
+      "available": "A new version is ready: apply it",
+      "apply": "Apply update",
+      "applying": "Applying…",
+      "unsupported": "There is no service worker here (dev server, private mode or an unsupported browser), so there is nothing to update.",
+      "error": "Could not check. Check your connection and try again."
+    }
   },
   "more": {
     "title": "More",
@@ -1052,7 +1079,9 @@
       "extra": "extra"
     },
     "afterMidnight": "☾ small hours",
-    "stock": "Stock"
+    "stock": "Stock",
+    "week": "Last 7 days",
+    "night": "small hours"
   },
   "setupLab": {
     "title": "Set up your lab",
@@ -1179,6 +1208,16 @@
       "title_other": "Your last check-in was {{count}} days ago",
       "body": "One minute is enough to see how each protocol suits you.",
       "action": "Check in"
+    },
+    "evolution": "Evolution",
+    "bodyView": {
+      "change": "Change",
+      "goal": "Goal",
+      "goalGap": "{{n}} from your goal",
+      "goalReached": "Goal reached",
+      "paceWindow": "last 4 weeks",
+      "records": "Readings",
+      "showingLast": "Showing the last {{count}}."
     }
   },
   "share": {
@@ -1421,7 +1460,7 @@
     }
   },
   "week": {
-    "eyebrow": "Planned vs taken",
+    "eyebrow": "Plan and doses",
     "thisWeek": "This week",
     "previous": "Previous week",
     "next": "Next week",
@@ -1442,7 +1481,7 @@
     "tapHint": "Tap a dose to edit or delete it.",
     "legend": {
       "onTime": "On time",
-      "late": "Late",
+      "late": "Off time",
       "missed": "Missed",
       "extra": "Extra",
       "upcoming": "Pending"
@@ -1473,7 +1512,7 @@
     "notedWait": "Meal noted: fast ready at {{at}}"
   },
   "outlook": {
-    "eyebrow": "Outlook",
+    "eyebrow": "Projection",
     "title": "Outlook",
     "horizon": {
       "months": "{{n}} months"
@@ -1530,7 +1569,15 @@
       "placebo": "Placebo",
       "you": "Your weigh-ins",
       "projection": "Your trend",
-      "observedOnly": "Dots are published data; lines only join them."
+      "observedOnly": "Dots are published data; lines only join them.",
+      "summaryYou": "Your latest weigh-in: {{pct}} since the start.",
+      "summaryProjection": "Your trend, drawn on as a straight line, would reach {{pct}} by week {{week}}: that is an extrapolation.",
+      "readout": {
+        "trial": "Trial · week {{week}}",
+        "placebo": "placebo {{pct}}",
+        "you": "Your weigh-in · week {{week}}",
+        "projection": "Your trend · week {{week}}"
+      }
     },
     "trial": {
       "open": "See the trial",
@@ -1555,7 +1602,8 @@
       "count_other": "{{count}} entries",
       "none": "None yet",
       "lab": "Lab test",
-      "note": "Notes"
+      "note": "Notes",
+      "since": "Entries since {{date}}"
     },
     "empty": {
       "title": "No active protocols",
@@ -1626,7 +1674,7 @@
       "resume": "On {{date}} the rest ends: {{dose}}",
       "end": "The cycle ends on {{date}}",
       "start": "Starts with {{dose}}",
-      "none": "No dose changes planned",
+      "none": "No changes planned",
       "ended": "Ended {{date}}"
     },
     "detail": {
@@ -1698,7 +1746,7 @@
       "weeks": "Length of the plan",
       "dose": "Today's dose"
     },
-    "hold": "Hold this week",
+    "hold": "Hold one more week",
     "holdRest": "Extend the rest by a week",
     "holdConfirm": "Hold one more week",
     "holdRestConfirm": "Extend by a week",
@@ -1780,7 +1828,7 @@
     "now": "Now",
     "decisionDue": "Step-up soon",
     "pausedNote": "On hold: adherence is not counted.",
-    "noChange": "Maintenance: no changes planned",
+    "noChange": "No changes planned",
     "noneCurrent": "No cycle is running right now.",
     "startsWith": "Starts {{date}} with {{dose}}",
     "when_zero": "today · {{date}}",
@@ -2045,7 +2093,7 @@
       "done": "Done today",
       "none": "Nothing today",
       "next": "Next: {{when}}",
-      "free": "Free dose",
+      "free": "One-off dose",
       "freeHint": "Log a dose"
     },
     "weight": {
@@ -2193,5 +2241,17 @@
       "left": "Vial: {{pct}} left"
     },
     "justNow": "just now"
+  },
+  "trend": {
+    "title": "Readings over time",
+    "aria_one": "{{count}} reading: {{last}} on {{to}}.",
+    "aria_other": "{{count}} readings from {{from}} to {{to}}. First {{first}}, latest {{last}}, lowest {{min}}, highest {{max}}.",
+    "ariaRange": "Reference range: {{low}} to {{high}}.",
+    "ariaRangeLow": "Reference range: from {{low}}.",
+    "ariaRangeHigh": "Reference range: up to {{high}}.",
+    "ariaTarget": "Target: {{target}}.",
+    "ariaSmooth": "Includes the trend line.",
+    "empty": "No readings in this range",
+    "target": "Target"
   }
 }

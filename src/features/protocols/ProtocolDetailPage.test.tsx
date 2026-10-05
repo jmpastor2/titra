@@ -118,7 +118,13 @@ describe('ProtocolDetailPage', () => {
     expect(within(vial).getByText('1 U = 16,7 mcg')).toBeInTheDocument()
     expect(screen.getByText('En ayunas.')).toBeInTheDocument()
 
-    for (const name of ['Mantener esta semana', 'Pausar', 'Duplicar', 'Archivar', 'Más acciones']) {
+    for (const name of [
+      'Mantener una semana más',
+      'Pausar',
+      'Duplicar',
+      'Archivar',
+      'Más acciones',
+    ]) {
       expect(screen.getAllByRole('button', { name: new RegExp(name) }).length).toBeGreaterThan(0)
     }
     fireEvent.click(screen.getByRole('button', { name: 'Editar pauta' }))
@@ -142,7 +148,7 @@ describe('ProtocolDetailPage', () => {
     open()
     expect(await screen.findByText('Ciclo terminado el dom 10 ene')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Ver ciclos/ })).toHaveAttribute('href', '/cycles')
-    expect(screen.queryByRole('button', { name: 'Mantener esta semana' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Mantener una semana más' })).toBeNull()
   })
 
   it('says so when the protocol does not exist', async () => {

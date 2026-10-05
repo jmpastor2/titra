@@ -63,7 +63,7 @@ describe('nextText', () => {
   })
 
   it('knows when nothing is planned or the plan is over', () => {
-    expect(say(RETA, '2026-11-30T10:00')).toBe('Sin cambios de dosis previstos')
+    expect(say(RETA, '2026-11-30T10:00')).toBe('Sin cambios previstos')
     expect(say(CJC, '2027-02-01T10:00')).toBe('Terminó el lun 11 ene')
   })
 })

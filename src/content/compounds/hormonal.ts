@@ -1,4 +1,4 @@
-import { t, type CompoundEntry } from '../schema'
+import { t, type CompoundDetail } from '../schema'
 
 /**
  * Hormonal axis agents: gonadotropins and GnRH analogues, posterior pituitary,
@@ -8,7 +8,7 @@ import { t, type CompoundEntry } from '../schema'
  * are labelled as such and kept out of `dosing.labeled`.
  */
 
-export const HORMONAL: CompoundEntry[] = [
+export const HORMONAL: CompoundDetail[] = [
   {
     id: 'hcg',
     names: {

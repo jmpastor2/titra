@@ -1,4 +1,4 @@
-import { t, type CompoundEntry, type L10n } from '../schema'
+import { t, type CompoundDetail, type L10n } from '../schema'
 
 /**
  * Cognitive (nootropic) and longevity compounds.
@@ -69,7 +69,7 @@ const STD_VIAL_RECON = (vialMg: number): L10n => {
   )
 }
 
-export const COGNITIVE_LONGEVITY: CompoundEntry[] = [
+export const COGNITIVE_LONGEVITY: CompoundDetail[] = [
   // ───────────────────────────── COGNITIVE ─────────────────────────────
   {
     id: 'semax',

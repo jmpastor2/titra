@@ -92,6 +92,7 @@ export function LevelCard({
   const amount = kind === 'curve' && x.nowMg !== null ? amountIn(x.nowMg, unit) : null
   const steady = x.progress ? fmtPercent(Math.min(x.progress.fraction, 1.5), locale) : null
   const next = nextLine(x.next, now)
+  const lastText = x.lastDose ? fmtAgo(x.lastDose.at, now, locale, t('levels.justNow')) : '—'
   const fill =
     vial && Number(vial.total_mg) > 0 ? Number(vial.remaining_mg) / Number(vial.total_mg) : 0
   const vialText = !vial
@@ -132,8 +133,8 @@ export function LevelCard({
               <span className="ml-1 text-[11px] font-medium text-muted">{amount.label}</span>
             </span>
           ) : (
-            <span className="text-[16px]">
-              {x.lastDose ? fmtAgo(x.lastDose.at, now, locale, t('levels.justNow')) : '—'}
+            <span className={clsx(lastText.length > 11 ? 'text-[14px]' : 'text-[16px]')}>
+              {lastText}
             </span>
           )}
         </div>

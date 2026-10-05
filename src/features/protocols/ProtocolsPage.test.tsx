@@ -51,7 +51,7 @@ describe('ProtocolsPage', () => {
   it('keeps this week after showing before and after, and undoes it', async () => {
     const { store } = open()
     await screen.findByText('Semana 2 de 12')
-    fireEvent.click(screen.getAllByRole('button', { name: 'Mantener esta semana' })[0]!)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Mantener una semana más' })[0]!)
 
     const sheet = await screen.findByRole('dialog')
     expect(
@@ -102,10 +102,10 @@ describe('ProtocolsPage', () => {
     })
     open({ protocols: [reta], inventory: [] })
     expect(await screen.findByText('Mantenimiento · semana 2')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Mantener esta semana' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Mantener una semana más' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     const menu = await screen.findByRole('dialog')
-    expect(within(menu).queryByText('Mantener esta semana')).toBeNull()
+    expect(within(menu).queryByText('Mantener una semana más')).toBeNull()
     expect(within(menu).getByText('Editar pauta')).toBeInTheDocument()
   })
 

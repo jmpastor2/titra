@@ -13,7 +13,7 @@ import { SubstanceDots } from './SubstanceDots'
 import { decisionDoses, decisionSentence, protocolTitle, whenText } from './text'
 
 /** Buttons that may carry a longer label than a pill is tall for: two lines are fine. */
-const WRAP = 'h-auto! min-h-11 px-3! py-1.5 text-[13.5px]! leading-tight'
+const WRAP = 'h-auto! min-h-11 whitespace-normal px-3! py-1.5 text-[13.5px]! leading-tight'
 
 /**
  * The decision about a change of dose: what changes and when, the person's own rule as a
