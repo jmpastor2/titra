@@ -22,6 +22,8 @@ export interface QuickTileProps {
   tone?: TileTone
   /** A small visual at the right of the reading (a sparkline). */
   trail?: ReactNode
+  /** Keep the trail at every width (a short label, unlike a chart). */
+  trailAlways?: boolean
   /** A thin gauge at the foot of the tile (the day's water, a fast running). */
   foot?: ReactNode
   /** The tile read out as one sentence. */
@@ -45,6 +47,7 @@ export function QuickTile({
   caption,
   tone = 'idle',
   trail,
+  trailAlways = false,
   foot,
   ariaLabel,
   onPress,
@@ -78,7 +81,11 @@ export function QuickTile({
               {value}
             </div>
             {/* A small chart only where the tile is wide enough to give the reading its room. */}
-            {trail && <div className="hidden shrink-0 @min-[330px]:block">{trail}</div>}
+            {trail && (
+              <div className={clsx('shrink-0', !trailAlways && 'hidden @min-[330px]:block')}>
+                {trail}
+              </div>
+            )}
           </div>
           {caption && (
             <div aria-hidden className="mt-1 break-words text-[12px] leading-snug text-muted">

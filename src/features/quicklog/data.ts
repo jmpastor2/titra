@@ -9,7 +9,7 @@ import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-quer
 import { startOfDay, subDays } from 'date-fns'
 import { useMemo } from 'react'
 import type { MeasurementKind, MeasurementRow } from '@/data/database.types'
-import { useAddMeasurement, useDeleteMeasurement } from '@/data/hooks'
+import { useAddMeasurement, useDeleteMeasurement, WINDOW_COUNTER_KINDS } from '@/data/hooks'
 import { WELLBEING } from '@/features/checkin/wellbeing'
 import { requireSupabase } from '@/lib/supabase'
 import { latestReading, ofKind, type LatestReading } from './readings'
@@ -164,6 +164,34 @@ function patchCache(
   )
 }
 
+/**
+ * Whether a cached list would hold a row of `kind`: each panel group holds its own kinds, a
+ * "last" list holds one kind, and the shared window leaves water and protein out unless it is
+ * the variant that asked for them. A new row goes only into those lists; added everywhere, a
+ * water tap was counted once per list (750 ml for a 250 ml tap) until the server answered.
+ */
+export function listHolds(queryKey: readonly unknown[], kind: MeasurementKind): boolean {
+  const [, , part, extra] = queryKey
+  if (part === 'quick') return GROUPS.find((g) => g.name === extra)?.kinds.includes(kind) ?? false
+  if (part === 'last') return extra === kind
+  if (typeof part === 'number')
+    return extra === 'counters' || !(WINDOW_COUNTER_KINDS as readonly string[]).includes(kind)
+  return false
+}
+
+function addToCache(qc: QueryClient, patientId: string, temps: readonly MeasurementRow[]) {
+  for (const kind of new Set(temps.map((t) => t.kind))) {
+    const mine = temps.filter((t) => t.kind === kind)
+    qc.setQueriesData<MeasurementRow[]>(
+      {
+        queryKey: scope(patientId),
+        predicate: (q) => listHolds(q.queryKey, kind),
+      },
+      (old) => (Array.isArray(old) ? [...mine, ...old].toSorted(byTimeDesc) : old),
+    )
+  }
+}
+
 const byTimeDesc = (a: MeasurementRow, b: MeasurementRow) =>
   Date.parse(b.measured_at) - Date.parse(a.measured_at)
 
@@ -193,7 +221,7 @@ export function useQuickWrites(patientId: string) {
         source: 'manual',
         created_at: stamp,
       }))
-      patchCache(qc, patientId, (rows) => [...temps, ...rows].toSorted(byTimeDesc))
+      addToCache(qc, patientId, temps)
       const saved = addAsync(
         temps.map((t) => ({
           patient_id: patientId,

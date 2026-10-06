@@ -178,6 +178,8 @@ function EditDoseForm({
 
   return (
     <Sheet
+      // Fixed height: what loads after it opens (vial, sites, syringe) must not move it.
+      tall
       open
       onClose={onClose}
       title={t('editDose.title')}

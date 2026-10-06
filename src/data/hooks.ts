@@ -335,7 +335,8 @@ export function useDeleteSymptom(patientId: string) {
 /* ------------------------------ Measurements ------------------------------ */
 
 /** One row per tap or meal: they would crowd out the readings that matter from a year of rows. */
-const COUNTER_KINDS = ['hydration_ml', 'protein_g'] as const
+/** Kinds the shared measurement window leaves out unless asked (see measurementsOptions). */
+export const WINDOW_COUNTER_KINDS = ['hydration_ml', 'protein_g'] as const
 
 /**
  * Measurements for the last `days`. Water and protein, which are logged many times a day, are
@@ -356,7 +357,7 @@ export const measurementsOptions = (patientId: string, days: number, counters = 
           .select('*')
           .eq('patient_id', patientId)
           .gte('measured_at', since)
-        return (counters ? query : query.not('kind', 'in', `(${COUNTER_KINDS.join(',')})`))
+        return (counters ? query : query.not('kind', 'in', `(${WINDOW_COUNTER_KINDS.join(',')})`))
           .order('measured_at', { ascending: false })
           .order('id')
           .range(from, to)

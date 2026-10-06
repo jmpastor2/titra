@@ -167,11 +167,11 @@ describe('body tiles', () => {
     const v = view('weight', { rows })
     expect(v).toMatchObject({
       value: { text: '77,0', unit: 'kg' },
-      caption: 'hace 2 días · −0,4',
+      caption: 'hace 2 días · −0,4 kg',
       tone: 'idle',
       visual: { kind: 'spark', values: [77.4, 77] },
     })
-    expect(v.aria).toBe('Peso. 77,0 kg. hace 2 días · −0,4')
+    expect(v.aria).toBe('Peso. 77,0 kg. hace 2 días · −0,4 kg')
   })
 
   it('highlights a stale reading and a first one invites', () => {
@@ -185,7 +185,7 @@ describe('body tiles', () => {
   it('is done once weighed today', () => {
     const v = view('weight', { rows: [row('weight', 76.8, '2026-10-05T08:00', 'kg'), ...rows] })
     expect(v.tone).toBe('done')
-    expect(v.caption).toBe('hoy · −0,2')
+    expect(v.caption).toBe('hoy · −0,2 kg')
   })
 
   it('shows the waist as stale only after a week', () => {
@@ -198,7 +198,7 @@ describe('body tiles', () => {
   it('speaks pounds and inches to an imperial user', () => {
     const v = view('weight', { rows, imperial: true })
     expect(v.value).toEqual({ text: '169,8', unit: 'lb' })
-    expect(v.caption).toBe('hace 2 días · −0,9')
+    expect(v.caption).toBe('hace 2 días · −0,9 lb')
     expect(view('waist', { rows, imperial: true }).value).toEqual({ text: '35,8', unit: 'in' })
   })
 })
@@ -356,7 +356,7 @@ describe('in English, and in one line', () => {
     ]
     expect(view('weight', { rows, lang: 'en' })).toMatchObject({
       label: 'Weight',
-      caption: '2 days ago · −0.4',
+      caption: '2 days ago · −0.4 kg',
       value: { text: '77.0', unit: 'kg' },
     })
     expect(view('water', { lang: 'en' }).caption).toBe('2.5\u00A0L to go')
@@ -373,7 +373,7 @@ describe('in English, and in one line', () => {
       row('weight', 77.4, '2026-10-01T08:00', 'kg'),
       row('weight', 77, '2026-10-03T08:00', 'kg'),
     ]
-    expect(summaryOf(view('weight', { rows }))).toBe('77,0 kg · hace 2 días · −0,4')
+    expect(summaryOf(view('weight', { rows }))).toBe('77,0 kg · hace 2 días · −0,4 kg')
     expect(summaryOf(view('symptom'))).toBe('Sin síntomas · Anota cómo te sientes')
   })
 })

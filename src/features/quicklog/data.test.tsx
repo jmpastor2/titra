@@ -72,8 +72,8 @@ function setup(mode: 'fine' | 'refuse' | 'slow' = 'fine') {
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   )
   const { result, rerender } = renderHook(() => useQuickWrites(PID), { wrapper })
-  // A list the screen already holds, as Progress or the panel would.
-  const key = ['measurements', PID, 365] as const
+  // A list the screen already holds: the panel's counters (water lives there).
+  const key = ['measurements', PID, 'quick', 'counters'] as const
   qc.setQueryData<MeasurementRow[]>(key, [])
   const cached = () => qc.getQueryData<MeasurementRow[]>(key) ?? []
   return { store, qc, writes: result, rerender, hold, cached }
@@ -161,6 +161,32 @@ describe('useQuickWrites', () => {
     })
     expect(cached().map((r) => r.value)).toEqual([500])
     expect(store.measurements.map((m) => m.value)).toEqual([500])
+  })
+
+  it('adds a new row only to the lists that hold its kind, so a tap counts once', async () => {
+    const { writes, qc, cached } = setup('slow')
+    const body = ['measurements', PID, 'quick', 'body'] as const
+    const checkIns = ['measurements', PID, 'quick', 'wellbeing'] as const
+    const window = ['measurements', PID, 400] as const
+    const windowAll = ['measurements', PID, 400, 'counters'] as const
+    const lastWater = ['measurements', PID, 'last', 'hydration_ml'] as const
+    const lastWeight = ['measurements', PID, 'last', 'weight'] as const
+    for (const k of [body, checkIns, window, windowAll, lastWater, lastWeight])
+      qc.setQueryData<MeasurementRow[]>(k, [])
+    await act(async () => {
+      await writes.current.addMany([WATER])
+    })
+    const len = (k: readonly unknown[]) => qc.getQueryData<MeasurementRow[]>(k)?.length
+    expect(cached()).toHaveLength(1)
+    expect([body, checkIns, window, lastWeight].map(len)).toEqual([0, 0, 0, 0])
+    expect([windowAll, lastWater].map(len)).toEqual([1, 1])
+    // A weight goes to the body readings, its own last list and the shared window.
+    await act(async () => {
+      await writes.current.addMany([{ kind: 'weight', value: 77, unit: 'kg' }])
+    })
+    expect([body, window, lastWeight].map(len)).toEqual([1, 1, 1])
+    expect(cached()).toHaveLength(1)
+    qc.clear()
   })
 
   it('hands back the same object on every render, so effects and memos can rely on it', () => {

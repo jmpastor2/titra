@@ -382,3 +382,9 @@
     font-size: 16px;
   }
 }
+
+/* Inside a sheet the content arrives with the sheet: a card that also rose 6 px on its own
+   made the sheet look as if it jumped once it had landed. */
+dialog .fade-up {
+  animation: none;
+}

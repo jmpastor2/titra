@@ -28,7 +28,7 @@ import type { LatestReading } from './readings'
 import { changeBetween, stepSpec, toDisplay } from './stepper'
 import { agoLabel, fmtFixed } from './text'
 import { STRENGTH_WEEKLY_TARGET, type Tier, type TileId, type TileTone } from './tiles'
-import { fmtVolume, splitVolume } from './water'
+import { fmtVolume, splitVolume, WATER_ADDS } from './water'
 
 export type TileVisual =
   /** How far toward the day's goal, 0 to 1 (more is drawn full). */
@@ -51,6 +51,8 @@ export interface TileView {
   dot: boolean
   /** The whole tile read out, with what a tap does when it is not obvious. */
   aria: string
+  /** What one tap adds, shown on the tile ("+250 ml") so the tap is never a surprise. */
+  tap?: string
   visual?: TileVisual
 }
 
@@ -84,6 +86,7 @@ function build(
     visual?: TileVisual
     /** What a tap does, when the label does not say it. */
     hint?: string
+    tap?: string
   },
 ): TileView {
   const tier = ctx.tiers.get(id) ?? 1
@@ -100,6 +103,7 @@ function build(
     dot: tone === 'attention',
     aria: [label, reading, parts.caption, parts.hint].filter(Boolean).join('. '),
     ...(parts.visual ? { visual: parts.visual } : {}),
+    ...(parts.tap ? { tap: parts.tap } : {}),
   }
 }
 
@@ -164,6 +168,7 @@ function waterView(ctx: TileContext): TileView {
       ? t('quick.water.tileDone')
       : t('quick.counter.left', { amount: nbsp(fmtVolume(goalMl - total, locale)) }),
     visual: { kind: 'gauge', fraction: total / goalMl, done: reached },
+    tap: `+${nbsp(fmtVolume(WATER_ADDS[0] ?? 250, locale))}`,
     hint: t('quick.water.tileHint', {
       goal: fmtVolume(goalMl, locale),
       amount: fmtVolume(250, locale),
@@ -193,7 +198,10 @@ function bodyView(
     : 0
   const caption = [
     agoLabel(t, reading.at, now),
-    delta !== 0 ? fmtSigned(delta, locale, spec.digits) : null,
+    // The change carries its unit: "−0,4" alone could be anything.
+    delta !== 0
+      ? nbsp(`${fmtSigned(delta, locale, spec.digits)} ${displayUnit(id, data.imperial)}`)
+      : null,
   ]
     .filter(Boolean)
     .join(' · ')

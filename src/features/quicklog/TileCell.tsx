@@ -47,8 +47,14 @@ export function TileCell({
       ariaLabel={view.aria}
       onPress={onPress}
       corner={corner}
+      trailAlways={Boolean(view.tap)}
       trail={
-        visual?.kind === 'spark' ? (
+        view.tap ? (
+          // What a tap adds, as a small pill: the tile is a button that logs, not a link.
+          <span className="readout rounded-full bg-signal-soft px-2 py-0.5 text-[12px] font-semibold text-signal">
+            {view.tap}
+          </span>
+        ) : visual?.kind === 'spark' ? (
           <div className="w-[46px]">
             <Spark values={visual.values} height={26} area={false} />
           </div>

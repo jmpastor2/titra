@@ -23,21 +23,28 @@ interface Viewport {
 }
 
 /**
- * The part of the screen that is really visible. On iOS the layout viewport does not shrink
- * when the keyboard opens, so a sheet sized to it ends up half behind the keyboard with its
- * footer floating over the fields; following the visual viewport keeps it above the keyboard.
+ * The part of the screen left above the on-screen keyboard, or null while there is none. On
+ * iOS the layout viewport does not shrink when the keyboard opens, so a sheet sized to it ends
+ * up half behind the keyboard; following the visual viewport keeps it above. Only then: with
+ * no keyboard the sheet keeps its plain CSS layout, so opening it never moves it a second time.
  */
-function useVisualViewport(active: boolean): Viewport | null {
+function useKeyboardViewport(active: boolean): Viewport | null {
   const [vp, setVp] = useState<Viewport | null>(null)
   useEffect(() => {
     const v = typeof window === 'undefined' ? undefined : window.visualViewport
     if (!active || !v) return
-    const read = () =>
-      setVp({
-        height: Math.round(v.height),
-        top: Math.round(v.offsetTop),
-        keyboard: window.innerHeight - v.height > 120,
-      })
+    const read = () => {
+      const keyboard = window.innerHeight - v.height > 120
+      const height = Math.round(v.height)
+      const top = Math.round(v.offsetTop)
+      setVp((prev) =>
+        !keyboard
+          ? null
+          : prev && prev.height === height && prev.top === top
+            ? prev
+            : { height, top, keyboard },
+      )
+    }
     read()
     v.addEventListener('resize', read)
     v.addEventListener('scroll', read)
@@ -57,7 +64,7 @@ function useVisualViewport(active: boolean): Viewport | null {
 export function Sheet({ open, onClose, title, description, children, footer, tall }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const { t } = useTranslation()
-  const vp = useVisualViewport(open)
+  const vp = useKeyboardViewport(open)
 
   useEffect(() => {
     const el = ref.current
