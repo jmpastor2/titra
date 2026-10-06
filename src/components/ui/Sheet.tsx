@@ -97,13 +97,14 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
   // Two frames after opening: the off-screen position has been drawn, so the change to the
   // resting one is a transition. Its own effect, so a re-run (Strict Mode) schedules it again.
   useEffect(() => {
-    if (!open) {
-      setEntered(false)
-      return
-    }
+    if (!open) return
+    // Without frames (tests, old engines) it simply shows.
     if (typeof requestAnimationFrame !== 'function') {
-      setEntered(true)
-      return
+      const timer = setTimeout(() => setEntered(true), 0)
+      return () => {
+        clearTimeout(timer)
+        setEntered(false)
+      }
     }
     let second = 0
     const first = requestAnimationFrame(() => {
@@ -112,6 +113,8 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
     return () => {
       cancelAnimationFrame(first)
       cancelAnimationFrame(second)
+      // Closed: the next opening starts off screen again.
+      setEntered(false)
     }
   }, [open])
 
