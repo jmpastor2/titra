@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { Pause, Plus } from 'lucide-react'
+import { Copy, Pause, Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -8,7 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Field, Input, Select, Textarea } from '@/components/ui/Field'
-import { Skeleton, ToggleRow } from '@/components/ui/primitives'
+import { Skeleton } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { compoundById } from '@/content/compounds'
 import { PROTOCOL_TEMPLATES, templateById } from '@/content/protocols/templates'
@@ -29,6 +29,7 @@ import { isBlend, activeVial, concentrationFor } from '@/features/inventory/vial
 import { fmtHours, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
+import { Caution } from './Caution'
 import { useCycleText } from './cycleText'
 import { doseView, fmtDoseLine } from './cycleView'
 import { EntryNote, EntryToggle } from './DoseField'
@@ -53,6 +54,7 @@ import { ScheduleCard } from './ScheduleCard'
 import { StepRow } from './StepRow'
 import { SubstancesCard } from './SubstancesCard'
 import { SubstancePicker } from './SubstancePicker'
+import { SwitchRow } from './SwitchRow'
 import { TitrationLadder, type LadderDisplay } from './TitrationLadder'
 import { UnsavedSheet } from './UnsavedSheet'
 import { useUnsavedGuard } from './useUnsavedGuard'
@@ -383,8 +385,9 @@ function ProtocolForm({
         )}
 
         {source.kind === 'copy' && (
-          <p className="rounded-control border border-line bg-panel-2 px-3.5 py-3 text-[13px] leading-snug text-ink-2">
-            {t('protocols.copyHint', { name: source.row.name })}
+          <p className="flex items-start gap-2 px-1 text-[13px] leading-snug text-ink-2">
+            <Copy aria-hidden className="mt-0.5 size-3.5 shrink-0 text-muted" />
+            <span className="min-w-0">{t('protocols.copyHint', { name: source.row.name })}</span>
           </p>
         )}
 
@@ -429,7 +432,7 @@ function ProtocolForm({
               />
             </div>
           )}
-          <ul className="flex flex-col gap-2.5">
+          <ul className="flex flex-col divide-y divide-line">
             {draft.steps.map((s, i) => {
               const step = rowOf(s.key)
               const mg = step && !step.pause ? step.doseMg : null
@@ -470,14 +473,11 @@ function ProtocolForm({
             })}
           </ul>
           {model.past.removed > 0 && (
-            <p
-              role="status"
-              className="mt-2.5 rounded-control border border-warn/30 bg-warn-soft px-3 py-2 text-[12.5px] leading-snug text-ink-2"
-            >
+            <Caution role="status" className="mt-2">
               {t('protocols.past.weeks')}
-            </p>
+            </Caution>
           )}
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-4">
             <Button
               size="md"
               variant="soft"
@@ -521,8 +521,10 @@ function ProtocolForm({
             </p>
           )}
           {model.steps.length > 1 && !model.openEndedInMiddle && model.plan && (
-            <div className="mt-4 rounded-control border border-line bg-panel-2 p-3">
-              <div className="spec mb-2">{t('protocols.ladderPreview')}</div>
+            <div className="mt-5 border-t border-line pt-4">
+              <div className="mb-2.5 text-[13px] font-medium text-ink-2">
+                {t('protocols.ladderPreview')}
+              </div>
               <TitrationLadder
                 protocol={model.plan}
                 unit={native}
@@ -612,7 +614,8 @@ function ProtocolForm({
                 />
               )}
             </Field>
-            <ToggleRow
+            <SwitchRow
+              className="border-t border-line pt-3"
               checked={draft.saveAsTemplate}
               onChange={(saveAsTemplate) => patch({ saveAsTemplate })}
               label={t('protocols.saveAsTemplate')}

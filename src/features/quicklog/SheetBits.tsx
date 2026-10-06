@@ -1,16 +1,21 @@
 import { clsx } from 'clsx'
 import { ArrowDown, ArrowUp, Equal } from 'lucide-react'
-import type { ReactNode } from 'react'
+import type { MouseEvent, ReactNode, Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fmtNumber, type Locale } from '@/lib/format'
 
-/** A big one-tap amount ("+250 ml"): tapping it is the whole action. */
+/**
+ * A one-tap amount as a soft pill: "+250 ml" adds at once (`tone="signal"`), "45 min" puts a
+ * value in the field (`active` while it is the value there). No border: it is a control, not
+ * a box.
+ */
 export function AmountChip({
   amount,
   unit,
   label,
   onPress,
   tone = 'default',
+  active,
 }: {
   amount: number | string
   unit: string
@@ -18,30 +23,33 @@ export function AmountChip({
   label: string
   onPress: () => void
   tone?: 'default' | 'signal'
+  /** The value it stands for is the one in the field. */
+  active?: boolean
 }) {
   return (
     <button
       type="button"
       aria-label={label}
+      aria-pressed={active}
       onClick={onPress}
       className={clsx(
-        'flex h-14 min-w-0 flex-1 touch-manipulation select-none flex-col items-center justify-center rounded-control border outline-none transition active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-signal/60',
-        tone === 'signal'
-          ? 'border-signal/40 bg-signal-soft text-signal'
-          : 'border-line-strong bg-panel-2 text-ink active:bg-panel-3',
+        'grid h-12 min-w-0 flex-1 touch-manipulation select-none place-items-center rounded-full px-2 outline-none transition active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-signal/60',
+        tone === 'signal' || active
+          ? 'bg-signal-soft text-signal'
+          : 'bg-panel-2 text-ink active:bg-panel-3',
       )}
     >
-      <span aria-hidden className="readout text-[19px] font-semibold leading-none">
-        {typeof amount === 'number' ? `+${amount}` : amount}
-      </span>
-      <span aria-hidden className="mt-1 text-[11px] font-medium leading-none text-muted">
-        {unit}
+      <span aria-hidden className="flex items-baseline gap-1 whitespace-nowrap">
+        <span className="readout text-[18px] font-semibold">
+          {typeof amount === 'number' ? `+${amount}` : amount}
+        </span>
+        <span className="text-[13px] font-medium opacity-75">{unit}</span>
       </span>
     </button>
   )
 }
 
-/** Silkscreen heading of a block inside a sheet. */
+/** The quiet, sentence-case heading of a block inside a sheet, with an optional aside. */
 export function BlockLabel({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-2 flex min-h-5 items-center justify-between gap-3">
@@ -53,19 +61,22 @@ export function BlockLabel({ children, action }: { children: ReactNode; action?:
 
 /**
  * The change against the last reading, in plain numbers and a neutral colour: a drop in
- * weight is not good news for everyone, so no red or green here.
+ * weight is not good news for everyone, so no red or green here. `bare` drops the soft pill
+ * for a row that is already tight.
  */
 export function DeltaChip({
   delta,
   digits,
   unit,
   locale,
+  bare = false,
   className,
 }: {
   delta: number
   digits: number
   unit: string
   locale: Locale
+  bare?: boolean
   className?: string
 }) {
   const { t } = useTranslation()
@@ -74,11 +85,12 @@ export function DeltaChip({
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1 rounded-full border border-line bg-panel-2 px-2.5 py-1 text-[12.5px] font-semibold text-ink-2',
+        'inline-flex items-center gap-1 font-semibold text-ink-2',
+        bare ? 'text-[12.5px]' : 'rounded-full bg-panel-2 px-2.5 py-1 text-[12.5px]',
         className,
       )}
     >
-      <Icon className="size-3.5" aria-hidden />
+      <Icon className="size-3.5 shrink-0" aria-hidden />
       {delta === 0 ? (
         t('measure.same')
       ) : (
@@ -105,11 +117,7 @@ export function Choice<T extends string>({
   label: string
 }) {
   return (
-    <div
-      role="radiogroup"
-      aria-label={label}
-      className="flex rounded-full border border-line bg-panel-2 p-0.5"
-    >
+    <div role="radiogroup" aria-label={label} className="flex rounded-full bg-panel-2 p-0.5">
       {options.map((o) => {
         const active = o.value === value
         return (
@@ -131,5 +139,38 @@ export function Choice<T extends string>({
         )
       })}
     </div>
+  )
+}
+
+/** A choice chip ("Náuseas", "HbA1c"): a pill that lights in iris when it is the one picked. */
+export function PickChip({
+  active,
+  onPress,
+  children,
+  role,
+  ref,
+}: {
+  active: boolean
+  onPress: (e: MouseEvent<HTMLButtonElement>) => void
+  children: ReactNode
+  /** "radio" inside a radiogroup; a toggle button otherwise. */
+  role?: 'radio'
+  ref?: Ref<HTMLButtonElement>
+}) {
+  return (
+    <button
+      ref={ref}
+      type="button"
+      role={role}
+      aria-checked={role === 'radio' ? active : undefined}
+      aria-pressed={role === 'radio' ? undefined : active}
+      onClick={onPress}
+      className={clsx(
+        'h-11 shrink-0 touch-manipulation whitespace-nowrap rounded-full px-4 text-[14px] outline-none transition active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-signal/60',
+        active ? 'bg-signal-soft font-semibold text-signal' : 'bg-panel-2 text-ink-2',
+      )}
+    >
+      {children}
+    </button>
   )
 }

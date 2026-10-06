@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
-import { Field, Input } from '@/components/ui/Field'
 import { Switch } from '@/components/ui/primitives'
+import { DateRow } from './DateRow'
 import { ReconstitutionResult } from './ReconstitutionResult'
 import type { WaterEntry } from './useWaterEntry'
 import { WaterField } from './WaterField'
@@ -46,24 +46,19 @@ export function ReconstitutionFields({
         <Switch checked={on} onChange={onToggle} label={t('inventory.alreadyReconstituted')} />
       </label>
       {on && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           <WaterField
             value={entry.water}
             onChange={entry.setWater}
             contentMg={contentMg}
             issues={entry.issues}
           />
-          <Field label={t('inventory.reconstitutedAt')}>
-            {(id) => (
-              <Input
-                id={id}
-                type="date"
-                value={date}
-                max={max}
-                onChange={(e) => onDate(e.target.value)}
-              />
-            )}
-          </Field>
+          <DateRow
+            label={t('inventory.reconstitutedAt')}
+            value={date}
+            max={max}
+            onChange={onDate}
+          />
           <ReconstitutionResult preview={entry.preview} waterMl={entry.waterMl} discard={discard} />
         </div>
       )}

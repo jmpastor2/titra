@@ -64,7 +64,7 @@ function Picker({
 
   return (
     <Sheet open onClose={onClose} title={t('picker.title')} tall>
-      <div className="flex flex-col gap-3 pb-2">
+      <div className="flex flex-col gap-4 pb-2 pt-1">
         <div className="relative">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
           <input
@@ -95,22 +95,24 @@ function Picker({
         </div>
 
         {mine.length > 0 && !query && category === 'all' && (
-          <div>
-            <div className="spec mb-2">{t('picker.mine')}</div>
-            <div className="flex flex-wrap gap-2">
+          <section className="flex flex-col gap-1">
+            <h3 className="text-[13px] font-medium text-ink-2">{t('picker.mine')}</h3>
+            <div className="flex flex-wrap gap-x-2">
               {mine.map((id) => (
                 <button
                   key={id}
                   type="button"
                   onClick={() => onPick(id)}
-                  className="inline-flex items-center gap-2 rounded-full border border-line-strong bg-panel-2 px-3 py-2 text-[13.5px] font-semibold"
+                  className="group inline-flex min-h-11 items-center outline-none"
                 >
-                  <SubstanceDot color={compoundColor(id)} />
-                  {compoundById(id)?.names.generic}
+                  <span className="inline-flex items-center gap-2 rounded-full border border-line-strong px-3.5 py-2 text-[13.5px] font-semibold transition group-active:bg-panel-2 group-focus-visible:ring-2 group-focus-visible:ring-signal/60">
+                    <SubstanceDot color={compoundColor(id)} />
+                    {compoundById(id)?.names.generic}
+                  </span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         <ul className="divide-y divide-line">
@@ -119,7 +121,7 @@ function Picker({
               <button
                 type="button"
                 onClick={() => onPick(c.id)}
-                className="flex w-full items-center gap-3 py-3 text-left active:opacity-70"
+                className="flex min-h-[60px] w-full items-center gap-3 py-3 text-left outline-none active:opacity-60 focus-visible:ring-2 focus-visible:ring-signal/60"
               >
                 <SubstanceDot color={categoryColor(c.category)} size={10} />
                 <span className="min-w-0 flex-1">
@@ -131,7 +133,9 @@ function Picker({
                     {pick(c.pharmClass)}
                   </span>
                 </span>
-                <span className="spec shrink-0">{t(`units.${c.defaultUnit}`)}</span>
+                <span className="readout shrink-0 text-[12.5px] text-muted">
+                  {t(`units.${c.defaultUnit}`)}
+                </span>
               </button>
             </li>
           ))}

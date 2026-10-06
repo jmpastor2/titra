@@ -22,7 +22,9 @@ import {
   type EditLine,
   type EditedLine,
 } from './doseLines'
+import { SheetSection } from './SheetSection'
 import { SlotPicker } from './SlotPicker'
+import { TextButton } from './TextButton'
 import { useSlotAssignment } from './useSlotAssignment'
 
 export interface EditDoseSheetProps {
@@ -196,65 +198,62 @@ function EditDoseForm({
         </Button>
       }
     >
-      <div className="flex flex-col gap-4 py-1">
-        <Field label={t('doses.when')}>
-          {() => (
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="date"
-                aria-label={t('common.date')}
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-              <Input
-                type="time"
-                aria-label={t('common.time')}
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-              />
-            </div>
-          )}
-        </Field>
+      <div className="flex flex-col gap-6 pb-2 pt-1">
+        <SheetSection label={t('doses.when')}>
+          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-2">
+            <Input
+              type="date"
+              aria-label={t('common.date')}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+            <Input
+              type="time"
+              aria-label={t('common.time')}
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+            />
+          </div>
+        </SheetSection>
 
         {slot && <SlotPicker assignment={slot} />}
 
-        <div className="flex flex-col gap-2.5">
-          <span className="spec">
-            {lines.length > 1 ? t('doses.sameSyringe') : t('doses.substance')}
-          </span>
-          {lines.map((l) => {
-            const members = editedMembers(l, vials)
-            return (
-              <DoseLine
-                key={l.key}
-                line={l}
-                vials={vialOptions(l)}
-                locale={locale}
-                onChange={(p) =>
-                  setLines((ls) => ls.map((x) => (x.key === l.key ? { ...x, ...p } : x)))
-                }
-                partnerDoses={l.partnerRows.map((row, i) => ({
-                  compoundId: row.compound_id,
-                  mg: members?.[i + 1]?.mg ?? null,
-                }))}
-                credit={{ inventoryId: l.initial.inventoryId, mg: Number(l.hostRow.dose_mg) }}
-              />
-            )
-          })}
-        </div>
+        <SheetSection label={lines.length > 1 ? t('doses.sameSyringe') : t('doses.dose')}>
+          <div className="flex flex-col divide-y divide-line">
+            {lines.map((l) => {
+              const members = editedMembers(l, vials)
+              return (
+                <div key={l.key} className="py-3 first:pt-0 last:pb-0">
+                  <DoseLine
+                    line={l}
+                    vials={vialOptions(l)}
+                    locale={locale}
+                    named={lines.length > 1}
+                    onChange={(p) =>
+                      setLines((ls) => ls.map((x) => (x.key === l.key ? { ...x, ...p } : x)))
+                    }
+                    partnerDoses={l.partnerRows.map((row, i) => ({
+                      compoundId: row.compound_id,
+                      mg: members?.[i + 1]?.mg ?? null,
+                    }))}
+                    credit={{ inventoryId: l.initial.inventoryId, mg: Number(l.hostRow.dose_mg) }}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </SheetSection>
 
         {injectable && (
-          <Field label={t('doses.site')}>
-            {() => (
-              <SitePicker
-                value={siteId}
-                onChange={setSiteId}
-                history={sites}
-                now={doseAt}
-                compoundId={rows[0]?.compound_id}
-              />
-            )}
-          </Field>
+          <SheetSection label={t('doses.site')}>
+            <SitePicker
+              value={siteId}
+              onChange={setSiteId}
+              history={sites}
+              now={doseAt}
+              compoundId={rows[0]?.compound_id}
+            />
+          </SheetSection>
         )}
 
         <Field label={`${t('common.notes')} · ${t('common.optional')}`}>
@@ -264,14 +263,14 @@ function EditDoseForm({
         </Field>
 
         {onDelete && (
-          <Button
-            variant="ghost"
-            className="self-start text-danger hover:text-danger"
-            leading={<Trash2 className="size-4" />}
+          <TextButton
+            tone="danger"
+            className="-ml-3 -mt-2 self-start"
+            icon={<Trash2 aria-hidden className="size-4" />}
             onClick={() => onDelete(administration)}
           >
             {t('editDose.delete')}
-          </Button>
+          </TextButton>
         )}
       </div>
     </Sheet>

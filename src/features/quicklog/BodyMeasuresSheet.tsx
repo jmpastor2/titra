@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { Button } from '@/components/ui/Button'
 import { Sheet } from '@/components/ui/Sheet'
-import { Skeleton } from '@/components/ui/primitives'
 import type { MeasurementKind } from '@/data/database.types'
 import { displayUnit, KIND_UNIT } from '@/features/health/kinds'
 import { useLocale } from '@/lib/useLocale'
@@ -12,7 +11,7 @@ import { NumberStepper } from './NumberStepper'
 import { latestReading } from './readings'
 import { DeltaChip } from './SheetBits'
 import { deltaFrom, inRange, stepSpec, toDisplay, toStored } from './stepper'
-import { agoLabel, fmtFixed } from './text'
+import { agoLabel } from './text'
 import { useQuickSave } from './useQuickSave'
 
 /** The body circumferences, in the order they are usually taken. */
@@ -27,7 +26,9 @@ type Girth = (typeof GIRTH_KINDS)[number]
 
 /**
  * All the tape measurements in one go: each row starts from the last reading, only the
- * ones you change are saved, and they go in with a single tap.
+ * ones you change are saved, and they go in with a single tap. The rows are drawn at once
+ * and fill in when the readings arrive, each with room kept for its line under the name, so
+ * nothing moves while the sheet loads or a value changes.
  */
 export function BodyMeasuresSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
@@ -75,6 +76,7 @@ export function BodyMeasuresSheet({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       title={t('bodyMeasures.title')}
       description={t('bodyMeasures.intro')}
+      tall
       footer={
         <Button block size="lg" disabled={!canSave} onClick={save}>
           {touched.length > 0
@@ -83,63 +85,55 @@ export function BodyMeasuresSheet({ onClose }: { onClose: () => void }) {
         </Button>
       }
     >
-      {pending ? (
-        <div className="flex flex-col gap-3 py-2">
-          {GIRTH_KINDS.map((k) => (
-            <Skeleton key={k} className="h-[68px] w-full" />
-          ))}
-        </div>
-      ) : (
-        <ul className="divide-y divide-line">
-          {lines.map((l) => {
-            const unit = displayUnit(l.kind, imperial)
-            const delta =
-              l.touched && l.value !== null && l.lastShown !== null && !l.invalid
-                ? deltaFrom(l.value, l.lastShown, l.spec.digits)
-                : null
-            return (
-              <li key={l.kind} className="flex items-center gap-3 py-3">
-                <div className="w-[92px] shrink-0">
-                  <div className="text-[14.5px] font-semibold">{t(`health.kinds.${l.kind}`)}</div>
-                  <div className="mt-0.5 text-[11.5px] leading-tight text-muted">
-                    {delta !== null ? (
-                      <DeltaChip
-                        delta={delta}
-                        digits={l.spec.digits}
-                        unit={unit}
-                        locale={locale}
-                        className="px-2 py-0.5 text-[11.5px]"
-                      />
-                    ) : l.last && l.lastShown !== null ? (
-                      <>
-                        {t('bodyMeasures.last', {
-                          value: fmtFixed(l.lastShown, locale, l.spec.digits),
-                        })}
-                        {' · '}
-                        {agoLabel(t, l.last.at, now)}
-                      </>
-                    ) : (
-                      t('bodyMeasures.none')
-                    )}
-                  </div>
+      <ul className="divide-y divide-line" aria-busy={pending || undefined}>
+        {lines.map((l) => {
+          const unit = displayUnit(l.kind, imperial)
+          const delta =
+            l.touched && l.value !== null && l.lastShown !== null && !l.invalid
+              ? deltaFrom(l.value, l.lastShown, l.spec.digits)
+              : null
+          return (
+            <li key={l.kind} className="flex items-center gap-3 py-3.5">
+              <div className="w-[88px] shrink-0">
+                <div className="text-[15px] font-semibold leading-tight">
+                  {t(`health.kinds.${l.kind}`)}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <NumberStepper
-                    size="sm"
-                    value={l.value}
-                    onChange={(v) => setEdited((e) => ({ ...e, [l.kind]: v }))}
-                    spec={l.spec}
-                    unit={unit}
-                    label={t(`health.kinds.${l.kind}`)}
-                    locale={locale}
-                    invalid={l.invalid}
-                  />
+                {/*
+                  Two lines kept: when the value in the stepper was taken, the change once it
+                  is moved, or nothing while the readings load.
+                */}
+                <div className="mt-1 min-h-8 text-[12.5px] leading-4 text-muted">
+                  {pending ? null : delta !== null ? (
+                    <DeltaChip
+                      bare
+                      delta={delta}
+                      digits={l.spec.digits}
+                      unit={unit}
+                      locale={locale}
+                    />
+                  ) : l.last && l.lastShown !== null ? (
+                    agoLabel(t, l.last.at, now)
+                  ) : (
+                    t('bodyMeasures.none')
+                  )}
                 </div>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <NumberStepper
+                  size="sm"
+                  value={l.value}
+                  onChange={(v) => setEdited((e) => ({ ...e, [l.kind]: v }))}
+                  spec={l.spec}
+                  unit={unit}
+                  label={t(`health.kinds.${l.kind}`)}
+                  locale={locale}
+                  invalid={l.invalid}
+                />
+              </div>
+            </li>
+          )
+        })}
+      </ul>
     </Sheet>
   )
 }

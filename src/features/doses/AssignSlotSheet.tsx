@@ -101,7 +101,7 @@ function AssignSlotForm({ administration, onClose, suggested }: FormProps) {
         </Button>
       }
     >
-      <div className="py-1">{slot && <SlotPicker assignment={slot} />}</div>
+      <div className="pb-2 pt-1">{slot && <SlotPicker assignment={slot} hideLabel />}</div>
     </Sheet>
   )
 }

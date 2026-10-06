@@ -28,6 +28,7 @@ import {
   startChoices,
 } from './newCycle'
 import { stepWeeks } from './readout'
+import { SheetSection } from '@/features/doses/SheetSection'
 
 type Preset = 'first' | 'left' | 'custom'
 
@@ -128,14 +129,16 @@ function NewCycleForm({
       onClose={onClose}
       title={t('cycles.new.title')}
       description={view.row.name}
+      // The preview follows the date and the first step: a fixed height keeps the sheet still.
+      tall
       footer={
         <Button block size="lg" loading={busy} disabled={!valid} onClick={() => void submit()}>
           {t('cycles.new.confirm')}
         </Button>
       }
     >
-      <div className="flex flex-col gap-5 pb-4 pt-1">
-        <p className="text-[13.5px] text-ink-2">{t('cycles.new.intro')}</p>
+      <div className="flex flex-col gap-6 pb-4 pt-1">
+        <p className="text-[13.5px] leading-snug text-ink-2">{t('cycles.new.intro')}</p>
 
         <div className="flex flex-col gap-2.5">
           <Field
@@ -154,20 +157,12 @@ function NewCycleForm({
               />
             )}
           </Field>
-          <div className="flex gap-2">
-            <Chip
-              active={startDate === monday}
-              className="min-h-11"
-              onClick={() => setStartDate(monday)}
-            >
+          <div className="-my-1 flex gap-2">
+            <Chip active={startDate === monday} onClick={() => setStartDate(monday)}>
               {t('cycles.new.nextMonday')}
             </Chip>
             {today !== monday && (
-              <Chip
-                active={startDate === today}
-                className="min-h-11"
-                onClick={() => setStartDate(today)}
-              >
+              <Chip active={startDate === today} onClick={() => setStartDate(today)}>
                 {t('cycles.new.today')}
               </Chip>
             )}
@@ -175,8 +170,7 @@ function NewCycleForm({
         </div>
 
         {choices.length > 1 ? (
-          <div className="flex flex-col gap-2.5">
-            <div className="spec">{t('cycles.new.first')}</div>
+          <SheetSection label={t('cycles.new.first')}>
             <Segmented<Preset>
               value={preset}
               onChange={(p) => {
@@ -199,19 +193,17 @@ function NewCycleForm({
                 </option>
               ))}
             </Select>
-          </div>
+          </SheetSection>
         ) : (
           first && (
-            <div>
-              <div className="spec">{t('cycles.new.first')}</div>
-              <div className="readout mt-1 text-[16px] font-semibold">{doseText(first.doseMg)}</div>
-            </div>
+            <SheetSection label={t('cycles.new.first')}>
+              <div className="readout text-[17px] font-semibold">{doseText(first.doseMg)}</div>
+            </SheetSection>
           )
         )}
 
         {preview && (
-          <section aria-label={t('cycles.new.preview')} className="flex flex-col gap-3">
-            <div className="spec">{t('cycles.new.preview')}</div>
+          <SheetSection label={t('cycles.new.preview')} className="gap-3">
             <TitrationLadder
               protocol={nextLike}
               unit={compoundById(view.row.compound_id)?.defaultUnit ?? 'mg'}
@@ -232,32 +224,32 @@ function NewCycleForm({
                   })
                 : t('cycles.new.rangeOpen', { from: date(preview.startsOn) })}
             </p>
-            <ol className="divide-y divide-line rounded-control border border-line bg-panel-2">
+            <ol className="divide-y divide-line border-y border-line">
               {preview.steps.map((s) => {
                 const r = ranges[s.index]
                 return (
-                  <li key={s.index} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                  <li key={s.index} className="flex items-center justify-between gap-3 py-2.5">
                     <div className="min-w-0">
-                      <div className="readout text-[13px] font-semibold">
+                      <div className="readout text-[14px] font-semibold">
                         {s.pause ? t('cycles.rest.title') : doseText(s.doseMg)}
                       </div>
-                      <div className="text-[11.5px] text-muted">
+                      <div className="text-[12.5px] text-muted">
                         {s.pause
                           ? t('common.weeks', { count: s.weeks ?? 0 })
                           : text.weekRange(r?.from ?? null, r?.to ?? null)}
                       </div>
                     </div>
-                    <div className="readout shrink-0 text-right text-[12px] text-muted">
+                    <div className="readout shrink-0 text-right text-[12.5px] text-muted">
                       {date(s.startsOn)}
                     </div>
                   </li>
                 )
               })}
             </ol>
-          </section>
+          </SheetSection>
         )}
 
-        <p className="text-[12px] text-muted">
+        <p className="text-[12.5px] leading-snug text-muted">
           {closesOnNewCycle(view.row.status)
             ? t('cycles.new.closes', { status: t('protocols.statuses.completed') })
             : t('cycles.new.keeps')}{' '}

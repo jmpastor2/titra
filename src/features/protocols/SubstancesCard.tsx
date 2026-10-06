@@ -1,5 +1,6 @@
 import { Plus, Syringe } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
@@ -69,30 +70,35 @@ export function SubstancesCard({
 
   return (
     <Card title={t('protocols.substances')}>
-      <button
-        type="button"
-        onClick={() => onPick('primary')}
-        className="flex w-full items-center gap-3 rounded-control border border-line-strong bg-panel-2 px-3.5 py-3 text-left"
-      >
-        {compound ? (
-          <>
-            <SubstanceDot color={compoundColor(compound.id)} size={10} />
-            <span className="min-w-0 flex-1">
-              <span className="block break-words text-[15.5px] font-semibold">
-                {compound.names.generic}
-              </span>
-              <span className="line-clamp-2 block text-[12px] text-muted">
-                {pick(compound.pharmClass)}
-              </span>
+      {compound ? (
+        <button
+          type="button"
+          onClick={() => onPick('primary')}
+          className="-mx-1 flex min-h-[56px] w-[calc(100%+0.5rem)] items-center gap-3 rounded-control px-1 text-left outline-none transition-opacity active:opacity-60 focus-visible:ring-2 focus-visible:ring-signal/60"
+        >
+          <SubstanceDot color={compoundColor(compound.id)} size={10} />
+          <span className="min-w-0 flex-1">
+            <span className="block break-words text-[16px] font-semibold leading-snug">
+              {compound.names.generic}
             </span>
-            <span className="spec">{t('common.edit')}</span>
-          </>
-        ) : (
-          <span className="flex items-center gap-2 text-[15px] font-semibold text-signal">
-            <Plus className="size-4" /> {t('protocols.pickSubstance')}
+            <span className="line-clamp-2 block text-[12.5px] leading-snug text-muted">
+              {pick(compound.pharmClass)}
+            </span>
           </span>
-        )}
-      </button>
+          <span className="shrink-0 text-[13px] font-semibold text-signal">
+            {t('protocols.change')}
+          </span>
+        </button>
+      ) : (
+        <Button
+          variant="soft"
+          block
+          leading={<Plus className="size-4" />}
+          onClick={() => onPick('primary')}
+        >
+          {t('protocols.pickSubstance')}
+        </Button>
+      )}
 
       {draft.components.map((c) => {
         const conc = concOf(c.compoundId)
@@ -112,15 +118,15 @@ export function SubstancesCard({
         )
       })}
       {draft.components.length > 0 && (
-        <p className="mt-2.5 text-[12px] leading-snug text-muted">{t('protocols.stackHint')}</p>
+        <p className="mt-3 text-[12.5px] leading-snug text-muted">{t('protocols.stackHint')}</p>
       )}
       {compound && (
         <button
           type="button"
           onClick={() => onPick('component')}
-          className="mt-2.5 flex min-h-11 items-center gap-1.5 text-[13px] font-semibold text-signal"
+          className="mt-1.5 flex min-h-11 items-center gap-1.5 text-[13.5px] font-semibold text-signal"
         >
-          <Syringe className="size-4" /> {t('protocols.addToSyringe')}
+          <Syringe aria-hidden className="size-4" /> {t('protocols.addToSyringe')}
         </button>
       )}
     </Card>

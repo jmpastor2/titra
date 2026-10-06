@@ -137,6 +137,10 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
         e.preventDefault()
         onClose()
       }}
+      // Where `overflow: clip` is not supported (iOS 15) a focus could still scroll it: undo it.
+      onScroll={(e) => {
+        if (e.currentTarget.scrollTop) e.currentTarget.scrollTop = 0
+      }}
       onClick={(e) => {
         // Click on backdrop (outside the panel) closes.
         if (e.target === ref.current) onClose()
@@ -144,12 +148,17 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
       className={clsx(
         // No blur behind: blurring the whole page every frame of the slide made it stutter on phones.
         'm-0 max-h-none max-w-none bg-transparent p-0 backdrop:bg-black/65',
-        'fixed inset-0 h-full w-full',
+        // Never scrollable: focusing the panel while it is still below the screen made the
+        // dialog scroll to it, and once it slid up it was left scrolled out of view (iOS).
+        'fixed inset-0 h-full w-full overflow-clip overscroll-none',
       )}
     >
       {open && (
         <div
-          className="absolute inset-x-0 top-0 flex h-full w-full items-end justify-center sm:items-center"
+          className="absolute inset-x-0 top-0 flex h-full w-full items-end justify-center overflow-clip sm:items-center"
+          onScroll={(e) => {
+            if (e.currentTarget.scrollTop) e.currentTarget.scrollTop = 0
+          }}
           style={vp ? { height: vp.height, top: vp.top } : undefined}
         >
           <div

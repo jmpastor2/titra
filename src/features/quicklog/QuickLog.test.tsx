@@ -297,9 +297,8 @@ describe('QuickLog', () => {
     it('starts empty on a new account and asks for the first reading', async () => {
       renderQuick({ empty: true })
       fireEvent.click(await tile(/^Peso\./))
-      const field = await screen.findByRole('textbox', { name: 'Peso' })
-      expect(field).toHaveValue('')
-      expect(screen.getByText(/Aún sin registros/)).toBeInTheDocument()
+      expect(await screen.findByText(/Aún sin registros/)).toBeInTheDocument()
+      expect(screen.getByRole('textbox', { name: 'Peso' })).toHaveValue('')
       expect(screen.getByRole('button', { name: 'Guardar' })).toBeDisabled()
     })
   })
@@ -320,7 +319,7 @@ describe('QuickLog', () => {
       const { store } = renderQuick()
       fireEvent.click(await tile(/^Fuerza\./))
       const sheet = await screen.findByRole('dialog')
-      fireEvent.click(within(sheet).getByRole('button', { name: 'Registrar sesión de 45 min' }))
+      fireEvent.click(within(sheet).getByRole('button', { name: 'Guardar 45 min' }))
       await settle()
       expect(rowsOf(store, 'resistance_session')[0]).toMatchObject({ value: 45, unit: 'min' })
       expect(screen.queryByRole('dialog')).toBeNull()
@@ -334,8 +333,8 @@ describe('QuickLog', () => {
       const { store } = renderQuick()
       const before = store.measurements.filter((m) => m.unit === 'score').length
       fireEvent.click(await tile(/^Check-in\./))
-      fireEvent.click(await screen.findByRole('button', { name: /Igual que la última vez/ }))
-      fireEvent.click(screen.getByRole('button', { name: /Guardar \(7\)/ }))
+      fireEvent.click(await screen.findByRole('button', { name: /^Igual que/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar 7 valores' }))
       await settle()
       const scores = store.measurements.filter((m) => m.unit === 'score')
       expect(scores.length - before).toBe(7)
@@ -350,18 +349,21 @@ describe('QuickLog', () => {
       fireEvent.click(await tile(/^Check-in\./))
       const mood = await screen.findByRole('slider', { name: 'Ánimo' })
       fireEvent.change(mood, { target: { value: '9' } })
-      fireEvent.click(screen.getByRole('button', { name: /Guardar \(1\)/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar 1 valor' }))
       await settle()
       const added = store.measurements.filter((m) => m.unit === 'score').slice(before)
       expect(added).toHaveLength(1)
       expect(added[0]).toMatchObject({ kind: 'mood', value: 9 })
     })
 
-    it('still says so when nothing was scored', async () => {
+    it('keeps the button off until something is scored', async () => {
       renderQuick()
       fireEvent.click(await tile(/^Check-in\./))
-      fireEvent.click(await screen.findByRole('button', { name: 'Guardar' }))
-      expect(await screen.findByText('Mueve al menos un control')).toBeInTheDocument()
+      expect(await screen.findByRole('button', { name: 'Guardar' })).toBeDisabled()
+      fireEvent.change(await screen.findByRole('slider', { name: 'Energía' }), {
+        target: { value: '7' },
+      })
+      expect(screen.getByRole('button', { name: 'Guardar 1 valor' })).toBeEnabled()
     })
   })
 
@@ -407,7 +409,10 @@ describe('QuickLog', () => {
       renderQuick()
       fireEvent.click(await tile(/^Más\./))
       fireEvent.click(await screen.findByText('Toma suelta'))
-      expect(await screen.findByRole('dialog')).toHaveTextContent('Registrar toma')
+      // The dose sheet, open on the choice of what was taken (its own wording is its own).
+      const dose = await screen.findByRole('dialog')
+      expect(dose).not.toHaveTextContent('Más registros')
+      expect(dose).toHaveTextContent('Retatrutida')
     })
 
     it('opens the tape measurements and saves only what changed', async () => {
@@ -497,8 +502,8 @@ describe('QuickLog', () => {
       const { store } = renderQuick()
       const before = store.measurements.filter((m) => m.unit === 'score').length
       fireEvent.click(await tile(/^Check-in\./))
-      fireEvent.click(await screen.findByRole('button', { name: /Igual que la última vez/ }))
-      fireEvent.click(screen.getByRole('button', { name: /Guardar \(7\)/ }))
+      fireEvent.click(await screen.findByRole('button', { name: /^Igual que/ }))
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar 7 valores' }))
       await settle()
       expect(store.measurements.filter((m) => m.unit === 'score')).toHaveLength(before + 7)
       fireEvent.click(await screen.findByRole('button', { name: 'Deshacer' }))
@@ -511,7 +516,7 @@ describe('QuickLog', () => {
       fireEvent.click(await tile(/^Fuerza\./))
       fireEvent.click(
         within(await screen.findByRole('dialog')).getByRole('button', {
-          name: 'Registrar sesión de 45 min',
+          name: 'Guardar 45 min',
         }),
       )
       await settle()
@@ -558,7 +563,7 @@ describe('QuickLog', () => {
       fireEvent.click(await screen.findByText('Añadir analítica'))
       fireEvent.click(await screen.findByRole('button', { name: 'HbA1c' }))
       fireEvent.change(screen.getByLabelText('Valor'), { target: { value: '5,2' } })
-      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar 5,2 %' }))
       await settle()
       expect(table(store, 'lab_results')).toHaveLength(1)
       fireEvent.click(await screen.findByRole('button', { name: 'Deshacer' }))
@@ -653,7 +658,7 @@ describe('QuickLog', () => {
 
       fireEvent.change(screen.getByLabelText('Valor'), { target: { value: '3,9' } })
       expect(screen.getByText('Fuera de rango')).toBeInTheDocument()
-      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar 3,9 mmol/L' }))
       await settle()
       expect(table(store, 'lab_results').at(-1)).toMatchObject({
         analyte: 'LDL',

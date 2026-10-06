@@ -3,7 +3,7 @@
  * with the kinds that are not a single number (blood pressure, a session) handled.
  */
 import { QueryClientProvider } from '@tanstack/react-query'
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PatientScopeProvider } from '@/app/scope'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -85,6 +85,13 @@ const reading = (kind: string, value: number, unit: string, daysAgo: number): Ro
   created_at: '',
 })
 
+/** A stepper's field once the last reading has filled it in. */
+async function filled(name: string, value: string) {
+  const field = await screen.findByRole('textbox', { name })
+  await waitFor(() => expect(field).toHaveValue(value))
+  return field
+}
+
 const settle = () => act(async () => void (await new Promise((r) => setTimeout(r, 30))))
 const rowsOf = (store: Store, kind: string) => store.measurements.filter((m) => m.kind === kind)
 
@@ -96,8 +103,8 @@ describe('LogMeasurementSheet', () => {
         reading('bp_diastolic', 80, 'mmHg', 3),
       )
     })
-    const systolic = await screen.findByRole('textbox', { name: 'TA sistólica' })
-    expect(systolic).toHaveValue('122')
+    // The fields are there at once and fill in when the last readings arrive.
+    await filled('TA sistólica', '122')
     expect(screen.getByRole('textbox', { name: 'TA diastólica' })).toHaveValue('80')
     fireEvent.click(screen.getByRole('button', { name: 'TA sistólica: sumar 1 mmHg' }))
     fireEvent.click(screen.getByRole('button', { name: 'Guardar 123/80' }))
@@ -120,8 +127,8 @@ describe('LogMeasurementSheet', () => {
     renderSheet('resistance_session', (s) =>
       s.measurements.push(reading('resistance_session', 1, 'session', 2)),
     )
-    expect(await screen.findByRole('textbox', { name: 'Sesión de fuerza' })).toHaveValue('')
-    expect(screen.getByText(/Aún sin registros/)).toBeInTheDocument()
+    expect(await screen.findByText(/Aún sin registros/)).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: 'Sesión de fuerza' })).toHaveValue('')
   })
 
   it('logs a session without a length as one session', async () => {
@@ -136,9 +143,9 @@ describe('LogMeasurementSheet', () => {
     renderSheet('weight', (s) => {
       s.measurements.push(reading('weight', 77, 'kg', 2), reading('waist', 91, 'cm', 9))
     })
-    expect(await screen.findByRole('textbox', { name: 'Peso' })).toHaveValue('77,0')
+    await filled('Peso', '77,0')
     fireEvent.click(screen.getByRole('radio', { name: 'Cintura' }))
-    expect(await screen.findByRole('textbox', { name: 'Cintura' })).toHaveValue('91,0')
+    await filled('Cintura', '91,0')
     expect(screen.getByText(/Última: 91,0 cm · hace 9 días/)).toBeInTheDocument()
   })
 
@@ -146,7 +153,7 @@ describe('LogMeasurementSheet', () => {
     const { store } = renderSheet('weight', (s) =>
       s.measurements.push(reading('weight', 77, 'kg', 2)),
     )
-    await screen.findByRole('textbox', { name: 'Peso' })
+    await filled('Peso', '77,0')
     fireEvent.click(screen.getByRole('radio', { name: 'Fecha' }))
     fireEvent.change(screen.getByLabelText('Fecha'), { target: { value: '2026-10-03' } })
     fireEvent.change(screen.getByLabelText('Hora'), { target: { value: '07:15' } })
@@ -167,8 +174,7 @@ describe('LogMeasurementSheet', () => {
     const { store } = renderSheet('steps', (s) =>
       s.measurements.push(reading('steps', 8000, 'steps', 1)),
     )
-    const field = await screen.findByRole('textbox', { name: 'Pasos' })
-    expect(field).toHaveValue('8000')
+    const field = await filled('Pasos', '8000')
     fireEvent.click(screen.getByRole('button', { name: 'Pasos: sumar 500 steps' }))
     expect(field).toHaveValue('8500')
     fireEvent.click(screen.getByRole('button', { name: /^Guardar 8500/ }))

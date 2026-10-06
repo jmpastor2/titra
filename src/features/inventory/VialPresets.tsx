@@ -1,10 +1,11 @@
-import { Info, Layers } from 'lucide-react'
+import { Info } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Chip, SubstanceDot } from '@/components/ui/primitives'
+import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
 import { fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { BLEND_PRESETS, type BlendPreset } from './blendPresets'
+import { ChoicePills } from './ChoicePills'
 
 /** The common vials as a row of chips, one tap to fill the form with their usual contents. */
 export function PresetChips({
@@ -17,9 +18,7 @@ export function PresetChips({
   const { t } = useTranslation()
   return (
     <div>
-      <div className="mb-2 flex items-center gap-1.5 text-[13px] font-medium text-ink-2">
-        <Layers className="size-3.5 text-muted" aria-hidden /> {t('inventory.blendPresets')}
-      </div>
+      <h3 className="spec mb-2">{t('inventory.blendPresets')}</h3>
       <div className="flex flex-wrap gap-2">
         {BLEND_PRESETS.map((p) => (
           <button
@@ -27,7 +26,7 @@ export function PresetChips({
             type="button"
             onClick={() => onPick(p)}
             aria-pressed={activeId === p.id}
-            className="flex min-h-11 max-w-full items-center gap-1.5 rounded-[18px] border border-line bg-panel-2 px-3.5 py-1.5 text-left text-[13px] font-medium leading-tight outline-none transition hover:border-line-strong focus-visible:ring-2 focus-visible:ring-signal/60 aria-pressed:border-signal/50 aria-pressed:bg-signal-soft"
+            className="flex min-h-11 max-w-full items-center gap-2 rounded-[18px] border border-line px-3.5 py-1.5 text-left text-[13px] font-medium leading-tight text-ink-2 outline-none transition hover:border-line-strong focus-visible:ring-2 focus-visible:ring-signal/60 aria-pressed:border-signal/45 aria-pressed:bg-signal-soft aria-pressed:text-ink"
           >
             <span className="flex shrink-0 gap-1">
               {p.parts.map((x) => (
@@ -60,20 +59,17 @@ export function PresetNote({
   const { t } = useTranslation()
   const { locale } = useLocale()
   return (
-    <div className="-mt-1 flex flex-col gap-2.5">
+    <div className="flex flex-col gap-1.5 pt-1">
       {preset.sizes && showSizes && (
-        <div role="group" aria-label={t('inventory.sizes')} className="flex flex-wrap gap-2">
-          {preset.sizes.map((size) => (
-            <Chip
-              key={size}
-              active={totalMg === size}
-              onClick={() => onSize(size)}
-              className="min-h-11 px-3.5"
-            >
-              <span className="readout">{fmtNumber(size, locale, 0)} mg</span>
-            </Chip>
-          ))}
-        </div>
+        <ChoicePills
+          label={t('inventory.sizes')}
+          value={String(totalMg)}
+          onChange={(mg) => onSize(Number(mg))}
+          options={preset.sizes.map((size) => ({
+            value: String(size),
+            label: <span className="readout">{fmtNumber(size, locale, 0)} mg</span>,
+          }))}
+        />
       )}
       <p className="flex items-start gap-2 text-[12.5px] leading-snug text-muted">
         <Info className="mt-px size-4 shrink-0 text-signal" aria-hidden />

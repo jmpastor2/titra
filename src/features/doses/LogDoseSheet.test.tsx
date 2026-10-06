@@ -47,6 +47,9 @@ const NIGHTS = [
   '2026-10-03T01:00',
 ]
 
+/** The log button, named after what it logs: "Registrar 9 U". */
+const LOG = /^Registrar \d/
+
 describe('LogDoseSheet, a free dose', () => {
   it('offers what you inject as tiles, and logs the CJC + ipamorelin vial as ONE draw', async () => {
     const history = NIGHTS.flatMap((at) => blendDose(at, { protocol_id: 'cjc' }))
@@ -79,7 +82,8 @@ describe('LogDoseSheet, a free dose', () => {
     // Free of any protocol: nothing to assign it to.
     expect(screen.queryByText('Cuenta para')).not.toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar toma' }))
+    // The button says what it logs: the units drawn.
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar 6 U' }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
 
     const added = store.doses.slice(history.length)
@@ -103,12 +107,12 @@ describe('LogDoseSheet, a free dose', () => {
     fireEvent.click(
       (await sectionFor('Tus viales')).getByRole('button', { name: /CJC-1295 \+ Ipamorelina/ }),
     )
-    fireEvent.click(await screen.findByRole('button', { name: 'Registrar toma' }))
+    fireEvent.click(await screen.findByRole('button', { name: LOG }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
     expect(store.doses).toHaveLength(2)
 
     // The toast outlives the sheet that raised it.
-    expect(screen.queryByRole('button', { name: 'Registrar toma' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: LOG })).not.toBeInTheDocument()
     fireEvent.click(await screen.findByRole('button', { name: 'Deshacer' }))
     await waitFor(() => expect(store.doses).toEqual([]))
     expect(Number(store.inventory[0]?.remaining_mg)).toBeCloseTo(4.5, 6)
@@ -124,7 +128,7 @@ describe('LogDoseSheet, a free dose', () => {
     )
     // 10 units of a 10 mg/mL vial is 1 mg.
     fireEvent.change(await screen.findByLabelText('Dosis'), { target: { value: '10' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar toma' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar 10 U' }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
 
     expect(store.doses).toHaveLength(1)
@@ -137,6 +141,30 @@ describe('LogDoseSheet, a free dose', () => {
     expect(Number(store.inventory[0]?.remaining_mg)).toBeCloseTo(11, 6)
   })
 
+  it('keeps the syringe in place while the amount is retyped, and names what it logs', async () => {
+    const store = makeStore({ protocols: [], inventory: [retaVial], doses: [] })
+    renderWithStore(<LogDoseSheet open onClose={() => {}} />, store)
+
+    fireEvent.click(
+      (await sectionFor('Tus viales')).getByRole('button', { name: /Retatrutida 15 mg/ }),
+    )
+    const field = await screen.findByLabelText('Dosis')
+    fireEvent.change(field, { target: { value: '12,5' } })
+    expect(screen.getByText('Prepara la jeringa')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Registrar 12,5 U' })).toBeInTheDocument()
+
+    // Emptied to type another number: the guide stays (empty), the button names nothing.
+    fireEvent.change(field, { target: { value: '' } })
+    expect(screen.getByText('Prepara la jeringa')).toBeInTheDocument()
+    expect(screen.getByText('Escribe la dosis para ver cuánto cargar.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Registrar toma' })).toBeInTheDocument()
+
+    // Typed as a mass, it says the mass.
+    fireEvent.click(screen.getByRole('tab', { name: 'mg' }))
+    fireEvent.change(field, { target: { value: '1,25' } })
+    expect(screen.getByRole('button', { name: 'Registrar 1,25 mg' })).toBeInTheDocument()
+  })
+
   it('refuses an empty amount', async () => {
     const store = makeStore({ protocols: [], inventory: [retaVial], doses: [] })
     const onClose = vi.fn()
@@ -145,6 +173,7 @@ describe('LogDoseSheet, a free dose', () => {
     fireEvent.click(
       (await sectionFor('Tus viales')).getByRole('button', { name: /Retatrutida 15 mg/ }),
     )
+    // Nothing typed yet: the button names no amount.
     fireEvent.click(await screen.findByRole('button', { name: 'Registrar toma' }))
 
     expect(await screen.findByText('Debe ser mayor que 0')).toBeInTheDocument()
@@ -190,7 +219,7 @@ describe('LogDoseSheet, a make-up dose', () => {
       screen.getByText('Tu adherencia sube: la del lunes pasa de perdida a hecha tarde.'),
     ).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar toma' }))
+    fireEvent.click(screen.getByRole('button', { name: LOG }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
 
     const added = store.doses.slice(history.length)
@@ -217,7 +246,7 @@ describe('LogDoseSheet, a make-up dose', () => {
     )
     fireEvent.click(await screen.findByRole('radio', { name: /Ninguna: toma extra/ }))
     expect(screen.getByText('Contará como extra y no cambia tu adherencia.')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar toma' }))
+    fireEvent.click(screen.getByRole('button', { name: LOG }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
 
     expect(store.doses.slice(history.length).map((r) => r.planned_at)).toEqual([null, null])
@@ -259,7 +288,7 @@ describe('LogDoseSheet, a make-up dose', () => {
       store,
     )
     expect(await screen.findByText(/Cubre la de vie 2 noche · 01:00/)).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar toma' }))
+    fireEvent.click(screen.getByRole('button', { name: LOG }))
     await waitFor(() => expect(first).toHaveBeenCalled())
     unmount()
 
@@ -280,7 +309,7 @@ describe('LogDoseSheet, a make-up dose', () => {
     // It has its own night, so there is nothing to choose: no older night is offered.
     expect(await screen.findByText(/Cubre la de vie 2 noche · 01:00/)).toBeInTheDocument()
     expect(screen.queryByRole('radiogroup', { name: 'Cuenta para' })).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Registrar toma' }))
+    fireEvent.click(screen.getByRole('button', { name: LOG }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
 
     // Nothing to assign: its time decides.

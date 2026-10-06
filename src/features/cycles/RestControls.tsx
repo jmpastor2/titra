@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { addDays } from 'date-fns'
 import { Minus, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -19,10 +20,13 @@ export function RestControls({
   view,
   now,
   canEdit,
+  inset = true,
 }: {
   view: CycleView
   now: Date
   canEdit: boolean
+  /** A row of a card (its own side padding); off inside a sheet, which pads its body. */
+  inset?: boolean
 }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
@@ -69,7 +73,12 @@ export function RestControls({
   )
 
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3.5">
+    <div
+      className={clsx(
+        'flex items-center justify-between gap-3 border-t border-line py-3.5',
+        inset ? 'px-4' : 'border-b',
+      )}
+    >
       <div className="min-w-0">
         <div className="spec">{t('cycles.rest.title')}</div>
         <div aria-live="polite" className="mt-0.5 text-[15px] font-semibold">

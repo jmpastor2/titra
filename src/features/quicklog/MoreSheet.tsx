@@ -64,20 +64,20 @@ function Entry({
       <button
         type="button"
         onClick={onPress}
-        className="flex min-h-14 w-full items-center gap-3 rounded-control px-1 py-2 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
+        className="-mx-2 flex min-h-14 w-[calc(100%+1rem)] items-center gap-3.5 rounded-xl px-2 py-2.5 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
       >
-        <span className="grid size-10 shrink-0 place-items-center rounded-full border border-signal/25 bg-signal-soft text-signal">
-          <Icon className="size-[18px]" aria-hidden />
+        <span aria-hidden className="grid w-6 shrink-0 place-items-center text-ink-2">
+          <Icon className="size-5" strokeWidth={1.75} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block break-words text-[15px] font-medium leading-snug">{title}</span>
+          <span className="block break-words text-[15px] font-semibold leading-snug">{title}</span>
           {subtitle && (
-            <span className="block break-words text-[12.5px] leading-snug text-muted">
+            <span className="mt-0.5 block break-words text-[12.5px] leading-snug text-muted">
               {subtitle}
             </span>
           )}
         </span>
-        <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+        <ChevronRight className="size-4 shrink-0 text-muted/70" aria-hidden />
       </button>
     </li>
   )
@@ -104,11 +104,11 @@ export function MoreSheet({
 
   return (
     <Sheet open onClose={onClose} title={t('quick.more.title')}>
-      <div className="flex flex-col gap-4 pb-2">
+      <div className="flex flex-col gap-6 pb-2 pt-1">
         {hidden.length > 0 && (
           <section>
             <h3 className="spec mb-1">{t('quick.more.panel')}</h3>
-            <ul>
+            <ul className="divide-y divide-line">
               {hidden.map((h) => (
                 <Entry
                   key={h.id}
@@ -123,16 +123,19 @@ export function MoreSheet({
         )}
         <section>
           <h3 className="spec mb-1">{t('quick.more.records')}</h3>
-          <ul>
+          <ul className="divide-y divide-line">
             <Entry
               icon={FlaskConical}
               title={t('health.addLab')}
               subtitle={
-                lastLab
-                  ? t('quick.more.lastLab', {
-                      when: agoLabel(t, new Date(`${lastLab.drawn_at}T12:00`), now),
-                    })
-                  : t('quick.more.noLab')
+                // A blank line while the labs load: no "none yet" that turns into a date.
+                labs.isPending
+                  ? '\u00a0'
+                  : lastLab
+                    ? t('quick.more.lastLab', {
+                        when: agoLabel(t, new Date(`${lastLab.drawn_at}T12:00`), now),
+                      })
+                    : t('quick.more.noLab')
               }
               onPress={() => onPick({ kind: 'lab' })}
             />
@@ -154,7 +157,7 @@ export function MoreSheet({
         </section>
         <section>
           <h3 className="spec mb-1">{t('quick.more.other')}</h3>
-          <ul>
+          <ul className="divide-y divide-line">
             <Entry
               icon={Plus}
               title={t('quick.dose.free')}

@@ -1,6 +1,7 @@
-import { ChevronDown, X } from 'lucide-react'
+import { clsx } from 'clsx'
+import { AlertTriangle, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Input } from '@/components/ui/Field'
+import { Input, Select } from '@/components/ui/Field'
 import { Badge, Segmented, SubstanceDot } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
@@ -46,6 +47,7 @@ export function DoseLine({
   partnerDoses = NO_PARTNERS,
   lastMg,
   credit,
+  named = true,
 }: {
   line: Line
   /** The vials it can be drawn from. */
@@ -60,6 +62,8 @@ export function DoseLine({
   lastMg?: number
   /** Editing: the dose being replaced goes back to its vial, so it still counts as available. */
   credit?: { inventoryId: string; mg: number }
+  /** Show the substance above the field; off when the sheet already names it. */
+  named?: boolean
 }) {
   const { t } = useTranslation()
   const native = unitOf(line.compoundId)
@@ -136,55 +140,93 @@ export function DoseLine({
   const available =
     vial && Number(vial.remaining_mg) + (credit?.inventoryId === vial.id ? credit.mg : 0)
 
+  const over = available !== undefined && lineDoseMg !== null && lineDoseMg > available + 1e-9
+
   return (
-    <div className="rounded-control border border-line bg-panel-2 p-3">
-      <div className="mb-2 flex items-center gap-2">
-        <SubstanceDot color={compoundColor(line.compoundId)} />
-        {partnerDoses.map((p) => (
-          <SubstanceDot key={p.compoundId} color={compoundColor(p.compoundId)} />
-        ))}
-        <span className="min-w-0 flex-1 break-words text-[14.5px] font-semibold">
-          {shortNames([line.compoundId, ...partnerDoses.map((p) => p.compoundId)])}
-        </span>
-        {partnerDoses.length > 0 && <Badge tone="brand">{t('doses.blend')}</Badge>}
-        {removable && (
-          <button
-            type="button"
-            aria-label={t('common.delete')}
-            onClick={onRemove}
-            className="grid size-11 place-items-center rounded-full text-muted hover:text-danger"
-          >
-            <X className="size-4" />
-          </button>
-        )}
-      </div>
-      <Input
-        inputMode="decimal"
-        aria-label={t('doses.dose')}
-        value={line.amount}
-        onChange={(e) => onChange({ amount: e.target.value })}
-        suffix={current === 'units' ? 'U' : t(`units.${current}`)}
-        className="readout bg-panel text-[22px] font-semibold"
-      />
+    <div className="flex flex-col gap-2">
+      {named && (
+        <div className="flex min-h-11 items-center gap-2">
+          <span className="flex shrink-0 items-center gap-1" aria-hidden>
+            <SubstanceDot color={compoundColor(line.compoundId)} />
+            {partnerDoses.map((p) => (
+              <SubstanceDot key={p.compoundId} color={compoundColor(p.compoundId)} />
+            ))}
+          </span>
+          <span className="min-w-0 flex-1 break-words text-[15px] font-semibold leading-snug">
+            {shortNames([line.compoundId, ...partnerDoses.map((p) => p.compoundId)])}
+          </span>
+          {partnerDoses.length > 0 && <Badge tone="brand">{t('doses.blend')}</Badge>}
+          {removable && (
+            <button
+              type="button"
+              aria-label={t('common.delete')}
+              onClick={onRemove}
+              className="-mr-2.5 grid size-11 shrink-0 place-items-center rounded-full text-muted hover:text-danger"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+      )}
       {picks.length > 1 && (
         <Segmented<Entry>
           value={current}
           onChange={choose}
           size="sm"
-          className="mt-2"
           options={picks.map((p) => ({
             value: p,
             label: p === 'units' ? t('doses.pickUnits') : t(`units.${p}`),
           }))}
         />
       )}
-      {others.length > 0 && (
-        <div className="readout mt-2 text-[13px] font-semibold text-signal">
-          = {others.join(' · ')}
-        </div>
+      <Input
+        inputMode="decimal"
+        enterKeyHint="done"
+        autoComplete="off"
+        aria-label={t('doses.dose')}
+        value={line.amount}
+        onChange={(e) => onChange({ amount: e.target.value })}
+        suffix={current === 'units' ? 'U' : t(`units.${current}`)}
+        className="readout font-semibold"
+        // Above the 16 px floor phones get for every field (an unlayered rule a utility class
+        // cannot beat), so it is set inline.
+        style={{ fontSize: 24 }}
+      />
+      {/* One line kept for the same dose in the other units, or for the vial running short:
+          typing never moves what is under the field. */}
+      <p
+        className={clsx(
+          'readout flex min-h-5 items-start gap-1.5 text-[13px] font-semibold leading-snug',
+          over ? 'text-warn' : 'text-signal',
+        )}
+      >
+        {over && vial ? (
+          <>
+            <AlertTriangle aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+            <span className="font-sans">
+              {t('doses.vialShort', { left: fmtDose(available ?? 0, native, locale) })}
+            </span>
+          </>
+        ) : (
+          others.length > 0 && `= ${others.join(' · ')}`
+        )}
+      </p>
+      {partnerDoses.length > 0 && (
+        <p className="flex min-h-5 flex-wrap gap-x-3 text-[13px] text-muted">
+          {partnerDoses.map((p) => (
+            <span key={p.compoundId} className="readout">
+              {shortName(p.compoundId)}{' '}
+              {p.mg !== null && (
+                <span className="font-semibold text-ink">
+                  {fmtDose(p.mg, unitOf(p.compoundId), locale)}
+                </span>
+              )}
+            </span>
+          ))}
+        </p>
       )}
       {quick.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
+        <div className="-my-1 flex flex-wrap gap-x-2">
           {quick.map((q) => (
             <button
               key={q.key}
@@ -197,64 +239,40 @@ export function DoseLine({
                     : {}),
                 })
               }
-              className="min-h-11 rounded-full border border-line-strong bg-panel px-3.5 py-1 text-[12px]"
+              className="group inline-flex min-h-11 items-center outline-none"
             >
-              <span className="text-muted">{q.label}</span>{' '}
-              <span className="readout font-semibold">
-                {conc ? `${fmtNumber(mgToUnits(q.mg, conc), locale, 1)} U · ` : ''}
-                {fmtDose(q.mg, native, locale)}
+              <span className="rounded-full border border-line-strong px-3 py-1.5 text-[12.5px] transition group-active:bg-panel-2 group-focus-visible:ring-2 group-focus-visible:ring-signal/60">
+                <span className="text-muted">{q.label}</span>{' '}
+                <span className="readout font-semibold">
+                  {conc ? `${fmtNumber(mgToUnits(q.mg, conc), locale, 1)} U · ` : ''}
+                  {fmtDose(q.mg, native, locale)}
+                </span>
               </span>
             </button>
           ))}
         </div>
       )}
-      <div className="mt-2.5">
-        {vials.length > 0 ? (
-          <div className="relative">
-            <select
-              aria-label={t('doses.inventory')}
-              value={line.inventoryId}
-              onChange={(e) => changeVial(e.target.value)}
-              className="h-11 w-full appearance-none truncate rounded-control border border-line bg-panel pl-3 pr-9 text-[13px] text-ink outline-none transition focus:border-signal/60"
-            >
-              <option value="">{t('doses.noInventory')}</option>
-              {vials.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.label} · {fmtNumber(Number(v.remaining_mg), locale, 2)} mg
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              aria-hidden
-              className="pointer-events-none absolute inset-y-0 right-3 my-auto size-4 text-muted"
-            />
-          </div>
-        ) : (
-          <span className="text-[12px] text-muted">{t('doses.noVial')}</span>
-        )}
-        {/* A menu shows a long name cut short: say it in full underneath. */}
-        {vial && vial.label.length > LONG_LABEL && (
-          <p className="mt-1.5 break-words px-1 text-[12px] leading-snug text-muted">
-            {vial.label}
-          </p>
-        )}
-      </div>
-      {partnerDoses.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap gap-x-3 text-[12px] text-muted">
-          {partnerDoses.map((p) => (
-            <span key={p.compoundId} className="readout">
-              {shortName(p.compoundId)}{' '}
-              <span className="font-semibold text-signal">
-                {p.mg !== null ? fmtDose(p.mg, unitOf(p.compoundId), locale) : '—'}
-              </span>
-            </span>
-          ))}
+      {vials.length > 0 ? (
+        <div className="flex flex-col gap-1.5">
+          <Select
+            aria-label={t('doses.inventory')}
+            value={line.inventoryId}
+            onChange={(e) => changeVial(e.target.value)}
+          >
+            <option value="">{t('doses.noInventory')}</option>
+            {vials.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.label} · {fmtNumber(Number(v.remaining_mg), locale, 2)} mg
+              </option>
+            ))}
+          </Select>
+          {/* A menu shows a long name cut short: say it in full underneath. */}
+          {vial && vial.label.length > LONG_LABEL && (
+            <p className="break-words px-1 text-[12.5px] leading-snug text-muted">{vial.label}</p>
+          )}
         </div>
-      )}
-      {available !== undefined && lineDoseMg !== null && lineDoseMg > available + 1e-9 && (
-        <p className="mt-1.5 text-[12px] font-semibold text-warn">
-          {t('doses.vialShort', { left: fmtDose(available, native, locale) })}
-        </p>
+      ) : (
+        <p className="text-[12.5px] text-muted">{t('doses.noVial')}</p>
       )}
     </div>
   )

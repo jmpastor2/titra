@@ -56,6 +56,16 @@ describe('FastingCard', () => {
     expect(text()).toContain('En ayunas desde las 23:15')
   })
 
+  it('keeps the room of what it may show, so noting a meal moves nothing', () => {
+    const { container } = render(<FastingCard name="CJC + Ipa" />)
+    // The time field and "Borrar" are laid out, hidden, before they are needed.
+    const hidden = [...container.querySelectorAll('[aria-hidden="true"]')]
+    expect(hidden.some((e) => e.querySelector('input[type="time"]'))).toBe(true)
+    expect(hidden.some((e) => e.textContent === 'Borrar')).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Hace 30 min' }))
+    expect(screen.getByRole('button', { name: 'Borrar' })).toBeInTheDocument()
+  })
+
   it('moves on as the minutes pass', () => {
     // Every timer, not only the clock: the card re-reads the time every half minute.
     vi.useRealTimers()

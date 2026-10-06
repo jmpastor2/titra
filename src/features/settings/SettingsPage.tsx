@@ -1,5 +1,5 @@
 import { LogOut, Share } from 'lucide-react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -40,6 +40,7 @@ export function SettingsPage() {
   const [protein, setProtein] = useState(fmtNumber(patient?.protein_g_per_kg ?? 1.6, locale, 1))
   const [goal, setGoal] = useState(goalText(patient?.goal_weight_kg ?? null, imperial, locale))
   const [invalid, setInvalid] = useState({ protein: false, goal: false })
+  const errorId = useId()
 
   // The goal is typed in the unit in use: when that changes (or a save lands), the field shows
   // the stored weight again in it. Adjusted while rendering, not in an effect, so there is no
@@ -105,43 +106,47 @@ export function SettingsPage() {
               {(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} />}
             </Field>
             {!isClinician && (
-              <div className="grid grid-cols-2 items-start gap-3">
-                <Field
-                  label={t('settings.proteinGPerKg')}
-                  error={invalid.protein ? t('settings.invalidNumber') : undefined}
+              <div>
+                <div className="grid grid-cols-2 items-start gap-3">
+                  <Field label={t('settings.proteinGPerKg')}>
+                    {(id) => (
+                      <Input
+                        id={id}
+                        aria-describedby={invalid.protein ? errorId : undefined}
+                        inputMode="decimal"
+                        value={protein}
+                        onChange={(e) => setProtein(e.target.value)}
+                        invalid={invalid.protein}
+                        suffix="g/kg"
+                      />
+                    )}
+                  </Field>
+                  <Field label={t('onboarding.goalWeight')}>
+                    {(id) => (
+                      <Input
+                        id={id}
+                        aria-describedby={invalid.goal ? errorId : undefined}
+                        inputMode="decimal"
+                        value={goal}
+                        onChange={(e) => setGoal(e.target.value)}
+                        invalid={invalid.goal}
+                        suffix={imperial ? 'lb' : 'kg'}
+                      />
+                    )}
+                  </Field>
+                </div>
+                {/* One line kept for the message, so the button does not move when it shows. */}
+                <p
+                  id={errorId}
+                  role="alert"
+                  className="mt-1.5 min-h-[18px] text-[12.5px] text-danger"
                 >
-                  {(id, describedBy) => (
-                    <Input
-                      id={id}
-                      aria-describedby={describedBy}
-                      inputMode="decimal"
-                      value={protein}
-                      onChange={(e) => setProtein(e.target.value)}
-                      invalid={invalid.protein}
-                      suffix="g/kg"
-                    />
-                  )}
-                </Field>
-                <Field
-                  label={t('onboarding.goalWeight')}
-                  error={invalid.goal ? t('settings.invalidNumber') : undefined}
-                >
-                  {(id, describedBy) => (
-                    <Input
-                      id={id}
-                      aria-describedby={describedBy}
-                      inputMode="decimal"
-                      value={goal}
-                      onChange={(e) => setGoal(e.target.value)}
-                      invalid={invalid.goal}
-                      suffix={imperial ? 'lb' : 'kg'}
-                    />
-                  )}
-                </Field>
+                  {invalid.protein || invalid.goal ? t('settings.invalidNumber') : null}
+                </p>
               </div>
             )}
-            <Button size="sm" loading={update.isPending} onClick={saveProfile}>
-              {t('common.save')}
+            <Button loading={update.isPending} onClick={saveProfile}>
+              {t('settings.saveProfile')}
             </Button>
           </div>
         </Card>

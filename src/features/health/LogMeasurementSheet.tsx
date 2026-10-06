@@ -6,11 +6,10 @@ import { usePatientScope } from '@/app/scope'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Textarea } from '@/components/ui/Field'
 import { Sheet } from '@/components/ui/Sheet'
-import { Skeleton } from '@/components/ui/primitives'
 import type { MeasurementKind } from '@/data/database.types'
 import { useLastReading } from '@/features/quicklog/data'
 import { NumberStepper } from '@/features/quicklog/NumberStepper'
-import { AmountChip, Choice, DeltaChip } from '@/features/quicklog/SheetBits'
+import { AmountChip, Choice, DeltaChip, PickChip } from '@/features/quicklog/SheetBits'
 import { deltaFrom, inRange, stepSpec, toDisplay, toStored } from '@/features/quicklog/stepper'
 import { useQuickSave } from '@/features/quicklog/useQuickSave'
 import { agoLabel, fmtFixed } from '@/features/quicklog/text'
@@ -164,43 +163,40 @@ function LogMeasurementForm({
       onClose={onClose}
       title={kindLabel(t, kind)}
       description={t('health.log')}
+      tall
       footer={
         <Button block size="lg" disabled={!canSave} onClick={save}>
           {saveLabel}
         </Button>
       }
     >
-      <div className="flex flex-col gap-5 py-1">
+      <div className="flex flex-col gap-6 pb-2 pt-1">
         <div
           role="radiogroup"
           aria-label={t('health.kind')}
-          className="hide-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 pb-1"
+          className="hide-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5"
         >
           {LOGGABLE_KINDS.map((k) => (
-            <button
+            <PickChip
               key={k}
               ref={k === kind ? picked : undefined}
-              type="button"
               role="radio"
-              aria-checked={k === kind}
-              onClick={(e) => {
+              active={k === kind}
+              onPress={(e) => {
                 setKind(k)
                 e.currentTarget.scrollIntoView?.({ inline: 'center', block: 'nearest' })
               }}
-              className={
-                k === kind
-                  ? 'h-11 shrink-0 rounded-full border border-signal bg-signal-soft px-4 text-[13.5px] font-semibold text-signal'
-                  : 'h-11 shrink-0 rounded-full border border-line bg-panel px-4 text-[13.5px] text-ink-2'
-              }
             >
               {kindLabel(t, k)}
-            </button>
+            </PickChip>
           ))}
         </div>
 
-        {loading ? (
-          <Skeleton className="h-[112px] w-full" />
-        ) : isBp ? (
+        {/*
+          The steppers are drawn at once, empty while the last reading loads, and fill in when it
+          comes: no placeholder of another height in between.
+        */}
+        {isBp ? (
           <div className="flex flex-col gap-3">
             {(
               [
@@ -209,7 +205,7 @@ function LogMeasurementForm({
               ] as const
             ).map(([k, v, s]) => (
               <div key={k} className="flex items-center gap-3">
-                <span className="w-[88px] shrink-0 text-[13.5px] font-semibold">
+                <span className="w-16 shrink-0 text-[13.5px] font-semibold leading-tight">
                   {t(`health.kinds.${k}`)}
                 </span>
                 <div className="min-w-0 flex-1">
@@ -221,7 +217,7 @@ function LogMeasurementForm({
                     unit="mmHg"
                     label={t(`health.kinds.${k}`)}
                     locale={locale}
-                    autoFocus={k === 'bp_systolic' && v === null}
+                    autoFocus={!loading && k === 'bp_systolic' && v === null}
                     invalid={v !== null && !inRange(s, v)}
                   />
                 </div>
@@ -238,7 +234,7 @@ function LogMeasurementForm({
                 unit={unit}
                 label={kindLabel(t, kind)}
                 locale={locale}
-                autoFocus={value === null && !(isSession && noLength)}
+                autoFocus={!loading && value === null && !(isSession && noLength)}
                 invalid={needsValue && value !== null && !inRange(spec, value)}
               />
             </div>
@@ -250,6 +246,7 @@ function LogMeasurementForm({
                     amount={String(n)}
                     unit={unit}
                     label={t('measure.setValue', { value: `${n} ${unit}` })}
+                    active={!noLength && value === n}
                     onPress={() => {
                       setNoLength(false)
                       edit(kind)(n)
@@ -263,7 +260,7 @@ function LogMeasurementForm({
                 type="button"
                 aria-pressed={noLength}
                 onClick={() => setNoLength((v) => !v)}
-                className="h-11 self-start px-1 text-[13px] font-semibold text-signal"
+                className="h-11 self-start text-[13.5px] font-semibold text-signal outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
               >
                 {noLength ? t('measure.withLength') : t('measure.noLength')}
               </button>
@@ -271,26 +268,23 @@ function LogMeasurementForm({
           </div>
         )}
 
-        {!loading && (
-          <div className="flex min-h-7 flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[12.5px] text-muted">
-            {outOfRange ? (
-              <span role="alert" className="font-medium text-danger">
-                {t('measure.outOfRange')}
-              </span>
-            ) : last && lastText ? (
-              <>
-                <span>
-                  {t('measure.last', { value: lastText, when: agoLabel(t, last.at, now) })}
-                </span>
-                {delta !== null && (
-                  <DeltaChip delta={delta} digits={spec.digits} unit={unit} locale={locale} />
-                )}
-              </>
-            ) : (
-              <span>{t('measure.noLast')}</span>
-            )}
-          </div>
-        )}
+        {/* A line kept for the last reading, the change and the warning: none of them pushes. */}
+        <div className="-mt-2 flex min-h-7 flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[12.5px] text-muted">
+          {loading ? null : outOfRange ? (
+            <span role="alert" className="font-medium text-danger">
+              {t('measure.outOfRange')}
+            </span>
+          ) : last && lastText ? (
+            <>
+              <span>{t('measure.last', { value: lastText, when: agoLabel(t, last.at, now) })}</span>
+              {delta !== null && (
+                <DeltaChip delta={delta} digits={spec.digits} unit={unit} locale={locale} />
+              )}
+            </>
+          ) : (
+            <span>{t('measure.noLast')}</span>
+          )}
+        </div>
 
         <Field label={t('measure.when')}>
           {() => (
@@ -334,7 +328,7 @@ function LogMeasurementForm({
           <button
             type="button"
             onClick={() => setShowNote(true)}
-            className="-mt-2 flex h-11 items-center gap-1.5 self-start text-[13px] font-semibold text-signal"
+            className="-mt-2 flex h-11 items-center gap-1.5 self-start text-[13.5px] font-semibold text-signal outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
           >
             <Plus className="size-3.5" aria-hidden />
             {t('measure.addNote')}

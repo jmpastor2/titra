@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/primitives'
 import { useLocale } from '@/lib/useLocale'
 import { fmtDeltaMin, ON_TIME_MIN } from './delta'
+import { SheetSection } from './SheetSection'
 import { slotWeekdayText, slotWhenText } from './slotText'
 import type { Consequence, SlotOption } from './slotView'
 import type { SlotAssignment } from './useSlotAssignment'
@@ -16,9 +17,12 @@ import type { SlotAssignment } from './useSlotAssignment'
  */
 export function SlotPicker({
   assignment,
+  hideLabel = false,
   className,
 }: {
   assignment: SlotAssignment
+  /** In a sheet whose title already asks which one it covers. */
+  hideLabel?: boolean
   className?: string
 }) {
   const { t } = useTranslation()
@@ -85,12 +89,18 @@ export function SlotPicker({
   const choosable = view.options.length > 1
 
   return (
-    <div className={clsx('flex flex-col gap-2', className)}>
-      <span id={labelId} className="spec">
-        {t('editDose.slot.label')}
-      </span>
+    <SheetSection
+      label={t('editDose.slot.label')}
+      labelId={labelId}
+      hideLabel={hideLabel}
+      className={className}
+    >
       {choosable && (
-        <div role="radiogroup" aria-labelledby={labelId} className="flex flex-col gap-1.5">
+        <div
+          role="radiogroup"
+          aria-labelledby={labelId}
+          className="flex flex-col divide-y divide-line border-y border-line"
+        >
           {view.options.map((option) => {
             const on = option.key === selected.key
             const { title, sub } = text(option)
@@ -101,25 +111,29 @@ export function SlotPicker({
                 role="radio"
                 aria-checked={on}
                 onClick={() => choose(option.key)}
-                className={clsx(
-                  'flex min-h-[52px] w-full items-center gap-3 rounded-control border px-3 py-2 text-left transition-colors',
-                  on
-                    ? 'border-signal/50 bg-signal-soft'
-                    : 'border-line bg-panel-2 active:border-line-strong',
-                )}
+                className="flex min-h-[52px] w-full items-center gap-3 py-2.5 text-left outline-none transition-opacity active:opacity-70"
               >
                 <span
                   aria-hidden
                   className={clsx(
-                    'grid size-5 shrink-0 place-items-center rounded-full border-2',
+                    'grid size-5 shrink-0 place-items-center rounded-full border-2 transition-colors',
                     on ? 'border-signal' : 'border-line-strong',
                   )}
                 >
                   {on && <span className="size-2.5 rounded-full bg-signal" />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold leading-snug">{title}</span>
-                  {sub && <span className="block text-[12px] leading-snug text-muted">{sub}</span>}
+                  <span
+                    className={clsx(
+                      'block text-[14.5px] font-semibold leading-snug',
+                      on ? 'text-ink' : 'text-ink-2',
+                    )}
+                  >
+                    {title}
+                  </span>
+                  {sub && (
+                    <span className="block text-[12.5px] leading-snug text-muted">{sub}</span>
+                  )}
                 </span>
                 {option.recommended && <Badge tone="brand">{t('editDose.slot.recommended')}</Badge>}
               </button>
@@ -127,16 +141,14 @@ export function SlotPicker({
           })}
         </div>
       )}
+      {/* Two lines kept for the sentence, so choosing another option never moves what follows. */}
       <p
         aria-live="polite"
-        className={clsx(
-          'flex items-start gap-2 rounded-control bg-panel-2 px-3 py-2 text-[12.5px] leading-snug text-ink-2',
-          !choosable && 'min-h-11 items-center',
-        )}
+        className="flex min-h-[2lh] items-start gap-2 text-[13px] leading-snug text-ink-2"
       >
         <Icon aria-hidden className={clsx('mt-px size-4 shrink-0', then.tone)} />
         <span>{then.text}</span>
       </p>
-    </div>
+    </SheetSection>
   )
 }

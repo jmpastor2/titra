@@ -33,7 +33,9 @@ describe('EditDoseSheet', () => {
     // One draw for both compounds: 100 mcg of a 5 + 5 mg blend in 3 mL is 6 U.
     const dose = await screen.findByLabelText('Dosis')
     expect(dose).toHaveValue('6')
-    expect(screen.getByText('CJC-1295 + Ipamorelina')).toBeInTheDocument()
+    // Named once, in the sheet's description; the partner rides along under the field.
+    expect(screen.getByText(/^CJC-1295 \+ Ipamorelina · /)).toBeInTheDocument()
+    expect(screen.getByText('Ipamorelina', { exact: false, selector: 'span' })).toBeInTheDocument()
 
     // Nine units is half as much again for both, and the partner follows it on screen.
     fireEvent.change(dose, { target: { value: '9' } })

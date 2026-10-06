@@ -9,12 +9,17 @@ import { SubstanceDot } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import type { InventoryRow } from '@/data/database.types'
 import { useAddDose, useDeleteDoses, useDoses, useInventory, useProtocols } from '@/data/hooks'
 import { suggestNextSite } from '@/domain/sites/injectionSites'
-import { vialHas } from '@/features/inventory/vials'
+import { concentrationFor, vialHas } from '@/features/inventory/vials'
 import { SubstancePicker } from '@/features/protocols/SubstancePicker'
-import { fromDateTimeInputs, toDateInputValue, toTimeInputValue } from '@/lib/format'
+import {
+  fmtDose,
+  fmtNumber,
+  fromDateTimeInputs,
+  toDateInputValue,
+  toTimeInputValue,
+} from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { FastingCard } from '@/features/fasting/FastingCard'
 import { needsFasting } from '@/features/fasting/fasting'
@@ -23,6 +28,7 @@ import { siteHistory } from './administrations'
 import { DoseLine } from './DoseLine'
 import { DrawGuide } from './DrawGuide'
 import {
+  amountToLog,
   buildInsertRows,
   drawPlanOf,
   lastMgOf,
@@ -36,6 +42,7 @@ import { FreeDoseChooser } from './FreeDoseChooser'
 import { freeChoices, linesForChoice, type FreeChoice } from './freeChoices'
 import { SlotPicker } from './SlotPicker'
 import { slotDayText } from './slotText'
+import { SheetSection } from './SheetSection'
 import { shortNames } from './substanceNames'
 import { useSlotAssignment } from './useSlotAssignment'
 import { WhenField, type WhenMode } from './WhenField'
@@ -128,6 +135,18 @@ function LogDoseForm({
   )
   const choices = useMemo(() => freeChoices(source), [source])
 
+  // The syringe guide: kept on screen (empty) while the amount is retyped, so nothing jumps.
+  const plan = useMemo(
+    () => (injectable ? drawPlanOf(lines, vials) : null),
+    [injectable, lines, vials],
+  )
+  const drawable =
+    injectable &&
+    lines.some((l) => {
+      const vial = vials.find((v) => v.id === l.inventoryId)
+      return Boolean(vial && concentrationFor(vial, l.compoundId))
+    })
+
   // The moment of the dose, to place it on the plan and to rotate the site.
   const doseAt = useMemo(
     () =>
@@ -205,6 +224,8 @@ function LogDoseForm({
 
   const everyCompound = lines.flatMap((l) => [l.compoundId, ...l.partners])
   const title = protocol?.name || shortNames(everyCompound)
+  const choosing = lines.length === 0
+  const amount = amountToLog(lines, vials, plan)
 
   return (
     <>
@@ -213,9 +234,10 @@ function LogDoseForm({
         tall
         open
         onClose={onClose}
-        title={t('doses.logTitle')}
+        title={choosing ? t('doses.choose.title') : t('doses.logTitle')}
+        description={choosing ? t('doses.choose.hint') : undefined}
         footer={
-          lines.length > 0 && (
+          !choosing && (
             <Button
               block
               size="lg"
@@ -223,47 +245,58 @@ function LogDoseForm({
               leading={<Syringe className="size-5" />}
               onClick={submit}
             >
-              {t('doses.confirm')}
+              {amount
+                ? t('doses.confirmAmount', {
+                    amount:
+                      'units' in amount
+                        ? `${fmtNumber(amount.units, locale, 1)} U`
+                        : fmtDose(amount.mg, amount.unit, locale),
+                  })
+                : t('doses.confirm')}
             </Button>
           )
         }
       >
-        {lines.length === 0 ? (
+        {choosing ? (
           <FreeDoseChooser
             choices={choices}
             onChoose={choose}
             onOther={() => setPicker('replace')}
           />
         ) : (
-          <div className="flex flex-col gap-4 py-1">
-            <div className="flex items-center gap-3 rounded-control border border-line bg-panel-2 px-3 py-2.5">
-              <span className="flex shrink-0 items-center gap-1" aria-hidden>
-                {everyCompound.map((id) => (
-                  <SubstanceDot key={id} color={compoundColor(id)} />
-                ))}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="spec block">
-                  {protocol ? t('doses.chosen.protocol') : t('doses.chosen.oneOff')}
+          <div className="flex flex-col gap-6 pb-2 pt-1">
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-3">
+                <span className="flex shrink-0 items-center gap-1" aria-hidden>
+                  {everyCompound.map((id) => (
+                    <SubstanceDot key={id} color={compoundColor(id)} size={9} />
+                  ))}
                 </span>
-                <span className="block break-words text-[15px] font-semibold">{title}</span>
-              </span>
-              {free && (
-                <button
-                  type="button"
-                  onClick={back}
-                  className="-mr-1 min-h-11 shrink-0 rounded-full px-3 text-[13px] font-semibold text-signal"
-                >
-                  {t('doses.choose.change')}
-                </button>
+                <span className="min-w-0 flex-1">
+                  <span className="block break-words text-[17px] font-semibold leading-snug">
+                    {title}
+                  </span>
+                  <span className="spec block">
+                    {protocol ? t('doses.chosen.protocol') : t('doses.chosen.oneOff')}
+                  </span>
+                </span>
+                {free && (
+                  <button
+                    type="button"
+                    onClick={back}
+                    className="-mr-2 min-h-11 shrink-0 rounded-full px-2 text-[14px] font-semibold text-signal"
+                  >
+                    {t('doses.choose.change')}
+                  </button>
+                )}
+              </div>
+              {protocol?.notes && (
+                <p className="flex items-start gap-2 text-[13px] leading-snug text-muted">
+                  <Info aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+                  <span className="min-w-0 break-words">{protocol.notes}</span>
+                </p>
               )}
             </div>
-            {protocol?.notes && (
-              <p className="-mt-1 flex items-start gap-1.5 rounded-control border border-warn/30 bg-warn-soft px-3 py-2 text-[12.5px] leading-snug text-ink-2">
-                <Info className="mt-0.5 size-3.5 shrink-0 text-warn" />
-                {protocol.notes}
-              </p>
-            )}
 
             <WhenField
               mode={whenMode}
@@ -278,53 +311,54 @@ function LogDoseForm({
 
             {slot && <SlotPicker assignment={slot} />}
 
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center justify-between">
-                <span className="spec">
-                  {lines.length > 1 ? t('doses.sameSyringe') : t('doses.substance')}
-                </span>
-                {!protocolId && (
+            <SheetSection
+              label={lines.length > 1 ? t('doses.sameSyringe') : t('doses.dose')}
+              action={
+                !protocolId && (
                   <button
                     type="button"
                     onClick={() => setPicker('add')}
-                    className="flex min-h-11 items-center gap-1 text-[12.5px] font-semibold text-signal"
+                    className="tap-link flex items-center gap-1 text-[13px] font-semibold text-signal"
                   >
-                    <Plus className="size-3.5" /> {t('doses.addToSyringe')}
+                    <Plus aria-hidden className="size-3.5" /> {t('doses.addToSyringe')}
                   </button>
-                )}
+                )
+              }
+            >
+              <div className="flex flex-col divide-y divide-line">
+                {lines.map((l) => (
+                  <div key={l.key} className="py-3 first:pt-0 last:pb-0">
+                    <DoseLine
+                      line={l}
+                      vials={vials.filter((v) => vialHas(v, l.compoundId))}
+                      locale={locale}
+                      named={lines.length > 1}
+                      removable={!protocolId && lines.length > 1}
+                      onChange={(p) => setLines((ls) => patchLine(ls, l.key, p, vials))}
+                      onRemove={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
+                      partnerDoses={l.partners.map((c) => ({
+                        compoundId: c,
+                        mg: partnerMg(l, c, vials),
+                      }))}
+                      lastMg={lastMgOf(doseRows, l.compoundId)}
+                    />
+                  </div>
+                ))}
               </div>
-              {lines.map((l) => (
-                <DoseLine
-                  key={l.key}
-                  line={l}
-                  vials={vials.filter((v) => vialHas(v, l.compoundId))}
-                  locale={locale}
-                  removable={!protocolId && lines.length > 1}
-                  onChange={(p) => setLines((ls) => patchLine(ls, l.key, p, vials))}
-                  onRemove={() => setLines((ls) => ls.filter((x) => x.key !== l.key))}
-                  partnerDoses={l.partners.map((c) => ({
-                    compoundId: c,
-                    mg: partnerMg(l, c, vials),
-                  }))}
-                  lastMg={lastMgOf(doseRows, l.compoundId)}
-                />
-              ))}
-              {injectable && <DrawGuideOf lines={lines} vials={vials} />}
+              {drawable && <DrawGuide plan={plan} />}
               {needsFasting(everyCompound) && <FastingCard name={title} />}
-            </div>
+            </SheetSection>
 
             {injectable && (
-              <Field label={t('doses.site')}>
-                {() => (
-                  <SitePicker
-                    value={siteId}
-                    onChange={setSiteId}
-                    history={sites}
-                    now={doseAt}
-                    compoundId={lines[0]?.compoundId}
-                  />
-                )}
-              </Field>
+              <SheetSection label={t('doses.site')}>
+                <SitePicker
+                  value={siteId}
+                  onChange={setSiteId}
+                  history={sites}
+                  now={doseAt}
+                  compoundId={lines[0]?.compoundId}
+                />
+              </SheetSection>
             )}
 
             <Field label={`${t('common.notes')} · ${t('common.optional')}`}>
@@ -357,10 +391,4 @@ function LogDoseForm({
       />
     </>
   )
-}
-
-/** The syringe guide for the lines in one syringe, when anything can be drawn. */
-function DrawGuideOf({ lines, vials }: { lines: readonly Line[]; vials: readonly InventoryRow[] }) {
-  const plan = useMemo(() => drawPlanOf(lines, vials), [lines, vials])
-  return plan ? <DrawGuide plan={plan} /> : null
 }

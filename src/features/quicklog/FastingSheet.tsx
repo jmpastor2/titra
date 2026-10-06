@@ -2,6 +2,7 @@ import { clsx } from 'clsx'
 import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Meter } from '@/components/kpi/Meter'
+import { Button } from '@/components/ui/Button'
 import { Sheet } from '@/components/ui/Sheet'
 import { useToast } from '@/components/ui/Toast'
 import { FastingControls } from '@/features/fasting/FastingCard'
@@ -15,8 +16,13 @@ import {
 } from '@/features/fasting/fasting'
 import { useNow } from '@/lib/useNow'
 import type { GlanceDose } from './doseGlance'
+import { BlockLabel } from './SheetBits'
 
-/** Last meal and the countdown to a fast that is long enough for the next GH dose. */
+/**
+ * Last meal and the countdown to a fast that is long enough for the next GH dose. Every part
+ * is drawn in every state (the gauge empty, the clear link hidden), so the sheet keeps its
+ * height when a meal is cleared or the countdown runs out while it is open.
+ */
 export function FastingSheet({
   fastFor,
   onClose,
@@ -51,52 +57,89 @@ export function FastingSheet({
     onClose()
   }
 
+  function ateNow() {
+    const at = new Date()
+    setLastMeal(at)
+    noted(at)
+  }
+
   return (
-    <Sheet open onClose={onClose} title={t('fasting.title')}>
-      <div className="flex flex-col gap-5 py-1">
+    <Sheet
+      open
+      onClose={onClose}
+      title={t('fasting.title')}
+      description={
+        fastFor ? t('fasting.next', { name: fastFor.name, time: clock(fastFor.at) }) : undefined
+      }
+      footer={
+        <Button block size="lg" onClick={ateNow}>
+          {t('fasting.justAte')}
+        </Button>
+      }
+    >
+      <div className="flex flex-col gap-7 pb-2 pt-1">
         <div>
-          {!lastMeal ? null : waiting ? (
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-              <span className="readout text-[40px] font-semibold leading-none text-warn">
-                {clock(s.readyAt ?? now)}
+          <div className="flex h-11 items-end justify-between gap-3">
+            {waiting ? (
+              <>
+                <span className="readout text-[40px] font-semibold leading-none text-warn">
+                  {clock(s.readyAt ?? now)}
+                </span>
+                <span className="readout pb-0.5 text-[13px] text-muted">
+                  {t('fasting.minLeft', { min: s.waitMin })}
+                </span>
+              </>
+            ) : lastMeal ? (
+              <span className="flex items-center gap-2 text-[22px] font-semibold leading-none">
+                <Check className="size-5 shrink-0 text-signal" strokeWidth={3} aria-hidden />
+                {t('fasting.fasted')}
               </span>
-              <span className="readout text-[13px] text-muted">
-                {t('fasting.minLeft', { min: s.waitMin })}
+            ) : (
+              <span className="text-[22px] font-semibold leading-none text-muted">
+                {t('quick.fasting.none')}
               </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 text-[20px] font-semibold">
-              <Check className="size-5 shrink-0 text-signal" strokeWidth={3} aria-hidden />
-              {t('fasting.fasted')}
-            </div>
-          )}
-          {lastMeal && (
-            <Meter
-              className="mt-3"
-              value={fastProgress(lastMeal, now)}
-              height={8}
-              color={waiting ? 'var(--warn)' : 'var(--signal)'}
-            />
-          )}
-          <p className={clsx('text-[14px] font-medium text-ink-2', lastMeal && 'mt-2.5')}>
+            )}
+          </div>
+          <Meter
+            className="mt-4"
+            value={lastMeal ? fastProgress(lastMeal, now) : 0}
+            height={6}
+            color={waiting ? 'var(--warn)' : 'var(--signal)'}
+          />
+          <p className="mt-3 text-[14px] font-medium leading-snug text-ink-2">
             {!lastMeal
               ? t('fasting.askShort')
               : s.ready
                 ? t('fasting.ready', { since: clock(s.readyAt ?? now) })
                 : t('fasting.wait', { at: clock(s.readyAt ?? now), min: s.waitMin })}
           </p>
-          {fastFor && (
-            <p className="mt-1 text-[13px] text-muted">
-              {t('fasting.next', { name: fastFor.name, time: clock(fastFor.at) })}
-            </p>
-          )}
+          {/* Two lines kept for it: the meal sentence and the rule are not the same length. */}
+          <p className="mt-1 min-h-9 text-[12.5px] leading-snug text-muted">
+            {lastMeal
+              ? t('fasting.lastMeal', { at: clock(lastMeal), after: EAT_AFTER_MIN })
+              : t('fasting.rule', { after: EAT_AFTER_MIN })}
+          </p>
         </div>
 
-        <FastingControls lastMeal={lastMeal} onSet={noted} />
-
-        <p className="text-[12px] leading-snug text-muted">
-          {t('fasting.rule', { after: EAT_AFTER_MIN })}
-        </p>
+        <div>
+          <BlockLabel>{t('fasting.otherTime')}</BlockLabel>
+          <FastingControls lastMeal={lastMeal} onSet={noted} justAte={false} clear={false} />
+          <button
+            type="button"
+            onClick={() => {
+              setLastMeal(null)
+              noted(null)
+            }}
+            aria-hidden={!lastMeal || undefined}
+            tabIndex={lastMeal ? undefined : -1}
+            className={clsx(
+              'mt-2 h-11 text-[13.5px] font-semibold text-muted outline-none focus-visible:ring-2 focus-visible:ring-signal/60',
+              !lastMeal && 'invisible',
+            )}
+          >
+            {t('fasting.clearMeal')}
+          </button>
+        </div>
       </div>
     </Sheet>
   )

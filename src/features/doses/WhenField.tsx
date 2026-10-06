@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next'
-import { Field, Input } from '@/components/ui/Field'
+import { Input } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/primitives'
 import { fmtDate, toTimeInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { SheetSection } from './SheetSection'
 
 export type WhenMode = 'now' | 'planned' | 'custom'
 
@@ -54,37 +55,33 @@ export function WhenField({
       : []
 
   return (
-    <Field label={t('doses.when')}>
-      {() => (
-        <div className="flex flex-col gap-2">
-          <Segmented<WhenMode>
-            value={mode}
-            onChange={onMode}
-            size="sm"
-            options={[
-              { value: 'now', label: t('doses.now') },
-              ...atPlanned,
-              { value: 'custom', label: t('doses.otherTime') },
-            ]}
+    <SheetSection label={t('doses.when')}>
+      <Segmented<WhenMode>
+        value={mode}
+        onChange={onMode}
+        size="sm"
+        options={[
+          { value: 'now', label: t('doses.now') },
+          ...atPlanned,
+          { value: 'custom', label: t('doses.otherTime') },
+        ]}
+      />
+      {mode === 'custom' && (
+        <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-2">
+          <Input
+            type="date"
+            aria-label={t('common.date')}
+            value={date}
+            onChange={(e) => onDate(e.target.value)}
           />
-          {mode === 'custom' && (
-            <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="date"
-                aria-label={t('common.date')}
-                value={date}
-                onChange={(e) => onDate(e.target.value)}
-              />
-              <Input
-                type="time"
-                aria-label={t('common.time')}
-                value={time}
-                onChange={(e) => onTime(e.target.value)}
-              />
-            </div>
-          )}
+          <Input
+            type="time"
+            aria-label={t('common.time')}
+            value={time}
+            onChange={(e) => onTime(e.target.value)}
+          />
         </div>
       )}
-    </Field>
+    </SheetSection>
   )
 }

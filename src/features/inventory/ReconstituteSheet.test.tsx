@@ -1,8 +1,9 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
 import { ReconstituteSheet } from './ReconstituteSheet'
 import { makeStore, protocolRow, renderInApp, stubDialog, vialRow } from './testUtils'
+import { WATER_SETTLE_MS } from './useWaterEntry'
 
 beforeAll(async () => {
   stubDialog()
@@ -16,6 +17,10 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers())
 
 const SAVE = 'Guardar reconstitución'
+
+/** Lets typing pause long enough for the water checks to look at it. */
+const settle = () => act(() => new Promise((r) => setTimeout(r, WATER_SETTLE_MS + 50)))
+const warnings = () => screen.getByRole('status')
 
 describe('ReconstituteSheet', () => {
   it('turns 100 U of water into 1 mL, 10 mg/mL and the 12 U of a 1.2 mg dose', async () => {
@@ -36,7 +41,8 @@ describe('ReconstituteSheet', () => {
     expect(result).toHaveTextContent('1,2 mg')
     // 28 days from the day of reconstitution, as an estimate.
     expect(result).toHaveTextContent('≈ lun 2 nov')
-    expect(screen.queryByRole('status')).toBeNull()
+    await settle()
+    expect(warnings()).toBeEmptyDOMElement()
   })
 
   it('offers 1, 2 and 3 mL as 100, 200 and 300 U', () => {
@@ -46,14 +52,14 @@ describe('ReconstituteSheet', () => {
     )
     const water = screen.getByLabelText('Agua bacteriostática')
     for (const [label, typed] of [
-      [/^2 mL\s*200 U$/, '200'],
-      [/^3 mL\s*300 U$/, '300'],
-      [/^1 mL\s*100 U$/, '100'],
+      [/^200 U\s*2 mL$/, '200'],
+      [/^300 U\s*3 mL$/, '300'],
+      [/^100 U\s*1 mL$/, '100'],
     ] as const) {
       fireEvent.click(screen.getByRole('button', { name: label }))
       expect(water).toHaveValue(typed)
     }
-    expect(screen.getByRole('button', { name: /^1 mL\s*100 U$/ })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: /^100 U\s*1 mL$/ })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
@@ -68,8 +74,10 @@ describe('ReconstituteSheet', () => {
     fireEvent.change(screen.getByLabelText('Agua bacteriostática'), { target: { value: '100' } })
 
     expect(screen.getByText('100 mL = 10.000 U')).toBeInTheDocument()
-    const warning = screen.getByRole('status')
-    expect(warning).toHaveTextContent('100 mL es muchísima agua para un vial de 10 mg')
+    const warning = warnings()
+    await waitFor(() =>
+      expect(warning).toHaveTextContent('100 mL es muchísima agua para un vial de 10 mg'),
+    )
     expect(warning).toHaveTextContent('¿Querías decir 100 unidades (= 1 mL)?')
     // The wrong reading would have made the vial 0.1 mg/mL.
     expect(screen.getByRole('region', { name: 'Resultado' })).toHaveTextContent(/0,1\s*mg\/mL/)
@@ -78,7 +86,7 @@ describe('ReconstituteSheet', () => {
 
     expect(screen.getByRole('radio', { name: 'U' })).toBeChecked()
     expect(screen.getByText('100 U = 1 mL')).toBeInTheDocument()
-    expect(screen.queryByRole('status')).toBeNull()
+    expect(warning).toBeEmptyDOMElement()
     await waitFor(() =>
       expect(screen.getByRole('region', { name: 'Resultado' })).toHaveTextContent(/10\s*mg\/mL/),
     )
@@ -94,13 +102,37 @@ describe('ReconstituteSheet', () => {
     // 300 U of water: 3.33 mg/mL, 1.2 mg is 36 U: fine.
     fireEvent.change(water, { target: { value: '300' } })
     await screen.findByText(/36 U/)
-    expect(screen.queryByRole('status')).toBeNull()
+    await settle()
+    expect(warnings()).toBeEmptyDOMElement()
 
     // 1000 U (10 mL): 1 mg/mL, 1.2 mg would be 120 U.
     fireEvent.change(water, { target: { value: '1000' } })
-    expect(await screen.findByRole('status')).toHaveTextContent('no cabe en una jeringa de 1 mL')
+    await waitFor(() => expect(warnings()).toHaveTextContent('no cabe en una jeringa de 1 mL'))
     // A warning is not a refusal.
     expect(screen.getByRole('button', { name: SAVE })).toBeEnabled()
+  })
+
+  it('checks the water once typing pauses, not on every key', async () => {
+    renderInApp(
+      <ReconstituteSheet vial={vialRow()} open onClose={() => {}} />,
+      makeStore({ protocols: [protocolRow()], inventory: [vialRow()] }),
+    )
+    const water = screen.getByLabelText('Agua bacteriostática')
+
+    // On the way to 150 U the field holds 1 U, which on its own would be a warning.
+    fireEvent.change(water, { target: { value: '1' } })
+    expect(warnings()).toBeEmptyDOMElement()
+    fireEvent.change(water, { target: { value: '15' } })
+    fireEvent.change(water, { target: { value: '150' } })
+    await settle()
+    expect(warnings()).toBeEmptyDOMElement()
+
+    // A pause on 1 U is checked; so is leaving the field, at once.
+    fireEvent.change(water, { target: { value: '1' } })
+    await waitFor(() => expect(warnings()).toHaveTextContent('¿Querías decir 1 mL?'))
+    fireEvent.change(water, { target: { value: '100' } })
+    fireEvent.blur(water)
+    expect(warnings()).toBeEmptyDOMElement()
   })
 
   it('saves only the water, the concentration and the day', async () => {

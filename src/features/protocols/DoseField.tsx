@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Input } from '@/components/ui/Field'
@@ -97,9 +98,16 @@ export function DoseEquivalents({
 }) {
   const { locale } = useLocale()
   const equivalent = fmtEquivalents(mg, entry, native, conc, locale)
-  if (!equivalent) return null
+  // Where there are other units to show, the line keeps its place while the field is
+  // emptied and retyped, so what is under it does not jump.
+  if (!equivalent && entriesFor(native, conc).length < 2) return null
   return (
-    <div className={className ?? 'readout mt-1.5 text-[12.5px] font-semibold text-signal'}>
+    <div
+      className={clsx(
+        'min-h-5',
+        className ?? 'readout text-[13px] font-semibold leading-snug text-signal',
+      )}
+    >
       {equivalent}
     </div>
   )
@@ -119,6 +127,7 @@ export function DoseInput({
   className,
   autoFocus,
   equivalents = true,
+  big = false,
 }: {
   id?: string
   value: string
@@ -135,6 +144,8 @@ export function DoseInput({
   autoFocus?: boolean
   /** Show the other units under the field; off when the caller lays them out itself. */
   equivalents?: boolean
+  /** The one number of a sheet: large rounded numerals. */
+  big?: boolean
 }) {
   const { t } = useTranslation()
   const suffix =
@@ -154,7 +165,10 @@ export function DoseInput({
         onFocus={(e) => e.currentTarget.select()}
         onKeyDown={blurOnEnter}
         suffix={suffix}
-        className={className ?? 'readout bg-panel'}
+        className={className ?? (big ? 'readout font-semibold' : 'readout')}
+        // Above the 16 px floor phones get for every field (an unlayered rule that a utility
+        // class cannot beat), so the large size is set inline.
+        style={big ? { fontSize: 24 } : undefined}
       />
       {equivalents && <DoseEquivalents mg={mg} entry={entry} native={native} conc={conc} />}
     </>

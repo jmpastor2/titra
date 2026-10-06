@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import type { InventoryRow } from '@/data/database.types'
 import { useLocale } from '@/lib/useLocale'
+import { Caution } from './Caution'
 import { useCycleText } from './cycleText'
 import { doseView, fmtDoseLine, fmtDoseView } from './cycleView'
 import type { Origin, PlanModel } from './draft'
@@ -63,14 +64,7 @@ export function PlanPreview({
           {text.phase(summary)}
           {summary.dose && <span className="readout"> · {fmtDoseLine(summary.dose, locale)}</span>}
         </p>
-        {before && (
-          <p
-            role="status"
-            className="rounded-control border border-warn/30 bg-warn-soft px-3 py-2 text-[12.5px] leading-snug text-ink-2"
-          >
-            {t('protocols.plan.todayChanged', { before })}
-          </p>
-        )}
+        {before && <Caution role="status">{t('protocols.plan.todayChanged', { before })}</Caution>}
         {summary.next && (
           <p className="text-[13.5px] text-ink-2">
             <NextChange summary={summary} />

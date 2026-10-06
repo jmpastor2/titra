@@ -1,4 +1,4 @@
-# Estado del proyecto (2026-10-07)
+# Estado del proyecto (2026-10-08)
 
 Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Actions al hacer push a `main`).
 
@@ -28,6 +28,12 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   - Datos: la cobertura de stock tiene en cuenta la caducidad (`inventory/supply.ts`), la tarjeta de vial
     cuenta solo las tomas antes de caducar, la decisión deja de preguntar si la toma ya se hizo a la dosis
     nueva, en Futuro «tu dosis en esa fecha», Más cuenta «urgentes».
+
+- Quinta tanda (hojas y formularios): todas las hojas sin cajas dentro de cajas, un botón principal que dice lo
+  que hace, altura fija (`tall`) donde el contenido cambia. `Sheet` abre desde un primer fotograma fuera de
+  pantalla con transición, nunca puede desplazarse (`overflow: clip` + reset de scroll: en iOS se iba arriba y
+  desaparecía), no abre el teclado al abrirse en el móvil y solo se ajusta al viewport visual con teclado.
+  Agua: cada toque cuenta una vez (`listHolds` en `quicklog/data.ts`), pastilla «+250 ml» en la tarjeta.
 
 ## Pendiente
 

@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
 import { InventorySheet } from './InventorySheet'
@@ -28,7 +28,7 @@ describe('vial form', () => {
     // The preset says the amounts can be edited.
     expect(screen.getByText(/Edítalas si tu vial es otro/)).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir vial' }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
     expect(store.inventory[0]).toMatchObject({
       compound_id: 'nad-plus',
@@ -48,11 +48,11 @@ describe('vial form', () => {
     renderInApp(<InventorySheet open onClose={() => {}} editing={null} />, store)
     fireEvent.click(screen.getByRole('button', { name: /NAD\+ 500 mg/ }))
 
-    fireEvent.click(screen.getByRole('button', { name: '100 mg' }))
-    expect(screen.getByRole('button', { name: '100 mg' })).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByRole('radio', { name: '100 mg' }))
+    expect(screen.getByRole('radio', { name: '100 mg' })).toBeChecked()
     expect(screen.getByDisplayValue('100')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir vial' }))
     await waitFor(() => expect(store.inventory).toHaveLength(1))
     expect(store.inventory[0]).toMatchObject({ total_mg: 100, label: 'NAD+ 100 mg' })
   })
@@ -68,7 +68,7 @@ describe('vial form', () => {
     // 5 mg of each in 1 mL: 5 mg/mL.
     expect(screen.getByRole('region', { name: 'Resultado' })).toHaveTextContent(/5\s*mg\/mL/)
 
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir vial' }))
     await waitFor(() => expect(store.inventory).toHaveLength(1))
     expect(store.inventory[0]).toMatchObject({
       total_mg: 5,
@@ -79,16 +79,18 @@ describe('vial form', () => {
     })
   })
 
-  it('guards the water here too: 100 in the mL field is probably 100 units', () => {
+  it('guards the water here too: 100 in the mL field is probably 100 units', async () => {
     renderInApp(<InventorySheet open onClose={() => {}} editing={null} />, makeStore())
     fireEvent.click(screen.getByRole('button', { name: /BPC-157 \+ TB-500 10 mg/ }))
     fireEvent.click(screen.getByRole('switch', { name: SWITCH }))
     fireEvent.click(screen.getByRole('radio', { name: 'mL' }))
     fireEvent.change(screen.getByLabelText('Agua bacteriostática'), { target: { value: '100' } })
 
-    expect(screen.getByRole('status')).toHaveTextContent('¿Querías decir 100 unidades (= 1 mL)?')
-    fireEvent.click(screen.getByRole('button', { name: 'Sí, 100 U' }))
-    expect(screen.queryByRole('status')).toBeNull()
+    const warning = screen.getByRole('status')
+    await waitFor(() => expect(warning).toHaveTextContent('¿Querías decir 100 unidades (= 1 mL)?'))
+    fireEvent.click(within(warning).getByRole('button', { name: 'Sí, 100 U' }))
+    expect(warning).toBeEmptyDOMElement()
+    expect(screen.getByRole('radio', { name: 'U' })).toBeChecked()
   })
 
   it('does not save a reconstituted vial without its water', () => {
@@ -96,7 +98,7 @@ describe('vial form', () => {
     renderInApp(<InventorySheet open onClose={() => {}} editing={null} />, store)
     fireEvent.click(screen.getByRole('button', { name: /NAD\+ 500 mg/ }))
     fireEvent.click(screen.getByRole('switch', { name: SWITCH }))
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Añadir vial' }))
     expect(screen.getByText('Indica el agua que le añadiste.')).toBeInTheDocument()
     expect(store.inventory).toHaveLength(0)
   })
@@ -126,7 +128,7 @@ describe('vial form', () => {
     fireEvent.change(screen.getByLabelText('Etiqueta'), {
       target: { value: 'MOTS-c nuevo nombre' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
     await waitFor(() => expect(store.inventory[0]!.label).toBe('MOTS-c nuevo nombre'))
     expect(store.inventory[0]).toMatchObject({
       diluent_ml: null,

@@ -17,6 +17,7 @@ import { RestControls } from './RestControls'
 import { stepWeeks } from './readout'
 import { windowStats, type StatsInput } from './stats'
 import { trailingRest } from './newCycle'
+import { TextButton } from '@/features/doses/TextButton'
 
 type StepState = 'past' | 'current' | 'future' | 'skipped'
 
@@ -29,9 +30,9 @@ const STATE_TONE = {
 
 function Fact({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-t border-line py-2.5 first:border-t-0">
-      <dt className="spec shrink-0">{label}</dt>
-      <dd className="readout min-w-0 text-right text-[14px] font-semibold">{children}</dd>
+    <div className="flex items-baseline justify-between gap-4 py-3">
+      <dt className="shrink-0 text-[13px] text-muted">{label}</dt>
+      <dd className="readout min-w-0 text-right text-[14.5px] font-semibold">{children}</dd>
     </div>
   )
 }
@@ -113,26 +114,41 @@ export function StepSheet({
         </span>
       }
       description={t('cycles.step.of', { n: stepIndex + 1, count: view.info.stepCount })}
+      // Steps differ in what they show: a fixed height, and the arrows in the footer, keep the
+      // buttons under the thumb while paging through them.
+      tall
       footer={
-        canEdit ? (
-          <Button
-            block
-            variant="secondary"
-            leading={<Pencil className="size-4" />}
-            onClick={() => nav(`/protocols/${view.row.id}/edit`)}
-          >
-            {t('cycles.step.edit')}
-          </Button>
+        view.info.stepCount > 1 ? (
+          <div className="grid grid-cols-2 gap-2 pb-1">
+            <Button
+              variant="secondary"
+              aria-label={t('cycles.step.previous')}
+              disabled={stepIndex <= 0}
+              leading={<ChevronLeft aria-hidden className="size-4 shrink-0" />}
+              onClick={() => onStep(stepIndex - 1)}
+            >
+              {t('cycles.step.previousShort')}
+            </Button>
+            <Button
+              variant="secondary"
+              aria-label={t('cycles.step.next')}
+              disabled={stepIndex >= view.info.stepCount - 1}
+              trailing={<ChevronRight aria-hidden className="size-4 shrink-0" />}
+              onClick={() => onStep(stepIndex + 1)}
+            >
+              {t('cycles.step.nextShort')}
+            </Button>
+          </div>
         ) : undefined
       }
     >
-      <div className="flex flex-col gap-4 pb-3 pt-1">
+      <div className="flex flex-col gap-5 pb-3 pt-1">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="spec">
+            <div className="text-[13px] font-medium text-ink-2">
               {step.pause ? t('cycles.rest.title') : t('cycles.step.dose')}
             </div>
-            <div className="readout mt-1 text-[26px] font-semibold leading-tight">
+            <div className="readout mt-1 text-[28px] font-semibold leading-tight">
               {label ? label.full : t('cycles.step.noDoses')}
             </div>
             {label?.units && (
@@ -144,7 +160,7 @@ export function StepSheet({
           </Badge>
         </div>
 
-        <dl>
+        <dl className="divide-y divide-line border-y border-line">
           <Fact label={t('cycles.step.dates')}>
             {step.endsOn
               ? t('cycles.step.range', {
@@ -183,29 +199,16 @@ export function StepSheet({
           <p className="text-[12.5px] text-muted">{t('cycles.step.skipped')}</p>
         )}
 
-        {isTrailingRest && <RestControls view={view} now={now} canEdit={canEdit} />}
+        {isTrailingRest && <RestControls view={view} now={now} canEdit={canEdit} inset={false} />}
 
-        {view.info.stepCount > 1 && (
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={stepIndex <= 0}
-              leading={<ChevronLeft className="size-4" />}
-              onClick={() => onStep(stepIndex - 1)}
-            >
-              {t('cycles.step.previous')}
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={stepIndex >= view.info.stepCount - 1}
-              trailing={<ChevronRight className="size-4" />}
-              onClick={() => onStep(stepIndex + 1)}
-            >
-              {t('cycles.step.next')}
-            </Button>
-          </div>
+        {canEdit && (
+          <TextButton
+            className="-ml-3 self-start"
+            icon={<Pencil aria-hidden className="size-4" />}
+            onClick={() => nav(`/protocols/${view.row.id}/edit`)}
+          >
+            {t('cycles.step.edit')}
+          </TextButton>
         )}
       </div>
     </Sheet>

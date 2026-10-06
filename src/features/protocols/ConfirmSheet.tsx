@@ -14,6 +14,7 @@ export function ConfirmSheet({
   confirmLabel,
   tone = 'primary',
   busy = false,
+  tall = false,
   onConfirm,
   onClose,
 }: {
@@ -23,6 +24,8 @@ export function ConfirmSheet({
   confirmLabel: string
   tone?: 'primary' | 'danger'
   busy?: boolean
+  /** Fixed height, for a body that changes while it is used (a dose being typed). */
+  tall?: boolean
   onConfirm: () => void
   onClose: () => void
 }) {
@@ -33,6 +36,7 @@ export function ConfirmSheet({
       onClose={onClose}
       title={title}
       description={description}
+      tall={tall}
       footer={
         <div className="flex flex-col gap-1.5 pb-1">
           <Button
@@ -50,7 +54,7 @@ export function ConfirmSheet({
         </div>
       }
     >
-      <div className="flex flex-col gap-3 py-1">{children}</div>
+      <div className="flex flex-col gap-4 pb-2 pt-1">{children}</div>
     </Sheet>
   )
 }

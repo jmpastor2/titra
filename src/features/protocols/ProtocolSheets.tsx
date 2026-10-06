@@ -2,21 +2,21 @@ import {
   Archive,
   Bookmark,
   CalendarPlus,
-  ChevronRight,
   Copy,
   Pause,
   Pencil,
   Play,
   Syringe,
   TrendingUp,
-  type LucideIcon,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Sheet } from '@/components/ui/Sheet'
+import { ActionList, type ActionItem } from '@/features/doses/ActionList'
 import { compoundById } from '@/content/compounds'
 import { activeVial, concentrationFor } from '@/features/inventory/vials'
 import { ChangeHeadline, ChangeRows } from './ChangeRows'
+import { Caution } from './Caution'
 import { ConfirmSheet } from './ConfirmSheet'
 import { DoseInput, EntryNote, EntryToggle } from './DoseField'
 import {
@@ -31,15 +31,6 @@ import {
 import { changeRows } from './stepChange'
 import { useCycleText } from './cycleText'
 import type { ProtocolActions } from './useProtocolActions'
-
-interface MenuItem {
-  key: string
-  icon: LucideIcon
-  title: string
-  hint?: string
-  tone?: 'danger'
-  run: () => void
-}
 
 /**
  * Everything a protocol's "⋯" opens: the action list and the sheets behind it, each one
@@ -58,13 +49,13 @@ export function ProtocolSheets({ actions: a }: { actions: ProtocolActions }) {
       : undefined
   }
 
-  const items: MenuItem[] = [
+  const items: ActionItem[] = [
     {
       key: 'edit',
       icon: Pencil,
       title: t('protocolMenu.edit'),
       hint: t('protocolMenu.editHint'),
-      run: a.edit,
+      onClick: a.edit,
     },
     ...(a.hold
       ? [
@@ -73,7 +64,7 @@ export function ProtocolSheets({ actions: a }: { actions: ProtocolActions }) {
             icon: CalendarPlus,
             title: rest ? t('protocolMenu.holdRest') : t('protocolMenu.hold'),
             hint: nextMoves(changeRows(a.hold.summary)),
-            run: () => a.open('hold'),
+            onClick: () => a.open('hold'),
           },
         ]
       : []),
@@ -84,7 +75,7 @@ export function ProtocolSheets({ actions: a }: { actions: ProtocolActions }) {
             icon: TrendingUp,
             title: rest ? t('protocolMenu.moveUpRest') : t('protocolMenu.moveUp'),
             hint: nextMoves(changeRows(a.moveUp.summary)),
-            run: () => a.open('moveUp'),
+            onClick: () => a.open('moveUp'),
           },
         ]
       : []),
@@ -95,7 +86,7 @@ export function ProtocolSheets({ actions: a }: { actions: ProtocolActions }) {
             icon: Syringe,
             title: t('protocolMenu.setDose'),
             hint: t('protocolMenu.setDoseHint', { dose: a.doseText(a.doseStep.doseMg) }),
-            run: () => a.open('dose'),
+            onClick: () => a.open('dose'),
           },
         ]
       : []),
@@ -114,21 +105,21 @@ export function ProtocolSheets({ actions: a }: { actions: ProtocolActions }) {
           : status === 'paused'
             ? t('protocolMenu.resumeHint')
             : t('protocolMenu.restoreHint'),
-      run: () => void a.togglePause(),
+      onClick: () => void a.togglePause(),
     },
     {
       key: 'duplicate',
       icon: Copy,
       title: t('protocolMenu.duplicate'),
       hint: t('protocolMenu.duplicateHint'),
-      run: a.duplicate,
+      onClick: a.duplicate,
     },
     {
       key: 'save',
       icon: Bookmark,
       title: t('protocols.saveAsTemplate'),
       hint: t('protocolMenu.saveHint'),
-      run: () => void a.saveAsReusable(),
+      onClick: () => void a.saveAsReusable(),
     },
     ...(status !== 'archived'
       ? [
@@ -138,7 +129,7 @@ export function ProtocolSheets({ actions: a }: { actions: ProtocolActions }) {
             title: t('protocols.archive'),
             hint: t('protocolMenu.archiveHint'),
             tone: 'danger' as const,
-            run: () => a.open('archive'),
+            onClick: () => a.open('archive'),
           },
         ]
       : []),
@@ -156,42 +147,9 @@ export function ProtocolSheets({ actions: a }: { actions: ProtocolActions }) {
           title={a.protocol.name}
           description={a.summary ? text.phase(a.summary) : undefined}
         >
-          <ul className="flex flex-col py-1">
-            {items.map(({ key, icon: Icon, title, hint, tone, run }) => (
-              <li key={key}>
-                <button
-                  type="button"
-                  onClick={run}
-                  className="flex min-h-[56px] w-full items-center gap-3 rounded-control px-1 py-2 text-left transition active:bg-panel-2"
-                >
-                  <span
-                    className={
-                      tone === 'danger'
-                        ? 'grid size-10 shrink-0 place-items-center rounded-full bg-danger-soft text-danger'
-                        : 'grid size-10 shrink-0 place-items-center rounded-full bg-panel-2 text-ink-2'
-                    }
-                  >
-                    <Icon className="size-[18px]" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span
-                      className={
-                        tone === 'danger'
-                          ? 'block text-[15px] font-semibold text-danger'
-                          : 'block text-[15px] font-semibold'
-                      }
-                    >
-                      {title}
-                    </span>
-                    {hint && (
-                      <span className="block text-[12.5px] leading-snug text-muted">{hint}</span>
-                    )}
-                  </span>
-                  <ChevronRight aria-hidden className="size-4 shrink-0 text-muted" />
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className="pb-2">
+            <ActionList items={items} />
+          </div>
         </Sheet>
       )}
 
@@ -222,9 +180,7 @@ export function ProtocolSheets({ actions: a }: { actions: ProtocolActions }) {
           <ChangeHeadline rows={moveUpRows} />
           <ChangeRows rows={moveUpRows} doseText={a.doseText} />
           {moveUpRows.some((r) => r.kind === 'dose') && (
-            <p className="rounded-control border border-warn/30 bg-warn-soft px-3 py-2 text-[12.5px] leading-snug text-ink-2">
-              {t('protocolMenu.moveUpStartsNow')}
-            </p>
+            <Caution>{t('protocolMenu.moveUpStartsNow')}</Caution>
           )}
           <p className="text-[13px] leading-snug text-muted">{t('protocolMenu.moveUpNote')}</p>
         </ConfirmSheet>
@@ -282,13 +238,15 @@ function DoseSheet({ actions: a }: { actions: ProtocolActions }) {
       title={t('protocolMenu.setDose')}
       description={`${a.protocol.name} · ${t('protocolMenu.doseStepOf', { n: step.index + 1, week: a.summary.info.weekInStep })}`}
       confirmLabel={t('protocolMenu.doseConfirm')}
+      // What is said under the field changes as the dose is typed: a fixed height keeps it still.
+      tall
       busy={a.busy}
       onConfirm={() => {
         if (mg !== null && pending) void a.changeDose(mg)
       }}
       onClose={a.close}
     >
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 pb-2">
         <EntryToggle entry={entry} native={native} conc={conc} onChange={choose} />
         <DoseInput
           autoFocus
@@ -299,7 +257,7 @@ function DoseSheet({ actions: a }: { actions: ProtocolActions }) {
           conc={conc}
           mg={mg}
           onChange={setText}
-          className="readout bg-panel-2 text-[22px] font-semibold"
+          big
         />
         <EntryNote
           native={native}
@@ -320,9 +278,7 @@ function DoseSheet({ actions: a }: { actions: ProtocolActions }) {
         </p>
       )}
       {nextBelow && (
-        <p className="rounded-control border border-warn/30 bg-warn-soft px-3 py-2 text-[12.5px] leading-snug text-ink-2">
-          {t('protocolMenu.doseBelowNext', { dose: a.doseText(nextBelow.doseMg) })}
-        </p>
+        <Caution>{t('protocolMenu.doseBelowNext', { dose: a.doseText(nextBelow.doseMg) })}</Caution>
       )}
     </ConfirmSheet>
   )

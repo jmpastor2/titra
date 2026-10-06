@@ -1,14 +1,11 @@
-import { clsx } from 'clsx'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { Button } from '@/components/ui/Button'
-import { Field, Input, Select, Textarea } from '@/components/ui/Field'
+import { Field, Input, Textarea } from '@/components/ui/Field'
 import { Sheet } from '@/components/ui/Sheet'
-import { SubstanceDot } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { compoundById } from '@/content/compounds'
-import { compoundColor } from '@/content/substanceColor'
 import type { InventoryForm, InventoryRow, Json } from '@/data/database.types'
 import { useSaveInventory } from '@/data/hooks'
 import { parseBlend } from '@/data/mappers'
@@ -17,7 +14,9 @@ import { fmtNumber, toDateInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { effectiveExpiry } from './alerts'
 import type { BlendPreset } from './blendPresets'
-import { BlendEditor, type BlendRow } from './BlendEditor'
+import { BlendEditor, ContentRow, type BlendRow } from './BlendEditor'
+import { ChoicePills } from './ChoicePills'
+import { DateRow } from './DateRow'
 import { contentMgOf, reconstitutionPatch } from './reconstitute'
 import { ReconstitutionFields } from './ReconstitutionFields'
 import { useWaterEntry } from './useWaterEntry'
@@ -170,6 +169,8 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId, preset }: Omi
     }
   }
 
+  const primaryName = compound?.names.generic ?? ''
+
   return (
     <>
       <Sheet
@@ -177,170 +178,136 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId, preset }: Omi
         onClose={onClose}
         tall
         title={editing ? t('inventory.edit') : t('inventory.add')}
+        description={editing?.label}
         footer={
           <Button block size="lg" loading={save.isPending} onClick={submit}>
-            {t('common.save')}
+            {editing ? t('inventory.saveChanges') : t(`inventory.addForm.${form}`)}
           </Button>
         }
       >
-        <div className="flex flex-col gap-4 py-1">
+        <div className="flex flex-col gap-7 py-1">
           {!editing && <PresetChips activeId={activePreset?.id} onPick={applyPreset} />}
 
-          <button
-            type="button"
-            onClick={() => setPicker('primary')}
-            className="flex min-h-12 items-center gap-3 rounded-control border border-line-strong bg-panel-2 px-3.5 py-3 text-left"
-          >
-            {compound ? (
-              <>
-                <SubstanceDot color={compoundColor(compound.id)} size={10} />
-                <span className="flex-1 text-[15px] font-semibold">{compound.names.generic}</span>
-                <span className="spec">{t('common.edit')}</span>
-              </>
-            ) : (
-              <span className="text-[15px] font-semibold text-signal">
-                {t('protocols.pickSubstance')}
-              </span>
-            )}
-          </button>
-
-          {compound && (
-            <BlendEditor parts={blend} onChange={setBlend} onAdd={() => setPicker('blend')} />
-          )}
-
-          {/* A blend's label is long ("mg de CJC-1295 (sin DAC) en el vial"): the two fields stack. */}
-          <div className={clsx('grid gap-3', blend.length > 0 ? 'grid-cols-1' : 'grid-cols-2')}>
-            <Field label={t('inventory.form')}>
-              {(id) => (
-                <Select
-                  id={id}
-                  value={form}
-                  onChange={(e) => setForm(e.target.value as InventoryForm)}
-                >
-                  {FORMS.map((f) => (
-                    <option key={f} value={f}>
-                      {t(`inventory.forms.${f}`)}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            </Field>
-            <Field
-              label={
+          <Section label={t('inventory.contentSection')}>
+            <ContentRow
+              compoundId={compoundId}
+              placeholder={t('protocols.pickSubstance')}
+              onPick={() => setPicker('primary')}
+              mg={total}
+              onMg={setTotal}
+              mgLabel={
                 blend.length
-                  ? t('inventory.totalOf', { name: compound?.names.generic ?? '' })
+                  ? t('inventory.totalOf', { name: primaryName })
                   : t('inventory.totalMg')
               }
-            >
-              {(id) => (
-                <Input
-                  id={id}
-                  inputMode="decimal"
-                  value={total}
-                  onChange={(e) => setTotal(e.target.value)}
-                  suffix="mg"
-                />
-              )}
-            </Field>
-          </div>
-
-          {activePreset && !editing && (
-            <PresetNote
-              preset={activePreset}
-              totalMg={num(total)}
-              showSizes={blend.length === 0}
-              onSize={(mg) => setTotal(String(mg))}
+              gutter={blend.length > 0}
             />
-          )}
-
-          {reconstitutable && (
-            <ReconstitutionFields
-              on={reconstituted}
-              onToggle={setReconstituted}
-              entry={entry}
-              contentMg={contentMgOf(draft)}
-              date={reconstitutedOn}
-              max={today}
-              onDate={setOpenedAt}
-              discard={discard}
-            />
-          )}
-
-          {showRemaining && (
-            <Field label={t('inventory.remainingMg')} hint={t('inventory.remainingHint')}>
-              {(id) => (
-                <Input
-                  id={id}
-                  inputMode="decimal"
-                  value={remaining}
-                  onChange={(e) => setRemaining(e.target.value)}
-                  suffix="mg"
-                />
-              )}
-            </Field>
-          )}
-
-          {/* The name it will get is written out under the field: a placeholder would be cut off. */}
-          <Field
-            label={t('inventory.label')}
-            hint={
-              autoLabel && !label.trim()
-                ? t('inventory.labelAuto', { label: autoLabel })
-                : undefined
-            }
-          >
-            {(id, describedBy) => (
-              <VialLabelInput
-                id={id}
-                describedBy={describedBy}
-                value={label}
-                onChange={setLabel}
-                placeholder={t('inventory.labelPlaceholder')}
+            {compound && (
+              <BlendEditor parts={blend} onChange={setBlend} onAdd={() => setPicker('blend')} />
+            )}
+            {activePreset && !editing && (
+              <PresetNote
+                preset={activePreset}
+                totalMg={num(total)}
+                showSizes={blend.length === 0}
+                onSize={(mg) => setTotal(String(mg))}
               />
             )}
-          </Field>
+          </Section>
 
-          <div className="grid grid-cols-2 gap-3">
-            {!reconstitutable && (
-              <Field label={t('inventory.openedAt')}>
-                {(id) => (
-                  <Input
+          <Section label={t('inventory.form')}>
+            <ChoicePills<InventoryForm>
+              label={t('inventory.form')}
+              value={form}
+              onChange={setForm}
+              options={FORMS.map((f) => ({ value: f, label: t(`inventory.forms.${f}`) }))}
+            />
+          </Section>
+
+          {(reconstitutable || showRemaining) && (
+            <div className="flex flex-col gap-5">
+              {reconstitutable && (
+                <ReconstitutionFields
+                  on={reconstituted}
+                  onToggle={setReconstituted}
+                  entry={entry}
+                  contentMg={contentMgOf(draft)}
+                  date={reconstitutedOn}
+                  max={today}
+                  onDate={setOpenedAt}
+                  discard={discard}
+                />
+              )}
+              {showRemaining && (
+                <Field label={t('inventory.remainingMg')} hint={t('inventory.remainingHint')}>
+                  {(id, describedBy) => (
+                    <Input
+                      id={id}
+                      aria-describedby={describedBy}
+                      inputMode="decimal"
+                      value={remaining}
+                      onChange={(e) => setRemaining(e.target.value)}
+                      suffix="mg"
+                      className="readout"
+                    />
+                  )}
+                </Field>
+              )}
+            </div>
+          )}
+
+          <Section label={t('inventory.optionalSection')}>
+            <div className="flex flex-col gap-4 pt-1">
+              {/* The name it will get is written out under the field: a placeholder would be cut off. */}
+              <Field
+                label={t('inventory.label')}
+                hint={
+                  autoLabel && !label.trim()
+                    ? t('inventory.labelAuto', { label: autoLabel })
+                    : undefined
+                }
+              >
+                {(id, describedBy) => (
+                  <VialLabelInput
                     id={id}
-                    type="date"
-                    value={openedAt}
-                    onChange={(e) => setOpenedAt(e.target.value)}
+                    describedBy={describedBy}
+                    value={label}
+                    onChange={setLabel}
+                    placeholder={t('inventory.labelPlaceholder')}
                   />
                 )}
               </Field>
-            )}
-            <Field
-              label={`${t('inventory.labelExpiry')} · ${t('common.optional')}`}
-              className={reconstitutable ? 'col-span-2' : undefined}
-            >
-              {(id) => (
-                <Input
-                  id={id}
-                  type="date"
-                  value={expiresAt}
-                  onChange={(e) => setExpiresAt(e.target.value)}
-                />
-              )}
-            </Field>
-          </div>
 
-          <Field label={`${t('inventory.lot')} · ${t('common.optional')}`}>
-            {(id) => <Input id={id} value={lot} onChange={(e) => setLot(e.target.value)} />}
-          </Field>
-          <Field label={`${t('inventory.storage')} · ${t('common.optional')}`}>
-            {(id) => (
-              <Textarea
-                id={id}
-                rows={2}
-                value={storage}
-                onChange={(e) => setStorage(e.target.value)}
-              />
-            )}
-          </Field>
+              <div className="flex flex-col gap-2">
+                {!reconstitutable && (
+                  <DateRow
+                    label={t('inventory.openedAt')}
+                    value={openedAt}
+                    onChange={setOpenedAt}
+                  />
+                )}
+                <DateRow
+                  label={t('inventory.labelExpiry')}
+                  value={expiresAt}
+                  onChange={setExpiresAt}
+                />
+              </div>
+
+              <Field label={t('inventory.lot')}>
+                {(id) => <Input id={id} value={lot} onChange={(e) => setLot(e.target.value)} />}
+              </Field>
+              <Field label={t('inventory.storage')}>
+                {(id) => (
+                  <Textarea
+                    id={id}
+                    rows={2}
+                    value={storage}
+                    onChange={(e) => setStorage(e.target.value)}
+                  />
+                )}
+              </Field>
+            </div>
+          </Section>
         </div>
       </Sheet>
       <SubstancePicker
@@ -354,5 +321,15 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId, preset }: Omi
         }}
       />
     </>
+  )
+}
+
+/** A group of the form: a quiet label over its fields, set apart by space rather than a box. */
+function Section({ label, children }: { label: ReactNode; children: ReactNode }) {
+  return (
+    <section>
+      <h3 className="spec mb-1">{label}</h3>
+      {children}
+    </section>
   )
 }

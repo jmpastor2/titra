@@ -23,7 +23,8 @@ export function ChangeRows({
   if (rows.length === 0) return null
 
   return (
-    <dl className="overflow-hidden rounded-control border border-line bg-panel-2">
+    // The result of the change, so the one soft panel of its sheet.
+    <dl className="divide-y divide-line rounded-control bg-panel-2">
       {rows.map((r) => {
         const [before, after] =
           r.kind === 'next'
@@ -35,7 +36,7 @@ export function ChangeRows({
                 ? [t('common.weeks', { count: r.before }), t('common.weeks', { count: r.after })]
                 : [doseText(r.before), doseText(r.after)]
         return (
-          <div key={r.kind} className="border-b border-line px-3.5 py-3 last:border-b-0">
+          <div key={r.kind} className="px-4 py-3">
             <dt className="spec">{t(`protocolMenu.row.${r.kind}`)}</dt>
             <dd className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <span className="readout text-[13.5px] text-muted line-through decoration-muted/60">

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { DoseRow, InventoryRow } from '@/data/database.types'
 import {
+  amountToLog,
   buildEditPatches,
   buildInsertRows,
   carrierOf,
@@ -391,5 +392,37 @@ describe('amounts in units, mg and mcg', () => {
     expect(entryAmount(0.1, 'mcg', null)).toBe('100')
     expect(entryAmount(0.1, 'mg', null)).toBe('0.1')
     expect(entryAmount(0.1, 'units', null)).toBe('')
+  })
+})
+
+describe('the amount the log button names', () => {
+  it('says the units as typed for one line, not the half-unit mark of the guide', () => {
+    const line = { ...makeLine('retatrutide', 1.5, vials), amount: '15,3' }
+    expect(line.mode).toBe('units')
+    expect(amountToLog([line], vials, drawPlanOf([line], vials))).toEqual({ units: 15.3 })
+  })
+
+  it('says a dose typed as a mass in the unit it was typed in', () => {
+    const line = { ...makeLine('retatrutide', 1.5, vials), mode: 'dose' as const }
+    const mcg = { ...line, doseUnit: 'mcg' as const, amount: '1500' }
+    expect(amountToLog([mcg], vials, drawPlanOf([mcg], vials))).toEqual({ mg: 1.5, unit: 'mcg' })
+  })
+
+  it('names the whole draw for a blend typed as a mass, or for several lines', () => {
+    const [blend] = linesForProtocol(cjcProtocol, vials, at)
+    if (!blend) throw new Error('no line')
+    const asMass = { ...blend, mode: 'dose' as const, doseUnit: 'mcg' as const, amount: '100' }
+    expect(amountToLog([asMass], vials, drawPlanOf([asMass], vials))).toEqual({ units: 6 })
+    const reta = makeLine('retatrutide', 1.5, vials)
+    const both = [blend, reta]
+    expect(amountToLog(both, vials, drawPlanOf(both, vials))).toEqual({ units: 21 })
+  })
+
+  it('names nothing while any line is empty or cannot be converted', () => {
+    const empty = { ...makeLine('retatrutide', 1.5, vials), amount: '' }
+    expect(amountToLog([empty], vials, null)).toBeNull()
+    expect(amountToLog([], vials, null)).toBeNull()
+    const noVial = { ...makeLine('retatrutide', 1.5, vials), inventoryId: '' }
+    expect(amountToLog([noVial], vials, null)).toBeNull()
   })
 })

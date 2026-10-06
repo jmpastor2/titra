@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import type { Blocker } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Sheet } from '@/components/ui/Sheet'
+import { TextButton } from '@/features/doses/TextButton'
 
 /** "You have unsaved changes": keep editing, or leave without them. */
 export function UnsavedSheet({ blocker }: { blocker: Blocker }) {
@@ -18,13 +19,13 @@ export function UnsavedSheet({ blocker }: { blocker: Blocker }) {
           <Button size="lg" block onClick={() => blocker.reset()}>
             {t('protocols.guard.stay')}
           </Button>
-          <Button size="md" variant="danger" block onClick={() => blocker.proceed()}>
+          <TextButton tone="danger" className="w-full" onClick={() => blocker.proceed()}>
             {t('protocols.guard.discard')}
-          </Button>
+          </TextButton>
         </div>
       }
     >
-      <div className="h-1" />
+      {null}
     </Sheet>
   )
 }

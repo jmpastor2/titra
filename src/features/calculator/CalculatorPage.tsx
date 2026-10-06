@@ -39,6 +39,9 @@ export function CalculatorPage() {
     }
   }, [vialMg, diluentMl, doseMcg])
 
+  const waterNum = Number(diluentMl.replace(',', '.'))
+  const waterUnits = waterNum > 0 ? waterNum * 100 : null
+
   const syringePref = useSyringePref()
   const barrel = barrelFor(
     syringePref,
@@ -87,7 +90,7 @@ export function CalculatorPage() {
           <Card>
             <p className="mb-4 text-[13px] leading-snug text-muted">{t('calculator.intro')}</p>
             <div className="flex flex-col gap-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 items-start gap-3">
                 <Field label={t('calculator.vialMg')}>
                   {(id) => (
                     <Input
@@ -100,10 +103,19 @@ export function CalculatorPage() {
                     />
                   )}
                 </Field>
-                <Field label={t('calculator.diluentMl')}>
-                  {(id) => (
+                <Field
+                  label={t('calculator.diluentMl')}
+                  // The same water as the syringe counts it: 100 U = 1 mL.
+                  hint={
+                    waterUnits === null ? undefined : (
+                      <span className="readout">= {fmtNumber(waterUnits, locale, 0)} U</span>
+                    )
+                  }
+                >
+                  {(id, describedBy) => (
                     <Input
                       id={id}
+                      aria-describedby={describedBy}
                       inputMode="decimal"
                       value={diluentMl}
                       onChange={(e) => setDiluentMl(e.target.value)}
@@ -131,7 +143,7 @@ export function CalculatorPage() {
             </div>
           </Card>
 
-          {result && (
+          {result ? (
             <Card>
               <Kpi
                 label={t('calculator.unitsRounded')}
@@ -178,6 +190,8 @@ export function CalculatorPage() {
                 />
               </dl>
             </Card>
+          ) : (
+            <EmptyResult text={t('calculator.empty')} />
           )}
         </div>
       ) : (
@@ -210,7 +224,7 @@ export function CalculatorPage() {
               </Field>
             </div>
           </Card>
-          {pen && (
+          {pen ? (
             <Card>
               <Kpi
                 label={t('calculator.penClicks')}
@@ -221,6 +235,8 @@ export function CalculatorPage() {
                 caption={t('calculator.penCaption', { dose: fmtNumber(pen.actualMg, locale, 4) })}
               />
             </Card>
+          ) : (
+            <EmptyResult text={t('calculator.emptyPen')} />
           )}
         </div>
       )}
@@ -243,5 +259,14 @@ function Fact({ label, value, unit }: { label: string; value: string; unit?: str
         {unit && <span className="block font-sans text-[12px] font-medium text-muted">{unit}</span>}
       </dd>
     </div>
+  )
+}
+
+/** Where the result goes while a field is empty or zero: the card stays, with what it needs. */
+function EmptyResult({ text }: { text: string }) {
+  return (
+    <Card>
+      <p className="text-[13.5px] leading-snug text-muted">{text}</p>
+    </Card>
   )
 }

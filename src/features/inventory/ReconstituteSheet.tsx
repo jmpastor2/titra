@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { Button } from '@/components/ui/Button'
-import { Field, Input } from '@/components/ui/Field'
 import { Sheet } from '@/components/ui/Sheet'
 import { Vial } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
@@ -12,6 +11,7 @@ import { useUpdateInventory } from '@/data/hooks'
 import { toDateInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { effectiveExpiry } from './alerts'
+import { DateRow } from './DateRow'
 import { contentMgOf, reconstitutionPatch } from './reconstitute'
 import { ReconstitutionResult } from './ReconstitutionResult'
 import { fmtMg, namesAboveLabel } from './vialFormat'
@@ -95,8 +95,8 @@ function ReconstituteForm({
         </Button>
       }
     >
-      <div className="flex flex-col gap-4 py-1">
-        <div className="flex items-start gap-3 border-b border-line pb-4">
+      <div className="flex flex-col gap-3 py-1">
+        <div className="mb-2 flex items-start gap-3 border-b border-line pb-4">
           <Vial {...vialLook(vial)} size={48} />
           <div className="min-w-0 flex-1 pt-0.5">
             {namesAboveLabel(names, vial.label) && (
@@ -117,17 +117,12 @@ function ReconstituteForm({
           issues={entry.issues}
         />
 
-        <Field label={t('reconstitute.date')}>
-          {(id) => (
-            <Input
-              id={id}
-              type="date"
-              value={date}
-              max={toDateInputValue(today)}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          )}
-        </Field>
+        <DateRow
+          label={t('reconstitute.date')}
+          value={date}
+          max={toDateInputValue(today)}
+          onChange={setDate}
+        />
 
         <ReconstitutionResult preview={entry.preview} waterMl={entry.waterMl} discard={discard} />
       </div>

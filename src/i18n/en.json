@@ -112,7 +112,6 @@
     "confirm": "Log dose",
     "otherTime": "Other time",
     "sameSyringe": "Same syringe",
-    "substance": "Substance",
     "addToSyringe": "Add to syringe",
     "noVial": "No vial registered",
     "eyebrow": "History",
@@ -195,7 +194,9 @@
       "daysLate": "{{days}} d late",
       "daysEarly": "{{days}} d early",
       "covers": "Covers {{slot}} · {{gap}}"
-    }
+    },
+    "confirmAmount": "Log {{amount}}",
+    "drawWaiting": "Type the dose to see how much to draw."
   },
   "protocols": {
     "title": "Protocols",
@@ -370,7 +371,8 @@
       "rest": "rest from {{date}}",
       "resume": "back to {{dose}} on {{date}}",
       "end": "ends {{date}}"
-    }
+    },
+    "change": "Change"
   },
   "symptoms": {
     "title": "Symptoms",
@@ -519,8 +521,6 @@
     "nextVialBy": "Have the next vial ready by {{date}}",
     "lyophilised": "Lyophilised",
     "blendPresets": "Common shortcuts",
-    "blendTitle": "Blend",
-    "blendHint": "If the vial comes premixed with other substances, add them with their mg. They are drawn together, in one draw.",
     "blendAdd": "Add another substance in the vial",
     "totalOf": "mg of {{name}} in the vial",
     "needsMigration4": "Saving blends needs migration 4 in Supabase.",
@@ -628,7 +628,18 @@
     "alertsLess": "Show fewer",
     "labelAuto": "If you leave it empty it will be called \"{{label}}\".",
     "nextDoseShort": "Next dose",
-    "endsByExpiry": "because of expiry: {{mg}} mg would be thrown away"
+    "endsByExpiry": "because of expiry: {{mg}} mg would be thrown away",
+    "contentSection": "Contents",
+    "optionalSection": "Optional",
+    "saveChanges": "Save changes",
+    "addForm": {
+      "vial": "Add vial",
+      "pen": "Add pen",
+      "cartridge": "Add cartridge",
+      "tablet": "Add tablets"
+    },
+    "blendRemove": "Remove {{name}}",
+    "blendTogether": "They go in the same syringe, in one draw."
   },
   "calculator": {
     "title": "Reconstitution calculator",
@@ -649,7 +660,9 @@
     "pageTitle": "Calculator",
     "drawCaption": "Draw {{ml}} mL · actual dose {{dose}} mcg",
     "penCaption": "Actual dose {{dose}} mg",
-    "syringe": "U-100 syringe, {{ml}} mL"
+    "syringe": "U-100 syringe, {{ml}} mL",
+    "empty": "Enter the content, the water and the dose to see the units to draw.",
+    "emptyPen": "Enter the dose and the mg per click to see the clicks."
   },
   "sites": {
     "title": "Injection sites",
@@ -926,7 +939,8 @@
       "unsupported": "No updates here: this happens in dev mode, private mode or a browser without support.",
       "error": "Could not check. Check your connection and try again."
     },
-    "installTitle": "Install Titra"
+    "installTitle": "Install Titra",
+    "saveProfile": "Save profile"
   },
   "more": {
     "title": "More",
@@ -1097,19 +1111,16 @@
   "checkin": {
     "title": "Check-in",
     "intro": "Rate only what you want. In a few weeks you will see it move.",
-    "nothing": "Move at least one slider",
     "emptyTitle": "No check-ins yet",
     "emptyHint": "Energy, sleep, mood, recovery… One minute a day shows you what each protocol does.",
     "before": "was {{value}}",
-    "doneToday": "You already did it today: you can update it.",
     "keep": "Keep {{what}} at {{value}}",
-    "same": "Same as last time",
-    "sameFrom": "From {{date}}. Adjust what changed.",
-    "saveCount": "Save ({{count}})",
     "saved": "Check-in saved",
-    "streak_one": "{{count}} day in a row",
-    "streak_other": "{{count}} days in a row",
-    "unscored": "not scored"
+    "unscored": "not scored",
+    "saveScores_one": "Save {{count}} score",
+    "saveScores_other": "Save {{count}} scores",
+    "sameAs": "Same as {{when}}",
+    "doneShort": "Done today"
   },
   "progress": {
     "eyebrow": "My improvements",
@@ -1516,7 +1527,9 @@
     "minLeft": "{{min}} min left",
     "next": "Next fasted dose: {{name}} · {{time}}",
     "notedReady": "Meal noted: you can inject now",
-    "notedWait": "Meal noted: fast ready at {{at}}"
+    "notedWait": "Meal noted: fast ready at {{at}}",
+    "otherTime": "If you ate earlier",
+    "clearMeal": "Clear the last meal"
   },
   "outlook": {
     "eyebrow": "Projection",
@@ -1957,7 +1970,9 @@
         "skipped": "Not reached"
       },
       "previous": "Previous step",
-      "next": "Next step"
+      "next": "Next step",
+      "previousShort": "Previous",
+      "nextShort": "Next"
     },
     "empty": {
       "title": "No cycles yet",
@@ -2109,7 +2124,6 @@
       "title": "Strength session",
       "week": "{{count}} in the last 7 days · target ≥ {{target}}",
       "length": "Length",
-      "log": "Log a {{minutes}} min session",
       "noLength": "Log without a length",
       "saved": "Strength session saved",
       "savedMinutes": "Strength session saved · {{minutes}} min"
@@ -2164,7 +2178,6 @@
   "bodyMeasures": {
     "title": "Body measurements",
     "intro": "Starts from your last reading. Only what you change is saved.",
-    "last": "last {{value}}",
     "none": "No readings yet",
     "save_one": "Save {{count}} measurement",
     "save_other": "Save {{count}} measurements",
@@ -2188,7 +2201,6 @@
     "when": "When",
     "labUsual": "Usual tests",
     "labYours": "Your tests",
-    "labMore": "More tests",
     "labInRange": "In range"
   },
   "levels": {

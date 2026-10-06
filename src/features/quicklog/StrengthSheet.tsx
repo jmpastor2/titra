@@ -1,8 +1,8 @@
-import { Check } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Sheet } from '@/components/ui/Sheet'
+import { fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { NumberStepper } from './NumberStepper'
 import type { StrengthWeek } from './readings'
@@ -19,22 +19,42 @@ interface Props {
   onClose: () => void
 }
 
-/** A strength session in two taps: its length as a chip, and it is saved. */
+/**
+ * A strength session: it starts from the length of the last one, so the same session again
+ * is one tap on the main button; a chip or the stepper changes it first.
+ */
 export function StrengthSheet({ week, onSave, onClose }: Props) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const spec = stepSpec('resistance_session', false)
   const [when, setWhen] = useState<'0' | '1'>('0')
-  const [custom, setCustom] = useState<number | null>(week.last?.minutes ?? 45)
+  const [minutes, setMinutes] = useState<number | null>(week.last?.minutes ?? 45)
   const daysBack = when === '1' ? 1 : 0
+  const valid = minutes !== null && inRange(spec, minutes)
 
   return (
-    <Sheet open onClose={onClose} title={t('quick.strength.title')}>
-      <div className="flex flex-col gap-5 py-1">
-        <p className="text-[14px] text-ink-2">
-          {t('quick.strength.week', { count: week.count, target: STRENGTH_WEEKLY_TARGET })}
-        </p>
-
+    <Sheet
+      open
+      onClose={onClose}
+      title={t('quick.strength.title')}
+      description={t('quick.strength.week', {
+        count: week.count,
+        target: STRENGTH_WEEKLY_TARGET,
+      })}
+      footer={
+        <Button
+          block
+          size="lg"
+          disabled={!valid}
+          onClick={() => valid && onSave(minutes, daysBack)}
+        >
+          {valid
+            ? t('measure.saveValue', { value: `${fmtNumber(minutes, locale, 0)} min` })
+            : t('common.save')}
+        </Button>
+      }
+    >
+      <div className="flex flex-col gap-6 pb-2 pt-1">
         <Choice<'0' | '1'>
           value={when}
           onChange={setWhen}
@@ -47,49 +67,33 @@ export function StrengthSheet({ week, onSave, onClose }: Props) {
 
         <div>
           <BlockLabel>{t('quick.strength.length')}</BlockLabel>
-          <div className="flex gap-2.5">
-            {SESSION_MINUTES.map((minutes) => (
+          <NumberStepper
+            value={minutes}
+            onChange={setMinutes}
+            spec={spec}
+            unit="min"
+            label={t('quick.strength.length')}
+            locale={locale}
+            invalid={minutes !== null && !inRange(spec, minutes)}
+          />
+          <div className="mt-4 flex gap-2.5">
+            {SESSION_MINUTES.map((m) => (
               <AmountChip
-                key={minutes}
-                amount={minutes}
+                key={m}
+                amount={String(m)}
                 unit="min"
-                label={t('quick.strength.log', { minutes })}
-                tone="signal"
-                onPress={() => onSave(minutes, daysBack)}
+                label={t('measure.setValue', { value: `${m} min` })}
+                active={minutes === m}
+                onPress={() => setMinutes(m)}
               />
             ))}
-          </div>
-        </div>
-
-        <div>
-          <BlockLabel>{t('quick.counter.other')}</BlockLabel>
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1">
-              <NumberStepper
-                size="sm"
-                value={custom}
-                onChange={setCustom}
-                spec={spec}
-                unit="min"
-                label={t('quick.strength.length')}
-                locale={locale}
-              />
-            </div>
-            <Button
-              variant="soft"
-              disabled={custom === null || !inRange(spec, custom)}
-              leading={<Check className="size-4" />}
-              onClick={() => custom !== null && onSave(custom, daysBack)}
-            >
-              {t('common.save')}
-            </Button>
           </div>
         </div>
 
         <button
           type="button"
           onClick={() => onSave(null, daysBack)}
-          className="-mt-1 h-11 self-start px-1 text-[13px] font-semibold text-signal"
+          className="-mt-2 h-11 self-start text-[13.5px] font-semibold text-signal outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
         >
           {t('quick.strength.noLength')}
         </button>

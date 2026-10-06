@@ -2,13 +2,15 @@ import { clsx } from 'clsx'
 import { Pause, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Field, Input } from '@/components/ui/Field'
-import { Badge, ToggleRow } from '@/components/ui/primitives'
+import { Badge } from '@/components/ui/primitives'
 import type { DoseUnit } from '@/domain/types'
+import { Caution } from './Caution'
 import { useCycleText } from './cycleText'
 import { blurOnEnter } from './blurOnEnter'
 import { DoseEquivalents, DoseInput } from './DoseField'
 import type { DoseEntry } from './doseUnits'
 import type { PastEdit, RowTime, StepDraft } from './draft'
+import { SwitchRow } from './SwitchRow'
 
 export interface FromWeekOffer {
   /** Whole weeks of the step already lived. */
@@ -65,17 +67,16 @@ export function StepRow({
   const current = time?.state === 'current'
 
   return (
-    <li
-      aria-current={current ? 'step' : undefined}
-      className={clsx(
-        'rounded-control border p-3',
-        step.pause ? 'border-dashed border-line-strong' : 'bg-panel-2',
-        current ? 'border-signal/50' : !step.pause && 'border-line',
-      )}
-    >
-      <div className="mb-1.5 flex items-center gap-2">
-        <span className="spec flex items-center gap-1.5">
-          {step.pause && <Pause className="size-3" />}
+    // A row of the steps list, split from the next by a hairline: no panel per step.
+    <li aria-current={current ? 'step' : undefined} className="py-4 first:pt-1 last:pb-1">
+      <div className="flex min-h-6 items-center gap-2">
+        <span
+          className={clsx(
+            'flex items-center gap-1.5 text-[14.5px] font-semibold',
+            step.pause && 'text-ink-2',
+          )}
+        >
+          {step.pause && <Pause aria-hidden className="size-3.5" />}
           {step.pause ? t('protocols.timeline.rest') : `${t('protocols.step')} ${index + 1}`}
         </span>
         {current && <Badge tone="brand">{t('protocols.timeline.here')}</Badge>}
@@ -86,14 +87,14 @@ export function StepRow({
             type="button"
             aria-label={t('protocols.removeStep')}
             onClick={onRemove}
-            className="-my-2 -mr-2 grid size-11 place-items-center rounded-full text-muted hover:text-danger"
+            className="-my-2.5 -mr-2.5 grid size-11 place-items-center rounded-full text-muted hover:text-danger"
           >
             <Trash2 className="size-4" />
           </button>
         )}
       </div>
       {time && (
-        <div className="readout mb-2 text-[12px] text-muted">
+        <div className="readout mt-0.5 text-[12.5px] text-muted">
           {text.span(time.startsOn, time.endsOn, now)}
           {current &&
             ` · ${
@@ -104,7 +105,7 @@ export function StepRow({
         </div>
       )}
 
-      <div className="grid grid-cols-2 items-start gap-2">
+      <div className="mt-3 grid grid-cols-2 items-start gap-2">
         {!step.pause && (
           <Field label={t('protocols.doseMg')}>
             {(id) => (
@@ -138,7 +139,7 @@ export function StepRow({
               onFocus={(e) => e.currentTarget.select()}
               onKeyDown={blurOnEnter}
               suffix={t('protocols.weeksShort')}
-              className="readout bg-panel"
+              className="readout"
             />
           )}
         </Field>
@@ -150,28 +151,24 @@ export function StepRow({
           entry={doseEntry}
           native={native}
           conc={conc}
-          className="readout mt-2 text-[12.5px] font-semibold text-signal"
+          className="readout mt-2 text-[13px] font-semibold leading-snug text-signal"
         />
       )}
       {syringe && (
-        <div className="readout mt-2 text-[12.5px] text-ink-2">
+        <div className="readout mt-1 text-[13px] text-ink-2">
           {t('protocols.syringeLine', { line: syringe })}
         </div>
       )}
 
       {past && (
-        <p
-          role="status"
-          className="mt-2.5 rounded-control border border-warn/30 bg-warn-soft px-3 py-2 text-[12.5px] leading-snug text-ink-2"
-        >
+        <Caution role="status" className="mt-2.5">
           {t(past === 'weeks' ? 'protocols.past.weeks' : 'protocols.past.dose')}
-        </p>
+        </Caution>
       )}
 
       {fromWeek && (
-        <ToggleRow
-          className="mt-2.5"
-          tone="signal"
+        <SwitchRow
+          className="mt-3"
           checked={fromWeek.apply}
           onChange={fromWeek.onApply}
           label={t('protocols.fromWeek.title')}

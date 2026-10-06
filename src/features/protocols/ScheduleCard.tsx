@@ -99,8 +99,9 @@ export function ScheduleCard({
         </div>
       ) : (
         // Seven 44 px targets across a phone: the row takes the card's padding for itself.
+        // Below 370 px seven do not fit at 44 px: the week wraps into two rows instead.
         <div
-          className="-mx-2.5 mt-3 grid grid-cols-7 gap-[3px]"
+          className="-mx-2.5 mt-3 grid grid-cols-4 gap-1.5 min-[370px]:grid-cols-7 min-[370px]:gap-[3px]"
           role="group"
           aria-label={t('protocols.onWeekdays')}
         >
@@ -118,19 +119,19 @@ export function ScheduleCard({
                 }
                 className={
                   on
-                    ? 'readout h-11 rounded-control border border-signal/50 bg-signal-soft text-[14px] font-semibold text-signal'
-                    : 'readout h-11 rounded-control border border-line bg-panel-2 text-[14px] text-muted'
+                    ? 'h-11 rounded-full bg-signal-soft text-[14px] font-semibold text-signal shadow-[inset_0_0_0_1px_color-mix(in_oklab,var(--signal)_40%,transparent)] transition-colors'
+                    : 'h-11 rounded-full bg-panel-2 text-[14px] font-medium text-muted transition-colors'
                 }
               >
-                {weekdayShort(d).toUpperCase()}
+                {weekdayShort(d)}
               </button>
             )
           })}
         </div>
       )}
 
-      <div className="mt-4">
-        <div className="spec mb-2">{t('protocols.times')}</div>
+      <div className="mt-5">
+        <div className="mb-2 text-[13px] font-medium text-ink-2">{t('protocols.times')}</div>
         <div className="flex flex-wrap items-center gap-2">
           {draft.times.map((tm, i) => (
             <div
@@ -169,9 +170,9 @@ export function ScheduleCard({
             <button
               type="button"
               onClick={() => onChange({ times: [...draft.times, '21:00'] })}
-              className="flex min-h-11 items-center gap-1 rounded-full border border-dashed border-line-strong px-3.5 text-[12.5px] font-semibold text-signal"
+              className="flex min-h-11 items-center gap-1 px-2 text-[13.5px] font-semibold text-signal"
             >
-              <Plus className="size-3.5" /> {t('protocols.addTime')}
+              <Plus aria-hidden className="size-4" /> {t('protocols.addTime')}
             </button>
           )}
         </div>
@@ -179,13 +180,15 @@ export function ScheduleCard({
       </div>
 
       {week && (
-        <div className="mt-4 rounded-control border border-line bg-panel-2 p-3">
-          <div className="spec mb-2">{t('protocols.typicalWeek')}</div>
+        <div className="mt-5 border-t border-line pt-4">
+          <div className="mb-2.5 text-[13px] font-medium text-ink-2">
+            {t('protocols.typicalWeek')}
+          </div>
           <div className="grid grid-cols-7 gap-1.5">
             {week.map(({ day, count, night }) => (
               <div key={day.getTime()} className="flex flex-col items-center gap-1.5">
-                <span className="readout text-[10px] text-muted">
-                  {weekdayShort(day.getDay()).toUpperCase()}
+                <span className="text-[11.5px] font-medium text-muted">
+                  {weekdayShort(day.getDay())}
                 </span>
                 <div className="flex h-5 flex-col items-center justify-end gap-0.5">
                   {Array.from({ length: Math.min(count, 3) }, (_, i) => (

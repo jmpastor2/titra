@@ -112,7 +112,6 @@
     "confirm": "Registrar toma",
     "otherTime": "Otra hora",
     "sameSyringe": "Misma jeringa",
-    "substance": "Sustancia",
     "addToSyringe": "Añadir a la jeringa",
     "noVial": "Sin vial registrado",
     "eyebrow": "Historial",
@@ -195,7 +194,9 @@
       "daysLate": "{{days}} d tarde",
       "daysEarly": "{{days}} d antes",
       "covers": "Cubre la del {{slot}} · {{gap}}"
-    }
+    },
+    "confirmAmount": "Registrar {{amount}}",
+    "drawWaiting": "Escribe la dosis para ver cuánto cargar."
   },
   "protocols": {
     "title": "Pautas",
@@ -370,7 +371,8 @@
       "rest": "descanso desde el {{date}}",
       "resume": "vuelves a {{dose}} el {{date}}",
       "end": "termina el {{date}}"
-    }
+    },
+    "change": "Cambiar"
   },
   "symptoms": {
     "title": "Síntomas",
@@ -519,8 +521,6 @@
     "nextVialBy": "Ten listo el siguiente vial para el {{date}}",
     "lyophilised": "Liofilizado",
     "blendPresets": "Atajos habituales",
-    "blendTitle": "Blend",
-    "blendHint": "Si el vial trae otras sustancias mezcladas, añádelas con sus mg. Se cargan en la misma jeringa, en una sola carga.",
     "blendAdd": "Añadir otra sustancia del vial",
     "totalOf": "mg de {{name}} en el vial",
     "needsMigration4": "Para guardar blends falta ejecutar la migración 4 en Supabase.",
@@ -628,7 +628,18 @@
     "alertsLess": "Ver menos",
     "labelAuto": "Si lo dejas vacío se llamará «{{label}}».",
     "nextDoseShort": "Próxima toma",
-    "endsByExpiry": "por caducidad: se tirarían {{mg}} mg"
+    "endsByExpiry": "por caducidad: se tirarían {{mg}} mg",
+    "contentSection": "Contenido",
+    "optionalSection": "Opcional",
+    "saveChanges": "Guardar cambios",
+    "addForm": {
+      "vial": "Añadir vial",
+      "pen": "Añadir pluma",
+      "cartridge": "Añadir cartucho",
+      "tablet": "Añadir comprimidos"
+    },
+    "blendRemove": "Quitar {{name}}",
+    "blendTogether": "Van en la misma jeringa, en una sola carga."
   },
   "calculator": {
     "title": "Calculadora de reconstitución",
@@ -649,7 +660,9 @@
     "pageTitle": "Calculadora",
     "drawCaption": "Carga {{ml}} mL · dosis real {{dose}} mcg",
     "penCaption": "Dosis real {{dose}} mg",
-    "syringe": "Jeringa U-100 de {{ml}} mL"
+    "syringe": "Jeringa U-100 de {{ml}} mL",
+    "empty": "Indica el contenido, el agua y la dosis para ver las unidades que cargar.",
+    "emptyPen": "Indica la dosis y los mg por clic para ver los clics."
   },
   "sites": {
     "title": "Puntos de inyección",
@@ -926,7 +939,8 @@
       "unsupported": "Aquí no hay actualizaciones: pasa en modo desarrollo, en privado o en un navegador sin soporte.",
       "error": "No se ha podido comprobar. Revisa tu conexión e inténtalo de nuevo."
     },
-    "installTitle": "Instala Titra"
+    "installTitle": "Instala Titra",
+    "saveProfile": "Guardar perfil"
   },
   "more": {
     "title": "Más",
@@ -1097,19 +1111,16 @@
   "checkin": {
     "title": "Check-in",
     "intro": "Puntúa solo lo que quieras. En unas semanas verás cómo cambia.",
-    "nothing": "Mueve al menos un control",
     "emptyTitle": "Aún sin check-ins",
     "emptyHint": "Energía, sueño, ánimo, recuperación… Un minuto al día y verás el efecto de cada pauta.",
     "before": "antes {{value}}",
-    "doneToday": "Hoy ya lo hiciste: puedes actualizarlo.",
     "keep": "Mantener {{what}} en {{value}}",
-    "same": "Igual que la última vez",
-    "sameFrom": "Del {{date}}. Ajusta lo que haya cambiado.",
-    "saveCount": "Guardar ({{count}})",
     "saved": "Check-in guardado",
-    "streak_one": "Llevas {{count}} día seguido",
-    "streak_other": "Llevas {{count}} días seguidos",
-    "unscored": "sin puntuar"
+    "unscored": "sin puntuar",
+    "saveScores_one": "Guardar {{count}} valor",
+    "saveScores_other": "Guardar {{count}} valores",
+    "sameAs": "Igual que {{when}}",
+    "doneShort": "Hecho hoy"
   },
   "progress": {
     "eyebrow": "Mis mejoras",
@@ -1516,7 +1527,9 @@
     "minLeft": "faltan {{min}} min",
     "next": "Próxima toma con ayuno: {{name}} · {{time}}",
     "notedReady": "Comida anotada: ya puedes pincharte",
-    "notedWait": "Comida anotada: ayuno listo a las {{at}}"
+    "notedWait": "Comida anotada: ayuno listo a las {{at}}",
+    "otherTime": "Si comiste antes",
+    "clearMeal": "Borrar la última comida"
   },
   "outlook": {
     "eyebrow": "Proyección",
@@ -1957,7 +1970,9 @@
         "skipped": "No llegó"
       },
       "previous": "Escalón anterior",
-      "next": "Escalón siguiente"
+      "next": "Escalón siguiente",
+      "previousShort": "Anterior",
+      "nextShort": "Siguiente"
     },
     "empty": {
       "title": "Aún no hay ciclos",
@@ -2109,7 +2124,6 @@
       "title": "Sesión de fuerza",
       "week": "{{count}} en los últimos 7 días · objetivo ≥ {{target}}",
       "length": "Duración",
-      "log": "Registrar sesión de {{minutes}} min",
       "noLength": "Registrar sin duración",
       "saved": "Sesión de fuerza guardada",
       "savedMinutes": "Sesión de fuerza guardada · {{minutes}} min"
@@ -2164,7 +2178,6 @@
   "bodyMeasures": {
     "title": "Medidas corporales",
     "intro": "Parte de tu última medida. Solo se guarda lo que cambies.",
-    "last": "últ. {{value}}",
     "none": "Sin medidas aún",
     "save_one": "Guardar {{count}} medida",
     "save_other": "Guardar {{count}} medidas",
@@ -2188,7 +2201,6 @@
     "when": "Cuándo",
     "labUsual": "Parámetros habituales",
     "labYours": "Tus parámetros",
-    "labMore": "Más parámetros",
     "labInRange": "Dentro de rango"
   },
   "levels": {

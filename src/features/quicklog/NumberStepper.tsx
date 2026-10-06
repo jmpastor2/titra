@@ -162,7 +162,8 @@ export function NumberStepper({
           aria-invalid={invalid || undefined}
           placeholder="—"
           value={shown}
-          style={{ width: `${Math.max(3, shown.length) + 0.5}ch` }}
+          // Wide enough for the number and never under a 44 px target, however tight the row.
+          style={{ width: `${Math.max(3, shown.length) + 0.5}ch`, minWidth: '2.75rem' }}
           onFocus={(e) => e.currentTarget.select()}
           onChange={(e) => {
             setDraft(e.target.value)

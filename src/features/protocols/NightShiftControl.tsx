@@ -36,9 +36,10 @@ export function NightShiftControl({
     )
 
   return (
-    <div className="mt-3 rounded-control border border-line bg-panel-2 p-3.5">
-      <div className="flex items-center gap-2 text-[14px] font-semibold">
-        <Moon aria-hidden className="size-4 shrink-0 text-accent" />
+    // A question about the times above: part of the same block, no panel of its own.
+    <div className="mt-4">
+      <div className="flex items-start gap-2 text-[14.5px] font-semibold leading-snug">
+        <Moon aria-hidden className="mt-0.5 size-4 shrink-0 text-accent" />
         {t('protocols.nightShift')}
       </div>
       <Segmented<'night' | 'same'>
@@ -50,12 +51,12 @@ export function NightShiftControl({
           { value: 'same', label: t('protocols.night.optSame') },
         ]}
       />
-      <p className="mt-2.5 text-[12.5px] leading-snug text-ink-2">
+      <p className="mt-2.5 text-[13px] leading-snug text-ink-2">
         {draft.nightShift
           ? t('protocols.night.exampleNight', { day: name(day), next: name(day + 1), time: early })
           : t('protocols.night.exampleSame', { day: name(day), time: early })}
       </p>
-      <p className="mt-1 text-[12px] leading-snug text-muted">{t('protocols.nightShiftHint')}</p>
+      <p className="mt-1 text-[12.5px] leading-snug text-muted">{t('protocols.nightShiftHint')}</p>
     </div>
   )
 }

@@ -32,7 +32,7 @@ export function ReconstitutionResult({
   const { locale } = useLocale()
 
   return (
-    <section aria-label={t('reconstitute.result')} className="border-t border-line pt-4">
+    <section aria-label={t('reconstitute.result')} className="mt-2 border-t border-line pt-4">
       {!preview ? (
         <>
           <span className="spec">{t('reconstitute.result')}</span>

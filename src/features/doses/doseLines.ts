@@ -232,6 +232,30 @@ export function partnerMg(
   return mg !== null && own && theirs ? mg * (theirs / own) : null
 }
 
+/** What a log button can promise to register: syringe units, or one dose in its unit. */
+export type LogAmount = { units: number } | { mg: number; unit: DoseUnit }
+
+/**
+ * The amount the log button names ("Registrar 15 U"): what was typed for a single line (the
+ * units as typed, not the half-unit mark of the guide), the total draw for several lines in
+ * one syringe, and nothing while any line is not a valid amount. A blend typed as a mass
+ * names its units, since the mass of one compound would not be the whole dose.
+ */
+export function amountToLog(
+  lines: readonly Line[],
+  vials: readonly InventoryRow[],
+  plan: DrawPlan | null,
+): LogAmount | null {
+  if (lines.length === 0 || lines.some((l) => lineMg(l, vials) === null)) return null
+  const drawn = plan && plan.unknown.length === 0 ? { units: plan.totalUnits } : null
+  const [only] = lines
+  if (lines.length > 1 || !only) return drawn
+  if (only.mode === 'units') return { units: parseAmount(only.amount) }
+  return only.partners.length === 0
+    ? { mg: toMg(parseAmount(only.amount), only.doseUnit), unit: only.doseUnit }
+    : drawn
+}
+
 /** The draw of the lines in one syringe, for the syringe guide. */
 export function drawPlanOf(
   lines: readonly Line[],

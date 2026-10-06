@@ -1,4 +1,3 @@
-import { clsx } from 'clsx'
 import { Plus } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -6,19 +5,16 @@ import { usePatientScope } from '@/app/scope'
 import { Button } from '@/components/ui/Button'
 import { Field, Input, Textarea } from '@/components/ui/Field'
 import { Sheet } from '@/components/ui/Sheet'
-import { Badge } from '@/components/ui/primitives'
+import { Badge, Skeleton } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { useAddLab, useDeleteLab, useLabs } from '@/data/hooks'
 import { rowId } from '@/features/quicklog/data'
 import { defaultsFor, LAB_PRESETS, labFlag, loggedAnalytes } from '@/features/quicklog/labs'
-import { BlockLabel, DeltaChip } from '@/features/quicklog/SheetBits'
+import { BlockLabel, DeltaChip, PickChip } from '@/features/quicklog/SheetBits'
 import { deltaFrom, parseNumber } from '@/features/quicklog/stepper'
 import { agoLabel } from '@/features/quicklog/text'
 import { fmtDate, fmtNumber, toDateInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-
-/** How many chips show before "Más parámetros". */
-const FIRST_CHIPS = 8
 
 /** Analytes match whatever the casing or the stray space. */
 const key = (name: string) => name.trim().toLocaleLowerCase()
@@ -29,32 +25,6 @@ const num = (text: string) => (text.trim() ? parseNumber(text, 2) : null)
 /** Mounted only while open, so every opening starts from a fresh form. */
 export function AddLabSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   return open ? <AddLabForm onClose={onClose} /> : null
-}
-
-function Chip({
-  active,
-  onPress,
-  children,
-}: {
-  active: boolean
-  onPress: () => void
-  children: string
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onPress}
-      className={clsx(
-        'h-11 touch-manipulation rounded-full border px-3.5 text-[13px] transition active:scale-[0.97]',
-        active
-          ? 'border-signal bg-signal-soft font-semibold text-signal'
-          : 'border-line bg-panel text-ink-2',
-      )}
-    >
-      {children}
-    </button>
-  )
 }
 
 function AddLabForm({ onClose }: { onClose: () => void }) {
@@ -77,15 +47,13 @@ function AddLabForm({ onClose }: { onClose: () => void }) {
   const [notes, setNotes] = useState('')
   const [showRange, setShowRange] = useState(false)
   const [showNote, setShowNote] = useState(false)
-  const [showAll, setShowAll] = useState(false)
   const valueBox = useRef<HTMLDivElement>(null)
 
   const known = new Set(logged.map((l) => key(l.analyte)))
   const chips = [
-    ...logged.slice(0, 6).map((l) => l.analyte),
+    ...logged.map((l) => l.analyte),
     ...LAB_PRESETS.map((p) => p.analyte).filter((a) => !known.has(key(a))),
   ]
-  const shownChips = showAll ? chips : chips.slice(0, FIRST_CHIPS)
   const own = logged.find((l) => key(l.analyte) === key(analyte))
 
   const v = num(value)
@@ -139,70 +107,79 @@ function AddLabForm({ onClose }: { onClose: () => void }) {
     onClose()
   }
 
+  const ready = analyte.trim() !== '' && v !== null
+  const saveLabel = ready
+    ? t('measure.saveValue', {
+        value: `${fmtNumber(v, locale, 2)} ${unit.trim()}`.trim(),
+      })
+    : t('common.save')
+
   return (
     <Sheet
       open
       onClose={onClose}
       title={t('health.addLab')}
+      tall
       footer={
-        <Button block size="lg" disabled={!analyte.trim() || v === null} onClick={save}>
-          {t('common.save')}
+        <Button block size="lg" disabled={!ready} onClick={save}>
+          {saveLabel}
         </Button>
       }
     >
-      <div className="flex flex-col gap-5 py-1">
+      <div className="flex flex-col gap-6 pb-2 pt-1">
         <div>
           <BlockLabel>
             {logged.length > 0 ? t('measure.labYours') : t('measure.labUsual')}
           </BlockLabel>
-          <div className="flex flex-wrap gap-2">
-            {shownChips.map((name) => (
-              <Chip key={name} active={key(analyte) === key(name)} onPress={() => choose(name)}>
-                {name}
-              </Chip>
-            ))}
-            {!showAll && chips.length > FIRST_CHIPS && (
-              <button
-                type="button"
-                onClick={() => setShowAll(true)}
-                className="h-11 rounded-full px-3 text-[13px] font-semibold text-signal"
-              >
-                {t('measure.labMore')}
-              </button>
-            )}
-          </div>
+          {/* One row that scrolls: as many analytes as there are, and never a taller block. */}
+          {labs.isPending ? (
+            <Skeleton className="h-11 w-full rounded-full" />
+          ) : (
+            <div className="hide-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5">
+              {chips.map((name) => (
+                <PickChip
+                  key={name}
+                  active={key(analyte) === key(name)}
+                  onPress={() => choose(name)}
+                >
+                  {name}
+                </PickChip>
+              ))}
+            </div>
+          )}
         </div>
 
         <Field label={t('health.analyte')}>
           {(id) => <Input id={id} value={analyte} onChange={(e) => setAnalyte(e.target.value)} />}
         </Field>
 
-        <div ref={valueBox} className="grid grid-cols-[1fr_8rem] gap-3">
-          <Field label={t('health.value')}>
-            {(id) => (
-              <Input
-                id={id}
-                inputMode="decimal"
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                className="tabular h-14 text-[22px] font-semibold"
-              />
-            )}
-          </Field>
-          <Field label={t('health.unit')}>
-            {(id) => (
-              <Input
-                id={id}
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                className="h-14"
-              />
-            )}
-          </Field>
-        </div>
-
-        {(own || flag) && (
-          <div className="-mt-2 flex min-h-7 flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[12.5px] text-muted">
+        {/* Pulled closer to the next field: its last line is room kept, often empty. */}
+        <div className="-mb-3">
+          <div ref={valueBox} className="grid grid-cols-[1fr_7.5rem] gap-3">
+            <Field label={t('health.value')}>
+              {(id) => (
+                <Input
+                  id={id}
+                  inputMode="decimal"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  className="readout h-14 text-[22px] font-semibold"
+                />
+              )}
+            </Field>
+            <Field label={t('health.unit')}>
+              {(id) => (
+                <Input
+                  id={id}
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  className="h-14"
+                />
+              )}
+            </Field>
+          </div>
+          {/* A line kept for the last result, the change and the range flag. */}
+          <div className="mt-2 flex min-h-6 flex-wrap items-center gap-x-2.5 gap-y-1.5 text-[12.5px] text-muted">
             {own && (
               <span>
                 {t('measure.last', {
@@ -220,7 +197,7 @@ function AddLabForm({ onClose }: { onClose: () => void }) {
               </Badge>
             )}
           </div>
-        )}
+        </div>
 
         <Field label={t('health.drawnAt')}>
           {(id) => (
@@ -255,19 +232,19 @@ function AddLabForm({ onClose }: { onClose: () => void }) {
             )}
           </Field>
         ) : (
-          <div className="flex items-center justify-between gap-3 text-[13px]">
-            <span className="text-muted">
-              {t('health.refRange')}:{' '}
-              <span className="readout text-ink-2">
+          <div className="-my-2 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[13px] font-medium text-ink-2">{t('health.refRange')}</div>
+              <div className="readout text-[15px] text-ink">
                 {lo === null && hi === null
                   ? '—'
-                  : `${fmtLimit(lo) || '…'} – ${fmtLimit(hi) || '…'}`}
-              </span>
-            </span>
+                  : `${fmtLimit(lo) || '…'} – ${fmtLimit(hi) || '…'} ${unit.trim()}`.trim()}
+              </div>
+            </div>
             <button
               type="button"
               onClick={() => setShowRange(true)}
-              className="h-11 px-1 font-semibold text-signal"
+              className="-mr-2 h-11 min-w-11 shrink-0 rounded-full px-3 text-[13.5px] font-semibold text-signal outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
             >
               {t('common.edit')}
             </button>
@@ -284,7 +261,7 @@ function AddLabForm({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={() => setShowNote(true)}
-            className="-mt-2 flex h-11 items-center gap-1.5 self-start text-[13px] font-semibold text-signal"
+            className="-mt-2 flex h-11 items-center gap-1.5 self-start text-[13.5px] font-semibold text-signal outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
           >
             <Plus className="size-3.5" aria-hidden />
             {t('measure.addNote')}

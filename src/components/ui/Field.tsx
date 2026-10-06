@@ -60,7 +60,11 @@ export function Input({ suffix, invalid, className, ...rest }: InputProps) {
   if (!suffix) {
     return (
       <input
-        className={clsx(controlClass, invalid && 'border-danger focus:ring-danger/30', className)}
+        className={clsx(
+          controlClass,
+          invalid && 'border-danger! focus:border-danger! focus:ring-danger/30',
+          className,
+        )}
         aria-invalid={invalid || undefined}
         {...rest}
       />
@@ -72,7 +76,7 @@ export function Input({ suffix, invalid, className, ...rest }: InputProps) {
         className={clsx(
           controlClass,
           'pr-16',
-          invalid && 'border-danger focus:ring-danger/30',
+          invalid && 'border-danger! focus:border-danger! focus:ring-danger/30',
           className,
         )}
         aria-invalid={invalid || undefined}

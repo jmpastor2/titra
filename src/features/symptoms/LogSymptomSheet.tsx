@@ -12,7 +12,7 @@ import { useToast } from '@/components/ui/Toast'
 import type { SymptomKind } from '@/data/database.types'
 import { useAddSymptom, useDeleteSymptom, useSymptoms } from '@/data/hooks'
 import { rowId } from '@/features/quicklog/data'
-import { BlockLabel, Choice } from '@/features/quicklog/SheetBits'
+import { BlockLabel, Choice, PickChip } from '@/features/quicklog/SheetBits'
 import { agoLabel } from '@/features/quicklog/text'
 import { fromDateTimeInputs, toDateInputValue, toTimeInputValue } from '@/lib/format'
 import {
@@ -37,33 +37,6 @@ export function LogSymptomSheet({ open, onClose }: Props) {
 const LEVELS = [1, 2, 3, 4, 5] as const
 
 const TONE_TEXT = { ok: 'text-ok', warn: 'text-warn', danger: 'text-danger' } as const
-
-function KindChip({
-  active,
-  onPress,
-  children,
-}: {
-  active: boolean
-  onPress: () => void
-  children: string
-}) {
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={active}
-      onClick={onPress}
-      className={clsx(
-        'h-11 touch-manipulation rounded-full border px-4 text-[13.5px] transition active:scale-[0.97]',
-        active
-          ? 'border-signal bg-signal-soft font-semibold text-signal'
-          : 'border-line bg-panel text-ink-2',
-      )}
-    >
-      {children}
-    </button>
-  )
-}
 
 function LogSymptomForm({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation()
@@ -123,6 +96,7 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
       open
       onClose={onClose}
       title={t('symptoms.log')}
+      tall
       footer={
         <Button block size="lg" disabled={!canSave} onClick={save}>
           {kind !== null && level !== null
@@ -131,7 +105,7 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
         </Button>
       }
     >
-      <div className="flex flex-col gap-5 py-1">
+      <div className="flex flex-col gap-6 pb-2 pt-1">
         {history.isPending ? (
           // Waiting for the history, so the usual symptoms do not shuffle when it arrives.
           <Skeleton className="h-[188px] w-full" />
@@ -155,7 +129,7 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
                         setKind(item.kind)
                         setLevel(levelOf(item.severity))
                       }}
-                      className="flex h-11 touch-manipulation items-center gap-1.5 rounded-full border border-line-strong bg-panel-2 px-3.5 text-[13.5px] font-semibold transition active:scale-[0.97]"
+                      className="flex h-11 touch-manipulation items-center gap-1.5 rounded-full bg-panel-2 px-4 text-[14px] font-semibold outline-none transition active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-signal/60"
                     >
                       <RotateCcw className="size-3.5 text-signal" aria-hidden />
                       {t(`symptoms.kinds.${item.kind}`)}
@@ -175,22 +149,16 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
                 role="radiogroup"
                 aria-label={t('symptoms.kind')}
               >
-                {habitual.map((k) => (
-                  <KindChip key={k} active={kind === k} onPress={() => setKind(k)}>
+                {(showAll ? [...habitual, ...others] : habitual).map((k) => (
+                  <PickChip key={k} role="radio" active={kind === k} onPress={() => setKind(k)}>
                     {t(`symptoms.kinds.${k}`)}
-                  </KindChip>
+                  </PickChip>
                 ))}
-                {showAll &&
-                  others.map((k) => (
-                    <KindChip key={k} active={kind === k} onPress={() => setKind(k)}>
-                      {t(`symptoms.kinds.${k}`)}
-                    </KindChip>
-                  ))}
                 {!showAll && (
                   <button
                     type="button"
                     onClick={() => setShowAll(true)}
-                    className="h-11 rounded-full px-3 text-[13.5px] font-semibold text-signal"
+                    className="h-11 rounded-full px-3 text-[13.5px] font-semibold text-signal outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
                   >
                     {t('symptoms.more')}
                   </button>
@@ -202,8 +170,9 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
 
         <div>
           <BlockLabel>{t('symptoms.severity')}</BlockLabel>
+          {/* One segmented track: five levels, the picked one lit, no box around each. */}
           <div
-            className="grid grid-cols-5 gap-2"
+            className="grid grid-cols-5 gap-0.5 rounded-control bg-panel-2 p-0.5"
             role="radiogroup"
             aria-label={t('symptoms.severity')}
           >
@@ -219,8 +188,8 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
                   aria-label={`${n}/5, ${t(`symptoms.level.${n}`)}`}
                   onClick={() => setLevel(n)}
                   className={clsx(
-                    'flex min-h-[68px] touch-manipulation flex-col items-center justify-center rounded-control border px-0.5 py-1.5 transition active:scale-[0.97]',
-                    active ? 'border-signal bg-signal-soft' : 'border-line bg-panel-2',
+                    'flex min-h-[64px] min-w-0 touch-manipulation flex-col items-center justify-center rounded-[calc(var(--radius-control)-2px)] px-0.5 py-1.5 outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60',
+                    active ? 'bg-panel shadow-[inset_0_0_0_1px_var(--line-strong)]' : '',
                   )}
                 >
                   <span
@@ -234,7 +203,10 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
                   </span>
                   <span
                     aria-hidden
-                    className="mt-1 text-center text-[10.5px] leading-[1.1] text-muted"
+                    className={clsx(
+                      'mt-1 text-center text-[10.5px] leading-[1.1]',
+                      active ? 'text-ink-2' : 'text-muted',
+                    )}
                   >
                     {t(`symptoms.level.${n}`)}
                   </span>
@@ -242,7 +214,7 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
               )
             })}
           </div>
-          <p className="mt-2 text-[12px] text-muted">
+          <p className="mt-2 text-[12.5px] text-muted">
             {level === null
               ? t('symptoms.severityHint')
               : t('symptoms.severityOf10', { value: severityOf(level) })}
@@ -291,7 +263,7 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={() => setShowNote(true)}
-            className="-mt-2 flex h-11 items-center gap-1.5 self-start text-[13px] font-semibold text-signal"
+            className="-mt-2 flex h-11 items-center gap-1.5 self-start text-[13.5px] font-semibold text-signal outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
           >
             <Plus className="size-3.5" aria-hidden />
             {t('symptoms.addNote')}
