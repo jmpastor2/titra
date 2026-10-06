@@ -15,8 +15,7 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
 
 ## Pendiente (en este orden)
 
-1. Quitar Recharts del todo: `TrendChart.tsx` y `OutlookPage.tsx` se estaban reescribiendo en SVG (parcial).
-   Cuando no quede ningún `from 'recharts'` en `src`, ejecutar `npm uninstall recharts`.
+1. (Hecho) Recharts eliminado; teclado iOS en hojas (visualViewport + campos de 16 px); wiki con categorías plegadas.
 2. Repasar con la cuenta real (`?real=1` en `lab.html`, exportando antes una copia a `src/dev/real-snapshot.json`,
    que está ignorada por git y se borra al terminar) el pulido de todas las pantallas: pestañas de Progreso,
    huecos de toque de 44 px, texto largo, claro/oscuro.

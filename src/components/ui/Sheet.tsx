@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import { X } from 'lucide-react'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -15,6 +15,41 @@ export interface SheetProps {
   tall?: boolean
 }
 
+interface Viewport {
+  height: number
+  top: number
+  /** The on-screen keyboard is covering part of the layout viewport. */
+  keyboard: boolean
+}
+
+/**
+ * The part of the screen that is really visible. On iOS the layout viewport does not shrink
+ * when the keyboard opens, so a sheet sized to it ends up half behind the keyboard with its
+ * footer floating over the fields; following the visual viewport keeps it above the keyboard.
+ */
+function useVisualViewport(active: boolean): Viewport | null {
+  const [vp, setVp] = useState<Viewport | null>(null)
+  useEffect(() => {
+    const v = typeof window === 'undefined' ? undefined : window.visualViewport
+    if (!active || !v) return
+    const read = () =>
+      setVp({
+        height: Math.round(v.height),
+        top: Math.round(v.offsetTop),
+        keyboard: window.innerHeight - v.height > 120,
+      })
+    read()
+    v.addEventListener('resize', read)
+    v.addEventListener('scroll', read)
+    return () => {
+      v.removeEventListener('resize', read)
+      v.removeEventListener('scroll', read)
+      setVp(null)
+    }
+  }, [active])
+  return vp
+}
+
 /**
  * iOS-style bottom sheet. Uses a native <dialog> for focus trapping and Escape
  * handling, portalled to body so it escapes any transformed ancestor.
@@ -22,6 +57,7 @@ export interface SheetProps {
 export function Sheet({ open, onClose, title, description, children, footer, tall }: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const { t } = useTranslation()
+  const vp = useVisualViewport(open)
 
   useEffect(() => {
     const el = ref.current
@@ -67,14 +103,17 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
       )}
     >
       {open && (
-        <div className="flex h-full w-full items-end justify-center sm:items-center">
+        <div
+          className="absolute inset-x-0 top-0 flex h-full w-full items-end justify-center sm:items-center"
+          style={vp ? { height: vp.height, top: vp.top } : undefined}
+        >
           <div
             role="document"
             tabIndex={-1}
             className={clsx(
               'outline-none',
               'sheet-in flex w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-line-strong bg-panel shadow-2xl sm:rounded-[28px]',
-              tall ? 'h-[92dvh]' : 'max-h-[92dvh]',
+              vp?.keyboard ? 'h-full' : tall ? 'h-[92dvh]' : 'max-h-[92dvh]',
             )}
           >
             <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-line-strong sm:hidden" />
@@ -99,7 +138,12 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
             </header>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">{children}</div>
             {footer && (
-              <footer className="safe-bottom border-t border-line bg-panel px-5 pt-3">
+              <footer
+                className={clsx(
+                  'border-t border-line bg-panel px-5 pt-3',
+                  vp?.keyboard ? 'pb-3' : 'safe-bottom',
+                )}
+              >
                 {footer}
               </footer>
             )}

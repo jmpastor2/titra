@@ -1,4 +1,4 @@
-import { FlaskConical, Search, X } from 'lucide-react'
+import { ChevronDown, FlaskConical, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -136,15 +136,24 @@ export function WikiPage() {
             const items = results.filter((c) => c.category === cat && !c.blend)
             if (items.length === 0) return null
             return (
-              <section key={cat}>
-                <SectionTitle action={<span className="spec">{items.length}</span>}>
-                  <span className="inline-flex items-center gap-2">
+              <details key={cat} className="group">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-control border border-line bg-panel px-4 py-2.5 [&::-webkit-details-marker]:hidden">
+                  <span className="inline-flex items-center gap-2 text-[14px] font-semibold">
                     <SubstanceDot color={categoryColor(cat)} />
                     {t(`wiki.categories.${cat}`)}
                   </span>
-                </SectionTitle>
-                <CompoundList items={items} />
-              </section>
+                  <span className="inline-flex items-center gap-2">
+                    <span className="spec">{items.length}</span>
+                    <ChevronDown
+                      className="size-4 text-muted transition group-open:rotate-180"
+                      aria-hidden
+                    />
+                  </span>
+                </summary>
+                <div className="mt-2">
+                  <CompoundList items={items} />
+                </div>
+              </details>
             )
           })}
         </div>

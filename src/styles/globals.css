@@ -391,3 +391,13 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* iOS zooms the whole page into any field set below 16 px and leaves it zoomed: every sheet
+   with a field jumped around while typing. Unlayered on purpose, so it wins over utilities. */
+@media (pointer: coarse) {
+  input:not([type='checkbox'], [type='radio'], [type='range']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
