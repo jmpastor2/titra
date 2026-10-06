@@ -10,7 +10,7 @@
       name="description"
       content="Titra · tu laboratorio personal de péptidos: pautas, tomas, jeringa, viales y avisos"
     />
-    <meta name="theme-color" content="#07080e" />
+    <meta name="theme-color" content="#0a0b10" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -72,26 +72,6 @@
       rel="apple-touch-startup-image"
       media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
       href="./splash/splash-750x1334.png"
-    />
-    <!--
-      The two faces the first screen paints with (Space Grotesk headings, JetBrains Mono readouts,
-      latin subsets: Spanish and English fit in them). Without the hint the browser only asks for
-      them after the stylesheet has been applied, so every launch paints in the fallback font and
-      swaps a moment later. Vite rewrites these paths to the hashed files the stylesheet uses.
-    -->
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      crossorigin
-      href="/node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2"
-    />
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      crossorigin
-      href="/node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2"
     />
     <!-- Open the connection to the database while the scripts download: the first request of the
       home screen no longer waits for DNS and TLS. -->

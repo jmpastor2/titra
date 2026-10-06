@@ -3,6 +3,7 @@
  * the most urgent first, so they do not fill the screen. Pure; see queue.test.ts.
  */
 import { decisionKey, type CycleDecision } from './decision'
+import type { DoseDrift } from './drift'
 import type { CycleAttention, ProtocolCycle } from './items'
 
 /** A protocol's cycle with what needs attention in it. */
@@ -32,6 +33,53 @@ export function pendingDecisions(items: readonly Item[], focusId: string | null)
         : [],
     )
     .toSorted((a, b) => urgency(a, focusId) - urgency(b, focusId))
+}
+
+/** Doses that do not match the plan, waiting for "update the plan" or "it was a one-off". */
+export interface DriftEntry {
+  kind: 'drift'
+  item: Item
+  drift: DoseDrift
+  key: string
+}
+
+/** Everything the decisions card holds: what disagrees with the plan, then the decisions. */
+export type Entry = DriftEntry | ({ kind: 'decision' } & Pending)
+
+export function boardEntries(items: readonly Item[], focusId: string | null): Entry[] {
+  return [
+    ...items.flatMap((item): DriftEntry[] =>
+      item.drift
+        ? [{ kind: 'drift', item, drift: item.drift, key: `drift:${item.protocol.id}` }]
+        : [],
+    ),
+    ...pendingDecisions(items, focusId).map(({ item, decision, key }): Entry => ({
+      kind: 'decision',
+      item,
+      decision,
+      key,
+    })),
+  ]
+}
+
+/**
+ * The entry that is open in the card, one at a time: what the person chose, else the decision
+ * a notification pointed at, else a drift (it holds the plan's next change back), else the
+ * most urgent decision not put off. Undefined when everything left was put off for today.
+ */
+export function openEntry(
+  entries: readonly Entry[],
+  opts: { focusId: string | null; chosenKey: string | null; isLater: (key: string) => boolean },
+): string | undefined {
+  const chosen = entries.find((e) => e.key === opts.chosenKey)
+  if (chosen) return chosen.key
+  const decisions = entries.flatMap((e) => (e.kind === 'decision' ? [e] : []))
+  const focused = decisions.find((p) => p.item.protocol.id === opts.focusId)
+  if (focused) return focused.key
+  return (
+    entries.find((e) => e.kind === 'drift')?.key ??
+    openDecision(decisions, { ...opts, chosenKey: null })
+  )
 }
 
 /**

@@ -1,11 +1,11 @@
-import { AlertTriangle, ExternalLink, FlaskConical, LineChart, Plus } from 'lucide-react'
+import { AlertTriangle, ChevronRight, ExternalLink, FlaskConical, LineChart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Badge, Skeleton, SubstanceDot } from '@/components/ui/primitives'
+import { Badge, SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
 import { blendsContaining, compoundById } from '@/content/compounds'
 import { templatesForCompound } from '@/content/protocols/templates'
 import type { CompoundDetail } from '@/content/schema'
@@ -18,7 +18,7 @@ import { BlendCalculator, BlendComponents, InBlends } from './BlendParts'
 import { ClinicianNotes } from './ClinicianNotes'
 import { Fold } from './Fold'
 import { KeyFacts } from './KeyFacts'
-import { BulletList, ClampedText, MiniStat, PkStat, Section } from './parts'
+import { BulletList, ClampedText, FactGrid, Section } from './parts'
 import { regulatoryTone } from './tones'
 import { useCompoundDetail } from './useCompoundDetail'
 
@@ -46,12 +46,6 @@ export function CompoundPage() {
   return (
     <div className="pb-4">
       <PageHeader
-        eyebrow={
-          <span className="inline-flex items-center gap-1.5">
-            <SubstanceDot color={categoryColor(compound.category)} size={7} />
-            {t(`wiki.categories.${compound.category}`)}
-          </span>
-        }
         title={
           <span className="block whitespace-normal text-balance">{compound.names.generic}</span>
         }
@@ -62,34 +56,28 @@ export function CompoundPage() {
         {pick(compound.pharmClass)}
       </p>
 
-      <div className="mb-3 flex flex-wrap gap-1.5">
-        {compound.blend && <Badge tone="accent">{t('wiki.blendBadge')}</Badge>}
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        <Badge className={WRAP}>
+          <SubstanceDot color={categoryColor(compound.category)} size={6} />
+          {t(`wiki.categories.${compound.category}`)}
+        </Badge>
         <Badge tone={regulatoryTone(compound.regulatory.us)} className={WRAP}>
-          {t('wiki.us')}: {t(`wiki.regulatoryStatus.${compound.regulatory.us}`)}
+          <span className="opacity-70">{t('wiki.us')}</span>
+          {t(`wiki.regulatoryStatus.${compound.regulatory.us}`)}
         </Badge>
         {compound.regulatory.eu && (
           <Badge tone={regulatoryTone(compound.regulatory.eu)} className={WRAP}>
-            {t('wiki.eu')}: {t(`wiki.regulatoryStatus.${compound.regulatory.eu}`)}
+            <span className="opacity-70">{t('wiki.eu')}</span>
+            {t(`wiki.regulatoryStatus.${compound.regulatory.eu}`)}
           </Badge>
         )}
       </div>
 
       {compound.blend && (
-        <Card tone="warn" className="mb-3">
-          <div className="flex gap-2.5">
-            <FlaskConical className="mt-0.5 size-5 shrink-0 text-warn" aria-hidden />
-            <p className="text-[13.5px] leading-snug">{t('wiki.blendNoTrials')}</p>
-          </div>
-        </Card>
-      )}
-
-      {compound.regulatory.us === 'research_only' && (
-        <Card tone="danger" className="mb-3">
-          <div className="flex gap-2.5">
-            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-danger" aria-hidden />
-            <p className="text-[13.5px] leading-snug">{t('wiki.regulatoryStatus.research_only')}</p>
-          </div>
-        </Card>
+        <p className="mb-4 flex gap-2.5 px-1 text-[13px] leading-snug text-ink-2">
+          <FlaskConical className="mt-px size-4 shrink-0 text-warn" aria-hidden />
+          {t('wiki.blendNoTrials')}
+        </p>
       )}
 
       {detail ? (
@@ -110,9 +98,9 @@ function DetailPending({ failed, onRetry }: { failed: boolean; onRetry: () => vo
   const { t } = useTranslation()
   if (failed) {
     return (
-      <Card tone="warn">
-        <p className="text-[13.5px]">{t('wiki.loadFailed')}</p>
-        <Button size="sm" variant="soft" className="mt-3" onClick={onRetry}>
+      <Card>
+        <p className="text-[13.5px] text-ink-2">{t('wiki.loadFailed')}</p>
+        <Button size="sm" variant="secondary" className="mt-3" onClick={onRetry}>
           {t('common.retry')}
         </Button>
       </Card>
@@ -151,6 +139,22 @@ function CompoundBody({
   const { dosing } = compound
   const cautions = compound.contraindications.slice(0, CAUTIONS_SHOWN)
   const moreCautions = compound.contraindications.length - cautions.length
+  const pkFacts = compound.pk
+    ? [
+        compound.pk.tmaxH !== undefined && {
+          label: t('wiki.tmax'),
+          value: fmtHours(compound.pk.tmaxH, locale),
+        },
+        compound.pk.bioavailability !== undefined && {
+          label: t('wiki.bioavailability'),
+          value: fmtPercent(compound.pk.bioavailability, locale),
+        },
+        compound.pk.apparentVolumeL !== undefined && {
+          label: 'V/F',
+          value: `${fmtNumber(compound.pk.apparentVolumeL, locale, 1)} L`,
+        },
+      ].filter((f) => f !== false)
+    : []
 
   return (
     <div className="flex flex-col gap-3">
@@ -159,11 +163,11 @@ function CompoundBody({
       <Card>
         <ClampedText text={pick(compound.summary)} className="text-[14.5px] text-ink-2" />
         {(compound.names.brands.length > 0 || compound.names.aliases.length > 0) && (
-          <dl className="mt-3 flex flex-col gap-1.5 text-[13px] leading-snug">
+          <dl className="mt-3.5 flex flex-col gap-2 border-t border-line pt-3.5 text-[13px] leading-snug">
             {compound.names.brands.length > 0 && (
               <div>
                 <dt className="spec">{t('wiki.brands')}</dt>
-                <dd className="mt-0.5">{compound.names.brands.join(' · ')}</dd>
+                <dd className="mt-0.5 text-ink-2">{compound.names.brands.join(' · ')}</dd>
               </div>
             )}
             {compound.names.aliases.length > 0 && (
@@ -177,7 +181,14 @@ function CompoundBody({
       </Card>
 
       {cautions.length > 0 && (
-        <Card tone="warn" title={t('wiki.watch')}>
+        <Card
+          title={
+            <span className="flex items-center gap-2">
+              <AlertTriangle className="size-4 shrink-0 text-warn" aria-hidden />
+              {t('wiki.watch')}
+            </span>
+          }
+        >
           <BulletList items={cautions} pick={pick} />
           {moreCautions > 0 && (
             <p className="mt-2.5 text-[12.5px] text-muted">
@@ -195,24 +206,25 @@ function CompoundBody({
 
       {templates.length > 0 && !readOnly && (
         <Card title={t('wiki.templates')} subtitle={t('protocols.templateHint')}>
-          <ul className="flex flex-col gap-2">
+          <ul className="-mb-1 divide-y divide-line border-t border-line">
             {templates.map((tpl) => (
               <li key={tpl.id}>
                 <button
                   type="button"
                   onClick={() => nav(`/protocols/new?template=${tpl.id}`)}
-                  className="flex min-h-14 w-full items-center justify-between gap-3 rounded-control border border-line px-3 py-2.5 text-left transition active:scale-[0.99]"
+                  className="-mx-2 flex min-h-14 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
                 >
-                  <span className="min-w-0">
-                    <span className="block text-[14px] font-semibold leading-snug">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14.5px] font-semibold leading-snug">
                       {pick(tpl.name)}
                     </span>
-                    <span className="mt-0.5 block text-[12px] leading-snug text-muted">
+                    <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">
                       {pick(tpl.source)}
                     </span>
                   </span>
-                  <span className="flex shrink-0 items-center gap-1 text-[12.5px] font-semibold text-signal">
-                    <Plus className="size-4" aria-hidden /> {t('wiki.useTemplate')}
+                  <span className="flex shrink-0 items-center gap-0.5 text-[13px] font-semibold text-signal">
+                    {t('wiki.useTemplate')}
+                    <ChevronRight className="size-4" aria-hidden />
                   </span>
                 </button>
               </li>
@@ -223,160 +235,163 @@ function CompoundBody({
 
       {compound.blend && <BlendCalculator blend={compound.blend} />}
 
-      <Fold title={t('wiki.dosing')}>
-        {dosing.labeled && (
-          <Section title={t('wiki.dosingLabeled')}>{pick(dosing.labeled)}</Section>
-        )}
-        {dosing.investigational && (
-          <Section title={t('wiki.dosingInvestigational')}>{pick(dosing.investigational)}</Section>
-        )}
-        {dosing.anecdotal && (
-          <div className="rounded-control bg-warn-soft p-3.5">
-            <div className="spec mb-1.5 flex items-center gap-1.5 text-warn">
-              <AlertTriangle className="size-3.5 shrink-0" aria-hidden />{' '}
-              {t('wiki.dosingAnecdotal')}
-            </div>
-            <p className="text-[13.5px] leading-relaxed">{pick(dosing.anecdotal)}</p>
-            <p className="mt-2 text-[12px] leading-snug text-warn">{t('wiki.anecdotalWarning')}</p>
-          </div>
-        )}
-      </Fold>
-
-      <Fold title={t('wiki.safety')}>
-        <Section title={t('wiki.common')}>
-          <BulletList items={compound.adverseEffects.common} pick={pick} />
-        </Section>
-        <Section title={t('wiki.serious')} tone="danger">
-          <BulletList items={compound.adverseEffects.serious} pick={pick} />
-        </Section>
-        <Section title={t('wiki.contraindications')}>
-          <BulletList items={compound.contraindications} pick={pick} />
-        </Section>
-        {compound.interactions.length > 0 && (
-          <Section title={t('wiki.interactions')}>
-            <BulletList items={compound.interactions} pick={pick} />
-          </Section>
-        )}
-        {compound.monitoring && compound.monitoring.length > 0 && (
-          <Section title={t('wiki.monitoring')}>
-            <BulletList items={compound.monitoring} pick={pick} />
-          </Section>
-        )}
-      </Fold>
-
-      <Fold title={t('wiki.mechanism')}>
-        <p className="text-[14px] leading-relaxed text-ink-2">{pick(compound.mechanism)}</p>
-        <Section title={t('wiki.indications')}>
-          <BulletList items={compound.indications} pick={pick} />
-        </Section>
-      </Fold>
-
-      {compound.pk && (
-        <Fold title={t('wiki.pk')}>
-          {(compound.pk.tmaxH !== undefined ||
-            compound.pk.bioavailability !== undefined ||
-            compound.pk.apparentVolumeL !== undefined) && (
-            <div className="grid grid-cols-2 gap-2.5">
-              {compound.pk.tmaxH !== undefined && (
-                <PkStat label={t('wiki.tmax')} value={fmtHours(compound.pk.tmaxH, locale)} />
+      <section className="mt-2">
+        <SectionTitle>{t('wiki.fullEntry')}</SectionTitle>
+        <Card padded={false} className="px-4">
+          <div className="divide-y divide-line">
+            <Fold title={t('wiki.dosing')}>
+              {dosing.labeled && (
+                <Section title={t('wiki.dosingLabeled')}>{pick(dosing.labeled)}</Section>
               )}
-              {compound.pk.bioavailability !== undefined && (
-                <PkStat
-                  label={t('wiki.bioavailability')}
-                  value={fmtPercent(compound.pk.bioavailability, locale)}
-                />
+              {dosing.investigational && (
+                <Section title={t('wiki.dosingInvestigational')}>
+                  {pick(dosing.investigational)}
+                </Section>
               )}
-              {compound.pk.apparentVolumeL !== undefined && (
-                <PkStat
-                  label="V/F"
-                  value={`${fmtNumber(compound.pk.apparentVolumeL, locale, 1)} L`}
-                />
-              )}
-            </div>
-          )}
-          {templates[0] && <SteadyStatePreview compound={compound} />}
-          {(compound.pk.notes || compound.pk.source) && (
-            <div className="flex flex-col gap-1.5 text-[12.5px] leading-snug text-muted">
-              {compound.pk.notes && <p>{compound.pk.notes}</p>}
-              {compound.pk.source && (
-                <p>
-                  {t('wiki.pkSource')}: {compound.pk.source}
-                </p>
-              )}
-            </div>
-          )}
-          {!readOnly && (
-            <Button
-              variant="soft"
-              size="sm"
-              leading={<LineChart className="size-4" />}
-              onClick={() => nav('/simulator')}
-            >
-              {t('wiki.simulate')}
-            </Button>
-          )}
-        </Fold>
-      )}
-
-      <Fold title={t('wiki.storageRecon')}>
-        {compound.reconstitution && (
-          <Section title={t('wiki.reconstitution')}>
-            {pick(compound.reconstitution)}
-            {!readOnly && (
-              <Button variant="ghost" size="sm" className="mt-2" onClick={() => nav('/calculator')}>
-                {t('calculator.title')}
-              </Button>
-            )}
-          </Section>
-        )}
-        <Section title={t('wiki.storage')}>{pick(compound.storage)}</Section>
-      </Fold>
-
-      {compound.keyTrials.length > 0 && (
-        <Fold title={t('wiki.trials')} aside={compound.keyTrials.length}>
-          <ul className="flex flex-col gap-3.5">
-            {compound.keyTrials.map((trial) => (
-              <li key={`${trial.name}-${trial.year}`}>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[14px] font-semibold leading-snug">{trial.name}</span>
-                  <span className="readout text-[12px] text-muted">{trial.year}</span>
-                </div>
-                <p className="mt-0.5 text-[13.5px] leading-relaxed text-ink-2">
-                  {pick(trial.finding)}
-                </p>
-                {trial.ref && <p className="mt-0.5 text-[11.5px] text-muted">{trial.ref}</p>}
-              </li>
-            ))}
-          </ul>
-        </Fold>
-      )}
-
-      <Fold title={t('wiki.references')} aside={compound.references.length}>
-        <ul className="flex flex-col gap-2.5">
-          {compound.references.map((r) => (
-            <li key={r.label}>
-              {r.url ? (
-                <a
-                  href={r.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex items-start gap-1.5 text-[13.5px] leading-snug text-signal underline underline-offset-2"
+              {dosing.anecdotal && (
+                <Section
+                  tone="warn"
+                  title={
+                    <>
+                      <AlertTriangle className="size-3.5 shrink-0" aria-hidden />
+                      {t('wiki.dosingAnecdotal')}
+                    </>
+                  }
                 >
-                  {r.label}
-                  <ExternalLink className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                </a>
-              ) : (
-                <span className="text-[13.5px] leading-snug text-ink-2">{r.label}</span>
+                  <p>{pick(dosing.anecdotal)}</p>
+                  <p className="mt-1.5 text-[12.5px] leading-snug text-warn">
+                    {t('wiki.anecdotalWarning')}
+                  </p>
+                </Section>
               )}
-            </li>
-          ))}
-        </ul>
-        <p className="text-[11.5px] text-muted">
-          {t('wiki.lastReviewed', { date: fmtDate(new Date(compound.lastReviewed), locale) })}
-        </p>
-      </Fold>
+            </Fold>
 
-      <p className="px-2 text-center text-[11px] leading-relaxed text-muted">
+            <Fold title={t('wiki.safety')}>
+              <Section title={t('wiki.common')}>
+                <BulletList items={compound.adverseEffects.common} pick={pick} />
+              </Section>
+              <Section title={t('wiki.serious')} tone="danger">
+                <BulletList items={compound.adverseEffects.serious} pick={pick} />
+              </Section>
+              <Section title={t('wiki.contraindications')}>
+                <BulletList items={compound.contraindications} pick={pick} />
+              </Section>
+              {compound.interactions.length > 0 && (
+                <Section title={t('wiki.interactions')}>
+                  <BulletList items={compound.interactions} pick={pick} />
+                </Section>
+              )}
+              {compound.monitoring && compound.monitoring.length > 0 && (
+                <Section title={t('wiki.monitoring')}>
+                  <BulletList items={compound.monitoring} pick={pick} />
+                </Section>
+              )}
+            </Fold>
+
+            <Fold title={t('wiki.mechanism')}>
+              <p className="text-[14px] leading-relaxed text-ink-2">{pick(compound.mechanism)}</p>
+              <Section title={t('wiki.indications')}>
+                <BulletList items={compound.indications} pick={pick} />
+              </Section>
+            </Fold>
+
+            {compound.pk && (
+              <Fold title={t('wiki.pk')}>
+                {pkFacts.length > 0 && <FactGrid items={pkFacts} />}
+                {templates[0] && <SteadyStatePreview compound={compound} />}
+                {(compound.pk.notes || compound.pk.source) && (
+                  <div className="flex flex-col gap-1.5 text-[12.5px] leading-snug text-muted">
+                    {compound.pk.notes && <p>{compound.pk.notes}</p>}
+                    {compound.pk.source && (
+                      <p>
+                        {t('wiki.pkSource')}: {compound.pk.source}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {!readOnly && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="self-start"
+                    leading={<LineChart className="size-4" />}
+                    onClick={() => nav('/simulator')}
+                  >
+                    {t('wiki.simulate')}
+                  </Button>
+                )}
+              </Fold>
+            )}
+
+            <Fold title={t('wiki.storageRecon')}>
+              {compound.reconstitution && (
+                <Section title={t('wiki.reconstitution')}>
+                  {pick(compound.reconstitution)}
+                  {!readOnly && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-2.5"
+                      onClick={() => nav('/calculator')}
+                    >
+                      {t('calculator.title')}
+                    </Button>
+                  )}
+                </Section>
+              )}
+              <Section title={t('wiki.storage')}>{pick(compound.storage)}</Section>
+            </Fold>
+
+            {compound.keyTrials.length > 0 && (
+              <Fold title={t('wiki.trials')} aside={compound.keyTrials.length}>
+                <ul className="flex flex-col gap-3.5">
+                  {compound.keyTrials.map((trial) => (
+                    <li key={`${trial.name}-${trial.year}`}>
+                      <div className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="text-[14px] font-semibold leading-snug">{trial.name}</span>
+                        <span className="readout text-[12px] text-muted">{trial.year}</span>
+                      </div>
+                      <p className="mt-0.5 text-[13.5px] leading-relaxed text-ink-2">
+                        {pick(trial.finding)}
+                      </p>
+                      {trial.ref && <p className="mt-0.5 text-[11.5px] text-muted">{trial.ref}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </Fold>
+            )}
+
+            <Fold title={t('wiki.references')} aside={compound.references.length}>
+              <ul className="flex flex-col gap-2.5">
+                {compound.references.map((r) => (
+                  <li key={r.label}>
+                    {r.url ? (
+                      <a
+                        href={r.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="inline-flex items-start gap-1.5 text-[13.5px] leading-snug text-signal underline decoration-signal/30 underline-offset-2"
+                      >
+                        {r.label}
+                        <ExternalLink className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                      </a>
+                    ) : (
+                      <span className="text-[13.5px] leading-snug text-ink-2">{r.label}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[12px] text-muted">
+                {t('wiki.lastReviewed', {
+                  date: fmtDate(new Date(compound.lastReviewed), locale),
+                })}
+              </p>
+            </Fold>
+          </div>
+        </Card>
+      </section>
+
+      <p className="px-2 pt-2 text-center text-[11.5px] leading-relaxed text-muted">
         {t('app.disclaimer')}
       </p>
     </div>
@@ -392,22 +407,23 @@ function SteadyStatePreview({ compound }: { compound: CompoundDetail }) {
   const last = tpl.steps[tpl.steps.length - 1]
   if (!last) return null
   const ss = steadyState(last.doseMg, last.intervalDays * 24, compound.pk)
+  const mg = (x: number) => `${fmtNumber(x, locale, 2)} mg`
   return (
-    <div className="rounded-control bg-panel-2 p-3.5">
-      <div className="spec">
-        {t('protocols.previewHint')} · {pick(tpl.name)}
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-        <MiniStat
-          label={t('protocols.ssTrough')}
-          value={`${fmtNumber(ss.troughMg, locale, 2)} mg`}
-        />
-        <MiniStat label={t('protocols.ssAvg')} value={`${fmtNumber(ss.avgMg, locale, 2)} mg`} />
-        <MiniStat label={t('protocols.ssPeak')} value={`${fmtNumber(ss.peakMg, locale, 2)} mg`} />
-      </div>
-      <p className="mt-3 text-center text-[11.5px] leading-snug text-muted">
-        {t('protocols.ssTime', { time: fmtHours(ss.hoursTo90, locale) })} ·{' '}
+    <div className="border-t border-line pt-3.5">
+      <h4 className="spec mb-2.5">
+        {t('protocols.previewHint')} · {pick(tpl.name)} ·{' '}
         {fmtDose(last.doseMg, compound.defaultUnit, locale)}
+      </h4>
+      <FactGrid
+        columns={3}
+        items={[
+          { label: t('protocols.ssTrough'), value: mg(ss.troughMg) },
+          { label: t('protocols.ssAvg'), value: mg(ss.avgMg) },
+          { label: t('protocols.ssPeak'), value: mg(ss.peakMg) },
+        ]}
+      />
+      <p className="mt-2.5 text-[12.5px] leading-snug text-muted">
+        {t('protocols.ssTime', { time: fmtHours(ss.hoursTo90, locale) })}
       </p>
     </div>
   )

@@ -114,18 +114,18 @@ export function BodyMap({
               [FRONT, BACK].map((cx) => (
                 <g
                   key={cx}
-                  className="spec"
-                  fontSize={8.5}
+                  fontSize={11}
+                  fontWeight={500}
                   fill="var(--muted)"
-                  letterSpacing="0.12em"
+                  style={{ fontFamily: 'var(--font-sans)' }}
                 >
-                  <text x={cx - 44} y={300} textAnchor="middle">
+                  <text x={cx - 44} y={302} textAnchor="middle">
                     {t('sites.leftShort')}
                   </text>
-                  <text x={cx} y={300} textAnchor="middle" fill="var(--ink-2)" fontWeight={700}>
+                  <text x={cx} y={302} textAnchor="middle" fill="var(--ink-2)" fontWeight={600}>
                     {cx === FRONT ? t('sites.front') : t('sites.back')}
                   </text>
-                  <text x={cx + 44} y={300} textAnchor="middle">
+                  <text x={cx + 44} y={302} textAnchor="middle">
                     {t('sites.rightShort')}
                   </text>
                 </g>
@@ -204,7 +204,7 @@ export function BodyMap({
                     fontSize={7}
                     fontWeight={700}
                     fill={colors.ink}
-                    fontFamily="var(--font-mono)"
+                    style={{ fontFamily: 'var(--font-num)' }}
                     aria-hidden
                     className="pointer-events-none"
                   >
@@ -220,7 +220,7 @@ export function BodyMap({
               {COMPACT_CAPTION_X.map((x, i) => (
                 <div
                   key={x}
-                  className="spec absolute top-0 flex -translate-x-1/2 gap-2 text-[9px] leading-none"
+                  className="absolute top-0 flex -translate-x-1/2 gap-2 whitespace-nowrap text-[10px] font-medium leading-none text-muted"
                   style={{ left: `${x * 100}%` }}
                 >
                   <span>{t('sites.leftShort')}</span>
@@ -250,7 +250,7 @@ export function BodyMap({
               </li>
             ))}
           </ul>
-          <div aria-live="polite" className="min-h-[52px] rounded-control bg-panel-2 px-3 py-2.5">
+          <div aria-live="polite" className="min-h-[52px] border-t border-line pt-3">
             {detail ? (
               <SiteDetail status={detail} now={now} />
             ) : (

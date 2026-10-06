@@ -51,21 +51,18 @@ export function PlanTimeline({
           <li
             key={s.index}
             aria-current={state === 'current' ? 'step' : undefined}
-            className={clsx(
-              'relative flex gap-3 rounded-control py-2.5 pl-1 pr-2',
-              state === 'current' && 'border border-signal/30 bg-signal-soft',
-            )}
+            className="relative flex gap-3 py-2.5 pr-1"
           >
             <div className="flex w-6 shrink-0 flex-col items-center">
               <Marker state={state} pause={s.pause} color={color} />
-              {!last && state !== 'current' && (
+              {!last && (
                 <span
                   aria-hidden
                   className={clsx(
                     'mt-1 w-px flex-1',
-                    state === 'past'
-                      ? 'bg-line-strong'
-                      : 'border-l border-dashed border-line-strong',
+                    state === 'future'
+                      ? 'border-l border-dashed border-line-strong'
+                      : 'bg-line-strong',
                   )}
                 />
               )}
@@ -124,10 +121,7 @@ function Marker({ state, pause, color }: { state: State; pause: boolean; color: 
       <span
         aria-hidden
         className="mt-0.5 grid size-5 place-items-center rounded-full"
-        style={{
-          background: color,
-          boxShadow: `0 0 12px color-mix(in oklab, ${color} 60%, transparent)`,
-        }}
+        style={{ background: color }}
       >
         {pause ? (
           <Pause className="size-3 text-signal-ink" />

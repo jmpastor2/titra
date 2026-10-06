@@ -41,9 +41,10 @@ export interface WeekInput {
   scores: ReadonlyMap<MeasurementKind, readonly TimePoint[]>
   /** Local midnights of the days with a check-in. */
   checkInDays: ReadonlySet<number>
-  adherence: AdherenceTotal
+  /** Doses taken this week against those due; left out where another screen already says it. */
+  adherence?: AdherenceTotal
   /** Taken doses this week split by timing, when known. */
-  timing: { onTime: number; offTime: number } | null
+  timing?: { onTime: number; offTime: number } | null
   symptoms: readonly { at: Date; kind: SymptomKind }[]
   protocols: readonly ProtocolRow[]
 }
@@ -119,7 +120,7 @@ export function weekChanges(input: WeekInput): WeekItem[] {
   const waist = bodyItem('waist', input.waist, now)
   if (waist) out.push(waist)
 
-  if (input.adherence.expected > 0) {
+  if (input.adherence && input.adherence.expected > 0) {
     out.push({
       kind: 'adherence',
       taken: input.adherence.taken,

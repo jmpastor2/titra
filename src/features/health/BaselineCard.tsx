@@ -4,6 +4,7 @@
  * baseline, so the first minute spent already produces something to look at.
  */
 import { useTranslation } from 'react-i18next'
+import { Meter } from '@/components/kpi/Meter'
 import { Card } from '@/components/ui/Card'
 import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
@@ -24,7 +25,6 @@ export function BaselineCard({ rows }: { rows: readonly DimensionBaseline[] }) {
 
   return (
     <Card
-      instrument
       eyebrow={t('progress.baseline.eyebrow')}
       title={compare ? t('progress.baseline.titleCompare') : t('progress.baseline.title')}
       subtitle={
@@ -55,18 +55,7 @@ export function BaselineCard({ rows }: { rows: readonly DimensionBaseline[] }) {
               <span className="text-[12.5px] leading-tight text-ink-2">
                 {t(`health.kinds.${r.kind}`)}
               </span>
-              <span className="relative h-2 rounded-full bg-panel-3" aria-hidden>
-                <span
-                  className="absolute inset-y-0 left-0 rounded-full bg-signal"
-                  style={{ width: `${Math.min(100, Math.max(0, value * 10))}%` }}
-                />
-                {compare && (
-                  <span
-                    className="absolute -top-1 h-4 w-[2px] -translate-x-1/2 rounded-full bg-ink"
-                    style={{ left: `${Math.min(100, Math.max(0, r.baseline * 10))}%` }}
-                  />
-                )}
-              </span>
+              <Meter value={value} max={10} target={compare ? r.baseline : undefined} />
               <span className="flex min-w-[4.5rem] items-baseline justify-end gap-1.5">
                 <span className="readout text-[13px] font-semibold text-ink">
                   {fmtNumber(value, locale, 1)}

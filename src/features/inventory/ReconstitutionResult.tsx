@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Kpi } from '@/components/kpi/Kpi'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
@@ -13,8 +14,9 @@ const nameOf = (id: string) => compoundById(id)?.names.generic ?? id
 const unitOf = (id: string) => compoundById(id)?.defaultUnit ?? 'mg'
 
 /**
- * What the water gives, live: concentration, what one syringe unit holds of each
- * compound, the units for the doses being taken now and when to discard the vial.
+ * What the water gives, live: the concentration as the one big number, then what one
+ * syringe unit holds of each compound, the units for the doses being taken now and when to
+ * discard the vial. Plain rows under a divider, no box of its own.
  */
 export function ReconstitutionResult({
   preview,
@@ -30,90 +32,82 @@ export function ReconstitutionResult({
   const { locale } = useLocale()
 
   return (
-    <section
-      aria-label={t('reconstitute.result')}
-      className="rounded-control border border-line bg-panel-2 p-3.5"
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="spec">{t('reconstitute.result')}</span>
-        <span className="spec">U-100</span>
-      </div>
-
+    <section aria-label={t('reconstitute.result')} className="border-t border-line pt-4">
       {!preview ? (
-        <p className="mt-2 text-[13px] text-muted">{t('reconstitute.resultEmpty')}</p>
+        <>
+          <span className="spec">{t('reconstitute.result')}</span>
+          <p className="mt-1 text-[13px] leading-snug text-muted">
+            {t('reconstitute.resultEmpty')}
+          </p>
+        </>
       ) : (
         <>
-          <div className="mt-2">
-            <div className="spec">{t('reconstitute.concentration')}</div>
-            <div className="mt-1 flex flex-wrap items-baseline gap-x-1.5">
-              <span className="readout text-glow text-[34px] font-semibold leading-none text-signal">
-                {fmtNumber(preview.concentration, locale, preview.concentration >= 10 ? 1 : 2)}
-              </span>
-              <span className="readout text-[15px] font-semibold text-signal">mg/mL</span>
-              <span className="readout ml-1 text-[12.5px] text-muted">
-                {t('reconstitute.inWater', { water: `${fmtNumber(waterMl, locale, 2)} mL` })}
-              </span>
-            </div>
-          </div>
+          <Kpi
+            label={t('reconstitute.concentration')}
+            value={fmtNumber(preview.concentration, locale, preview.concentration >= 10 ? 1 : 2)}
+            unit="mg/mL"
+            tone="signal"
+            caption={`${t('reconstitute.inWater', { water: `${fmtNumber(waterMl, locale, 2)} mL` })} · U-100`}
+          />
 
-          <Row label={t('reconstitute.perUnit')}>
-            <ul className="flex flex-col gap-1.5">
-              {preview.compounds.map((c) => (
-                <li key={c.compoundId} className="flex items-start gap-2 text-[13.5px]">
-                  <span className="mt-[6px] flex">
-                    <SubstanceDot color={compoundColor(c.compoundId)} />
-                  </span>
-                  <span className="min-w-0 flex-1 font-semibold leading-snug">
-                    {nameOf(c.compoundId)}
-                  </span>
-                  <span className="readout shrink-0 font-semibold">
-                    {fmtPerUnit(c.mgPerUnit, unitOf(c.compoundId), locale)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Row>
-
-          <Row label={t('reconstitute.yourDose')}>
-            {preview.draws.length === 0 ? (
-              <p className="text-[12.5px] text-muted">{t('reconstitute.noDoses')}</p>
-            ) : (
-              <ul className="flex flex-col gap-2.5">
-                {preview.draws.map((d) => (
-                  <li key={d.protocolId} className="flex items-center gap-3">
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-[13.5px] font-semibold leading-snug">
-                        {d.protocolName}
-                      </span>
-                      <span className="readout block text-[12px] leading-snug text-muted">
-                        {fmtDoseList(
-                          d.parts.map((p) => ({ valueMg: p.doseMg, unit: unitOf(p.compoundId) })),
-                          locale,
-                        )}
-                      </span>
+          <dl className="mt-1 divide-y divide-line">
+            <Row label={t('reconstitute.perUnit')}>
+              <ul className="flex flex-col gap-1.5">
+                {preview.compounds.map((c) => (
+                  <li key={c.compoundId} className="flex items-start gap-2 text-[14px]">
+                    <span className="mt-[7px] flex">
+                      <SubstanceDot color={compoundColor(c.compoundId)} size={7} />
                     </span>
-                    <span className="readout text-glow shrink-0 text-[22px] font-semibold leading-none text-signal">
-                      {fmtUnits(d.units, locale)}
+                    <span className="min-w-0 flex-1 leading-snug">{nameOf(c.compoundId)}</span>
+                    <span className="readout shrink-0 font-semibold">
+                      {fmtPerUnit(c.mgPerUnit, unitOf(c.compoundId), locale)}
                     </span>
                   </li>
                 ))}
               </ul>
-            )}
-          </Row>
-
-          {discard && (
-            <Row label={t('reconstitute.discard')}>
-              <div className="readout text-[15px] font-semibold">
-                {discard.estimated ? '≈ ' : ''}
-                {fmtDate(discard.date, locale, 'EEE d MMM')}
-              </div>
-              <p className="mt-0.5 text-[12px] leading-snug text-muted">
-                {discard.estimated
-                  ? t('reconstitute.discardEstimated', { days: IN_USE_DAYS })
-                  : t('reconstitute.discardLabel')}
-              </p>
             </Row>
-          )}
+
+            <Row label={t('reconstitute.yourDose')}>
+              {preview.draws.length === 0 ? (
+                <p className="text-[13px] text-muted">{t('reconstitute.noDoses')}</p>
+              ) : (
+                <ul className="flex flex-col gap-2.5">
+                  {preview.draws.map((d) => (
+                    <li key={d.protocolId} className="flex items-center gap-3">
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[14px] font-medium leading-snug">
+                          {d.protocolName}
+                        </span>
+                        <span className="readout block text-[12px] leading-snug text-muted">
+                          {fmtDoseList(
+                            d.parts.map((p) => ({ valueMg: p.doseMg, unit: unitOf(p.compoundId) })),
+                            locale,
+                          )}
+                        </span>
+                      </span>
+                      <span className="readout shrink-0 text-[22px] font-semibold leading-none text-signal">
+                        {fmtUnits(d.units, locale)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Row>
+
+            {discard && (
+              <Row label={t('reconstitute.discard')}>
+                <div className="readout text-[16px] font-semibold">
+                  {discard.estimated ? '≈ ' : ''}
+                  {fmtDate(discard.date, locale, 'EEE d MMM')}
+                </div>
+                <p className="mt-0.5 text-[12px] leading-snug text-muted">
+                  {discard.estimated
+                    ? t('reconstitute.discardEstimated', { days: IN_USE_DAYS })
+                    : t('reconstitute.discardLabel')}
+                </p>
+              </Row>
+            )}
+          </dl>
         </>
       )}
     </section>
@@ -122,9 +116,9 @@ export function ReconstitutionResult({
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="mt-3 border-t border-line pt-3">
-      <div className="spec mb-1.5">{label}</div>
-      {children}
+    <div className="py-3 last:pb-0">
+      <dt className="spec mb-1.5">{label}</dt>
+      <dd>{children}</dd>
     </div>
   )
 }

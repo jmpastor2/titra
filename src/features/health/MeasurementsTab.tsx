@@ -7,8 +7,9 @@ import { Scale } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
+import { Kpi } from '@/components/kpi/Kpi'
 import { Card } from '@/components/ui/Card'
-import { Chip, EmptyState, Row, Skeleton, Stat } from '@/components/ui/primitives'
+import { Chip, EmptyState, Row, Skeleton } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { compoundColor } from '@/content/substanceColor'
 import type { MeasurementKind, MeasurementRow } from '@/data/database.types'
@@ -209,18 +210,20 @@ export function MeasurementsTab({ scope }: { scope: ProgressScope }) {
 
       <Card padded={false} className="p-3.5">
         <div className="mb-3 grid grid-cols-2 gap-x-4 gap-y-3.5">
-          <Stat
+          <Kpi
+            size="sm"
             label={label}
             value={view.latest ? fmtReading(active, view.latest.value, locale) : '—'}
             unit={unit}
-            hint={
+            caption={
               view.latest
                 ? fmtRelativeDay(view.latest.at, locale)
                 : t('charts.progress.noneInRangeShort')
             }
           />
           {view.change?.delta != null && view.change.baseline && (
-            <Stat
+            <Kpi
+              size="sm"
               label={t('progress.bodyView.change')}
               value={
                 <ChangeValue
@@ -231,25 +234,27 @@ export function MeasurementsTab({ scope }: { scope: ProgressScope }) {
                   threshold={threshold}
                 />
               }
-              hint={t('progress.summary.since', {
+              caption={t('progress.summary.since', {
                 date: fmtDate(view.change.baseline.at, locale, 'd MMM'),
               })}
             />
           )}
           {view.trended && (
-            <Stat
+            <Kpi
+              size="sm"
               label={t('progress.trend.rateLabel')}
               value={view.rate ? fmtSignedFixed(view.rate.perWeek, locale, RATE_DIGITS) : '—'}
               unit={view.rate ? `${unit}/${t('progress.trend.weekShort')}` : undefined}
-              hint={view.rate ? t('progress.bodyView.paceWindow') : t('progress.trend.rateNeed')}
+              caption={view.rate ? t('progress.bodyView.paceWindow') : t('progress.trend.rateNeed')}
             />
           )}
           {goal !== null && (
-            <Stat
+            <Kpi
+              size="sm"
               label={t('progress.bodyView.goal')}
               value={fmtReading(active, goal, locale)}
               unit={unit}
-              hint={
+              caption={
                 toGoal === null
                   ? undefined
                   : Math.abs(toGoal) < 0.05

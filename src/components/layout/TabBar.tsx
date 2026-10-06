@@ -19,7 +19,7 @@ export function TabBar() {
       aria-label={t('nav.main')}
       className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),10px)]"
     >
-      <ul className="mx-auto flex max-w-md items-stretch justify-around rounded-[26px] border border-line-strong bg-panel/85 px-1.5 py-1.5 shadow-2xl backdrop-blur-xl">
+      <ul className="mx-auto flex max-w-md items-stretch justify-around rounded-[26px] border border-line bg-panel/80 px-1.5 py-1.5 shadow-2xl backdrop-blur-xl">
         {items.map(({ to, label, icon: Icon, end }) => (
           <li key={to} className="flex-1">
             <NavLink
@@ -28,20 +28,13 @@ export function TabBar() {
               className={({ isActive }) =>
                 clsx(
                   'flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-[20px] py-1.5 text-[11px] font-semibold tracking-[0.01em] transition-colors active:scale-[0.97]',
-                  isActive ? 'bg-signal-soft text-signal' : 'text-muted hover:text-ink-2',
+                  isActive ? 'bg-panel-3 text-ink' : 'text-muted hover:text-ink-2',
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon
-                    className={clsx(
-                      'size-[20px]',
-                      isActive &&
-                        'drop-shadow-[0_0_8px_color-mix(in_oklab,var(--signal)_55%,transparent)]',
-                    )}
-                    strokeWidth={isActive ? 2.3 : 1.9}
-                  />
+                  <Icon className={clsx('size-[20px]')} strokeWidth={isActive ? 2.3 : 1.9} />
                   {label}
                 </>
               )}

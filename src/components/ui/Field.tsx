@@ -27,7 +27,7 @@ export function Field({ label, hint, error, trailing, className, children }: Fie
       {(label || trailing) && (
         <div className="flex items-center justify-between">
           {label && (
-            <label htmlFor={id} className="spec">
+            <label htmlFor={id} className="text-[13px] font-medium text-ink-2">
               {label}
             </label>
           )}

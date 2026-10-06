@@ -152,13 +152,15 @@ describe('DosesPage', () => {
     renderWithStore(<DosesPage />, store)
 
     // Monday's night was forgotten: four of five, one missed, plus the extra of Sunday.
-    expect(await screen.findByRole('img', { name: '4 de 5 tomas' })).toBeInTheDocument()
-    expect(screen.getByText('4 de 5 tomas', { selector: 'div' })).toBeInTheDocument()
+    const head = within((await screen.findByText('/ 5 tomas')).closest('section')!)
     // The week plan is folded away, so what went wrong is also flagged on its button.
-    expect(screen.getAllByText('1 perdida')).toHaveLength(2)
-    expect(screen.getByText('1 extra', { selector: 'span.font-semibold' })).toBeInTheDocument()
-    // The last dose and what is next.
-    expect(screen.getByText('4 h', { selector: 'dd' })).toBeInTheDocument()
+    expect(head.getAllByText('1 perdida')).toHaveLength(2)
+    expect(head.getByText(/1 extra/)).toBeInTheDocument()
+    // How close to 01:00 the nights went in (2 min either way, all within the hour) and
+    // what is next.
+    expect(screen.getByText('Puntualidad')).toBeInTheDocument()
+    expect(screen.getByText('±2', { selector: 'dd' })).toBeInTheDocument()
+    expect(screen.getByText('100 % a su hora')).toBeInTheDocument()
     expect(screen.getByText('01:00', { selector: 'dd' })).toBeInTheDocument()
 
     expect(screen.queryByText('Plan y tomas')).not.toBeInTheDocument()

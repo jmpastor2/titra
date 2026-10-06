@@ -331,3 +331,8 @@ export function fmtSignedFixed(v: number, locale: Locale, digits: number): strin
   if (s === fmtFixed(0, locale, digits)) return s
   return `${v > 0 ? '+' : '−'}${s}`
 }
+
+/** "−0,6 %" / "−0.6%": a signed percentage at one precision, spaced as the locale writes it. */
+export function fmtSignedPct(v: number, locale: Locale, digits: number): string {
+  return `${fmtSignedFixed(v, locale, digits)}${locale === 'es' ? '\u00a0%' : '%'}`
+}

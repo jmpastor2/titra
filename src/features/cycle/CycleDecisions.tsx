@@ -1,19 +1,24 @@
 import { clsx } from 'clsx'
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { DecisionCard } from './DecisionCard'
-import { DriftNotice } from './DriftNotice'
-import { openDecision, pendingDecisions } from './queue'
+import { compoundById } from '@/content/compounds'
+import { toProtocolLike } from '@/data/mappers'
+import { useLocale } from '@/lib/useLocale'
+import { DecisionBody, EntryRow } from './DecisionCard'
+import { DriftBody } from './DriftNotice'
+import { boardEntries, openEntry, type Entry } from './queue'
 import { ruleHits } from './rule'
+import { decisionDoses, decisionShort, whenText } from './text'
 import { useCycleActions, useDecideLater } from './useCycleActions'
 import { useCycleBoard } from './useCycleBoard'
 
 /**
- * What the cycles ask of the person: where the doses taken do not match the plan (that comes
- * first) and, when the dose is about to change, the decision to go up or hold one more week.
- * With several decisions due only one is open at a time, so they do not fill the screen.
- * Nothing at all when there is nothing to ask. `focusProtocolId` is the notification link
- * `#/?cycle=<id>`: that protocol's decision opens even if it was put off.
+ * What the cycles ask of the person, on one card: where the doses taken do not match the plan
+ * and, when the dose is about to change, the decision to go up or hold one more week. One is
+ * open at a time; the rest wait as rows underneath that open in its place. Nothing at all when
+ * there is nothing to ask. `focusProtocolId` is the notification link `#/?cycle=<id>`: that
+ * protocol's decision opens even if it was put off.
  */
 export function CycleDecisions({
   focusProtocolId = null,
@@ -22,6 +27,8 @@ export function CycleDecisions({
   focusProtocolId?: string | null
   className?: string
 }) {
+  const { t } = useTranslation()
+  const { locale } = useLocale()
   const nav = useNavigate()
   // Read here, not handed down: the answer and the data it answers from render together.
   const board = useCycleBoard(focusProtocolId)
@@ -31,53 +38,81 @@ export function CycleDecisions({
   const [chosenKey, setChosenKey] = useState<string | null>(null)
   const logged = useMemo(() => ruleHits(symptoms, now), [symptoms, now])
 
-  const pending = pendingDecisions(items, focusProtocolId)
-  const drifting = items.flatMap((item) => (item.drift ? [{ item, drift: item.drift }] : []))
-  if (board.loading || (drifting.length === 0 && pending.length === 0)) return null
+  const entries = boardEntries(items, focusProtocolId)
+  if (board.loading || entries.length === 0) return null
 
-  const openKey = openDecision(pending, {
+  const openKey = openEntry(entries, {
     focusId: focusProtocolId,
     chosenKey,
     isLater: later.isLater,
   })
+  const open = entries.find((e) => e.key === openKey)
+  const rest = entries.filter((e) => e !== open)
+
+  const expand = (e: Entry) => {
+    later.reopen(e.key)
+    setChosenKey(e.key)
+  }
+
+  const rowText = (e: Entry) => {
+    if (e.kind === 'drift') return t('cycle.short.drift')
+    const pl = toProtocolLike(e.item.protocol)
+    const unit = compoundById(e.item.protocol.compound_id)?.defaultUnit ?? 'mg'
+    return decisionShort(e.decision, decisionDoses(e.decision, pl, vials), unit, t, locale)
+  }
 
   return (
-    <div className={clsx('flex flex-col gap-3', className)}>
-      {drifting.map(({ item, drift }) => (
-        <DriftNotice
-          key={`drift-${item.protocol.id}`}
-          protocol={item.protocol}
-          info={item.info}
-          drift={drift}
+    <section
+      aria-label={t('cycle.decision.cardAria')}
+      className={clsx('card fade-up p-4', className)}
+    >
+      {open?.kind === 'drift' && (
+        <DriftBody
+          protocol={open.item.protocol}
+          info={open.item.info}
+          drift={open.drift}
           vials={vials}
           busy={actions.busy}
-          onUpdate={() => actions.updatePlan(item, drift)}
-          onOnce={() => actions.once(item, drift)}
+          onUpdate={() => actions.updatePlan(open.item, open.drift)}
+          onOnce={() => actions.once(open.item, open.drift)}
         />
-      ))}
-
-      {pending.map(({ item, decision, key }) => (
-        <DecisionCard
-          key={`decision-${item.protocol.id}`}
-          protocol={item.protocol}
-          decision={decision}
+      )}
+      {open?.kind === 'decision' && (
+        <DecisionBody
+          protocol={open.item.protocol}
+          decision={open.decision}
           vials={vials}
           logged={logged}
-          collapsed={key !== openKey}
           busy={actions.busy}
-          onExpand={() => {
-            later.reopen(key)
-            setChosenKey(key)
-          }}
-          onAcknowledge={() => actions.acknowledge(item, decision)}
-          onHold={() => actions.hold(item, decision)}
+          onAcknowledge={() => actions.acknowledge(open.item, open.decision)}
+          onHold={() => actions.hold(open.item, open.decision)}
           onLater={() => {
-            later.postpone(key)
+            later.postpone(open.key)
             setChosenKey(null)
           }}
           onNewCycle={() => nav('/cycles')}
         />
-      ))}
-    </div>
+      )}
+      {!open && <h2 className="spec">{t('cycle.decision.pendingTitle')}</h2>}
+
+      {rest.length > 0 && (
+        <ul className={clsx('divide-y divide-line', open && 'mt-4 border-t border-line')}>
+          {rest.map((e) => (
+            <li key={e.key}>
+              <EntryRow
+                protocol={e.item.protocol}
+                text={rowText(e)}
+                when={
+                  e.kind === 'decision' && e.decision.kind !== 'finished'
+                    ? whenText(e.decision.daysAway, t)
+                    : null
+                }
+                onExpand={() => expand(e)}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }

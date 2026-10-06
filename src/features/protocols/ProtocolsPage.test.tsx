@@ -33,15 +33,17 @@ function open(rows: Parameters<typeof storeWith>[0] = {}) {
 describe('ProtocolsPage', () => {
   it('says where each protocol stands: week, dose in units and what changes next', async () => {
     open()
-    // The ring says the week, the hero the dose in units and, under it, in mass.
-    const ring = await screen.findByRole('img', { name: 'Semana 2 de 12' })
-    expect(within(ring).getByText('2')).toBeInTheDocument()
-    expect(screen.getByText('9 U')).toBeInTheDocument()
+    // The staircase of weeks, the dose in units as the big figure and, under it, in mass.
+    await screen.findByRole('img', { name: 'Semana 2 de 12' })
+    expect(screen.getByText('9', { selector: 'span' })).toHaveTextContent('9U')
     expect(screen.getByText('150 + 150 mcg')).toBeInTheDocument()
-    // With the step-up close, the decision says it once, and what to do.
-    expect(screen.getByText(/Toca decidir/)).toBeInTheDocument()
-    expect(screen.getAllByText(/El lun 5 oct sube a 12 U/)).toHaveLength(1)
-    expect(screen.getByText('Si no haces nada, sube ese día.')).toBeInTheDocument()
+    expect(screen.getByText('Semana 2 de 12 · sube el lun 5 a 12 U')).toBeInTheDocument()
+    // With the step-up close, the card only flags it and leads to Ciclos, where it is taken.
+    expect(screen.getByRole('link', { name: 'Toca decidir mañana' })).toHaveAttribute(
+      'href',
+      '/cycles',
+    )
+    expect(screen.queryByText('Si no haces nada, sube ese día.')).toBeNull()
   })
 
   it('says what comes next where there is nothing to decide yet', async () => {
@@ -49,7 +51,7 @@ describe('ProtocolsPage', () => {
     open()
     await screen.findByRole('img', { name: 'Semana 3 de 12' })
     expect(screen.queryByText(/Toca decidir/)).not.toBeInTheDocument()
-    expect(screen.getByText(/El lun 14 dic empieza el descanso/)).toBeInTheDocument()
+    expect(screen.getByText('Semana 3 de 12 · descanso desde el lun 14 dic')).toBeInTheDocument()
   })
 
   it('shows Edit and the menu on the card, both as big as a thumb', async () => {
@@ -63,7 +65,8 @@ describe('ProtocolsPage', () => {
   it('keeps this week after showing before and after, and undoes it', async () => {
     const { store } = open()
     await screen.findByRole('img', { name: 'Semana 2 de 12' })
-    fireEvent.click(screen.getAllByRole('button', { name: 'Mantener una semana más' })[0]!)
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
+    fireEvent.click(await screen.findByRole('button', { name: /Mantener una semana más/ }))
 
     const sheet = await screen.findByRole('dialog')
     expect(
@@ -77,7 +80,7 @@ describe('ProtocolsPage', () => {
     fireEvent.click(within(sheet).getByRole('button', { name: 'Mantener una semana más' }))
     await waitFor(() => expect(weeks(store.protocols[0])).toEqual([1, 2, 10, 4]))
     expect(await screen.findByRole('img', { name: 'Semana 2 de 13' })).toBeInTheDocument()
-    expect(screen.getByText(/El lun 12 oct sube a 12 U/)).toBeInTheDocument()
+    expect(screen.getByText(/sube el lun 12 oct a 12 U/)).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent(
       'Mantienes esta semana. El próximo cambio pasa al lun 12 oct.',
     )
@@ -113,7 +116,7 @@ describe('ProtocolsPage', () => {
       steps: [{ doseMg: 2.5, intervalDays: 1, weekdays: [1], durationWeeks: null }],
     })
     open({ protocols: [reta], inventory: [] })
-    expect(await screen.findByRole('img', { name: 'Mantenimiento · semana 2' })).toBeInTheDocument()
+    expect(await screen.findByText('Mantenimiento · semana 2')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Mantener una semana más' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     const menu = await screen.findByRole('dialog')
@@ -140,7 +143,7 @@ describe('ProtocolsPage', () => {
     await waitFor(() =>
       expect(((store.protocols[0]?.steps ?? []) as { doseMg: number }[])[1]?.doseMg).toBe(0.166667),
     )
-    expect(await screen.findByText('10 U')).toBeInTheDocument()
+    expect(await screen.findByText('10', { selector: 'span' })).toHaveTextContent('10U')
   })
 
   it('archives after asking, and brings it back on undo', async () => {

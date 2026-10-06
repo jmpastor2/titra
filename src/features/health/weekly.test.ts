@@ -91,6 +91,12 @@ describe('weekChanges', () => {
     expect(weekChanges(input({ timing: { onTime: 3, offTime: 0 } }))).toEqual([])
   })
 
+  it('leaves adherence out when it is not asked for', () => {
+    const weight = [p(18, 78), p(25, 77.5)]
+    const items = weekChanges({ ...input({ weight }), adherence: undefined, timing: undefined })
+    expect(items.map((i) => i.kind)).toEqual(['body'])
+  })
+
   it('names the wellbeing dimension that moved most, else counts check-ins', () => {
     const scores = new Map<MeasurementKind, TimePoint[]>([
       ['energy', [p(20, 6), p(27, 8)]],

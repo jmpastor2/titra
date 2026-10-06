@@ -71,11 +71,26 @@ describe('WikiPage', () => {
     expect(screen.getByText(i18n.t('wiki.noResults'))).toBeInTheDocument()
   })
 
-  it('narrows to a family with its chip', () => {
+  it('keeps each family folded with its size, and opens it on request', () => {
     visit()
-    fireEvent.click(screen.getByRole('button', { name: i18n.t('wiki.categories.repair') }))
-    const list = screen.getByRole('list')
-    expect(within(list).getByText('BPC-157')).toBeInTheDocument()
-    expect(within(list).queryByText('Retatrutida')).not.toBeInTheDocument()
+    const repair = screen.getByText(i18n.t('wiki.categories.repair')).closest('details')
+    const summary = repair?.querySelector('summary')
+    if (!repair || !summary) throw new Error('the family is not a fold')
+    expect(repair).not.toHaveAttribute('open')
+    const family = within(repair)
+    expect(family.getByText('BPC-157')).toBeInTheDocument()
+    expect(family.queryByText('Retatrutida')).not.toBeInTheDocument()
+    const size = family.getAllByRole('listitem').length
+    expect(within(summary).getByText(String(size))).toBeInTheDocument()
+    fireEvent.click(summary)
+    expect(repair).toHaveAttribute('open')
+  })
+
+  it('writes the evidence of every row in words next to its bars', () => {
+    visit()
+    fireEvent.change(search(), { target: { value: 'retatrutida' } })
+    const row = screen.getByRole('button', { name: /Retatrutida/ })
+    expect(row).toHaveTextContent(i18n.t('wiki.evidenceTiers.phase3'))
+    expect(row.querySelector('[data-level]')).toHaveAttribute('data-level', '6')
   })
 })

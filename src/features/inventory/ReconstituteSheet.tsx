@@ -14,7 +14,7 @@ import { useLocale } from '@/lib/useLocale'
 import { effectiveExpiry } from './alerts'
 import { contentMgOf, reconstitutionPatch } from './reconstitute'
 import { ReconstitutionResult } from './ReconstitutionResult'
-import { fmtMg } from './vialFormat'
+import { fmtMg, namesAboveLabel } from './vialFormat'
 import { isLyophilised, vialContents, vialLook, waterOf } from './vials'
 import { useWaterEntry } from './useWaterEntry'
 import { WaterField } from './WaterField'
@@ -96,11 +96,13 @@ function ReconstituteForm({
       }
     >
       <div className="flex flex-col gap-4 py-1">
-        <div className="flex items-start gap-3.5 rounded-control border border-line bg-panel-2 p-3">
-          <Vial {...vialLook(vial)} size={52} />
-          <div className="min-w-0 flex-1">
-            <div className="spec leading-snug">{names}</div>
-            <div className="mt-0.5 text-[15px] font-semibold leading-snug">{vial.label}</div>
+        <div className="flex items-start gap-3 border-b border-line pb-4">
+          <Vial {...vialLook(vial)} size={48} />
+          <div className="min-w-0 flex-1 pt-0.5">
+            {namesAboveLabel(names, vial.label) && (
+              <div className="spec mb-0.5 leading-snug">{names}</div>
+            )}
+            <div className="text-[15px] font-semibold leading-snug">{vial.label}</div>
             <div className="readout mt-0.5 text-[12.5px] text-muted">
               {fmtMg(contentMgOf(vial), locale)} ·{' '}
               {correcting ? t('inventory.statusInUse') : t('inventory.lyophilised')}

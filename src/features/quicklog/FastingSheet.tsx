@@ -1,7 +1,8 @@
-import { Check, Utensils } from 'lucide-react'
+import { clsx } from 'clsx'
+import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Meter } from '@/components/kpi/Meter'
 import { Sheet } from '@/components/ui/Sheet'
-import { ProgressRing } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { FastingControls } from '@/features/fasting/FastingCard'
 import {
@@ -53,54 +54,43 @@ export function FastingSheet({
   return (
     <Sheet open onClose={onClose} title={t('fasting.title')}>
       <div className="flex flex-col gap-5 py-1">
-        <div className="flex flex-col items-center gap-3">
-          <ProgressRing
-            fraction={fastProgress(lastMeal, now)}
-            size={156}
-            stroke={11}
-            color={waiting ? 'var(--warn)' : 'var(--signal)'}
-          >
-            <div className="text-center leading-none">
-              {!lastMeal ? (
-                <>
-                  <Utensils className="mx-auto mb-2 size-5 text-muted" aria-hidden />
-                  <div className="px-3 text-[12.5px] text-muted">{t('fasting.noMeal')}</div>
-                </>
-              ) : waiting ? (
-                <>
-                  <div className="readout text-[32px] font-semibold text-warn">
-                    {clock(s.readyAt ?? now)}
-                  </div>
-                  <div className="mt-1.5 text-[12px] text-muted">
-                    {t('fasting.minLeft', { min: s.waitMin })}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Check
-                    className="mx-auto mb-1.5 size-6 text-signal"
-                    strokeWidth={3}
-                    aria-hidden
-                  />
-                  <div className="text-[14px] font-semibold">{t('fasting.fasted')}</div>
-                </>
-              )}
+        <div>
+          {!lastMeal ? null : waiting ? (
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <span className="readout text-[40px] font-semibold leading-none text-warn">
+                {clock(s.readyAt ?? now)}
+              </span>
+              <span className="readout text-[13px] text-muted">
+                {t('fasting.minLeft', { min: s.waitMin })}
+              </span>
             </div>
-          </ProgressRing>
-          <p className="text-center text-[14px] font-medium text-ink-2">
+          ) : (
+            <div className="flex items-center gap-2 text-[20px] font-semibold">
+              <Check className="size-5 shrink-0 text-signal" strokeWidth={3} aria-hidden />
+              {t('fasting.fasted')}
+            </div>
+          )}
+          {lastMeal && (
+            <Meter
+              className="mt-3"
+              value={fastProgress(lastMeal, now)}
+              height={8}
+              color={waiting ? 'var(--warn)' : 'var(--signal)'}
+            />
+          )}
+          <p className={clsx('text-[14px] font-medium text-ink-2', lastMeal && 'mt-2.5')}>
             {!lastMeal
               ? t('fasting.askShort')
               : s.ready
                 ? t('fasting.ready', { since: clock(s.readyAt ?? now) })
                 : t('fasting.wait', { at: clock(s.readyAt ?? now), min: s.waitMin })}
           </p>
+          {fastFor && (
+            <p className="mt-1 text-[13px] text-muted">
+              {t('fasting.next', { name: fastFor.name, time: clock(fastFor.at) })}
+            </p>
+          )}
         </div>
-
-        {fastFor && (
-          <p className="rounded-control border border-line bg-panel-2 px-3 py-2.5 text-[13px] text-ink-2">
-            {t('fasting.next', { name: fastFor.name, time: clock(fastFor.at) })}
-          </p>
-        )}
 
         <FastingControls lastMeal={lastMeal} onSet={noted} />
 

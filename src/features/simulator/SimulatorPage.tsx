@@ -3,9 +3,11 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { Delta, Kpi } from '@/components/kpi/Kpi'
+import { Meter } from '@/components/kpi/Meter'
 import { Card } from '@/components/ui/Card'
 import { Select } from '@/components/ui/Field'
-import { EmptyState, Segmented, Skeleton, Stat } from '@/components/ui/primitives'
+import { EmptyState, Segmented, Skeleton } from '@/components/ui/primitives'
 import { PK_COMPOUNDS } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import { templatesForCompound } from '@/content/protocols/templates'
@@ -173,9 +175,13 @@ export function SimulatorPage() {
         : scenario === 'switch'
           ? target?.names.generic
           : undefined
-  const fmtAmount = (mg: number) => {
+  const amountParts = (mg: number) => {
     const a = amountIn(mg, unit)
-    return `${fmtNumber(a.value, locale, a.digits)} ${a.label}`
+    return { value: fmtNumber(a.value, locale, a.digits), unit: a.label }
+  }
+  const fmtAmount = (mg: number) => {
+    const a = amountParts(mg)
+    return `${a.value} ${a.unit}`
   }
 
   return (
@@ -252,23 +258,20 @@ export function SimulatorPage() {
         )}
 
         {insight && (
-          <Card instrument>
+          <Card>
             {insight.kind === 'skip' && (
-              <Stat
-                size="lg"
-                label={t('simulator.levelAfterSkip')}
-                value={fmtAmount(insight.lowestMg)}
-                tone="accent"
-                hint={t('simulator.versusPlan', { value: fmtAmount(insight.planLowestMg) })}
+              <SkipInsight
+                lowest={amountParts(insight.lowestMg)}
+                plan={fmtAmount(insight.planLowestMg)}
+                share={insight.planLowestMg > 0 ? insight.lowestMg / insight.planLowestMg : null}
+                color={color}
               />
             )}
             {insight.kind === 'stop' && (
-              <Stat
-                size="lg"
+              <Kpi
                 label={t('simulator.washout')}
                 value={fmtHours(insight.washoutH, locale)}
-                tone="accent"
-                hint={t('simulator.washoutHint')}
+                caption={t('simulator.washoutHint')}
               />
             )}
           </Card>
@@ -335,5 +338,42 @@ export function SimulatorPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+/**
+ * What skipping the next dose does to the lowest level ahead: the figure, how far below the
+ * plan's lowest it falls, and a bar of how much of that lowest level is left.
+ */
+function SkipInsight({
+  lowest,
+  plan,
+  share,
+  color,
+}: {
+  lowest: { value: string; unit: string }
+  /** The plan's lowest level, formatted. */
+  plan: string
+  /** The lowest after skipping against the plan's lowest; null when the plan's is zero. */
+  share: number | null
+  color: string
+}) {
+  const { t } = useTranslation()
+  const { locale } = useLocale()
+  const drop = share === null ? 0 : Math.round((1 - share) * 100)
+  return (
+    <Kpi
+      label={t('simulator.levelAfterSkip')}
+      value={lowest.value}
+      unit={lowest.unit}
+      aside={
+        drop > 0 ? (
+          <Delta text={`${fmtNumber(drop, locale, 0)} %`} direction="down" tone="neutral" />
+        ) : null
+      }
+      caption={t('simulator.versusPlan', { value: plan })}
+    >
+      {share !== null && <Meter value={Math.min(1, share)} max={1} color={color} />}
+    </Kpi>
   )
 }

@@ -96,7 +96,7 @@ export function SettingsPage() {
 
   return (
     <div className="pb-8">
-      <PageHeader eyebrow={t('more.groups.app')} title={t('settings.title')} back="/more" />
+      <PageHeader title={t('settings.title')} back="/more" />
 
       <div className="flex flex-col gap-3">
         <Card title={t('settings.profile')}>
@@ -212,12 +212,7 @@ export function SettingsPage() {
         {!isStandalone() && (
           <Card>
             <div className="flex items-start gap-3">
-              <span
-                aria-hidden
-                className="grid size-10 shrink-0 place-items-center rounded-[14px] border border-signal/20 bg-signal-soft text-signal"
-              >
-                <Share className="size-[18px]" />
-              </span>
+              <Share className="mt-0.5 size-5 shrink-0 text-ink-2" strokeWidth={1.75} aria-hidden />
               <div className="min-w-0">
                 <h2 className="text-[15px] font-semibold leading-snug">
                   {t('settings.installTitle')}

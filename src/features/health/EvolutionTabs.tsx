@@ -2,8 +2,9 @@ import { clsx } from 'clsx'
 import type { ReactNode } from 'react'
 
 /**
- * The tabs of "Evolución": the look of the app's segmented control, but the labels never end in an
- * ellipsis. On the narrowest phones the type steps down a size instead of cutting "Analíticas" short.
+ * The tabs of "Evolución": quiet words on a hairline, the chosen one in ink with a short bar under
+ * it. Each tab is a full 44 px target, and the labels never end in an ellipsis: on the narrowest
+ * phones the type steps down a size instead of cutting "Analíticas" short.
  */
 export function EvolutionTabs<T extends string>({
   value,
@@ -19,10 +20,7 @@ export function EvolutionTabs<T extends string>({
   return (
     <div
       role="tablist"
-      className={clsx(
-        'flex h-[46px] w-full items-stretch rounded-full border border-line bg-panel-2',
-        className,
-      )}
+      className={clsx('flex w-full items-stretch border-b border-line', className)}
     >
       {options.map((o) => {
         const active = o.value === value
@@ -33,18 +31,19 @@ export function EvolutionTabs<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(o.value)}
-            className="group flex min-w-0 flex-1 items-center justify-center px-0.5 outline-none"
+            className={clsx(
+              'relative flex min-h-11 min-w-0 flex-1 items-center justify-center whitespace-nowrap px-0.5 text-[12.5px] font-semibold outline-none transition-colors focus-visible:bg-panel-2 min-[360px]:text-[13.5px]',
+              active ? 'text-ink' : 'text-muted hover:text-ink-2',
+            )}
           >
+            {o.label}
             <span
+              aria-hidden
               className={clsx(
-                'flex h-[34px] w-full items-center justify-center whitespace-nowrap rounded-full px-1 text-[11.5px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60 min-[360px]:px-2 min-[360px]:text-[12.5px]',
-                active
-                  ? 'bg-panel text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'
-                  : 'text-muted group-hover:text-ink-2',
+                'absolute inset-x-3 -bottom-px h-[2px] rounded-full',
+                active ? 'bg-ink' : 'bg-transparent',
               )}
-            >
-              {o.label}
-            </span>
+            />
           </button>
         )
       })}

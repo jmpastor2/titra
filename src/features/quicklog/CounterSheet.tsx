@@ -1,9 +1,9 @@
-import { Beef, Droplets, Minus, Plus, Trash2, Undo2, type LucideIcon } from 'lucide-react'
+import { Minus, Plus, Trash2, Undo2 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Meter } from '@/components/kpi/Meter'
 import { Button } from '@/components/ui/Button'
 import { Sheet } from '@/components/ui/Sheet'
-import { ProgressRing } from '@/components/ui/primitives'
 import type { MeasurementRow } from '@/data/database.types'
 import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
@@ -32,7 +32,6 @@ interface CounterProps {
 
 interface Layout {
   title: string
-  icon: LucideIcon
   goal: number | null
   adds: readonly number[]
   /** Unit of the chips and the entries: ml, g. */
@@ -41,15 +40,14 @@ interface Layout {
   customDefault: number
   /** An amount as text with its unit: "250 ml", "1,25 L". */
   format: (amount: number) => string
-  /** An amount as a number and its unit, for the middle of the ring. */
+  /** An amount as a number and its unit, for the reading at the top. */
   split: (amount: number) => { value: string; unit: string }
   goalControl?: ReactNode
 }
 
-/** The shared body of the water and protein sheets: a gauge, one-tap amounts, today's list. */
+/** The shared body of the water and protein sheets: the day's total on a gauge, one-tap amounts, today's list. */
 function CounterSheet({
   title,
-  icon: Icon,
   goal,
   adds,
   unit,
@@ -91,27 +89,30 @@ function CounterSheet({
       }
     >
       <div className="flex flex-col gap-5 py-1">
-        <div className="flex flex-col items-center gap-3">
-          <ProgressRing
-            fraction={goal ? total / goal : 0}
-            size={156}
-            stroke={11}
-            color={goal !== null && total >= goal ? 'var(--ok)' : 'var(--signal)'}
-          >
-            <div className="text-center leading-none">
-              <Icon className="mx-auto mb-1.5 size-4 text-muted" aria-hidden />
-              <div className="readout text-[30px] font-semibold">
-                {center.value}
-                <span className="ml-1 text-[13px] font-medium text-muted">{center.unit}</span>
-              </div>
-              {goal !== null && (
-                <div className="mt-1.5 text-[11.5px] text-muted">
-                  {t('quick.counter.of', { goal: format(goal) })}
-                </div>
-              )}
+        <div>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <div className="readout text-[40px] font-semibold leading-none">
+              {center.value}
+              <span className="ml-1 font-sans text-[15px] font-medium text-muted">
+                {center.unit}
+              </span>
             </div>
-          </ProgressRing>
-          <p className="text-[14px] font-medium text-ink-2">{status}</p>
+            {goal !== null && (
+              <span className="readout text-[13px] text-muted">
+                {t('quick.counter.of', { goal: format(goal) })}
+              </span>
+            )}
+          </div>
+          {goal !== null && (
+            <Meter
+              className="mt-3"
+              value={total}
+              max={goal}
+              height={8}
+              color={total >= goal ? 'var(--ok)' : 'var(--signal)'}
+            />
+          )}
+          <p className="mt-2.5 text-[14px] font-medium text-ink-2">{status}</p>
         </div>
 
         <div className="flex gap-2.5">
@@ -196,7 +197,7 @@ function CounterSheet({
           )}
         </div>
       </div>
-      {/* The reading of the day for assistive tech; the ring is decoration. */}
+      {/* The reading of the day for assistive tech; the gauge is decoration. */}
       <span className="sr-only" aria-live="polite">
         {title}: {format(total)}. {status}
       </span>
@@ -248,7 +249,6 @@ export function WaterSheet(props: CounterProps & { goal: number }) {
     <CounterSheet
       {...props}
       title={t('quick.water.title')}
-      icon={Droplets}
       kind="hydration_ml"
       unit="ml"
       adds={WATER_ADDS}
@@ -277,7 +277,6 @@ export function ProteinSheet({
     <CounterSheet
       {...props}
       title={t('quick.protein.title')}
-      icon={Beef}
       kind="protein_g"
       unit="g"
       goal={target}
@@ -286,7 +285,7 @@ export function ProteinSheet({
       format={(g) => `${fmtNumber(g, locale, 0)} g`}
       split={(g) => ({ value: fmtNumber(g, locale, 0), unit: 'g' })}
       goalControl={
-        <p className="rounded-control border border-line bg-panel-2 px-3 py-2.5 text-[12.5px] leading-snug text-ink-2">
+        <p className="text-[12.5px] leading-snug text-muted">
           {target !== null && weightKg !== null
             ? t('quick.protein.targetNote', {
                 perKg: fmtNumber(perKg, locale, 1),

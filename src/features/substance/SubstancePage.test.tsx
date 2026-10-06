@@ -53,11 +53,13 @@ afterEach(() => {
 })
 
 describe('SubstancePage', () => {
-  it('draws the level curve of a long-acting substance with its readout', async () => {
+  it('draws the level curve of a long-acting substance, and the vial in use with what is left', async () => {
     await visit('retatrutide')
     expect(await screen.findByRole('img', { name: /Curva de nivel estimado/ })).toBeInTheDocument()
-    expect(screen.getByText('A bordo')).toBeInTheDocument()
-    expect(screen.getByText('Titulación')).toBeInTheDocument()
+    const vials = screen.getByRole('heading', { name: 'Viales' }).closest('section')
+    if (!vials) throw new Error('no vials section')
+    expect(within(vials).getByText('En uso')).toBeInTheDocument()
+    expect(within(vials).getByText(/^de \d+(,\d+)? mg$/)).toBeInTheDocument()
   })
 
   it('draws MOTS-c as a dose timeline instead of an empty card', async () => {

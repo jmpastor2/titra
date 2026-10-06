@@ -195,13 +195,14 @@ const OutlookLayers = memo(function OutlookLayers({
               y1={y(value)}
               y2={y(value)}
               stroke={value === 0 ? 'var(--line-strong)' : 'var(--line)'}
-              strokeDasharray={value === 0 ? undefined : '2 4'}
+              shapeRendering="crispEdges"
             />
             <text
               x={box.x0 - 6}
               y={y(value) + 4}
               textAnchor="end"
               fontSize={AXIS_FONT}
+              fontFamily="var(--font-num)"
               fill="var(--muted)"
               style={{ fontVariantNumeric: 'tabular-nums' }}
             >
@@ -216,7 +217,7 @@ const OutlookLayers = memo(function OutlookLayers({
           textAnchor="end"
           fontSize={9.5}
           fontWeight={600}
-          fontFamily="var(--font-mono)"
+          fontFamily="var(--font-num)"
           fill="var(--muted)"
         >
           %
@@ -324,7 +325,7 @@ const OutlookLayers = memo(function OutlookLayers({
             textAnchor={layout.endLabel.anchor}
             fontSize={11}
             fontWeight={600}
-            fontFamily="var(--font-mono)"
+            fontFamily="var(--font-num)"
             fill="var(--ink)"
             stroke="var(--panel)"
             strokeWidth={3}
@@ -341,12 +342,13 @@ const OutlookLayers = memo(function OutlookLayers({
           const px = x(week)
           return (
             <g key={week}>
-              <line x1={px} x2={px} y1={box.y1} y2={box.y1 + 3} stroke="var(--line-strong)" />
+              <line x1={px} x2={px} y1={box.y1} y2={box.y1 + 3} stroke="var(--line)" />
               <text
                 x={px}
                 y={box.y1 + 16}
                 textAnchor={px < 20 ? 'start' : px > width - 20 ? 'end' : 'middle'}
                 fontSize={AXIS_FONT}
+                fontFamily="var(--font-num)"
                 fill="var(--muted)"
               >
                 {text}

@@ -70,7 +70,7 @@ export function ScheduleCard({
   }, [steps, times, draft.compoundId, now])
 
   return (
-    <Card eyebrow="02" title={t('protocols.schedule')}>
+    <Card title={t('protocols.schedule')}>
       <Segmented<ScheduleMode>
         value={draft.mode}
         onChange={(mode) => onChange({ mode })}

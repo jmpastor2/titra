@@ -1,4 +1,4 @@
-# Estado del proyecto (2026-10-06)
+# Estado del proyecto (2026-10-07)
 
 Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Actions al hacer push a `main`).
 
@@ -19,12 +19,21 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   - Más: grupos con insignias en vivo. Wiki: 44 entradas, categorías plegadas, fichas escaneables.
   - Primitivas: `components/kpi/Ring`, `PageHeader`/filas sin truncado, `Segmented` escala a 320 px.
 
+- Cuarta tanda («instrumento silencioso», ver `DESIGN.md`):
+  - Tema: fuente del sistema, cifras SF Pro Rounded, acento iris, botón principal en tinta, sin fuentes
+    web, sin anillos, sin etiquetas en mayúsculas, sin cajas dentro de cajas. Icono y splash nuevos.
+  - Kit `src/components/kpi` (Kpi, Delta, Meter, Ticks, Steps, Spark, DayTrack); `lab.html?kit=1`.
+  - Hoy en 6 bloques (próxima toma con las próximas 24 h, 4 KPIs, una sola decisión, registro rápido,
+    niveles). Registro con Puntualidad. Pautas con escalera. Futuro con escala «dónde estás frente al ensayo».
+  - Datos: la cobertura de stock tiene en cuenta la caducidad (`inventory/supply.ts`), la tarjeta de vial
+    cuenta solo las tomas antes de caducar, la decisión deja de preguntar si la toma ya se hizo a la dosis
+    nueva, en Futuro «tu dosis en esa fecha», Más cuenta «urgentes».
+
 ## Pendiente
 
 1. Probar el teclado de las hojas (viales, agua) en el iPhone real.
 2. Repasar con la cuenta real (`?real=1`, exportar copia a `src/dev/real-snapshot.json`, git-ignorada).
-3. Poda de claves i18n sin uso: el script automático borra claves construidas dinámicamente
-   (`cycle.decision.increase*`); hacerlo a mano o mejorar el script.
+3. Poda de i18n: hecha (`scratchpad/i18n_unused.py` ya reconoce claves construidas con plantillas).
 4. Avisos push: se activan en el iPhone (Más, Avisos).
 
 ## Cómo trabajar

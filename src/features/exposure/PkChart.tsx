@@ -261,7 +261,7 @@ export function PkChart({
       >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+            <stop offset="0%" stopColor={color} stopOpacity={0.22} />
             <stop offset="100%" stopColor={color} stopOpacity={0.02} />
           </linearGradient>
           <clipPath id={`${gradId}-clip`}>
@@ -396,15 +396,13 @@ export function PkChart({
 
         {nowValue !== undefined && (
           <g pointerEvents="none">
-            <circle cx={x(nowT)} cy={y(nowValue * factor)} r={9} fill={color} fillOpacity={0.18} />
             <circle
               cx={x(nowT)}
               cy={y(nowValue * factor)}
               r={4.5}
               fill={color}
               stroke="var(--panel)"
-              strokeWidth={2}
-              style={{ filter: `drop-shadow(0 0 4px ${color})` }}
+              strokeWidth={2.5}
             />
           </g>
         )}

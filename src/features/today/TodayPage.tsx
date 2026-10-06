@@ -1,57 +1,48 @@
-import { differenceInCalendarDays } from 'date-fns'
-import { BellRing, ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
-import { Card } from '@/components/ui/Card'
 import { SectionTitle, Skeleton } from '@/components/ui/primitives'
 import type { InventoryRow } from '@/data/database.types'
+import { useInventory } from '@/data/hooks'
 import { planDraw } from '@/domain/dosing/draw'
 import type { StackComponent } from '@/domain/types'
-import { useInventory } from '@/data/hooks'
 import { CycleDecisions } from '@/features/cycle/CycleDecisions'
-import { CycleOverview } from '@/features/cycle/CycleOverview'
-import { useCycleInfos } from '@/features/cycle/useCycleInfos'
 import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
-import { StockAlerts } from '@/features/inventory/StockAlerts'
-import { useStock } from '@/features/inventory/useStock'
-import { activeVial, drawPartFor } from '@/features/inventory/vials'
 import { useExposure } from '@/features/exposure/useExposure'
-import { FastingCard } from '@/features/fasting/FastingCard'
-import { upcomingAdministrations } from '@/features/reminders/plan'
 import { needsFasting } from '@/features/fasting/fasting'
-import { useReminderPrefs } from '@/features/reminders/useReminders'
+import { useStock } from '@/features/inventory/useStock'
+import { drawPartFor } from '@/features/inventory/vials'
+import { FastingSheet } from '@/features/quicklog/FastingSheet'
 import { QuickLog } from '@/features/quicklog/QuickLog'
 import { FAST_WINDOW_H, type TileId } from '@/features/quicklog/tiles'
-import { fmtDate } from '@/lib/format'
+import { upcomingAdministrations } from '@/features/reminders/plan'
+import { useReminderPrefs } from '@/features/reminders/useReminders'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
-import { AgendaRow } from './AgendaRow'
-import { NextDoseCard } from './NextDoseCard'
+import { buildToday, focusItem, longDate } from './agenda'
+import { FastingLine } from './FastingLine'
+import { KpiGrid } from './KpiGrid'
+import { LevelsCard, LevelsCardSkeleton } from './LevelsCard'
+import { NextDoseCard, type HeroDose } from './NextDoseCard'
+import { RemindersNotice, StockNotice } from './Notices'
 import { SetupLab } from './SetupLab'
-import { useLastSevenDays } from './useLastSevenDays'
-import { KpiChips } from './KpiChips'
-import { WeekGrid } from './WeekPulse'
-import { adherenceOf, coverKpi, cycleKpi } from './kpis'
-import { agendaAddsToHero, buildToday, focusItem, summarise } from './agenda'
-import { LevelCard, LevelCardSkeleton } from './LevelCard'
+import { heroRows, slotKey, trackItems, windowItems } from './track'
+import { useHomeKpis } from './useHomeKpis'
 
 /** Tiles of the quick log on this screen, "Más" aside: two columns by three rows. */
 const QUICK_TILES = 5
+const HOUR_MS = 3_600_000
 
-type SheetState = {
-  kind: 'dose'
-  protocolId?: string | null
-  compoundId?: string
-  plannedAt?: Date
-} | null
+type SheetState =
+  { kind: 'dose'; protocolId?: string | null; plannedAt?: Date } | { kind: 'fasting' } | null
 
 /**
- * Hoy, in the order of what needs the person: the next dose with today's ring, the figures that
- * say whether the protocol is on track, what the cycles ask and today's agenda; after that the
- * stock to watch, the levels, the quick log, the cycles and the last seven days. `embedded`
- * renders the page inside another screen (a shared, read-only view) without its header.
+ * Hoy, a calm control panel in six blocks: the date; the next dose with the day around it;
+ * four tiles that say whether the plan is on track; the one decision the cycles ask for; the
+ * quick log; and the levels. A stock problem that cannot wait, or reminders switched off, adds
+ * one slim row. `embedded` renders the page inside another screen (a shared, read-only view)
+ * without its header.
  */
 export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation()
@@ -81,73 +72,60 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
       )
   }
 
-  const items = useMemo(
-    () => buildToday(exposure.protocols, exposure.doses, now),
-    [exposure.protocols, exposure.doses, now],
-  )
-  const summary = summarise(items.filter((i) => !i.extra))
-  const week = useLastSevenDays(exposure.protocols, exposure.doses, now)
-  const cycle = cycleKpi(useCycleInfos())
-  const focus = focusItem(items)
+  const { protocols, doses } = exposure
+  const vials = inventory.data ?? NO_VIALS
+  const hasProtocols = protocols.some((p) => p.status === 'active')
   // Compounds that ride along in another protocol's syringe or blend vial are shown on that
-  // protocol's card, not on their own.
+  // protocol's row, not on their own.
   const tracked = exposure.items.filter((x) => (x.protocol || x.lastDose) && !x.partnerOf)
-  const firstStart = exposure.protocols
-    .filter((p) => p.status === 'active')
-    .map((p) => new Date(p.start_date))
-    .toSorted((a, b) => a.getTime() - b.getTime())[0]
-  const dayN = firstStart ? differenceInCalendarDays(now, firstStart) + 1 : null
 
-  const hasProtocols = exposure.protocols.some((p) => p.status === 'active')
-  const vials = inventory.data ?? []
-  // Nothing left today: the next administration on any later day.
-  const nextUp = focus
-    ? null
-    : (upcomingAdministrations(exposure.protocols, exposure.doses, vials, now, {
-        horizonDays: 14,
-      })[0] ?? null)
-  const heroUnits = focus ? unitsToDraw(focus.doses, vials) : (nextUp?.totalUnits ?? null)
-  const onlyExtra = summary.total === 0 && items.length > 0
-  const heroNote = onlyExtra
-    ? t('today.onlyExtra', { count: items.length })
-    : focus || nextUp
-      ? ''
-      : t('today.nothingToday')
+  const day = useMemo(() => {
+    const today = buildToday(protocols, doses, now)
+    const focus = focusItem(today)
+    // Nothing left today: the next administration on any later day.
+    const next = focus
+      ? null
+      : (upcomingAdministrations(protocols, doses, vials, now, { horizonDays: 14 })[0] ?? null)
+    const dose: HeroDose | null = focus ?? (next && { ...next, status: 'upcoming' })
+    const heroKey = dose ? slotKey(dose.protocol.id, dose.at) : null
+    const window = windowItems(protocols, doses, now)
+    return {
+      dose,
+      units: focus ? unitsToDraw(focus.doses, vials) : (next?.totalUnits ?? null),
+      track: trackItems(window, heroKey),
+      rows: heroRows(today, window, heroKey),
+    }
+  }, [protocols, doses, vials, now])
 
-  // The next GH-secretagogue shot within the fast window asks for a fasting window (the same
-  // window the quick log's Ayuno tile counts to, so the two always agree).
-  const fastFor = items.find(
-    (i) =>
-      (i.status === 'due' ||
-        i.status === 'overdue' ||
-        (i.status === 'upcoming' && i.at.getTime() - now.getTime() < FAST_WINDOW_H * 3_600_000)) &&
-      needsFasting(i.doses.map((d) => d.compoundId)),
-  )
-  const fastingShown = !readOnly && Boolean(fastFor)
+  const kpis = useHomeKpis(protocols, doses, readOnly ? null : stock.restock, now)
 
-  // The quick log leaves out what this screen already says: the next dose has its card (or the
-  // first-run steps their button), and an open fast has its own.
-  const omit = useMemo<TileId[]>(
-    () => (fastingShown ? ['dose', 'fasting'] : ['dose']),
-    [fastingShown],
-  )
+  // The hero's dose asks for a fast when it is a GH secretagogue within the fast window (the
+  // same window the quick log's Ayuno tile counts to, so the two always agree).
+  const fastFor =
+    !readOnly &&
+    day.dose &&
+    needsFasting(day.dose.doses.map((d) => d.compoundId)) &&
+    day.dose.at.getTime() - now.getTime() < FAST_WINDOW_H * HOUR_MS
+      ? day.dose
+      : null
+
+  // The quick log leaves out what this screen already says: the next dose has the hero, and
+  // its fast a line in it.
+  const omit = useMemo<TileId[]>(() => (fastFor ? ['dose', 'fasting'] : ['dose']), [fastFor])
 
   return (
     <div
       className={
         embedded
-          ? 'flex flex-col gap-4 pt-2'
-          : 'flex flex-col gap-4 pt-[max(env(safe-area-inset-top),18px)]'
+          ? 'flex flex-col gap-3 pt-2'
+          : 'flex flex-col gap-3 pt-[max(env(safe-area-inset-top),18px)]'
       }
     >
       {!embedded && (
-        <header className="flex items-end justify-between gap-3">
+        <header className="mb-1 flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <div className="spec">
-              {fmtDate(now, locale, 'EEE d MMM').toUpperCase()}
-              {dayN && dayN > 0 ? ` · ${t('today.dayN', { n: dayN })}` : ''}
-            </div>
-            <h1 className="mt-1 break-words font-display text-[32px] font-bold leading-none">
+            <p className="text-[13.5px] font-medium text-muted">{longDate(now, locale)}</p>
+            <h1 className="mt-0.5 break-words font-display text-[34px] font-bold leading-tight">
               {readOnly ? patient?.display_name : t('today.title')}
             </h1>
           </div>
@@ -155,7 +133,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
             <Link
               to="/settings"
               aria-label={t('more.settings')}
-              className="grid size-11 shrink-0 place-items-center rounded-full border border-line-strong bg-panel font-display text-[15px] font-bold text-signal"
+              className="grid size-11 shrink-0 place-items-center rounded-full bg-panel-3 font-display text-[15px] font-semibold text-ink-2"
             >
               {(patient?.display_name ?? '?').trim().charAt(0).toUpperCase()}
             </Link>
@@ -164,82 +142,45 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
       )}
 
       {exposure.isPending ? (
-        <Card>
-          <Skeleton className="h-[220px] w-full" />
-        </Card>
+        <div className="card p-4" aria-hidden>
+          <Skeleton className="h-[260px] w-full" />
+        </div>
       ) : !hasProtocols && tracked.length === 0 ? (
         <SetupLab readOnly={readOnly} onFreeDose={() => setSheet({ kind: 'dose' })} />
       ) : (
         <NextDoseCard
-          focus={focus}
-          nextUp={nextUp}
-          units={heroUnits}
-          summary={summary}
-          note={heroNote}
+          dose={day.dose}
+          units={day.units}
+          track={day.track}
+          rows={day.rows}
+          unitsOf={(item) => unitsToDraw(item.doses, vials)}
           now={now}
           readOnly={readOnly}
+          aside={fastFor && <FastingLine onOpen={() => setSheet({ kind: 'fasting' })} />}
           onLog={() =>
-            focus && setSheet({ kind: 'dose', protocolId: focus.protocol.id, plannedAt: focus.at })
+            day.dose &&
+            setSheet({ kind: 'dose', protocolId: day.dose.protocol.id, plannedAt: day.dose.at })
+          }
+          onLogItem={(item) =>
+            setSheet({ kind: 'dose', protocolId: item.protocol.id, plannedAt: item.at })
           }
           onLogOther={() => setSheet({ kind: 'dose' })}
         />
       )}
 
-      {fastingShown && fastFor && <FastingCard name={fastFor.protocol.name} />}
-
       {hasProtocols && !exposure.isPending && (
-        <KpiChips
-          streak={week.streak}
-          trail={week.trail}
-          adherence={adherenceOf(week.summary)}
-          week={week.summary}
-          cycle={cycle}
-          cover={readOnly ? null : coverKpi(stock.restock, now)}
-          linked={!readOnly}
-        />
+        <KpiGrid kpis={kpis} vials={vials} now={now} linked={!readOnly} />
       )}
 
       {hasProtocols && <CycleDecisions focusProtocolId={cycleFocus} />}
 
-      {items.length > 0 && agendaAddsToHero(items, focus) && (
-        <section>
-          <SectionTitle>{t('today.agenda')}</SectionTitle>
-          <ul className="flex flex-col gap-2">
-            {items.map((i) => (
-              <AgendaRow
-                key={i.key}
-                item={i}
-                now={now}
-                units={unitsToDraw(i.doses, vials)}
-                readOnly={readOnly}
-                onLog={() => setSheet({ kind: 'dose', protocolId: i.protocol.id, plannedAt: i.at })}
-              />
-            ))}
-          </ul>
-        </section>
-      )}
+      {!readOnly && <StockNotice alerts={stock.alerts} />}
+      {!readOnly && hasProtocols && reminders.loaded && !reminders.enabled && <RemindersNotice />}
 
-      {!readOnly && stock.alerts.length > 0 && (
-        <section>
-          <SectionTitle>{t('today.stock')}</SectionTitle>
-          <StockAlerts alerts={stock.alerts} limit={1} linkTo="/inventory" />
-        </section>
-      )}
+      {!readOnly && <QuickLog className="mt-2" omit={omit} max={QUICK_TILES} />}
 
-      {!readOnly && <QuickLog omit={omit} max={QUICK_TILES} />}
-
-      {exposure.isPending && (
-        <section aria-hidden>
-          <SectionTitle>{t('today.levels')}</SectionTitle>
-          <div className="flex flex-col gap-2">
-            <LevelCardSkeleton />
-            <LevelCardSkeleton />
-          </div>
-        </section>
-      )}
-
-      {tracked.length > 0 && (
-        <section>
+      {(exposure.isPending || tracked.length > 0) && (
+        <section aria-label={t('today.levels')}>
           <SectionTitle
             action={
               !readOnly && (
@@ -251,69 +192,41 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
           >
             {t('today.levels')}
           </SectionTitle>
-          <div className="flex flex-col gap-2">
-            {tracked.map((x) => (
-              <LevelCard
-                key={x.compoundId}
-                x={x}
-                now={now}
-                vial={activeVial(vials, x.compoundId, x.next?.doseMg)}
-              />
-            ))}
-          </div>
+          {exposure.isPending ? <LevelsCardSkeleton /> : <LevelsCard items={tracked} />}
         </section>
       )}
 
-      {hasProtocols && <CycleOverview focusProtocolId={cycleFocus} />}
-
-      {hasProtocols && !exposure.isPending && (
-        <section>
-          <SectionTitle
-            action={
-              !readOnly && (
-                <Link to="/log" className="spec text-signal">
-                  {t('nav.log')}
-                </Link>
-              )
-            }
-          >
-            {t('today.week')}
-          </SectionTitle>
-          <Card>
-            <WeekGrid days={week.days} protocols={exposure.protocols} now={now} />
-          </Card>
-        </section>
-      )}
-
-      {!readOnly && hasProtocols && reminders.loaded && !reminders.enabled && (
-        <Link
-          to="/reminders"
-          className="card flex min-h-12 items-center gap-3 px-4 py-2.5 transition active:scale-[0.99]"
-        >
-          <BellRing aria-hidden className="size-[18px] shrink-0 text-signal" />
-          <span className="min-w-0 flex-1 text-[14px] font-semibold">
-            {t('today.remindersOff')}
-          </span>
-          <ChevronRight aria-hidden className="size-4 shrink-0 text-muted" />
-        </Link>
-      )}
-
-      <p className="px-2 pb-2 text-center text-[11px] leading-relaxed text-muted">
+      <p className="px-2 pb-2 pt-3 text-center text-[11px] leading-relaxed text-muted">
         {t('app.disclaimer')}
       </p>
 
       <LogDoseSheet
         // A reminder tapped while the sheet is open switches it to that protocol.
-        key={sheet?.kind === 'dose' ? (sheet.protocolId ?? sheet.compoundId ?? 'free') : 'closed'}
+        key={sheet?.kind === 'dose' ? (sheet.protocolId ?? 'free') : 'closed'}
         open={sheet?.kind === 'dose'}
         onClose={closeSheet}
         protocolId={sheet?.kind === 'dose' ? sheet.protocolId : undefined}
-        compoundId={sheet?.kind === 'dose' ? sheet.compoundId : undefined}
         plannedAt={sheet?.kind === 'dose' ? sheet.plannedAt : undefined}
       />
+      {sheet?.kind === 'fasting' && (
+        <FastingSheet
+          fastFor={
+            fastFor && {
+              protocolId: fastFor.protocol.id,
+              at: fastFor.at,
+              compoundIds: fastFor.doses.map((d) => d.compoundId),
+              name: fastFor.protocol.name,
+              units: day.units,
+            }
+          }
+          onClose={closeSheet}
+        />
+      )}
     </div>
   )
 }
+
+const NO_VIALS: readonly InventoryRow[] = []
 
 /** Units to draw for an administration, when every compound has a reconstituted vial. */
 function unitsToDraw(doses: readonly StackComponent[], vials: readonly InventoryRow[]) {

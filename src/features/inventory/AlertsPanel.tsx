@@ -3,6 +3,7 @@ import { Check, CheckCheck, ChevronDown, CircleCheck, RotateCcw } from 'lucide-r
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
+import { Card } from '@/components/ui/Card'
 import { useToast } from '@/components/ui/Toast'
 import { useDismissAlert, useRestoreAlert } from '@/data/hooks'
 import { useSession } from '@/features/auth/SessionProvider'
@@ -13,11 +14,12 @@ import { AlertBody, StockAlerts } from './StockAlerts'
 const VISIBLE_ALERTS = 3
 
 const QUIET =
-  'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold text-ink-2 outline-none transition hover:bg-panel-2 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-signal/60 disabled:opacity-50'
+  'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold outline-none transition hover:bg-panel-2 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-signal/60 disabled:opacity-50'
 
 /**
- * The alerts of the inventory: what is pending (each one can be marked as read, or all at
- * once) and, collapsed, what was already read, which can be brought back.
+ * The alerts of the inventory in one card: a row per pending alert (each can be marked as
+ * read, or all at once) and, folded at the bottom, what was already read, which can be
+ * brought back.
  */
 export function AlertsPanel({
   alerts,
@@ -50,25 +52,31 @@ export function AlertsPanel({
   }
 
   return (
-    <section aria-label={t('inventory.alertsTitle')} className="mb-3">
+    <Card aria-label={t('inventory.alertsTitle')} className="mb-3">
       {alerts.length > 0 ? (
         <>
-          <div className="mb-1 flex flex-wrap items-center justify-between gap-x-2 px-1">
-            <h2 className="spec">{t('inventory.alertsCount', { count: alerts.length })}</h2>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3">
+            <h2 className="text-[15px] font-semibold">
+              {t('inventory.alertsCount', { count: alerts.length })}
+            </h2>
             {canAct && alerts.length > 1 && (
-              <button type="button" onClick={markAllRead} className={clsx(QUIET, '-mr-2')}>
+              <button
+                type="button"
+                onClick={markAllRead}
+                className={clsx(QUIET, '-my-2 -mr-3 text-signal hover:bg-signal-soft')}
+              >
                 <CheckCheck className="size-4" aria-hidden />
                 {t('inventory.markAllRead')}
               </button>
             )}
           </div>
-          <StockAlerts alerts={showAll ? alerts : alerts.slice(0, VISIBLE_ALERTS)} />
+          <StockAlerts bare alerts={showAll ? alerts : alerts.slice(0, VISIBLE_ALERTS)} />
           {alerts.length > VISIBLE_ALERTS && (
             <button
               type="button"
               aria-expanded={showAll}
               onClick={() => setShowAll((o) => !o)}
-              className={clsx(QUIET, 'mt-1 w-full justify-center')}
+              className={clsx(QUIET, 'mt-2 w-full justify-center text-ink-2')}
             >
               {showAll
                 ? t('inventory.alertsLess')
@@ -81,19 +89,19 @@ export function AlertsPanel({
           )}
         </>
       ) : (
-        <div className="flex items-center gap-2.5 rounded-control border border-line bg-panel px-3.5 py-3 text-[13px] text-ink-2">
-          <CircleCheck className="size-4 shrink-0 text-signal" aria-hidden />
+        <p className="flex items-center gap-2.5 text-[13.5px] leading-snug text-ink-2">
+          <CircleCheck className="size-[18px] shrink-0 text-signal" aria-hidden />
           {t('inventory.noAlerts')}
-        </div>
+        </p>
       )}
 
       {read.length > 0 && (
-        <div className="mt-1">
+        <div className="-mb-2 mt-3 border-t border-line pt-1">
           <button
             type="button"
             aria-expanded={showRead}
             onClick={() => setShowRead((o) => !o)}
-            className="flex min-h-11 w-full items-center justify-between gap-2 px-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
+            className="flex min-h-11 w-full items-center justify-between gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
           >
             <span className="spec flex items-center gap-1.5">
               <Check className="size-3.5" aria-hidden />
@@ -105,21 +113,18 @@ export function AlertsPanel({
             />
           </button>
           {showRead && (
-            <div className="flex flex-col gap-2">
-              <ul className="flex flex-col gap-2">
+            <div className="flex flex-col pb-2">
+              <ul className="flex flex-col divide-y divide-line">
                 {read.map((a) => (
-                  <li
-                    key={alertKey(a)}
-                    className="rounded-control border border-line bg-panel px-3.5 pb-1.5 pt-3 text-muted"
-                  >
-                    <AlertBody alert={a} />
+                  <li key={alertKey(a)} className="py-3 first:pt-1">
+                    <AlertBody alert={a} muted />
                     {canAct && (
-                      <div className="flex justify-end">
+                      <div className="-mb-2 -mr-2 flex justify-end">
                         <button
                           type="button"
                           disabled={restore.isPending}
                           onClick={() => void restoreAlerts([a])}
-                          className={clsx(QUIET, '-mr-1.5')}
+                          className={clsx(QUIET, 'text-ink-2')}
                         >
                           <RotateCcw className="size-4" aria-hidden />
                           {t('inventory.restoreAlert')}
@@ -134,7 +139,7 @@ export function AlertsPanel({
                   type="button"
                   disabled={restore.isPending}
                   onClick={() => void restoreAlerts(read)}
-                  className={clsx(QUIET, 'self-end')}
+                  className={clsx(QUIET, '-mr-2 mt-1 self-end text-signal hover:bg-signal-soft')}
                 >
                   <RotateCcw className="size-4" aria-hidden />
                   {t('inventory.restoreAll')}
@@ -144,6 +149,6 @@ export function AlertsPanel({
           )}
         </div>
       )}
-    </section>
+    </Card>
   )
 }

@@ -69,7 +69,7 @@ export const AdministrationRow = memo(function AdministrationRow({
           {toTimeInputValue(a.at)}
         </span>
         {night && (
-          <span className="spec mt-0.5 block text-[9.5px] leading-tight">
+          <span className="mt-0.5 block text-[11px] leading-tight text-muted">
             {t('doses.nightOf', { day: fmtDate(night, locale, 'EEE') })}
           </span>
         )}
@@ -135,7 +135,7 @@ export const AdministrationRow = memo(function AdministrationRow({
           <button
             type="button"
             onClick={() => onAssign(extra)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-accent/40 bg-accent-soft px-4 text-[13px] font-semibold text-accent transition active:scale-[0.98]"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full bg-accent-soft px-4 text-[13px] font-semibold text-accent transition active:scale-[0.98]"
           >
             <CalendarCheck className="size-4" aria-hidden />
             {t('doses.assignAsk', { slot: slotDayText(extra.suggested, locale) })}

@@ -12,9 +12,6 @@ import { RailLabels, XAxisLabels, YAxisGrid } from './chartParts'
 import { TIP_GAP, tipSide, type TrendLayout } from './trendLayout'
 import type { TrendModel, TrendRow } from './trendModel'
 
-const GLOW = (color: string) =>
-  `drop-shadow(0 0 4px color-mix(in oklab, ${color} 60%, transparent))`
-
 export const TrendLayers = memo(function TrendLayers({
   model,
   layout,
@@ -127,7 +124,6 @@ export const TrendLayers = memo(function TrendLayers({
           strokeOpacity={hasSmooth ? 0.35 : 1}
           strokeLinejoin="round"
           strokeLinecap="round"
-          style={hasSmooth ? undefined : { filter: GLOW(color) }}
         />
         {hasSmooth && (
           <path
@@ -138,7 +134,6 @@ export const TrendLayers = memo(function TrendLayers({
             strokeWidth={2.25}
             strokeLinejoin="round"
             strokeLinecap="round"
-            style={{ filter: GLOW(color) }}
           />
         )}
       </g>

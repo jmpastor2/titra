@@ -215,7 +215,7 @@ export function DoseLine({
               aria-label={t('doses.inventory')}
               value={line.inventoryId}
               onChange={(e) => changeVial(e.target.value)}
-              className="h-11 w-full appearance-none truncate rounded-control border border-line bg-panel pl-3 pr-9 font-mono text-[12.5px] text-ink outline-none transition focus:border-signal/60"
+              className="h-11 w-full appearance-none truncate rounded-control border border-line bg-panel pl-3 pr-9 text-[13px] text-ink outline-none transition focus:border-signal/60"
             >
               <option value="">{t('doses.noInventory')}</option>
               {vials.map((v) => (
@@ -230,7 +230,7 @@ export function DoseLine({
             />
           </div>
         ) : (
-          <span className="font-mono text-[11.5px] text-muted">{t('doses.noVial')}</span>
+          <span className="text-[12px] text-muted">{t('doses.noVial')}</span>
         )}
         {/* A menu shows a long name cut short: say it in full underneath. */}
         {vial && vial.label.length > LONG_LABEL && (

@@ -31,7 +31,8 @@ import { STRENGTH_WEEKLY_TARGET, type Tier, type TileId, type TileTone } from '.
 import { fmtVolume, splitVolume } from './water'
 
 export type TileVisual =
-  | { kind: 'ring'; fraction: number; done: boolean; icon: LucideIcon }
+  /** How far toward the day's goal, 0 to 1 (more is drawn full). */
+  | { kind: 'gauge'; fraction: number; done: boolean }
   /** How far through a wait, 0 to 1. */
   | { kind: 'bar'; fraction: number }
   | { kind: 'spark'; values: number[] }
@@ -162,7 +163,7 @@ function waterView(ctx: TileContext): TileView {
     caption: reached
       ? t('quick.water.tileDone')
       : t('quick.counter.left', { amount: nbsp(fmtVolume(goalMl - total, locale)) }),
-    visual: { kind: 'ring', fraction: total / goalMl, done: reached, icon: Droplets },
+    visual: { kind: 'gauge', fraction: total / goalMl, done: reached },
     hint: t('quick.water.tileHint', {
       goal: fmtVolume(goalMl, locale),
       amount: fmtVolume(250, locale),
@@ -270,12 +271,7 @@ function proteinView(ctx: TileContext): TileView {
         : reached
           ? t('quick.protein.tileDone')
           : t('quick.counter.left', { amount: nbsp(`${fmtNumber(target - total, locale, 0)} g`) }),
-    visual: {
-      kind: 'ring',
-      fraction: target ? total / target : 0,
-      done: reached,
-      icon: Beef,
-    },
+    visual: { kind: 'gauge', fraction: target ? total / target : 0, done: reached },
   })
 }
 

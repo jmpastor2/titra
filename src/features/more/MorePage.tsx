@@ -33,19 +33,19 @@ import {
   type MenuState,
 } from './menu'
 
-const ICON = 'size-[18px]'
+const ICON = 'size-[20px]'
 const ICONS: Record<MenuId, ReactNode> = {
-  protocols: <FlaskConical className={ICON} />,
-  cycles: <CalendarRange className={ICON} />,
-  inventory: <Package className={ICON} />,
-  calculator: <Calculator className={ICON} />,
-  simulator: <Sparkles className={ICON} />,
-  sites: <Target className={ICON} />,
-  outlook: <TrendingUp className={ICON} />,
-  reminders: <BellRing className={ICON} />,
-  share: <Share2 className={ICON} />,
-  export: <Download className={ICON} />,
-  settings: <Settings className={ICON} />,
+  protocols: <FlaskConical className={ICON} strokeWidth={1.75} />,
+  cycles: <CalendarRange className={ICON} strokeWidth={1.75} />,
+  inventory: <Package className={ICON} strokeWidth={1.75} />,
+  calculator: <Calculator className={ICON} strokeWidth={1.75} />,
+  simulator: <Sparkles className={ICON} strokeWidth={1.75} />,
+  sites: <Target className={ICON} strokeWidth={1.75} />,
+  outlook: <TrendingUp className={ICON} strokeWidth={1.75} />,
+  reminders: <BellRing className={ICON} strokeWidth={1.75} />,
+  share: <Share2 className={ICON} strokeWidth={1.75} />,
+  export: <Download className={ICON} strokeWidth={1.75} />,
+  settings: <Settings className={ICON} strokeWidth={1.75} />,
 }
 
 /**
@@ -82,9 +82,9 @@ export function MorePage() {
 
   return (
     <div>
-      <PageHeader eyebrow={t('more.eyebrow')} title={t('more.title')} large />
+      <PageHeader title={t('more.title')} large />
 
-      <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-6">
         {MENU_GROUPS.map((group) => (
           <section key={group.title} aria-label={t(group.title)}>
             <h2 className="spec mb-2 px-1">{t(group.title)}</h2>
@@ -101,11 +101,27 @@ export function MorePage() {
         ))}
       </div>
 
-      <p className="spec mt-8 text-center">TITRA · {env.appVersion}</p>
-      <p className="mt-2 px-2 text-center text-[11px] leading-relaxed text-muted">
+      <p className="readout mt-9 text-center text-[12.5px] font-medium text-muted">
+        {t('app.name')} {env.appVersion}
+      </p>
+      <p className="mx-auto mt-2 max-w-[34ch] text-center text-[11.5px] leading-relaxed text-muted">
         {t('app.disclaimer')}
       </p>
     </div>
+  )
+}
+
+/** A status worth seeing in colour (something to do) gets a tinted badge; facts stay plain text. */
+function Status({ badge }: { badge: MenuBadge }) {
+  const { t } = useTranslation()
+  const text = t(badge.key, badge.values)
+  if (badge.tone === 'neutral') {
+    return <span className="shrink-0 text-[13px] text-muted">{text}</span>
+  }
+  return (
+    <Badge tone={badge.tone} className="shrink-0">
+      {text}
+    </Badge>
   )
 }
 
@@ -114,30 +130,21 @@ function MenuRow({ id, badge }: { id: MenuId; badge?: MenuBadge }) {
   return (
     <Link
       to={MENU_ROUTES[id]}
-      className="-mx-2 flex min-h-[68px] w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
+      className="-mx-2 flex min-h-[64px] w-[calc(100%+1rem)] items-center gap-3.5 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
     >
-      <span
-        aria-hidden
-        className="grid size-10 shrink-0 place-items-center rounded-[14px] border border-signal/20 bg-signal-soft text-signal"
-      >
+      <span aria-hidden className="grid w-6 shrink-0 place-items-center text-ink-2">
         {ICONS[id]}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center justify-between gap-2">
-          <span className="min-w-0 text-[15px] font-semibold leading-snug">
-            {t(`more.items.${id}`)}
-          </span>
-          {badge && (
-            <Badge tone={badge.tone} className="shrink-0">
-              {t(badge.key, badge.values)}
-            </Badge>
-          )}
+        <span className="block text-[15px] font-semibold leading-snug">
+          {t(`more.items.${id}`)}
         </span>
         <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">
           {t(`more.hints.${id}`)}
         </span>
       </span>
-      <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+      {badge && <Status badge={badge} />}
+      <ChevronRight className="size-4 shrink-0 text-muted/70" aria-hidden />
     </Link>
   )
 }

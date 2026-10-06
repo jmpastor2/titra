@@ -32,21 +32,21 @@ export function ReconstitutionFields({
 }) {
   const { t } = useTranslation()
   return (
-    <div className="rounded-control border border-line bg-panel-2 p-3">
+    <div className="flex flex-col gap-4">
       {/* The whole row is the label, so the text is as good a target as the switch. */}
       <label className="flex min-h-11 items-center gap-3">
         <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-semibold">
+          <span className="block text-[14px] font-medium">
             {t('inventory.alreadyReconstituted')}
           </span>
-          <span className="mt-0.5 block text-[12px] leading-snug text-muted">
+          <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">
             {on ? t('inventory.reconstitutedHint') : t('inventory.lyophilisedHint')}
           </span>
         </span>
         <Switch checked={on} onChange={onToggle} label={t('inventory.alreadyReconstituted')} />
       </label>
       {on && (
-        <div className="mt-4 flex flex-col gap-4 border-t border-line pt-4">
+        <div className="flex flex-col gap-4">
           <WaterField
             value={entry.water}
             onChange={entry.setWater}

@@ -8,7 +8,9 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Badge, ProgressRing, Skeleton, Stat } from '@/components/ui/primitives'
+import { Kpi } from '@/components/kpi/Kpi'
+import { Meter } from '@/components/kpi/Meter'
+import { Badge, Skeleton } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow, SymptomRow } from '@/data/database.types'
 import { cycleInfo, type CycleInfo } from '@/domain/dosing/cycle'
@@ -134,7 +136,7 @@ export function ExposureCard({
     <Card padded={false} className="overflow-hidden">
       <div className="flex items-start justify-between gap-3 px-4 pt-4">
         <div className="min-w-0">
-          {showTitle && <h2 className="text-[17px] font-bold tracking-tight">{x.title}</h2>}
+          {showTitle && <h2 className="text-[17px] font-semibold leading-snug">{x.title}</h2>}
           <div className={showTitle ? 'mt-1 flex flex-wrap gap-1.5' : 'flex flex-wrap gap-1.5'}>
             {current && protocol && (
               <>
@@ -162,74 +164,56 @@ export function ExposureCard({
       </div>
 
       {kind === 'curve' && amount ? (
-        <div className="flex items-center gap-4 px-4 pt-4">
-          <ProgressRing
-            fraction={x.progress ? Math.min(1, x.progress.fraction) : 0}
-            size={92}
-            stroke={9}
-          >
-            <div className="text-center leading-none">
-              <div className="readout text-[20px] font-bold">
-                {x.progress ? fmtPercent(Math.min(x.progress.fraction, 1.5), locale) : '—'}
-              </div>
-              <div className="spec mx-auto mt-1 max-w-[60px] text-[8.5px] leading-tight tracking-[0.08em]">
-                {t('charts.steady.short')}
-              </div>
-            </div>
-          </ProgressRing>
-          <div className="min-w-0 flex-1">
-            <Stat
+        <div className="px-4 pt-4">
+          {x.progress ? (
+            <Kpi
+              label={t('charts.level.label')}
+              value={fmtNumber(Math.round(Math.min(x.progress.fraction, 1.5) * 100), locale, 0)}
+              unit={t('charts.level.unit')}
+              caption={`${t('charts.level.onBoard', {
+                amount: `${fmtNumber(amount.value, locale, amount.digits)} ${amount.label}`,
+              })} · ${
+                x.progress.fraction >= 0.9 && ref
+                  ? t('charts.steady.reached', { dose: fmtDose(ref.doseMg, unit, locale) })
+                  : t('charts.steady.toReach', { time: fmtHours(x.progress.hoursTo90, locale) })
+              }`}
+            >
+              <Meter
+                value={Math.min(1, x.progress.fraction) * 100}
+                max={100}
+                target={90}
+                color={color}
+              />
+            </Kpi>
+          ) : (
+            <Kpi
               label={t('levels.onBoard')}
               value={fmtNumber(amount.value, locale, amount.digits)}
               unit={amount.label}
-              hint={
-                x.progress && ref
-                  ? x.progress.fraction >= 0.9
-                    ? t('charts.steady.reached', { dose: fmtDose(ref.doseMg, unit, locale) })
-                    : t('charts.steady.toReach', { time: fmtHours(x.progress.hoursTo90, locale) })
-                  : t('charts.steady.hint')
-              }
+              caption={t('charts.steady.hint')}
             />
-          </div>
+          )}
         </div>
       ) : timeline ? (
-        <div className="flex items-center gap-4 px-4 pt-4">
-          <ProgressRing
-            fraction={timeline.summary.expected > 0 ? timeline.summary.ratio : 0}
-            size={92}
-            stroke={9}
-          >
-            <div className="text-center leading-none">
-              <div className="readout text-[20px] font-bold">
-                {timeline.summary.expected > 0 ? fmtPercent(timeline.summary.ratio, locale) : '—'}
-              </div>
-              <div className="spec mx-auto mt-1 max-w-[60px] text-[8.5px] leading-tight tracking-[0.08em]">
-                {t('charts.timeline.adherenceShort')}
-              </div>
-            </div>
-          </ProgressRing>
-          <div className="min-w-0 flex-1">
-            <Stat
+        <div className="px-4 pt-4">
+          {x.lastDose ? (
+            <Kpi
               label={t('levels.lastDose')}
-              value={x.lastDose ? fmtAgo(x.lastDose.at, now, locale, t('levels.justNow')) : '—'}
-              hint={
-                x.lastDose
-                  ? `${fmtDateTime(x.lastDose.at, locale)} · ${describeDoses(
-                      [
-                        { compoundId: x.compoundId, doseMg: x.lastDose.mg },
-                        ...x.partners.flatMap((p) => {
-                          const same = p.history.find(
-                            (h) => h.at.getTime() === x.lastDose?.at.getTime(),
-                          )
-                          return same ? [{ compoundId: p.compoundId, doseMg: same.mg }] : []
-                        }),
-                      ],
-                      locale,
-                    )}`
-                  : t('charts.timeline.noDoses')
-              }
+              value={fmtAgo(x.lastDose.at, now, locale, t('levels.justNow'))}
+              caption={`${fmtDateTime(x.lastDose.at, locale)} · ${describeDoses(
+                [
+                  { compoundId: x.compoundId, doseMg: x.lastDose.mg },
+                  ...x.partners.flatMap((p) => {
+                    const same = p.history.find((h) => h.at.getTime() === x.lastDose?.at.getTime())
+                    return same ? [{ compoundId: p.compoundId, doseMg: same.mg }] : []
+                  }),
+                ],
+                locale,
+              )}`}
             />
-          </div>
+          ) : (
+            <p className="text-[13px] text-muted">{t('charts.timeline.noDoses')}</p>
+          )}
         </div>
       ) : null}
 
@@ -365,13 +349,11 @@ export function ExposureCardSkeleton() {
         </div>
         <Skeleton className="h-14 w-24" />
       </div>
-      <div className="flex items-center gap-4 px-4 pt-4">
-        <Skeleton className="size-[92px] rounded-full" />
-        <div className="flex flex-1 flex-col gap-2">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-7 w-28" />
-          <Skeleton className="h-3 w-36" />
-        </div>
+      <div className="flex flex-col gap-2 px-4 pt-4">
+        <Skeleton className="h-3 w-24" />
+        <Skeleton className="h-7 w-28" />
+        <Skeleton className="h-3 w-48" />
+        <Skeleton className="mt-1 h-1.5 w-full" />
       </div>
       <div className="px-4 pt-4">
         <Skeleton className="h-10 w-full rounded-full" />
@@ -522,12 +504,9 @@ function Titration({
         </>
       )}
       {info.decisionDue && (
-        <div className="mt-1.5">
-          <Badge tone="accent">{t('charts.cycle.decide')}</Badge>
-          <p className="mt-1 text-[11.5px] leading-snug text-muted">
-            {t('charts.cycle.decideHint')}
-          </p>
-        </div>
+        <Badge tone="warn" className="mt-1.5">
+          {t('charts.cycle.decide')}
+        </Badge>
       )}
     </div>
   )

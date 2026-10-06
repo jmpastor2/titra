@@ -1,11 +1,9 @@
 /**
- * How a cycle reads at a glance: "week 3 of 12", how much of the dosing is behind us,
- * the rest that is left, and the one-line summaries of the cycles in progress.
+ * How a cycle reads at a glance: "week 3 of 12" and the rest that is left.
  * Pure and locale-free: components turn these into words. See readout.test.ts.
  */
 import { differenceInCalendarDays, startOfDay } from 'date-fns'
-import type { CycleChange, CycleInfo, CycleStep } from '@/domain/dosing/cycle'
-import { cycleCompoundIds, type CycleView } from './model'
+import type { CycleInfo, CycleStep } from '@/domain/dosing/cycle'
 
 export type WeekReadout =
   | { kind: 'before'; days: number }
@@ -68,48 +66,9 @@ export function weekReadout(info: CycleInfo, now: Date): WeekReadout {
   }
 }
 
-/**
- * Share of the dosing weeks already behind us, 0–1. Rest weeks do not count either way,
- * so "12 of 12" is a full ring whatever rest follows. A plan that ends in maintenance
- * counts its titration: the ring fills as the doses step up and stays full afterwards.
- */
-export function doseProgress(info: Pick<CycleInfo, 'steps'>, now: Date): number {
-  const today = startOfDay(now)
-  let done = 0
-  let total = 0
-  for (const s of info.steps) {
-    if (s.pause || s.endsOn === null) continue
-    const days = differenceInCalendarDays(s.endsOn, s.startsOn)
-    total += days
-    done += Math.min(days, Math.max(0, differenceInCalendarDays(today, s.startsOn)))
-  }
-  return total > 0 ? done / total : 1
-}
-
 /** A countdown in the unit that reads best: weeks while there are more than seven days. */
 export function remaining(days: number): { unit: 'weeks' | 'days'; count: number } {
   return days > 7
     ? { unit: 'weeks', count: Math.ceil(days / 7) }
     : { unit: 'days', count: Math.max(0, days) }
-}
-
-export interface SummaryLine {
-  id: string
-  name: string
-  compoundIds: string[]
-  readout: WeekReadout
-  next: CycleChange | null
-}
-
-/** One line per active protocol, in the order of the Ciclos screen. */
-export function summaryLines(views: readonly CycleView[], now: Date): SummaryLine[] {
-  return views
-    .filter((v) => v.row.status === 'active')
-    .map((v) => ({
-      id: v.row.id,
-      name: v.row.name,
-      compoundIds: cycleCompoundIds(v),
-      readout: weekReadout(v.info, now),
-      next: v.info.next,
-    }))
 }

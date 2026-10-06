@@ -22,21 +22,19 @@ export function UpdatesCard() {
 
   return (
     <Card title={t('settings.updates.title')} subtitle={t('settings.updates.hint')}>
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3 rounded-control border border-line bg-panel-2 px-3.5 py-3">
-          <div className="min-w-0">
-            <div className="spec">{t('settings.updates.version')}</div>
-            <div className="readout mt-1 text-[20px] font-semibold leading-none">{version}</div>
-          </div>
-          <div className="flex min-w-0 flex-wrap justify-end gap-1.5">
+      <div className="flex flex-col gap-3.5">
+        <dl className="flex items-center justify-between gap-3 border-t border-line pt-3.5">
+          <dt className="spec">{t('settings.updates.version')}</dt>
+          <dd className="flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1">
+            <span className="readout text-[17px] font-semibold leading-none">{version}</span>
             {build && (
-              <Badge className="max-w-full truncate">
+              <span className="readout break-all text-[12.5px] text-muted">
                 {t('settings.updates.build', { build })}
-              </Badge>
+              </span>
             )}
-            {env.isDev && <Badge tone="accent">{t('settings.updates.dev')}</Badge>}
-          </div>
-        </div>
+            {env.isDev && <Badge>{t('settings.updates.dev')}</Badge>}
+          </dd>
+        </dl>
 
         {phase !== 'unsupported' &&
           (phase === 'available' ? (

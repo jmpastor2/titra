@@ -1,47 +1,54 @@
 import { clsx } from 'clsx'
 import { isToday, isTomorrow } from 'date-fns'
-import { Check, ChevronDown, Moon, X } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ChevronDown, Moon } from 'lucide-react'
+import { Fragment, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Kpi } from '@/components/kpi/Kpi'
+import { Ticks } from '@/components/kpi/Ticks'
 import { Card } from '@/components/ui/Card'
-import { Ring } from '@/components/kpi/Ring'
 import { Badge } from '@/components/ui/primitives'
 import { isNightSlot } from '@/features/today/agenda'
-import { fmtDate, fmtPercent, toTimeInputValue } from '@/lib/format'
+import { fmtDate, fmtNumber, fmtPercent, toTimeInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { substanceLine } from './administrations'
-import { fmtElapsed, type DayMark, type LogKpis, type StripDay } from './logKpis'
+import { Fact, FactRow } from './Fact'
+import { tickOf, type LogKpis } from './logKpis'
+import { fmtPunctuality, type Punctuality } from './punctuality'
 
 /**
- * The head of Registro: how the week is going (ring and one dot per day), how the last four
- * weeks went, how long since the last dose and what comes next. The plan of the week, with
- * the doses to log or fix, opens from the foot.
+ * The head of Registro: the week in one figure with a bar per day, then three facts — how
+ * the last four weeks went, how close to their time the doses go in, and what comes next.
+ * The plan of the week, with the doses to log or fix, opens from the foot.
  */
 export function LogSummary({
   kpis,
-  now,
+  punctuality,
   planOpen,
   onTogglePlan,
 }: {
   kpis: LogKpis
-  now: Date
+  /** Over the last 28 days; null when nothing planned was taken in them. */
+  punctuality: Punctuality | null
   planOpen: boolean
   onTogglePlan: () => void
 }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
-  const { week, strip, adherence, last, next } = kpis
+  const { week, strip, adherence, next } = kpis
 
-  const headline =
-    week.planned === 0
-      ? t('doses.kpi.noPlan')
-      : week.remaining > 0
-        ? t('doses.kpi.left', { count: week.remaining })
-        : week.missed > 0
-          ? t('doses.kpi.doneOf', { taken: week.taken, planned: week.planned })
-          : t('doses.kpi.complete')
-
-  const ago = last ? fmtElapsed(last.at, now, locale) : ''
+  // What the figure means, in words: what is left, what was missed, what was extra.
+  const status: { key: string; text: string; tone?: string }[] = []
+  if (week.planned === 0) status.push({ key: 'plan', text: t('doses.kpi.noPlan') })
+  else if (week.remaining > 0)
+    status.push({ key: 'left', text: t('doses.kpi.left', { count: week.remaining }) })
+  else if (week.missed === 0) status.push({ key: 'done', text: t('doses.kpi.complete') })
+  if (week.missed > 0)
+    status.push({
+      key: 'missed',
+      text: t('doses.kpi.missed', { count: week.missed }),
+      tone: 'text-danger',
+    })
+  if (week.extras > 0)
+    status.push({ key: 'extras', text: t('doses.kpi.extras', { count: week.extras }) })
 
   const nextDay = (at: Date) =>
     isToday(at)
@@ -50,105 +57,93 @@ export function LogSummary({
         ? t('doses.kpi.tomorrow')
         : fmtDate(at, locale, 'EEE d')
 
-  return (
-    <Card instrument padded={false} className="mb-5">
-      <div className="p-4 pb-3">
-        <div className="flex items-center gap-4">
-          <Ring
-            value={week.planned > 0 ? week.taken / week.planned : 0}
-            size={84}
-            stroke={8}
-            color={week.missed > 0 ? 'var(--warn)' : 'var(--signal)'}
-            label={t('doses.kpi.doneOf', { taken: week.taken, planned: week.planned })}
-          >
-            <div className="text-center leading-none">
-              <div className="readout text-[24px] font-semibold">{week.taken}</div>
-              <div className="spec mt-1 text-[10px]">/{week.planned}</div>
-            </div>
-          </Ring>
-          <div className="min-w-0 flex-1">
-            <div className="spec">{t('doses.kpi.eyebrow')}</div>
-            <div className="mt-1 font-display text-[21px] font-semibold leading-tight">
-              {headline}
-            </div>
-            <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[12.5px] text-muted">
-              <span>{t('doses.kpi.taken', { count: week.taken })}</span>
-              {week.missed > 0 && (
-                <span className="font-semibold text-danger">
-                  {t('doses.kpi.missed', { count: week.missed })}
-                </span>
-              )}
-              {week.extras > 0 && (
-                <span className="font-semibold text-accent">
-                  {t('doses.kpi.extras', { count: week.extras })}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
+  const facts: ReactNode[] = []
+  if (adherence) {
+    facts.push(
+      <Fact
+        key="adherence"
+        label={t('doses.kpi.adherence')}
+        value={fmtNumber(Math.round(adherence.ratio * 100), locale, 0)}
+        unit="%"
+        tone={adherence.ratio >= 0.9 ? 'signal' : 'warn'}
+        caption={t('doses.kpi.inWindow', { taken: adherence.taken, expected: adherence.expected })}
+      />,
+    )
+  }
+  if (punctuality) {
+    const p = fmtPunctuality(punctuality.medianMin, locale)
+    facts.push(
+      <Fact
+        key="punctuality"
+        label={t('doses.kpi.punctuality')}
+        value={p.value}
+        unit={p.unit}
+        caption={t('doses.kpi.onTimeShare', { percent: fmtPercent(punctuality.onTime, locale) })}
+      />,
+    )
+  }
+  if (next) {
+    facts.push(
+      <Fact
+        key="next"
+        label={t('doses.kpi.next')}
+        value={next.due ? t('doses.kpi.now') : toTimeInputValue(next.at)}
+        tone={next.due ? 'warn' : 'default'}
+        icon={
+          !next.due && isNightSlot(next.at) ? (
+            <Moon role="img" aria-label={t('today.night')} className="size-3.5 text-muted" />
+          ) : null
+        }
+        caption={`${nextDay(next.slotDay)} · ${next.protocol.name}`}
+        // Below 360 px it takes a row of its own, so the name has room to wrap.
+        wide={facts.length === 2}
+      />,
+    )
+  }
 
-        <ol className="mt-4 grid grid-cols-7 gap-1" aria-hidden>
-          {strip.map((d) => (
-            <DayDot key={d.day.getTime()} day={d} />
+  return (
+    <Card padded={false} className="mb-5">
+      <div className="p-4">
+        <Kpi
+          label={t('doses.kpi.eyebrow')}
+          value={week.taken}
+          unit={
+            week.planned > 0
+              ? t('doses.kpi.ofPlanned', { count: week.planned })
+              : t('doses.kpi.doses', { count: week.taken })
+          }
+          caption={status.map((part, i) => (
+            <Fragment key={part.key}>
+              {i > 0 && ' · '}
+              <span className={part.tone}>{part.text}</span>
+            </Fragment>
           ))}
-        </ol>
+        />
+        <div className="mt-3.5">
+          <Ticks cells={strip.map(tickOf)} todayLast={false} height={22} />
+          <ol className="mt-1.5 flex gap-[3px]" aria-hidden>
+            {strip.map((d) => (
+              <li
+                key={d.day.getTime()}
+                className={clsx(
+                  'min-w-[3px] flex-1 text-center text-[11px] leading-none first-letter:uppercase',
+                  isToday(d.day) ? 'font-semibold text-ink' : 'text-muted',
+                )}
+              >
+                {fmtDate(d.day, locale, 'EEEEE')}
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
 
-      <dl className="grid grid-cols-1 divide-y divide-line border-t border-line min-[360px]:grid-cols-3 min-[360px]:divide-x min-[360px]:divide-y-0">
-        <Tile label={t('doses.kpi.adherence')}>
-          <dd
-            className={clsx(
-              'readout text-[19px] font-semibold leading-none',
-              adherence && (adherence.ratio >= 0.9 ? 'text-signal' : 'text-warn'),
-            )}
-          >
-            {adherence ? fmtPercent(adherence.ratio, locale) : '—'}
-          </dd>
-          <dd className="mt-1.5 text-[11.5px] leading-snug text-muted">
-            {adherence
-              ? t('doses.kpi.adherenceSub', {
-                  taken: adherence.taken,
-                  expected: adherence.expected,
-                })
-              : t('doses.kpi.noData')}
-          </dd>
-        </Tile>
-        <Tile label={t('doses.kpi.last')}>
-          <dd
-            className={clsx(
-              'readout whitespace-nowrap font-semibold leading-none',
-              ago.length > 8 ? 'text-[16px]' : 'text-[19px]',
-            )}
-          >
-            {last ? ago : '—'}
-          </dd>
-          <dd className="mt-1.5 text-[11.5px] leading-snug text-muted">
-            {last ? substanceLine(last) : t('doses.kpi.noneYet')}
-          </dd>
-        </Tile>
-        <Tile label={t('doses.kpi.next')}>
-          <dd
-            className={clsx(
-              'readout flex items-center gap-1 text-[19px] font-semibold leading-none',
-              next?.due && 'text-warn',
-            )}
-          >
-            {next ? (next.due ? t('doses.kpi.now') : toTimeInputValue(next.at)) : '—'}
-            {next && !next.due && isNightSlot(next.at) && (
-              <Moon role="img" aria-label={t('today.night')} className="size-3.5 text-muted" />
-            )}
-          </dd>
-          <dd className="mt-1.5 text-[11.5px] leading-snug text-muted">
-            {next ? `${nextDay(next.slotDay)} · ${next.protocol.name}` : t('doses.kpi.nothingNext')}
-          </dd>
-        </Tile>
-      </dl>
+      <FactRow count={facts.length}>{facts}</FactRow>
 
       <button
         type="button"
         aria-expanded={planOpen}
         onClick={onTogglePlan}
-        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-b-card border-t border-line px-4 text-left text-[13.5px] font-semibold text-ink-2 outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
+        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-b-card border-t border-line px-4 text-left text-[14px] font-medium text-ink-2 outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
       >
         <span className="flex items-center gap-2">
           {t('doses.kpi.plan')}
@@ -162,55 +157,5 @@ export function LogSummary({
         />
       </button>
     </Card>
-  )
-}
-
-function Tile({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="min-w-0 px-4 py-3 min-[360px]:px-3 min-[360px]:first:pl-4 min-[360px]:last:pr-4">
-      <dt className="spec text-[9.5px] leading-snug tracking-[0.1em]">{label}</dt>
-      <div className="mt-1.5">{children}</div>
-    </div>
-  )
-}
-
-const DOT: Record<DayMark, string> = {
-  rest: 'border-transparent text-muted',
-  upcoming: 'border-line-strong text-muted',
-  partial: 'border-signal/60 bg-signal-soft text-signal',
-  due: 'border-warn bg-warn-soft text-warn',
-  done: 'border-signal bg-signal text-signal-ink',
-  late: 'border-warn/60 bg-warn-soft text-warn',
-  missed: 'border-danger/60 bg-danger-soft text-danger',
-}
-
-/** One day of the week: its letter and a mark for how it went. */
-function DayDot({ day: d }: { day: StripDay }) {
-  const { locale } = useLocale()
-  const today = isToday(d.day)
-  return (
-    <li className="flex flex-col items-center gap-1">
-      <span className={clsx('spec text-[9.5px] tracking-[0.06em]', today && 'text-signal')}>
-        {fmtDate(d.day, locale, 'EEE')}
-      </span>
-      <span
-        className={clsx(
-          'relative grid size-8 place-items-center rounded-full border',
-          DOT[d.mark],
-          today && 'ring-2 ring-signal/40 ring-offset-2 ring-offset-panel',
-        )}
-      >
-        {d.mark === 'done' || d.mark === 'late' ? (
-          <Check className="size-4" strokeWidth={3} />
-        ) : d.mark === 'missed' ? (
-          <X className="size-4" strokeWidth={3} />
-        ) : (
-          <span className="readout text-[12px] font-semibold">{d.day.getDate()}</span>
-        )}
-        {d.extra && (
-          <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-panel bg-accent" />
-        )}
-      </span>
-    </li>
   )
 }

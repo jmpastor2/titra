@@ -5,7 +5,7 @@
  * are no human outcome data. The user's own weight trend is drawn forward next to the
  * trial band, always flagged as an extrapolation, and one list says what to measure.
  */
-import { ChevronRight, Telescope } from 'lucide-react'
+import { ChevronRight, Info, Telescope } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
@@ -25,7 +25,6 @@ import { buildModel, mergeMeasure, measureStatus } from './outlookModel'
 import { MeasureSection } from './MeasureSection'
 import { NoDataSection, type NoDataEntry } from './NoDataSection'
 import { Headline, HeadlineTrial } from './OutlookHero'
-import { PersonalBlock } from './PersonalBlock'
 import { TrialCard } from './TrialCard'
 import { useFormat } from './outlookFormat'
 
@@ -58,10 +57,13 @@ export function OutlookPage() {
   }
   const logWeight = () => setSheet({ kind: 'measure', measure: 'weight' })
 
-  // The personal KPI is measured from the first trial's start, or the cycle's when none has a trial.
-  const cycleTrend = model.cycle ? personalTrend(weights, model.cycle, now) : null
+  // The person on the scale is measured from the first trial's start, or the cycle's without one.
   const first = model.trialItems[0]
-  const headlineTrend = first ? personalTrend(weights, first.since, now) : cycleTrend
+  const since = first?.since ?? model.cycle
+  const headlineTrend = useMemo(
+    () => (since ? personalTrend(weights, since, now) : null),
+    [weights, since, now],
+  )
 
   // What no trial measured, once per compound, and the things worth measuring, once each.
   const noData = useMemo<NoDataEntry[]>(() => {
@@ -73,12 +75,10 @@ export function OutlookPage() {
     [model.items, model.cycle, rows],
   )
 
-  let section = 0
-  const nextIndex = () => String(++section).padStart(2, '0')
   const loading = protocols.isPending || measurements.isPending
 
   return (
-    <div className="flex flex-col gap-5 pb-2">
+    <div className="flex flex-col gap-4 pb-2">
       <PageHeader eyebrow={t('outlook.eyebrow')} title={t('outlook.title')} back="/more" />
 
       {loading ? (
@@ -109,50 +109,26 @@ export function OutlookPage() {
             now={now}
             trials={model.trialItems}
             trend={headlineTrend}
+            readOnly={readOnly}
+            onLogWeight={logWeight}
           />
 
-          {model.trialItems.length > 0 ? (
-            <section className="flex flex-col gap-3">
-              <SectionTitle index={nextIndex()}>{t('outlook.section.trial')}</SectionTitle>
-              {model.trialItems.map((item) => (
-                <TrialCard
-                  key={item.row.id}
-                  f={f}
-                  item={item}
-                  horizon={horizon}
-                  now={now}
-                  weights={weights}
-                  readOnly={readOnly}
-                  onLogWeight={logWeight}
-                />
-              ))}
-            </section>
-          ) : (
-            <section>
-              <SectionTitle index={nextIndex()}>{t('outlook.section.you')}</SectionTitle>
-              <Card>
-                <PersonalBlock
-                  f={f}
-                  trend={cycleTrend}
-                  horizon={horizon}
-                  now={now}
-                  readOnly={readOnly}
-                  onLogWeight={logWeight}
-                />
-              </Card>
-            </section>
-          )}
-
-          {noData.length > 0 && (
-            <section>
-              <SectionTitle index={nextIndex()}>{t('outlook.section.noData')}</SectionTitle>
-              <NoDataSection f={f} entries={noData} />
-            </section>
-          )}
+          {model.trialItems.map((item) => (
+            <TrialCard
+              key={item.row.id}
+              f={f}
+              item={item}
+              horizon={horizon}
+              now={now}
+              weights={weights}
+              readOnly={readOnly}
+              onLogWeight={logWeight}
+            />
+          ))}
 
           {measure.length > 0 && model.cycle && (
             <section>
-              <SectionTitle index={nextIndex()}>{t('outlook.measure.title')}</SectionTitle>
+              <SectionTitle>{t('outlook.measure.title')}</SectionTitle>
               <MeasureSection
                 f={f}
                 status={measure}
@@ -162,13 +138,22 @@ export function OutlookPage() {
               />
             </section>
           )}
+
+          {noData.length > 0 && (
+            <section>
+              <SectionTitle>{t('outlook.section.noData')}</SectionTitle>
+              <NoDataSection f={f} entries={noData} />
+            </section>
+          )}
         </>
       )}
 
-      <Card tone="warn" className="text-[12.5px] leading-relaxed text-ink-2">
-        <div className="spec mb-1 text-warn">{t('outlook.disclaimer.title')}</div>
-        <p>{t('outlook.disclaimer.body')}</p>
-      </Card>
+      {model.items.length > 0 && (
+        <p className="flex gap-2 px-1 text-[12px] leading-relaxed text-muted">
+          <Info className="mt-[3px] size-3.5 shrink-0" aria-hidden />
+          <span>{t('outlook.disclaimer.body')}</span>
+        </p>
+      )}
 
       <LogMeasurementSheet
         key={sheet?.kind === 'measure' ? sheet.measure : 'closed'}
@@ -184,32 +169,41 @@ export function OutlookPage() {
 
 /* ------------------------------------------------------------------ compact card */
 
-/** Compact summary for embedding (e.g. on Progress): the headline for 6 months and a link. */
+/**
+ * Compact summary for Progress: the trial range at 6 months on its scale, with the person on it,
+ * and a link to the screen. The weights come from the same request the screen around it makes.
+ */
 export function OutlookCard({ horizon = 6 }: { horizon?: Horizon }) {
   const f = useFormat()
   const { t } = f
   const { patientId } = usePatientScope()
   const protocols = useProtocols(patientId)
+  const measurements = useMeasurements(patientId, 365)
   const now = useNow()
   const model = useMemo(
     () => buildModel(protocols.data ?? [], now, horizon),
     [protocols.data, now, horizon],
   )
+  const weights = useMemo(() => weightPoints(measurements.data ?? []), [measurements.data])
   if (protocols.isPending || model.items.length === 0) return null
+  const first = model.trialItems[0]
+  const trend = first ? personalTrend(weights, first.since, now) : null
   return (
-    <Link to="/outlook" className="card fade-up block p-4 transition active:scale-[0.99]">
+    <Link
+      to="/outlook"
+      className="card fade-up block p-4 outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60 active:scale-[0.99]"
+    >
       <div className="flex items-center justify-between gap-2">
         <span className="spec">
           {t('outlook.title')} · {t('outlook.headline.in', { n: horizon })}
         </span>
-        <ChevronRight className="size-4 text-muted" />
+        <ChevronRight className="size-4 text-muted" aria-hidden />
       </div>
-      <div className="mt-2 flex flex-col gap-2">
-        {model.trialItems.map((item) => (
-          <HeadlineTrial key={item.row.id} f={f} item={item} />
-        ))}
-        {model.otherItems.length > 0 && (
-          <p className="text-[12.5px] leading-snug text-ink-2">
+      <div className="mt-2">
+        {first ? (
+          <HeadlineTrial f={f} item={first} compactScale youPct={trend?.changePct ?? null} />
+        ) : (
+          <p className="text-[13px] leading-snug text-ink-2">
             {t('outlook.card.noData', {
               names: model.otherItems.map((i) => i.title).join(', '),
             })}

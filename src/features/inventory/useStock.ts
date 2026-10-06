@@ -3,6 +3,7 @@ import { useAlertDismissals, useDoses, useInventory, useProtocols } from '@/data
 import { useSession } from '@/features/auth/SessionProvider'
 import { upcomingAdministrations } from '@/features/reminders/plan'
 import { alertKey, splitDismissed, stockAlerts, type StockAlert } from './alerts'
+import { supplyRunway } from './supply'
 import { activeVial, restockPlan, vialHas, vialRunway, type VialRunway } from './vials'
 
 const NONE: StockAlert[] = []
@@ -55,9 +56,21 @@ export function useStock(patientId: string | undefined, now: Date = new Date()) 
     return out
   }, [upcomingByCompound, list])
 
+  // The same vials walked with their discard date: how many doses each can still give
+  // before it expires, and what would be thrown away.
+  const usable = useMemo(() => {
+    const out = new Map<string, VialRunway>()
+    for (const [id, r] of runways) {
+      const vial = list.find((v) => v.id === id)
+      const mine = vial ? upcomingByCompound.get(vial.compound_id) : undefined
+      if (vial && mine) out.set(id, { ...r, ...supplyRunway([vial], vial.compound_id, mine) })
+    }
+    return out
+  }, [runways, list, upcomingByCompound])
+
   const restock = useMemo(
     () =>
-      restockPlan(list, upcomingByCompound).filter(
+      restockPlan(list, upcomingByCompound, supplyRunway).filter(
         // A blend partner is covered by the line of the vial's own compound.
         (l) =>
           !list.some(
@@ -86,6 +99,7 @@ export function useStock(patientId: string | undefined, now: Date = new Date()) 
     pending: inventory.isPending,
     list,
     runways,
+    usable,
     restock,
     // Until the read marks have loaded nothing shows: an alert already read must not flash up.
     alerts: dismissals.isLoading ? NONE : active,

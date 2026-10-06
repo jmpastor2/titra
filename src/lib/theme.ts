@@ -21,7 +21,7 @@ export function applyTheme(pref: ThemePref): void {
     pref === 'dark' ||
     (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]:not([media])')
-  if (meta) meta.content = dark ? '#07080e' : '#f4f5fb'
+  if (meta) meta.content = dark ? '#0a0b10' : '#f6f6f9'
 }
 
 export function useTheme(): [ThemePref, (p: ThemePref) => void] {

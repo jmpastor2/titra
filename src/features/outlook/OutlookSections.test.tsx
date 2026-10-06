@@ -75,13 +75,32 @@ describe('Headline', () => {
         trend={personalTrend(weights, new Date(2026, 8, 7), now)}
       />,
     )
-    expect(screen.getByText('Esperado en 6 meses · 4 abr 2027')).toBeInTheDocument()
-    expect(flat(screen.getByText(/de peso · ensayo a 24 semanas/).textContent)).toContain(
-      '24 semanas',
-    )
+    expect(screen.getByText('Cambio de peso en 6 meses · 4 abr 2027')).toBeInTheDocument()
     expect(screen.getByText(/−\d+ % a −\d+ %/)).toBeInTheDocument()
-    expect(flat(screen.getByText(/≈ .* kg sobre tus 80 kg/).textContent)).toMatch(/−\d/)
-    expect(screen.getByText('Tú, si sigues así')).toBeInTheDocument()
+    expect(flat(screen.getByText(/≈ .* kg sobre tus 80,0 kg/).textContent)).toMatch(/−\d+,\d kg/)
+  })
+
+  it('puts the person on the scale of the trial: the band, placebo and where he is today', () => {
+    const f = formatter()
+    const { container } = render(
+      <Headline
+        f={f}
+        horizon={6}
+        onHorizon={() => undefined}
+        now={now}
+        trials={model.trialItems}
+        trend={personalTrend(weights, new Date(2026, 8, 7), now)}
+      />,
+    )
+    // 80 kg to 78 kg is −2,5 %.
+    const scale = screen.getByRole('img', { name: /Tú hoy: −2,5/ })
+    expect(flat(scale.getAttribute('aria-label'))).toContain('Ensayo, semana 24')
+    expect(flat(screen.getByText(/^tú /).textContent)).toBe('tú −2,5 %')
+    expect(container.querySelector('[data-part="band"]')).not.toBeNull()
+    expect(container.querySelector('[data-part="placebo"]')).not.toBeNull()
+    expect(container.querySelector('[data-part="you"]')).not.toBeNull()
+    expect(screen.getByText('Ensayo, semana 24')).toBeInTheDocument()
+    expect(screen.getByText('Tú hoy')).toBeInTheDocument()
   })
 
   it('draws the person’s own line forward and flags it as an extrapolation', () => {
@@ -100,10 +119,11 @@ describe('Headline', () => {
     expect(screen.getByText(/Extrapolación/)).toBeInTheDocument()
   })
 
-  it('says why there is no line yet, and offers the other horizons', () => {
+  it('asks for a weigh-in to put the person on the scale, and offers the other horizons', () => {
     const f = formatter()
     const onHorizon = vi.fn()
-    render(
+    const onLogWeight = vi.fn()
+    const { container } = render(
       <Headline
         f={f}
         horizon={6}
@@ -111,9 +131,15 @@ describe('Headline', () => {
         now={now}
         trials={model.trialItems}
         trend={null}
+        readOnly={false}
+        onLogWeight={onLogWeight}
       />,
     )
-    expect(screen.getByText('Registra tu peso')).toBeInTheDocument()
+    expect(container.querySelector('[data-part="you"]')).toBeNull()
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Registra tu peso para verte en la escala' }),
+    )
+    expect(onLogWeight).toHaveBeenCalledOnce()
     fireEvent.click(screen.getByRole('tab', { name: '12 meses' }))
     expect(onHorizon).toHaveBeenCalledWith(12)
   })
@@ -221,7 +247,7 @@ describe('NoDataSection', () => {
         ]}
       />,
     )
-    expect(screen.getAllByText('Sin datos de resultados en humanos')).toHaveLength(1)
+    expect(screen.getAllByText(/No hay ensayos con estas dosis/)).toHaveLength(1)
     expect(screen.getByText('MOTS-c')).toBeInTheDocument()
     expect(screen.getAllByText(/Evidencia/)).toHaveLength(2)
   })

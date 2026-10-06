@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Titra",
-    "tagline": "Tu laboratorio personal de péptidos",
+    "tagline": "Tu control de péptidos",
     "disclaimer": "Titra es una herramienta de registro y referencia. No sustituye el criterio de tu médico ni recomienda dosis. Las curvas son estimaciones basadas en modelos farmacocinéticos poblacionales."
   },
   "common": {
@@ -22,7 +22,6 @@
     "time": "Hora",
     "today": "Hoy",
     "yesterday": "Ayer",
-    "seeAll": "Ver todo",
     "showMore": "Mostrar más",
     "offline": "Sin conexión · mostrando datos guardados",
     "updateAvailable": "Hay una nueva versión de Titra",
@@ -32,8 +31,7 @@
     "error": "Algo ha fallado. Inténtalo de nuevo.",
     "copied": "Copiado",
     "weeks_one": "{{count}} semana",
-    "weeks_other": "{{count}} semanas",
-    "week": "Semana"
+    "weeks_other": "{{count}} semanas"
   },
   "nav": {
     "log": "Registro",
@@ -66,11 +64,18 @@
       "weak": "La contraseña es demasiado corta.",
       "exists": "Ya existe una cuenta con ese correo.",
       "generic": "No se ha podido completar la operación."
-    }
+    },
+    "enter": "Entrar",
+    "signupTitle": "Crea tu cuenta",
+    "resetTitle": "Recupera tu contraseña",
+    "resetHint": "Te enviaremos un enlace a tu correo para elegir una nueva.",
+    "noAccount": "¿Aún no tienes cuenta?",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "backToSignIn": "Volver a iniciar sesión"
   },
   "onboarding": {
-    "welcome": "Bienvenido a Titra",
-    "intro": "Configura tu perfil en un minuto. Podrás cambiarlo después en Ajustes.",
+    "welcome": "Bienvenido",
+    "intro": "Elige cómo ver tus datos y dinos tu nombre.",
     "profile": "Perfil",
     "units": "Unidades",
     "metric": "Métrico (kg, cm)",
@@ -85,7 +90,8 @@
     "goalWeight": "Peso objetivo",
     "clinicCode": "Código de consulta",
     "finish": "Empezar",
-    "setup": "Configuración"
+    "profileHint": "Lo demás es opcional: puedes completarlo luego en Ajustes.",
+    "goalHint": "Para ver cuánto te queda."
   },
   "dashboard": {
     "noProtocolHint": "Crea una pauta para ver tu curva, el estado estacionario y la próxima toma."
@@ -157,23 +163,23 @@
       "left_other": "Quedan {{count}} tomas",
       "doneOf": "{{taken}} de {{planned}} tomas",
       "complete": "Semana completa",
-      "taken_one": "{{count}} hecha",
-      "taken_other": "{{count}} hechas",
       "missed_one": "{{count}} perdida",
       "missed_other": "{{count}} perdidas",
       "extras_one": "{{count}} extra",
       "extras_other": "{{count}} extras",
-      "adherence": "Adherencia",
-      "adherenceSub": "28 días · {{taken}} de {{expected}}",
-      "noData": "Aún sin datos",
-      "last": "Última toma",
-      "noneYet": "Ninguna todavía",
       "next": "Próxima toma",
       "now": "Ahora",
       "today": "Hoy",
       "tomorrow": "Mañana",
-      "nothingNext": "Nada previsto",
-      "plan": "Plan de la semana"
+      "plan": "Plan de la semana",
+      "ofPlanned_one": "/ {{count}} toma",
+      "ofPlanned_other": "/ {{count}} tomas",
+      "doses_one": "toma",
+      "doses_other": "tomas",
+      "punctuality": "Puntualidad",
+      "onTimeShare": "{{percent}} a su hora",
+      "adherence": "Adherencia",
+      "inWindow": "{{taken}} de {{expected}} en 28 d"
     },
     "filter": {
       "label": "Mostrar",
@@ -353,7 +359,17 @@
     },
     "decision": {
       "title": "Toca decidir",
-      "hint": "Si no haces nada, sube ese día."
+      "hint": "Si no haces nada, sube ese día.",
+      "badge": "Toca decidir {{when}}"
+    },
+    "soon": {
+      "start": "empieza el {{date}} con {{dose}}",
+      "increase": "sube el {{date}} a {{dose}}",
+      "decrease": "baja el {{date}} a {{dose}}",
+      "same": "escalón {{n}} el {{date}}",
+      "rest": "descanso desde el {{date}}",
+      "resume": "vuelves a {{dose}} el {{date}}",
+      "end": "termina el {{date}}"
     }
   },
   "symptoms": {
@@ -494,8 +510,6 @@
     "storage": "Conservación",
     "empty": "Sin inventario",
     "emptyHint": "Añade tus viales, plumas o comprimidos para controlar lo que queda, la caducidad y cuándo pedir más.",
-    "expired": "Caducado",
-    "expiresSoon": "Caduca en {{days}} d",
     "low": "Queda poco",
     "dosesLeft_one": "{{count}} toma",
     "dosesLeft_other": "{{count}} tomas",
@@ -504,14 +518,12 @@
     "remainingHint": "Déjalo vacío si el vial está entero.",
     "nextVialBy": "Ten listo el siguiente vial para el {{date}}",
     "lyophilised": "Liofilizado",
-    "expiresBeforeEmpty": "Caduca antes de acabarse: ten otro listo para el {{date}}",
     "blendPresets": "Atajos habituales",
     "blendTitle": "Blend",
     "blendHint": "Si el vial trae otras sustancias mezcladas, añádelas con sus mg. Se cargan en la misma jeringa, en una sola carga.",
     "blendAdd": "Añadir otra sustancia del vial",
     "totalOf": "mg de {{name}} en el vial",
     "needsMigration4": "Para guardar blends falta ejecutar la migración 4 en Supabase.",
-    "restockEyebrow": "Reposición",
     "restockTitle": "Lo que te dura cada sustancia",
     "vialsCount_one": "{{count}} vial",
     "vialsCount_other": "{{count}} viales",
@@ -540,7 +552,6 @@
     "fillAria": "Queda el {{pct}} % del producto",
     "labelExpiry": "Caducidad (etiqueta)",
     "inWater": "en {{water}} mL",
-    "yourDoseShort": "Tu dosis",
     "eachUnit": "Cada U",
     "noAlerts": "Todo en orden: no hay alertas pendientes.",
     "alertsTitle": "Alertas del inventario",
@@ -559,7 +570,6 @@
     "sizes": "Tamaño del vial",
     "presetNote": "Cantidades habituales de {{name}}. Edítalas si tu vial es otro.",
     "kpi": {
-      "coverTitle": "Cobertura de tu stock",
       "dayUnit_one": "día",
       "dayUnit_other": "días",
       "plentyValue": "+8",
@@ -567,23 +577,20 @@
       "coverAria_one": "Tu stock te llega para {{count}} día",
       "coverAria_other": "Tu stock te llega para {{count}} días",
       "coverAriaPlenty": "Tu stock te llega para más de 8 meses",
-      "coverUntil": "Te llega hasta el {{date}}",
-      "coverFirst": "Lo primero en acabarse: {{names}}",
       "coverNow": "{{names}} ya no cubre tu próxima toma",
-      "coverNowHint": "Pide más o abre otro vial cuanto antes.",
       "plentyHint": "Con tus pautas actuales no te quedas sin nada en los próximos 8 meses.",
       "coverNone": "Sin pautas que usen tu stock",
       "coverNoneHint": "Cuando una pauta use estas sustancias verás aquí hasta cuándo te llegan.",
       "inUse": "En uso",
-      "inUseSub": "Viales abiertos",
+      "inUseSub": "abiertos",
       "reserve": "Reserva",
-      "reserveSub": "Sin abrir",
+      "reserveSub": "sin abrir",
       "expiry": "Caduca primero",
-      "expiryNone": "Ningún vial tiene fecha de caducidad",
-      "reorder": "Próximo pedido",
+      "reorder": "Pedir",
       "reorderNow": "Ya",
-      "reorderSub": "{{names}} · se acaba el {{date}}",
-      "reorderNone": "Nada que pedir por ahora"
+      "cover": "Cobertura",
+      "coverFirstOn": "Lo primero en acabarse: {{names}}, el {{date}}",
+      "orderMark": "pedir"
     },
     "rel": {
       "today": "hoy",
@@ -603,20 +610,25 @@
       "ofTotalPct": "de {{total}} · queda el {{pct}} %",
       "powderHint": "Liofilizado, aún sin agua",
       "mgOfTotal": "{{left}} de {{total}}",
-      "expiryCaption": "caduca",
-      "expiryCaptionEstimated": "caduca ≈",
-      "expiredCaption": "caducado",
-      "dayShort": "d",
-      "expiryAria_one": "Caduca en {{count}} día",
-      "expiryAria_other": "Caduca en {{count}} días",
-      "expiredAria_one": "Caducó hace {{count}} día",
-      "expiredAria_other": "Caducó hace {{count}} días",
-      "estimated": "fecha estimada",
-      "lastsToday": "Te llega solo hasta hoy"
+      "lastsToday": "Te llega solo hasta hoy",
+      "left": "Quedan",
+      "content": "Contenido",
+      "expiresIn_zero": "Caduca hoy · {{date}}",
+      "expiresIn_one": "Caduca mañana · {{date}}",
+      "expiresIn_other": "Caduca en {{count}} días · {{date}}",
+      "expiredAgo_one": "Caducó hace {{count}} día · {{date}}",
+      "expiredAgo_other": "Caducó hace {{count}} días · {{date}}",
+      "beforeEmpty": "Caduca antes de acabarse: ten otro listo para entonces.",
+      "wouldLast_one": "Daría para {{count}} día, hasta el {{date}}",
+      "wouldLast_other": "Daría para {{count}} días, hasta el {{date}}",
+      "wasteAtExpiry_one": "{{count}} toma antes de caducar · sobrarían {{mg}} mg",
+      "wasteAtExpiry_other": "{{count}} tomas antes de caducar · sobrarían {{mg}} mg",
+      "leftOne": "Queda"
     },
-    "noDate": "Sin fecha",
     "alertsLess": "Ver menos",
-    "labelAuto": "Si lo dejas vacío se llamará «{{label}}»."
+    "labelAuto": "Si lo dejas vacío se llamará «{{label}}».",
+    "nextDoseShort": "Próxima toma",
+    "endsByExpiry": "por caducidad: se tirarían {{mg}} mg"
   },
   "calculator": {
     "title": "Calculadora de reconstitución",
@@ -626,9 +638,7 @@
     "doseMcg": "Dosis deseada",
     "concentration": "Concentración",
     "perUnit": "Por unidad",
-    "draw": "Cargar",
     "unitsRounded": "Marca de jeringa",
-    "actualDose": "Dosis real",
     "dosesPerVial": "Dosis por vial",
     "suggest": "Sugerir volumen para {{units}} U",
     "penClicks": "Clics de pluma",
@@ -636,7 +646,10 @@
     "clicks": "clics",
     "warning": "Comprueba siempre la etiqueta del vial y tu pauta antes de cargar la jeringa.",
     "eyebrow": "Reconstitución",
-    "pageTitle": "Calculadora"
+    "pageTitle": "Calculadora",
+    "drawCaption": "Carga {{ml}} mL · dosis real {{dose}} mcg",
+    "penCaption": "Dosis real {{dose}} mg",
+    "syringe": "Jeringa U-100 de {{ml}} mL"
   },
   "sites": {
     "title": "Puntos de inyección",
@@ -654,10 +667,10 @@
       "glute_l": "Glúteo izq.",
       "glute_r": "Glúteo der."
     },
-    "front": "DELANTE",
-    "back": "DETRÁS",
-    "leftShort": "IZQ",
-    "rightShort": "DER",
+    "front": "Delante",
+    "back": "Detrás",
+    "leftShort": "Izq.",
+    "rightShort": "Der.",
     "next": "Próximos puntos",
     "byRest": "Descanso por punto",
     "timeline": "Últimos 14 días",
@@ -704,11 +717,13 @@
       "arm_r": "Brazo D",
       "glute_l": "Glúteo I",
       "glute_r": "Glúteo D"
-    }
+    },
+    "nextOne": "Siguiente punto",
+    "then": "Después"
   },
   "wiki": {
     "title": "Wiki de péptidos",
-    "search": "Buscar compuesto, marca o clase…",
+    "search": "Nombre, marca o clase…",
     "all": "Todos",
     "count_one": "{{count}} compuesto",
     "count_other": "{{count}} compuestos",
@@ -789,7 +804,6 @@
     "eyebrow": "Aprende",
     "mine": "Tus sustancias",
     "blends": "Blends",
-    "blendBadge": "Blend premezclado",
     "blendNoTrials": "Ningún ensayo en humanos ha estudiado esta combinación. Cada componente conserva sus propios riesgos y la evidencia del blend es la de su componente más débil.",
     "blendComponents": "Qué lleva el vial",
     "blendTotal": "{{total}} en total por vial",
@@ -815,7 +829,20 @@
     "parts_one": "{{count}} componente",
     "parts_other": "{{count}} componentes",
     "more": "Leer más",
-    "less": "Leer menos"
+    "less": "Leer menos",
+    "families": "Por familia",
+    "noResultsHint": "Prueba con la marca, otro nombre o la clase.",
+    "fullEntry": "Ficha completa",
+    "myNoteEmpty": "Aún no has escrito ninguna nota.",
+    "evidenceHints": {
+      "fda_approved": "Con ficha técnica aprobada",
+      "phase3": "Ensayos grandes en personas",
+      "phase2": "Ensayos pequeños en pacientes",
+      "phase1": "Solo seguridad, en pocos voluntarios",
+      "withdrawn": "Retirado del mercado",
+      "preclinical": "Solo en animales o en laboratorio",
+      "anecdotal": "Sin ensayos: lo cuentan usuarios"
+    }
   },
   "simulator": {
     "title": "Simulador",
@@ -904,7 +931,6 @@
   "more": {
     "title": "Más",
     "settings": "Ajustes",
-    "eyebrow": "Titra",
     "groups": {
       "plan": "Mi pauta",
       "tools": "Herramientas",
@@ -945,8 +971,8 @@
       "decide": "Toca decidir",
       "rest": "Descanso",
       "finished": "Terminado",
-      "alerts_one": "{{count}} alerta",
-      "alerts_other": "{{count}} alertas",
+      "alerts_one": "{{count}} urgente",
+      "alerts_other": "{{count}} urgentes",
       "vials_one": "{{count}} vial",
       "vials_other": "{{count}} viales",
       "on": "Activados",
@@ -990,58 +1016,23 @@
   },
   "today": {
     "title": "Hoy",
-    "dayN": "día {{n}}",
-    "next": "Siguiente",
     "dueNow": "Toca ahora",
-    "inTime": "En {{time}}",
     "overdueBy": "Retrasada {{time}}",
     "missed": "Perdida",
     "takenAt": "Hecha {{time}}",
     "taken": "Hecha",
-    "logNow": "Registrar ahora",
-    "nothingToday": "Hoy no toca ninguna toma.",
-    "agenda": "Agenda",
     "levels": "Niveles",
     "manage": "Gestionar",
-    "learn": "Aprende",
-    "readMore": "Leer ficha",
     "remindersOff": "Activa los avisos",
     "extraAt": "Fuera de pauta · {{time}}",
-    "onlyExtra_one": "Hoy no tocaba. Registraste {{count}} toma fuera de pauta.",
-    "onlyExtra_other": "Hoy no tocaba. Registraste {{count}} tomas fuera de pauta.",
-    "legend": {
-      "onTime": "a su hora",
-      "late": "fuera de hora",
-      "missed": "perdida",
-      "upcoming": "pendiente",
-      "extra": "extra"
-    },
-    "stock": "Stock",
-    "week": "Últimos 7 días",
     "night": "madrugada",
-    "state": "Estado",
-    "late": "Retraso",
-    "left": "Falta",
-    "draw": "Cargar",
-    "dose": "Dosis",
     "logOther": "Registrar otra toma",
-    "missedN_one": "{{count}} perdida",
-    "missedN_other": "{{count}} perdidas",
-    "free": "libre",
-    "done": "hecho",
-    "day": "hoy",
-    "ringAria": "{{taken}} de {{total}} tomas de hoy",
     "kpis": "Cómo vas",
     "streak": "Racha",
     "streakUnit_one": "día",
     "streakUnit_other": "días",
     "streakHint": "con todas las tomas",
     "streakNone": "sin racha ahora",
-    "adherence": "Adherencia",
-    "adherenceHint": "{{taken}} de {{planned}} tomas en 7 días",
-    "cycle": "Semana del ciclo",
-    "cycleRest": "Descanso del ciclo",
-    "cover": "Stock para",
     "coverPlenty": "Todo cubierto",
     "coverUnit": {
       "d_one": "día",
@@ -1049,7 +1040,44 @@
       "mo_one": "mes",
       "mo_other": "meses"
     },
-    "trailAria": "Últimos 7 días: {{done}} completos"
+    "hero": {
+      "title": "Próxima toma",
+      "none": "Sin tomas previstas en los próximos 14 días.",
+      "track": "Próximas 24 h",
+      "trackAria_one": "Próximas 24 horas: {{count}} toma",
+      "trackAria_other": "Próximas 24 horas: {{count}} tomas",
+      "in": "en {{time}}",
+      "log": "Registrar",
+      "loadAria": "Cargar {{units}} U ({{dose}})"
+    },
+    "fast": {
+      "ask": "Ayuno: ¿cuándo comiste?"
+    },
+    "kpi": {
+      "ticksAria": "Últimos {{days}} días: {{done}} completos",
+      "adherence": "Adherencia 28 d",
+      "adherenceOf": "{{taken}} de {{expected}} tomas",
+      "pts": "{{value}} pts",
+      "ptsAria": "{{value}} puntos frente a los 28 días anteriores",
+      "cycle": "Ciclo · {{name}}",
+      "rest": "Descanso · {{name}}",
+      "weekOf": "/ {{total}} sem",
+      "weeks": "sem",
+      "stock": "Stock",
+      "stockOf": "Stock · {{names}}",
+      "orderBy": "Pide antes del {{date}}",
+      "orderNow": "Pide ya: se acaba el {{date}}"
+    },
+    "notice": {
+      "expired": "{{names}}: el vial ha caducado",
+      "expiresToday": "{{names}} caduca hoy",
+      "expiresTomorrow": "{{names}} caduca mañana",
+      "reconstitute": "{{names}}: reconstituye el vial de reserva",
+      "runsOut_one": "{{names}}: el vial da para {{count}} toma más",
+      "runsOut_other": "{{names}}: el vial da para {{count}} tomas más",
+      "empty": "{{names}}: el vial está vacío",
+      "more": "+{{count}}"
+    }
   },
   "setupLab": {
     "title": "Monta tu laboratorio",
@@ -1097,7 +1125,7 @@
       "noWeight": "Pésate para empezar tu línea base",
       "noWaist": "Mide tu cintura",
       "log": "Registrar {{what}}",
-      "weighIns": "Pesajes · 14 d",
+      "weighIns": "Pesajes",
       "last": {
         "today": "Último: hoy",
         "yesterday": "Último: ayer",
@@ -1105,20 +1133,14 @@
         "ago_other": "Último: hace {{count}} días",
         "never": "Aún ninguno"
       },
-      "adh7": "Adherencia · 7 d",
-      "adh28": "Adherencia · 28 d",
-      "doses": "{{taken}}/{{expected}} tomas",
       "noDoses": "Sin tomas previstas",
-      "noProtocols": "Sin pautas activas",
-      "checkin": "Check-in",
-      "streak_one": "día seguido",
-      "streak_other": "días seguidos",
-      "checkinNow": "Hacer check-in",
       "stripDays": "{{n}} de {{total}} días con registro",
-      "stripDoses": "{{n}} de {{total}} días con todas las tomas",
       "bodyFat": "% de grasa",
       "noBodyFat": "Mide tu % de grasa",
-      "goalPath": "{{pct}} del camino a {{goal}}"
+      "goalPath": "{{pct}} del camino a {{goal}}",
+      "pace": "ritmo {{rate}}",
+      "goalLeft": "faltan {{n}}",
+      "ofDays": "de {{n}} días"
     },
     "trend": {
       "label": "Tendencia",
@@ -1158,7 +1180,6 @@
         "yesterday": "ayer",
         "weekday": "el {{weekday}}"
       },
-      "stepsLabel": "Dosis",
       "adherenceOn": "Adherencia {{pct}} · {{taken}}/{{expected}} tomas, todas en hora",
       "adherenceOff_one": "Adherencia {{pct}} · {{taken}}/{{expected}} tomas, {{count}} fuera de hora",
       "adherenceOff_other": "Adherencia {{pct}} · {{taken}}/{{expected}} tomas, {{count}} fuera de hora"
@@ -1184,8 +1205,6 @@
       "showingLast": "Se muestran los {{count}} últimos."
     },
     "consistency": {
-      "eyebrow": "Constancia · {{n}} semanas",
-      "ring": "Últimos 28 d",
       "streak": "Racha actual",
       "best": "Mejor racha",
       "days_one": "día",
@@ -1201,11 +1220,15 @@
         "missed": "Ninguna",
         "none": "Sin tomas"
       },
-      "empty": "Con una pauta activa verás aquí cada toma, día a día."
+      "empty": "Con una pauta activa verás aquí cada toma, día a día.",
+      "title": "Constancia",
+      "adherence": "Adherencia · 28 días",
+      "points": "{{n}} pt",
+      "calendar": "Últimas {{n}} semanas"
     },
     "total": {
       "eyebrow": "Total administrado",
-      "hint": "Una barra por semana, las últimas {{n}}; la última sigue en curso.",
+      "hint": "Por semana, últimas {{n}}",
       "caption_one": "{{count}} toma · desde el {{date}}",
       "caption_other": "{{count}} tomas · desde el {{date}}",
       "barsAria": "{{name}}, por semana, de la más antigua a la actual: {{values}}"
@@ -1241,7 +1264,12 @@
       "body": "Se toma junto al resto de la mezcla: sus tomas y su calendario son los de esa pauta.",
       "open": "Ver niveles y tomas",
       "protocol": "Ver pauta"
-    }
+    },
+    "manage": "Gestionar",
+    "learn": "Aprende",
+    "readMore": "Leer ficha",
+    "inUse": "En uso",
+    "ofTotal": "de {{total}}"
   },
   "draw": {
     "title": "Prepara la jeringa",
@@ -1361,7 +1389,6 @@
       "cycle": "Ciclo"
     },
     "steady": {
-      "short": "Nivel estable",
       "hint": "Cantidad estimada en el organismo ahora",
       "reached": "Alcanzado · nivel estable de {{dose}}",
       "toReach": "{{time}} para llegar al 90 %"
@@ -1394,8 +1421,7 @@
       "tomorrow": "mañana",
       "inDays_one": "en {{count}} día",
       "inDays_other": "en {{count}} días",
-      "decide": "A decidir",
-      "decideHint": "El cambio está cerca: decide si subes o te quedas una semana más."
+      "decide": "A decidir"
     },
     "adherence": {
       "title": "Adherencia 28 d",
@@ -1416,7 +1442,6 @@
       "next": "Próxima",
       "last": "Última",
       "planDose": "pauta: {{dose}}",
-      "adherenceShort": "Adherencia",
       "noDoses": "Aún no hay tomas registradas",
       "taken": "{{taken}} de {{expected}} tomas",
       "missed_one": "{{count}} perdida",
@@ -1436,6 +1461,11 @@
       },
       "whyShort": "Acción corta: una curva suave de nivel engañaría. Aquí ves cada toma.",
       "whyNoData": "Sin datos farmacocinéticos en humanos para dibujar un nivel. Aquí ves cada toma."
+    },
+    "level": {
+      "label": "Nivel estimado",
+      "unit": "% del estable",
+      "onBoard": "{{amount}} a bordo"
     }
   },
   "week": {
@@ -1485,7 +1515,6 @@
     "fasted": "En ayunas",
     "minLeft": "faltan {{min}} min",
     "next": "Próxima toma con ayuno: {{name}} · {{time}}",
-    "noMeal": "Sin comida anotada",
     "notedReady": "Comida anotada: ya puedes pincharte",
     "notedWait": "Comida anotada: ayuno listo a las {{at}}"
   },
@@ -1498,15 +1527,11 @@
     "headline": {
       "in": "En {{n}} meses",
       "you": "Tú, si sigues así",
-      "bandNote": "de peso · ensayo a {{week}} semanas",
-      "expected": "Esperado en {{n}} meses",
       "kg": "≈ {{range}} sobre tus {{weight}}"
     },
     "range": "{{a}} a {{b}}",
     "compounds": "Sustancias: {{names}}",
     "section": {
-      "trial": "Con datos de ensayo",
-      "you": "Tu tendencia",
       "noData": "Sin datos en humanos"
     },
     "band": {
@@ -1515,18 +1540,16 @@
       "none": "No hay datos publicados para esta pauta."
     },
     "position": {
-      "between": "Tu dosis ({{dose}}) está entre los brazos de {{lower}} y {{upper}}: una franja, no una predicción.",
-      "exact": "Tu dosis ({{dose}}) coincide con el brazo de {{lower}}: es su media observada.",
-      "below": "Tu dosis ({{dose}}) queda bajo el brazo más bajo ({{upper}}): la franja va de placebo a ese brazo.",
-      "above": "Tu dosis ({{dose}}) supera el brazo más alto ({{lower}}): queda fuera de lo estudiado."
+      "between": "Tu dosis en esa fecha ({{dose}}) está entre los brazos de {{lower}} y {{upper}}: una franja, no una predicción.",
+      "exact": "Tu dosis en esa fecha ({{dose}}) coincide con el brazo de {{lower}}: es su media observada.",
+      "below": "Tu dosis en esa fecha ({{dose}}) queda bajo el brazo más bajo ({{upper}}): la franja va de placebo a ese brazo.",
+      "above": "Tu dosis en esa fecha ({{dose}}) supera el brazo más alto ({{lower}}): queda fuera de lo estudiado."
     },
     "personal": {
-      "label": "Si sigues así",
       "badge": "Extrapolación",
       "badgeWeak": "Extrapolación larga",
-      "weak": "Tienes pocos datos para llegar tan lejos: tómalo con cautela.",
       "short": {
-        "no_data": "Registra tu peso",
+        "no_data": "Aún no hay pesajes",
         "need_more": "Faltan pesajes",
         "too_far": "Faltan semanas de datos"
       },
@@ -1534,8 +1557,7 @@
       "needMoreHint": "Hacen falta {{n}} pesajes repartidos en al menos {{days}} días.",
       "until": "Tus datos permiten proyectar hasta el {{date}}.",
       "askWeight": "Registra tu peso para ver tu propia tendencia junto a la del ensayo.",
-      "logWeight": "Registrar peso",
-      "emptyTitle": "Aún no hay pesajes"
+      "logWeight": "Registrar peso"
     },
     "chart": {
       "summary": "Hoy vas por la semana {{today}}. A las {{week}} semanas, el ensayo observó {{band}} de peso.",
@@ -1567,7 +1589,6 @@
       "means": "Medias del grupo respecto al peso inicial; no muestran la dispersión entre personas."
     },
     "noData": {
-      "title": "Sin datos de resultados en humanos",
       "body": "No hay ensayos con estas dosis. Tus propios registros son la mejor forma de saberlo."
     },
     "measure": {
@@ -1587,11 +1608,23 @@
       "action": "Crear pauta"
     },
     "disclaimer": {
-      "title": "Cómo leer esto",
       "body": "Medias de ensayos con grupos de personas, no una predicción para ti. Tu línea es tu tendencia prolongada en recta. No es consejo médico."
     },
     "card": {
       "noData": "Sin referencia de ensayo: {{names}}"
+    },
+    "hero": {
+      "label": "Cambio de peso en {{n}} meses"
+    },
+    "scale": {
+      "you": "tú",
+      "youAria": "Tú hoy: {{pct}}",
+      "projectionAria": "A este ritmo llegarías a {{pct}}: es una extrapolación",
+      "band": "Ensayo, semana {{week}}",
+      "placebo": "Placebo",
+      "youToday": "Tú hoy",
+      "projection": "A este ritmo",
+      "logWeight": "Registra tu peso para verte en la escala"
     }
   },
   "stock": {
@@ -1622,7 +1655,6 @@
     "dismissFailed": "No se pudo marcar como leída. Inténtalo de nuevo."
   },
   "cycle": {
-    "eyebrow": "Ciclos",
     "headline": {
       "week": "Semana {{week}} de {{total}}",
       "step": "Semana {{week}} · escalón {{step}} de {{steps}}",
@@ -1632,8 +1664,6 @@
       "before": "Empieza el {{date}}",
       "finished": "Ciclo terminado"
     },
-    "doseNow": "Ahora",
-    "noDose": "Sin dosis",
     "inDays_one": "en {{count}} día",
     "inDays_other": "en {{count}} días",
     "when": {
@@ -1641,25 +1671,15 @@
       "tomorrow": "mañana"
     },
     "next": {
-      "increase": "El {{date}} sube a {{dose}}",
-      "decrease": "El {{date}} baja a {{dose}}",
-      "same": "El {{date}} empieza el escalón {{step}} con la misma dosis",
-      "rest": "El {{date}} empieza el descanso",
-      "resume": "El {{date}} termina el descanso: {{dose}}",
-      "end": "El ciclo termina el {{date}}",
+      "increase": "Sube el {{date}} a {{dose}}",
+      "decrease": "Baja el {{date}} a {{dose}}",
+      "same": "Escalón {{step}} el {{date}}, misma dosis",
+      "rest": "Descanso desde el {{date}}",
+      "resume": "Vuelves el {{date}} a {{dose}}",
+      "end": "Termina el {{date}}",
       "start": "Empieza con {{dose}}",
       "none": "Sin cambios previstos",
       "ended": "Terminó el {{date}}"
-    },
-    "detail": {
-      "ladder": "Escalones de la pauta",
-      "here": "estás aquí",
-      "rest": "Descanso",
-      "onwards": "{{from}} en adelante",
-      "range": "{{from}} – {{to}}",
-      "adherence": "Tomas de este escalón",
-      "adherenceValue": "{{taken}} de {{planned}}",
-      "edit": "Editar pauta"
     },
     "decision": {
       "eyebrow": "Decisión de la semana",
@@ -1679,7 +1699,9 @@
       "logged": "Esta semana has anotado: {{list}}.",
       "increaseDetail": "El {{date}} sube de {{from}} a {{to}} ({{detail}}).",
       "increaseToday": "Hoy sube de {{from}} a {{to}}.",
-      "increaseTodayDetail": "Hoy sube de {{from}} a {{to}} ({{detail}})."
+      "increaseTodayDetail": "Hoy sube de {{from}} a {{to}} ({{detail}}).",
+      "cardAria": "Decisiones de tus ciclos",
+      "pendingTitle": "Decisiones pendientes"
     },
     "action": {
       "up": "Subir como estaba previsto",
@@ -1706,6 +1728,14 @@
       "held": "Sin cambios hasta el {{date}}",
       "updated": "Pauta actualizada: {{dose}} esta semana.",
       "once": "Anotado: fue puntual."
+    },
+    "short": {
+      "increase": "Sube a {{dose}}",
+      "resume": "Vuelves a {{dose}}",
+      "rest": "Empieza el descanso",
+      "end": "Termina el ciclo",
+      "finished": "Ciclo terminado",
+      "drift": "Tus tomas no coinciden con la pauta"
     }
   },
   "protocolMenu": {
@@ -1853,7 +1883,7 @@
       "extras_one": "+{{count}} extra",
       "extras_other": "+{{count}} extras",
       "weight": "Peso",
-      "sinceStart": "desde el inicio del ciclo",
+      "sinceStart": "desde el inicio",
       "lastDose": "Última dosis"
     },
     "rest": {
@@ -1865,11 +1895,11 @@
       "longer": "Alargar el descanso una semana",
       "saved_one": "Descanso de {{count}} semana",
       "saved_other": "Descanso de {{count}} semanas",
-      "guide": "Tu referencia: {{min}}–{{max}} semanas. Es solo una guía: tú decides cuánto.",
       "leftWeeks_one": "Queda {{count}} semana",
       "leftWeeks_other": "Quedan {{count}} semanas",
       "leftDays_one": "Queda {{count}} día",
-      "leftDays_other": "Quedan {{count}} días"
+      "leftDays_other": "Quedan {{count}} días",
+      "guideShort": "tu referencia: {{min}}–{{max}} semanas"
     },
     "compare": {
       "title": "Comparar con el ciclo anterior",
@@ -1928,12 +1958,6 @@
       },
       "previous": "Escalón anterior",
       "next": "Escalón siguiente"
-    },
-    "summary": {
-      "title": "Ciclos",
-      "all": "Ver todo",
-      "more_one": "+{{count}} más",
-      "more_other": "+{{count}} más"
     },
     "empty": {
       "title": "Aún no hay ciclos",
@@ -2169,32 +2193,20 @@
   },
   "levels": {
     "onBoard": "A bordo",
-    "steady": "Estable",
     "steadyAria": "{{pct}} del nivel estable de la pauta actual",
     "lastDose": "Última toma",
     "noDoses": "Sin tomas",
-    "nextIn": "Próxima en {{time}}",
-    "dueNow": "Toca ahora",
-    "overdue": "Retrasada {{time}}",
-    "noPlan": "Sin pauta activa",
-    "spark": {
-      "aria": "Nivel de los últimos {{past}} días y previsión de los próximos {{ahead}}"
-    },
     "strip": {
-      "span": "{{n}} d",
-      "aria": "{{taken}} de {{planned}} tomas previstas en los últimos {{days}} días",
-      "missed": "perdida",
-      "late": "a deshora",
-      "extra": "extra",
-      "planned": "pendiente",
-      "caption": "{{n}} d · {{taken}}/{{expected}}"
+      "aria": "{{taken}} de {{planned}} tomas previstas en los últimos {{days}} días"
     },
-    "vial": {
-      "none": "Sin vial",
-      "low": "Vial casi agotado",
-      "left": "Vial: queda el {{pct}}"
-    },
-    "justNow": "ahora mismo"
+    "justNow": "ahora mismo",
+    "onBoardValue": "{{amount}} a bordo",
+    "ofSteady": "del estable",
+    "steadyIn": "estable en {{time}}",
+    "steadyNow": "en nivel estable",
+    "ago": "hace {{time}}",
+    "daysDone": "{{taken}} de {{expected}} días cumplidos",
+    "noPlanDays": "Sin tomas previstas en {{n}} días"
   },
   "trend": {
     "title": "Evolución",

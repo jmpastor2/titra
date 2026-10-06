@@ -123,7 +123,7 @@ function CheckInForm({ onClose }: { onClose: () => void }) {
                         </span>
                       ))}
                     <span
-                      className={`readout min-w-12 text-right text-[18px] font-semibold ${v === undefined ? 'text-muted' : 'text-signal text-glow'}`}
+                      className={`readout min-w-12 text-right text-[18px] font-semibold ${v === undefined ? 'text-muted' : 'text-signal'}`}
                     >
                       {v ?? '–'}
                       <span className="text-[11px] text-muted">/10</span>

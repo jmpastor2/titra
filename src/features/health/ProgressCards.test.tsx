@@ -26,7 +26,7 @@ afterEach(cleanup)
 describe('ConsistencyCard', () => {
   const grid = heatGrid([], new Date(2026, 9, 7, 14))
 
-  it('says the streak, the best one and the adherence of the last 28 days', () => {
+  it('says the adherence of the last 28 days against its mark, the streak and the best one', () => {
     render(
       <ConsistencyCard
         grid={grid}
@@ -35,17 +35,43 @@ describe('ConsistencyCard', () => {
         hasProtocols
       />,
     )
-    expect(screen.getByText('Constancia · 12 semanas')).toBeInTheDocument()
+    expect(screen.getByText('Adherencia · 28 días')).toBeInTheDocument()
+    expect(screen.getByText('96')).toBeInTheDocument()
+    expect(screen.getByText('25 de 26 tomas')).toBeInTheDocument()
+    expect(screen.getByRole('meter', { name: /Adherencia · 28 días: 96/ })).toBeInTheDocument()
     expect(screen.getByText('Racha actual')).toBeInTheDocument()
     expect(screen.getByText('Mejor racha')).toBeInTheDocument()
-    expect(screen.getByText('8')).toBeInTheDocument()
-    expect(screen.getByText('14')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /Últimos 28 d: 96/ })).toBeInTheDocument()
+    expect(flat(screen.getByText(/^8 d/).textContent)).toBe('8 días')
+    expect(flat(screen.getByText(/^14 d/).textContent)).toBe('14 días')
+    expect(screen.getByText('Últimas 12 semanas')).toBeInTheDocument()
     expect(
       screen
         .getAllByRole('img')
         .some((e) => /Calendario de 12 semanas/.test(e.getAttribute('aria-label') ?? '')),
     ).toBe(true)
+  })
+
+  it('compares with the 28 days before in points, only when there were doses then', () => {
+    const { rerender } = render(
+      <ConsistencyCard
+        grid={grid}
+        streaks={{ current: 8, best: 14 }}
+        last28={{ taken: 25, expected: 26, ratio: 25 / 26 }}
+        prev28={{ taken: 23, expected: 25, ratio: 23 / 25 }}
+        hasProtocols
+      />,
+    )
+    expect(screen.getByText('+4 pt')).toBeInTheDocument()
+    rerender(
+      <ConsistencyCard
+        grid={grid}
+        streaks={{ current: 8, best: 14 }}
+        last28={{ taken: 25, expected: 26, ratio: 25 / 26 }}
+        prev28={{ taken: 0, expected: 0, ratio: null }}
+        hasProtocols
+      />,
+    )
+    expect(screen.queryByText(/ pt$/)).toBeNull()
   })
 
   it('writes "1 día" in the singular', () => {
@@ -57,7 +83,7 @@ describe('ConsistencyCard', () => {
         hasProtocols
       />,
     )
-    expect(screen.getAllByText('día')).toHaveLength(2)
+    expect(screen.getAllByText(/^1 día$/)).toHaveLength(2)
   })
 
   it('asks for a protocol instead of drawing an empty calendar', () => {
@@ -74,7 +100,7 @@ describe('ConsistencyCard', () => {
     expect(document.querySelector('[data-level]')).toBeNull()
   })
 
-  it('leaves the ring without a percentage when nothing was due', () => {
+  it('says nothing was due instead of a percentage or an empty bar', () => {
     render(
       <ConsistencyCard
         grid={grid}
@@ -83,7 +109,8 @@ describe('ConsistencyCard', () => {
         hasProtocols
       />,
     )
-    expect(screen.getByText('—')).toBeInTheDocument()
+    expect(screen.getByText('Sin tomas previstas')).toBeInTheDocument()
+    expect(screen.queryByRole('meter')).toBeNull()
   })
 })
 
@@ -153,28 +180,26 @@ describe('WeekCard', () => {
     expect(screen.getByText('Adherencia 89 % · 8/9 tomas')).toBeInTheDocument()
   })
 
-  it('keeps the dose steps in a block of their own', () => {
-    renderCard([
-      { kind: 'adherence', taken: 1, expected: 1, offTime: null },
-      {
-        kind: 'step',
-        protocolId: 'reta',
-        name: 'Retatrutida',
-        compoundId: 'retatrutide',
-        unit: 'mg',
-        upcoming: true,
-        change: {
-          kind: 'up',
-          at: new Date(),
-          doseMg: 1.75,
-          prevDoseMg: 1.5,
-          index: 2,
-          pause: false,
-        },
+  it('tells the dose steps that already happened, not the ones ahead', () => {
+    const step = (upcoming: boolean, doseMg: number, protocolId: string): WeekItem => ({
+      kind: 'step',
+      protocolId,
+      name: 'Retatrutida',
+      compoundId: 'retatrutide',
+      unit: 'mg',
+      upcoming,
+      change: {
+        kind: 'up',
+        at: new Date(2026, 8, 28),
+        doseMg,
+        prevDoseMg: 1.25,
+        index: 2,
+        pause: false,
       },
-    ])
-    expect(screen.getByText('Dosis')).toBeInTheDocument()
-    expect(screen.getByText(/Retatrutida sube a 1,75 mg/)).toBeInTheDocument()
+    })
+    renderCard([step(false, 1.5, 'reta'), step(true, 1.75, 'next')])
+    expect(screen.getByText(/Retatrutida subió a 1,5 mg/)).toBeInTheDocument()
+    expect(screen.queryByText(/1,75 mg/)).toBeNull()
   })
 
   it('asks for something to record when there is nothing to say', () => {
@@ -206,25 +231,35 @@ describe('BodyTile', () => {
     wide: true,
   }
 
+  it('shows the change since the start with its percentage and the pace', () => {
+    render(<BodyTile {...props} goal={null} />)
+    expect(screen.getByText('77,0')).toBeInTheDocument()
+    expect(flat(screen.getByText(/−3,2 kg/).textContent)).toBe('−3,2 kg')
+    expect(flat(screen.getByText(/desde el 8 sep/).textContent)).toBe(
+      '−4,0 % desde el 8 sep · ritmo −0,8 kg/sem',
+    )
+  })
+
   it('shows the way done towards the goal as a bar', () => {
     render(<BodyTile {...props} goal={72} />)
-    const bar = screen.getByRole('progressbar')
+    const bar = screen.getByRole('meter')
     // From 80,2 to 72 is 8,2 kg; 3,2 of them are done.
     expect(bar).toHaveAttribute('aria-valuenow', '39')
     expect(flat(bar.getAttribute('aria-label'))).toBe('39 % del camino a 72,0 kg')
+    expect(screen.getByText('faltan 5,0 kg')).toBeInTheDocument()
   })
 
   it('says the goal is reached once it is', () => {
     render(<BodyTile {...props} goal={77.5} />)
-    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100')
+    expect(screen.getByRole('meter')).toHaveAttribute('aria-valuenow', '100')
     expect(screen.getByText('Objetivo alcanzado')).toBeInTheDocument()
   })
 
   it('has no bar without a goal, and on the small tiles', () => {
     const { rerender } = render(<BodyTile {...props} goal={null} />)
-    expect(screen.queryByRole('progressbar')).toBeNull()
+    expect(screen.queryByRole('meter')).toBeNull()
     rerender(<BodyTile {...props} wide={false} goal={72} />)
-    expect(screen.queryByRole('progressbar')).toBeNull()
+    expect(screen.queryByRole('meter')).toBeNull()
   })
 
   it('asks for the first reading when there is none', () => {

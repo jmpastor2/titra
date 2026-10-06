@@ -60,22 +60,28 @@ function open(path = '/protocols/cjc') {
 describe('ProtocolDetailPage', () => {
   it('reads first: where the cycle stands, with the dose in units and mass', async () => {
     open()
-    expect(await screen.findByText('Semana 2 de 12')).toBeInTheDocument()
+    expect(await screen.findByText('Semana 2 de 12 · sube el lun 5 a 12 U')).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { level: 1, name: 'CJC-1295 + Ipamorelina' }),
     ).toBeInTheDocument()
     expect(screen.getByText('CJC-1295 (sin DAC) + Ipamorelina')).toBeInTheDocument()
-    const hero = screen.getByText('Dosis ahora').closest('section')!
-    expect(within(hero).getByText('9 U')).toBeInTheDocument()
-    expect(within(hero).getByText('(150 + 150 mcg)')).toBeInTheDocument()
-    expect(within(hero).getByText(/El lun 5 oct sube a 12 U/)).toBeInTheDocument()
-    // Sunday evening before a step-up: the decision is right there.
-    expect(within(hero).getByText(/Toca decidir/)).toBeInTheDocument()
+    const hero = within(screen.getByText('Dosis ahora').closest('section')!)
+    expect(hero.getByText('9', { selector: 'span' })).toHaveTextContent('9U')
+    expect(hero.getByText('150 + 150 mcg')).toBeInTheDocument()
+    // The weeks of the cycle as a staircase, from its first day to its last.
+    expect(hero.getByRole('img', { name: 'Semana 2 de 12' })).toBeInTheDocument()
+    expect(hero.getByText('21 sep 2026')).toBeInTheDocument()
+    expect(hero.getByText('10 ene 2027')).toBeInTheDocument()
+    // Sunday evening before a step-up: flagged, and decided on Ciclos.
+    expect(hero.getByRole('link', { name: 'Toca decidir mañana' })).toHaveAttribute(
+      'href',
+      '/cycles',
+    )
   })
 
   it('lists every step with its dates and says where you are', async () => {
     open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByText('Semana 2 de 12 · sube el lun 5 a 12 U')
     const timeline = screen.getByRole('heading', { name: 'Escalones y fechas' }).closest('section')!
     const steps = within(timeline).getAllByRole('listitem')
     expect(steps).toHaveLength(4)
@@ -93,7 +99,7 @@ describe('ProtocolDetailPage', () => {
 
   it("sets the week's doses planned against taken", async () => {
     open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByText('Semana 2 de 12 · sube el lun 5 a 12 U')
     const week = screen.getByRole('heading', { name: 'Esta semana' }).closest('section')!
     expect(within(week).getByText('9 U por toma')).toBeInTheDocument()
     // Four of the five planned nights were taken, plus the extra shot on its own.
@@ -111,7 +117,7 @@ describe('ProtocolDetailPage', () => {
 
   it('shows the vial in use, the notes and the big actions', async () => {
     const { router } = open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByText('Semana 2 de 12 · sube el lun 5 a 12 U')
     const vial = screen.getByRole('heading', { name: 'Vial en uso' }).closest('section')!
     expect(within(vial).getByText('CJC-1295 + Ipamorelina 10 mg')).toBeInTheDocument()
     expect(within(vial).getByText('Quedan 4 de 5 mg')).toBeInTheDocument()
@@ -136,7 +142,7 @@ describe('ProtocolDetailPage', () => {
     open()
     expect(await screen.findByText('Descanso · semana 1 de 4')).toBeInTheDocument()
     // The rest is the last thing in the plan: it ends on its last day, three weeks away.
-    expect(screen.getByText(/El dom 10 ene termina el ciclo/)).toHaveTextContent('en 21 días')
+    expect(screen.getByText('Termina el dom 10 ene · en 21 días')).toBeInTheDocument()
     const link = screen.getByRole('link', { name: /Ver ciclos/ })
     expect(link).toHaveAttribute('href', '/cycles')
     // No dose in a rest, and no hold to offer on a finished week.

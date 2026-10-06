@@ -1,17 +1,18 @@
 /**
- * The tiles of the summary: a card with a quiet label and one big number (`Tile`, `Readout`),
- * and the body tile that shows a measurement's latest value, its change since the cycle began,
- * a sparkline and, for weight, the pace per week and the way to the goal.
+ * The body KPIs of the summary. Weight is the hero: the latest reading, its change since the
+ * cycle began, the pace, the line of the last weeks and the way to the goal. Waist and body fat
+ * are small ones with their own line. Each answers "is it working?" for one measure.
  */
 import { clsx } from 'clsx'
 import { Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Delta, Kpi } from '@/components/kpi/Kpi'
+import { Meter } from '@/components/kpi/Meter'
+import { Spark } from '@/components/kpi/Spark'
 import { fmtDate, fmtPercent, type Locale } from '@/lib/format'
 import { KIND_DIGITS } from './kinds'
-import { fmtSignedFixed } from './progress'
-import { ChangeValue } from './ProgressCharts'
-import { Sparkline } from './Spark'
+import { changeTone, fmtSignedFixed, fmtSignedPct } from './progress'
 import { goalProgress, type baselineChange, type weeklyRate } from './trend'
 import { fmtReading, type BodyUnits } from './units'
 
@@ -19,54 +20,31 @@ import { fmtReading, type BodyUnits } from './units'
 const SPARK_MIN_SPAN = 2
 /** A weekly rate comes from a fit over a few weigh-ins: a tenth is as fine as it gets. */
 const RATE_DIGITS = 1
+/** Changes smaller than this read as no change. */
+const FLAT = 0.2
 
+/** A summary card: one KPI and, at its top right, an optional small action. */
 export function Tile({
-  label,
   wide = false,
-  color,
   action,
+  className,
   children,
 }: {
-  label: ReactNode
   wide?: boolean
-  color?: string
   action?: ReactNode
+  className?: string
   children: ReactNode
 }) {
   return (
     <div
-      className={clsx('card fade-up flex min-w-0 flex-col p-3', wide && 'col-span-2')}
-      style={color ? { borderColor: `color-mix(in oklab, ${color} 28%, var(--line))` } : undefined}
-    >
-      <div className="flex min-h-5 items-start justify-between gap-2">
-        <span className="spec">{label}</span>
-        {action}
-      </div>
-      {children}
-    </div>
-  )
-}
-
-export function Readout({
-  value,
-  unit,
-  tight = false,
-  className,
-}: {
-  value: string
-  unit?: string
-  /** The unit continues the number ("4/14") instead of naming it ("77,0 kg"). */
-  tight?: boolean
-  className?: string
-}) {
-  return (
-    <div className={clsx('readout mt-1.5 text-[22px] font-semibold leading-none', className)}>
-      {value}
-      {unit && (
-        <span className={clsx('text-[11.5px] font-medium text-muted', !tight && 'ml-1')}>
-          {unit}
-        </span>
+      className={clsx(
+        'card fade-up relative flex min-w-0 flex-col',
+        wide ? 'col-span-2 p-4' : 'p-3.5',
+        className,
       )}
+    >
+      {action && <div className="absolute right-1 top-1">{action}</div>}
+      {children}
     </div>
   )
 }
@@ -89,8 +67,8 @@ export function BodyTile({
   color,
   onLog,
   wide = false,
-  rateHint,
   goal,
+  className,
 }: {
   kind: BodyTileKind
   units: BodyUnits
@@ -101,20 +79,19 @@ export function BodyTile({
   color: string
   onLog?: () => void
   wide?: boolean
-  rateHint?: string
   /** The goal in the person's unit, when there is one. */
   goal?: number | null
+  className?: string
 }) {
   const { t } = useTranslation()
   const { change, rate } = data
   const unit = units.unit(kind)
   const action = onLog && (
-    // 44 px to hit, drawn as before: the tile's padding is taken back with the margin.
     <button
       type="button"
       onClick={onLog}
       aria-label={t('progress.summary.log', { what: label.toLowerCase() })}
-      className="-m-3 grid size-11 place-items-center rounded-full text-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-signal/60"
+      className="grid size-11 place-items-center rounded-full text-muted outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-signal/60"
     >
       <Plus className="size-4" />
     </button>
@@ -122,108 +99,71 @@ export function BodyTile({
 
   if (!change) {
     return (
-      <Tile label={label} wide={wide} action={action}>
-        <Readout value="—" />
-        <p className="mt-1.5 text-[11.5px] text-muted">{empty}</p>
+      <Tile wide={wide} action={action} className={className}>
+        <span className="spec pr-8">{label}</span>
+        <p className="mt-1.5 pr-6 text-[13px] leading-snug text-ink-2">{empty}</p>
       </Tile>
     )
   }
 
-  const delta = change.delta
-  const detail =
-    delta !== null && change.baseline ? (
-      <>
-        <div className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5">
-          <ChangeValue
-            kind={kind}
-            delta={delta}
-            digits={KIND_DIGITS[kind]}
-            unit={unit}
-            threshold={0.2}
-            className="text-[13px]"
-          />
-          {change.pct !== null && (
-            <span className="readout text-[11.5px] text-muted">
-              {fmtSignedFixed(change.pct * 100, locale, 1)}&nbsp;%
-            </span>
-          )}
-        </div>
-        <p className="mt-0.5 text-[11.5px] leading-snug text-muted">
-          {t('progress.summary.since', { date: fmtDate(change.baseline.at, locale, 'd MMM') })}
-        </p>
-      </>
-    ) : (
-      <p className="mt-1.5 text-[11.5px] leading-snug text-muted">
-        {t('progress.summary.firstReading')}
-      </p>
-    )
-
-  const rateLine = wide && (
-    <p className="mt-1 text-[11.5px] text-muted">
-      {rate ? (
-        <>
-          {t('progress.trend.rateLabel')}{' '}
-          <span className="readout whitespace-nowrap font-semibold text-ink-2">
-            {fmtSignedFixed(rate.perWeek, locale, RATE_DIGITS)}&nbsp;{unit}/
-            {t('progress.trend.weekShort')}
-          </span>
-        </>
-      ) : (
-        rateHint
-      )}
-    </p>
-  )
-
+  const { delta, baseline } = change
+  const digits = KIND_DIGITS[kind]
+  const tone = delta === null ? 'neutral' : changeTone(kind, delta, FLAT)
+  const aside =
+    delta !== null && baseline ? (
+      <Delta
+        text={`${fmtSignedFixed(delta, locale, digits)} ${unit}`}
+        direction={Math.abs(delta) < FLAT ? 'flat' : delta < 0 ? 'down' : 'up'}
+        tone={tone}
+      />
+    ) : undefined
+  const since = baseline
+    ? [
+        change.pct !== null && fmtSignedPct(change.pct * 100, locale, 1),
+        t('progress.summary.since', { date: fmtDate(baseline.at, locale, 'd MMM') }),
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : t('progress.summary.firstReading')
+  const pace =
+    wide && rate
+      ? t('progress.summary.pace', {
+          rate: `${fmtSignedFixed(rate.perWeek, locale, RATE_DIGITS)} ${unit}/${t('progress.trend.weekShort')}`,
+        })
+      : null
   const minSpan = units.show(kind, SPARK_MIN_SPAN)
   const value = fmtReading(kind, change.latest.value, locale)
   const toGoal =
-    wide && goal && change.baseline
-      ? goalProgress(change.baseline.value, change.latest.value, goal)
-      : null
+    wide && goal && baseline ? goalProgress(baseline.value, change.latest.value, goal) : null
 
   return (
-    <Tile label={label} wide={wide} color={color} action={action}>
-      {wide ? (
-        <>
-          <div className="flex items-end gap-3">
-            <div className="min-w-0 flex-1">
-              <Readout value={value} unit={unit} className="text-[28px]" />
-              {detail}
-              {rateLine}
-            </div>
-            <Sparkline
-              values={data.spark}
-              color={color}
-              height={52}
-              minSpan={minSpan}
-              className="w-[42%] shrink-0"
-            />
-          </div>
-          {toGoal && goal && (
-            <GoalBar progress={toGoal} goal={goal} kind={kind} locale={locale} unit={unit} />
-          )}
-        </>
-      ) : (
-        <>
-          <Readout value={value} unit={unit} />
-          {detail}
-          {data.spark.length > 1 && (
-            <Sparkline
-              values={data.spark}
-              color={color}
-              height={22}
-              minSpan={minSpan}
-              className="mt-auto pt-2"
-            />
-          )}
-        </>
+    <Tile wide={wide} action={action} className={className}>
+      <Kpi
+        label={<span className="pr-8">{label}</span>}
+        value={value}
+        unit={unit}
+        size={wide ? 'lg' : 'sm'}
+        aside={aside}
+        caption={pace ? `${since} · ${pace}` : since}
+      />
+      {data.spark.length > 1 && (
+        <Spark
+          values={data.spark}
+          color={color}
+          height={wide ? 36 : 24}
+          minSpan={minSpan}
+          className={wide ? 'mt-4' : 'mt-auto pt-3'}
+        />
+      )}
+      {toGoal && goal && (
+        <GoalMeter progress={toGoal} goal={goal} kind={kind} locale={locale} unit={unit} />
       )}
     </Tile>
   )
 }
 
-/** How much of the way to the goal is done, as a thin bar with the figure beside it. */
-function GoalBar({
+/** How much of the way to the goal is done, as a thin bar with the figure above it. */
+function GoalMeter({
   progress,
   goal,
   kind,
@@ -244,22 +184,16 @@ function GoalBar({
         pct: fmtPercent(progress.fraction, locale),
         goal: `${fmtReading(kind, goal, locale)} ${unit}`,
       })
+  const left = `${fmtReading(kind, progress.remaining, locale)} ${unit}`
   return (
-    <div className="mt-3">
-      <p className="text-[11.5px] text-muted">{text}</p>
-      <div
-        role="progressbar"
-        aria-label={text}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress.fraction * 100)}
-        className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-3"
-      >
-        <div
-          className="h-full rounded-full bg-signal"
-          style={{ width: `${Math.round(progress.fraction * 100)}%` }}
-        />
+    <div className="mt-4 border-t border-line pt-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-[12.5px]">
+        <span className="text-ink-2">{text}</span>
+        {!done && (
+          <span className="readout text-muted">{t('progress.summary.goalLeft', { n: left })}</span>
+        )}
       </div>
+      <Meter className="mt-2" value={Math.round(progress.fraction * 100)} max={100} label={text} />
     </div>
   )
 }

@@ -58,12 +58,10 @@ export function PastCycleCard({
                   <SubstanceDot key={id} color={compoundColor(id)} />
                 ))}
               </span>
-              <h3 className="break-words font-display text-[16px] font-semibold leading-snug">
-                {row.name}
-              </h3>
+              <h3 className="break-words text-[16px] font-semibold leading-snug">{row.name}</h3>
             </div>
             {view.siblings > 1 && (
-              <div className="spec mt-1">{t('cycles.cycleN', { n: view.ordinal })}</div>
+              <div className="spec mt-0.5">{t('cycles.cycleN', { n: view.ordinal })}</div>
             )}
           </div>
           <Badge tone={STATUS_TONE[row.status]}>{t(`protocols.statuses.${row.status}`)}</Badge>
@@ -79,11 +77,15 @@ export function PastCycleCard({
           {text.span(retro.weeks, retro.doseWeeks, retro.restWeeks)}
           {retro.early && ` · ${t('cycles.past.early')}`}
         </p>
-
-        <div className="mt-3.5">
-          <CycleFigures stats={stats} state={statsState} imperial={imperial} lastDose={lastDose} />
-        </div>
+        {lastDose && (
+          <p className="mt-0.5 text-[12.5px] text-muted">
+            {t('cycles.stat.lastDose')} ·{' '}
+            <span className="readout font-semibold text-ink-2">{lastDose}</span>
+          </p>
+        )}
       </div>
+
+      <CycleFigures stats={stats} state={statsState} imperial={imperial} />
 
       {comparison && <CompareBlock comparison={comparison} imperial={imperial} />}
 
@@ -91,7 +93,7 @@ export function PastCycleCard({
         <div className="border-t border-line px-4 py-3">
           <Button
             block
-            variant="soft"
+            variant="secondary"
             leading={<Repeat className="size-4" />}
             onClick={() => onNewCycle(view)}
           >

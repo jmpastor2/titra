@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
+import { Meter } from '@/components/kpi/Meter'
+import { Spark } from '@/components/kpi/Spark'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
-import { Sparkline } from '@/features/health/Spark'
-import { MiniBar, MiniRing, QuickTile, Readout, Word } from './QuickTile'
+import { QuickTile, Readout, Word } from './QuickTile'
 import type { TileView } from './tileViews'
 
 /** One tile of the grid, dressed from its view: the reading, its caption and its visual. */
@@ -17,7 +18,6 @@ export function TileCell({
   corner?: ReactNode
 }) {
   const { visual } = view
-  const RingIcon = visual?.kind === 'ring' ? visual.icon : null
   // The substances of a dose lead its caption, as on the agenda.
   const caption =
     visual?.kind === 'substances' ? (
@@ -47,19 +47,20 @@ export function TileCell({
       ariaLabel={view.aria}
       onPress={onPress}
       corner={corner}
-      lead={
-        visual?.kind === 'ring' && RingIcon ? (
-          <MiniRing fraction={visual.fraction} done={visual.done}>
-            <RingIcon className="size-4 text-muted" aria-hidden />
-          </MiniRing>
-        ) : undefined
-      }
       trail={
         visual?.kind === 'spark' ? (
-          <Sparkline values={visual.values} height={26} className="w-[46px] shrink-0" />
+          <div className="w-[46px]">
+            <Spark values={visual.values} height={26} area={false} />
+          </div>
         ) : undefined
       }
-      foot={visual?.kind === 'bar' ? <MiniBar fraction={visual.fraction} /> : undefined}
+      foot={
+        visual?.kind === 'gauge' ? (
+          <Meter value={visual.fraction} height={4} />
+        ) : visual?.kind === 'bar' ? (
+          <Meter value={visual.fraction} height={4} color="var(--warn)" />
+        ) : undefined
+      }
     />
   )
 }

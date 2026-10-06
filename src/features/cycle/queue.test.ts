@@ -3,7 +3,8 @@ import type { ProtocolRow } from '@/data/database.types'
 import { cycleInfo } from '@/domain/dosing/cycle'
 import { toProtocolLike } from '@/data/mappers'
 import { cycleDecision, decisionKey } from './decision'
-import { openDecision, pendingDecisions, type Item } from './queue'
+import type { DoseDrift } from './drift'
+import { boardEntries, openDecision, openEntry, pendingDecisions, type Item } from './queue'
 
 const W15 = [1, 2, 3, 4, 5]
 const dosing = (doseMg: number, durationWeeks: number | null) => ({
@@ -90,5 +91,43 @@ describe('openDecision', () => {
     expect(openDecision(pending, { focusId: 'reta', chosenKey: null, isLater: () => true })).toBe(
       second,
     )
+  })
+})
+
+describe('boardEntries and openEntry', () => {
+  const drift = {} as DoseDrift
+  const drifting: Item = { ...item(quiet), drift, decision: null }
+  const items = [item(cjc), drifting, item(reta)]
+  const none = () => false
+
+  it('lists what disagrees with the plan first, then the decisions', () => {
+    const entries = boardEntries(items, null)
+    expect(entries.map((e) => [e.kind, e.item.protocol.id])).toEqual([
+      ['drift', 'quiet'],
+      ['decision', 'cjc'],
+      ['decision', 'reta'],
+    ])
+    expect(entries[0]!.key).toBe('drift:quiet')
+  })
+
+  it('opens the drift before any decision, unless one was chosen or pointed at', () => {
+    const entries = boardEntries(items, null)
+    const [driftKey, cjcKey, retaKey] = entries.map((e) => e.key) as [string, string, string]
+    const opts = { focusId: null, chosenKey: null, isLater: none }
+    expect(openEntry(entries, opts)).toBe(driftKey)
+    expect(openEntry(entries, { ...opts, chosenKey: retaKey })).toBe(retaKey)
+    expect(openEntry(boardEntries(items, 'cjc'), { ...opts, focusId: 'cjc' })).toBe(cjcKey)
+  })
+
+  it('opens the most urgent decision not put off, and none when all were', () => {
+    const entries = boardEntries([item(cjc), item(reta)], null)
+    const [cjcKey, retaKey] = entries.map((e) => e.key) as [string, string]
+    expect(
+      openEntry(entries, { focusId: null, chosenKey: null, isLater: (k) => k === cjcKey }),
+    ).toBe(retaKey)
+    expect(
+      openEntry(entries, { focusId: null, chosenKey: null, isLater: () => true }),
+    ).toBeUndefined()
+    expect(openEntry([], { focusId: null, chosenKey: null, isLater: none })).toBeUndefined()
   })
 })

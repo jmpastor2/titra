@@ -26,13 +26,13 @@ export function BlendEditor({
 }) {
   const { t } = useTranslation()
   return (
-    <div
-      className={parts.length > 0 ? 'rounded-control border border-line bg-panel-2 p-3' : undefined}
-    >
+    <div className={parts.length > 0 ? 'border-y border-line py-3' : undefined}>
       {parts.length > 0 && (
         <>
-          <div className="spec mb-1">{t('inventory.blendTitle')}</div>
-          <p className="mb-2 text-[12px] text-muted">{t('inventory.blendHint')}</p>
+          <div className="text-[13px] font-medium text-ink-2">{t('inventory.blendTitle')}</div>
+          <p className="mb-2 mt-0.5 text-[12.5px] leading-snug text-muted">
+            {t('inventory.blendHint')}
+          </p>
         </>
       )}
       {parts.map((b, i) => {
@@ -63,7 +63,7 @@ export function BlendEditor({
                 onChange(parts.map((x, j) => (j === i ? { ...x, mg: e.target.value } : x)))
               }
               suffix="mg"
-              className="readout bg-panel"
+              className="readout"
             />
           </div>
         )

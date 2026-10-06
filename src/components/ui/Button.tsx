@@ -14,12 +14,12 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  // The one luminous action colour: signal fill, dark ink, soft glow in the dark lab.
+  // The main action is ink on the canvas (white on night, near-black on day): calm and unmistakable.
   primary:
-    'bg-signal text-signal-ink glow hover:brightness-110 active:scale-[0.98] disabled:bg-panel-3 disabled:text-muted disabled:shadow-none',
+    'bg-ink text-canvas hover:opacity-90 active:scale-[0.98] disabled:bg-panel-3 disabled:text-muted',
   secondary:
-    'bg-panel-2 text-ink border border-line-strong hover:border-signal/40 active:scale-[0.98] disabled:text-muted',
-  soft: 'bg-signal-soft text-signal border border-signal/20 hover:bg-signal/15 active:scale-[0.98] disabled:opacity-60',
+    'bg-panel-2 text-ink border border-line hover:border-line-strong active:scale-[0.98] disabled:text-muted',
+  soft: 'bg-signal-soft text-signal hover:bg-signal/20 active:scale-[0.98] disabled:opacity-60',
   ghost:
     'bg-transparent text-ink-2 hover:bg-panel-2 hover:text-ink active:scale-[0.98] disabled:text-muted',
   danger:

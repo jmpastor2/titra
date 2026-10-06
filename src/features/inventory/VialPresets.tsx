@@ -17,8 +17,8 @@ export function PresetChips({
   const { t } = useTranslation()
   return (
     <div>
-      <div className="spec mb-2 flex items-center gap-1.5">
-        <Layers className="size-3.5" /> {t('inventory.blendPresets')}
+      <div className="mb-2 flex items-center gap-1.5 text-[13px] font-medium text-ink-2">
+        <Layers className="size-3.5 text-muted" aria-hidden /> {t('inventory.blendPresets')}
       </div>
       <div className="flex flex-wrap gap-2">
         {BLEND_PRESETS.map((p) => (
@@ -27,7 +27,7 @@ export function PresetChips({
             type="button"
             onClick={() => onPick(p)}
             aria-pressed={activeId === p.id}
-            className="flex min-h-11 max-w-full items-center gap-1.5 rounded-2xl border border-line-strong bg-panel-2 px-3.5 py-1.5 text-left text-[12.5px] font-semibold leading-tight aria-pressed:border-signal/50 aria-pressed:bg-signal-soft"
+            className="flex min-h-11 max-w-full items-center gap-1.5 rounded-[18px] border border-line bg-panel-2 px-3.5 py-1.5 text-left text-[13px] font-medium leading-tight outline-none transition hover:border-line-strong focus-visible:ring-2 focus-visible:ring-signal/60 aria-pressed:border-signal/50 aria-pressed:bg-signal-soft"
           >
             <span className="flex shrink-0 gap-1">
               {p.parts.map((x) => (

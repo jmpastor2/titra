@@ -3,15 +3,18 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Card } from '@/components/ui/Card'
-import { Badge, Chip, Divider, SubstanceDot } from '@/components/ui/primitives'
+import { Chip, SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import type { BlendInfo, CompoundMeta } from '@/content/schema'
 import { categoryColor } from '@/content/substanceColor'
 import { fmtDose, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { blendShares, UNITS_PER_ML } from './blendMath'
+import { EvidenceTag } from './EvidenceMeter'
 import { Section } from './parts'
-import { evidenceTone } from './tones'
+
+const ROW =
+  '-mx-2 flex min-h-14 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60'
 
 /** What is in the vial: every component with its amount, and why they are sold together. */
 export function BlendComponents({ blend }: { blend: BlendInfo }) {
@@ -24,43 +27,38 @@ export function BlendComponents({ blend }: { blend: BlendInfo }) {
       title={t('wiki.blendComponents')}
       subtitle={t('wiki.blendTotal', { total: fmtDose(total, 'mg', locale) })}
     >
-      <ul className="flex flex-col gap-2">
+      <ul className="divide-y divide-line border-y border-line">
         {blend.components.map((p) => {
           const c = compoundById(p.compoundId)
           if (!c) return null
           return (
             <li key={p.compoundId}>
-              <button
-                type="button"
-                onClick={() => nav(`/wiki/${c.id}`)}
-                className="flex min-h-14 w-full items-center gap-3 rounded-control border border-line px-3 py-2.5 text-left transition active:scale-[0.99]"
-              >
+              <button type="button" onClick={() => nav(`/wiki/${c.id}`)} className={ROW}>
                 <SubstanceDot color={categoryColor(c.category)} size={9} />
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold leading-snug">
-                    {c.names.generic}
+                  <span className="flex items-baseline justify-between gap-3">
+                    <span className="text-[14.5px] font-semibold leading-snug">
+                      {c.names.generic}
+                    </span>
+                    <span className="readout shrink-0 text-[15px] font-semibold">
+                      {fmtDose(p.mg, 'mg', locale)}
+                    </span>
                   </span>
-                  <span className="mt-0.5 block text-[12px] leading-snug text-muted">
+                  <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">
                     {pick(c.pharmClass)}
                   </span>
+                  <EvidenceTag tier={c.evidence} layout="inline" className="mt-2" />
                 </span>
-                <span className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="readout text-[14px] font-semibold">
-                    {fmtDose(p.mg, 'mg', locale)}
-                  </span>
-                  <Badge tone={evidenceTone(c.evidence)}>
-                    {t(`wiki.evidenceTiers.${c.evidence}`)}
-                  </Badge>
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+                <ChevronRight className="size-4 shrink-0 text-muted/70" aria-hidden />
               </button>
             </li>
           )
         })}
       </ul>
-      <Divider className="my-3.5" />
-      <Section title={t('wiki.blendWhy')}>{pick(blend.rationale)}</Section>
-      <p className="mt-3 text-[12px] leading-snug text-muted">{t('wiki.blendEvidenceNote')}</p>
+      <div className="mt-3.5">
+        <Section title={t('wiki.blendWhy')}>{pick(blend.rationale)}</Section>
+      </div>
+      <p className="mt-3 text-[12.5px] leading-snug text-muted">{t('wiki.blendEvidenceNote')}</p>
     </Card>
   )
 }
@@ -82,7 +80,7 @@ export function BlendCalculator({ blend }: { blend: BlendInfo }) {
   return (
     <Card title={t('wiki.blendMath')} subtitle={t('wiki.blendMathHint')}>
       <div className="spec">{t('wiki.blendDiluent')}</div>
-      <div className="mt-1 flex flex-wrap gap-x-2">
+      <div className="mt-0.5 flex flex-wrap gap-x-2">
         {diluents.map((ml) => (
           <Chip key={ml} active={diluentMl === ml} onClick={() => setDiluentMl(ml)}>
             {fmtNumber(ml, locale, 1)} mL
@@ -90,27 +88,29 @@ export function BlendCalculator({ blend }: { blend: BlendInfo }) {
         ))}
       </div>
       <div className="spec mt-2">{t('wiki.blendUnits')}</div>
-      <div className="mt-1 flex flex-wrap gap-x-2">
+      <div className="mt-0.5 flex flex-wrap gap-x-2">
         {UNIT_OPTIONS.map((u) => (
           <Chip key={u} active={units === u} onClick={() => setUnits(u)}>
             {u} U
           </Chip>
         ))}
       </div>
-      <ul className="mt-3 divide-y divide-line rounded-control bg-panel-2 px-3.5">
+      <ul className="mt-3 divide-y divide-line border-y border-line">
         {shares.map((s) => (
-          <li key={s.compoundId} className="flex items-baseline justify-between gap-3 py-2.5">
-            <span className="min-w-0 text-[13.5px] leading-snug">
+          <li key={s.compoundId} className="flex items-baseline justify-between gap-3 py-3">
+            <span className="min-w-0 text-[14px] leading-snug">
               {compoundById(s.compoundId)?.names.generic ?? s.compoundId}
             </span>
             <span className="shrink-0 text-right">
-              <span className="readout block text-[16px] font-semibold">{amount(s.mg)}</span>
-              <span className="readout block text-[11px] text-muted">{amount(s.mgPerMl)}/mL</span>
+              <span className="readout block text-[18px] font-semibold leading-tight">
+                {amount(s.mg)}
+              </span>
+              <span className="readout block text-[12px] text-muted">{amount(s.mgPerMl)}/mL</span>
             </span>
           </li>
         ))}
       </ul>
-      <p className="mt-2.5 text-[12px] leading-snug text-muted">
+      <p className="mt-2.5 text-[12.5px] leading-snug text-muted">
         {t('wiki.blendPerDraw', { units, ml: fmtNumber(units / UNITS_PER_ML, locale, 2) })}
       </p>
     </Card>
@@ -123,20 +123,19 @@ export function InBlends({ blends }: { blends: readonly CompoundMeta[] }) {
   const nav = useNavigate()
   return (
     <Card title={t('wiki.inBlends')}>
-      <div className="flex flex-wrap gap-2">
+      <ul className="-my-1 divide-y divide-line">
         {blends.map((b) => (
-          <button
-            key={b.id}
-            type="button"
-            onClick={() => nav(`/wiki/${b.id}`)}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line bg-panel px-3.5 py-1.5 text-left text-[13px] font-semibold leading-snug text-ink-2 transition active:scale-[0.98]"
-          >
-            <FlaskConical className="size-3.5 shrink-0 text-muted" aria-hidden />
-            {b.names.generic}
-            <ChevronRight className="size-3.5 shrink-0 text-muted" aria-hidden />
-          </button>
+          <li key={b.id}>
+            <button type="button" onClick={() => nav(`/wiki/${b.id}`)} className={ROW}>
+              <FlaskConical className="size-4 shrink-0 text-muted" aria-hidden />
+              <span className="min-w-0 flex-1 text-[14.5px] font-semibold leading-snug">
+                {b.names.generic}
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-muted/70" aria-hidden />
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
     </Card>
   )
 }

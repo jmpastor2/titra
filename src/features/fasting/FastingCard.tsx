@@ -2,6 +2,7 @@ import { clsx } from 'clsx'
 import { Utensils } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Meter } from '@/components/kpi/Meter'
 import { useNow } from '@/lib/useNow'
 import {
   clock,
@@ -144,12 +145,12 @@ export function FastingCard({ name, className }: { name: string; className?: str
               : t('fasting.rule', { after: EAT_AFTER_MIN })}
           </div>
           {waiting && (
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-panel">
-              <div
-                className="h-full rounded-full bg-warn"
-                style={{ width: `${fastProgress(lastMeal, now) * 100}%` }}
-              />
-            </div>
+            <Meter
+              className="mt-2"
+              value={fastProgress(lastMeal, now)}
+              color="var(--warn)"
+              height={5}
+            />
           )}
           <div className="mt-2.5">
             <FastingControls lastMeal={lastMeal} />

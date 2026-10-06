@@ -1,84 +1,118 @@
 /**
- * "Constancia": am I on track? The adherence of the last 28 days, the streak of days with every
- * dose taken, the best one, and the calendar of the last twelve weeks.
+ * "Constancia": am I on track? The adherence of the last 28 days against a 90 % mark (and against
+ * the 28 days before, when there were any), the streak of days with every dose taken and the best
+ * one, then the calendar of the last twelve weeks.
  */
 import { useTranslation } from 'react-i18next'
-import { Ring } from '@/components/kpi/Ring'
-import { fmtPercent } from '@/lib/format'
+import { Delta, Kpi, type KpiTone } from '@/components/kpi/Kpi'
+import { Meter } from '@/components/kpi/Meter'
+import { fmtNumber, fmtPercent } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { AdherenceHeatmap } from './AdherenceHeatmap'
 import type { AdherenceTotal, DoseStreaks } from './consistency'
 import { HEAT_WEEKS, type HeatGrid } from './heatmap'
 
-function ringColor(total: AdherenceTotal): string {
-  if (total.ratio === null) return 'var(--muted)'
-  return total.ratio >= 0.9 ? 'var(--signal)' : total.ratio >= 0.7 ? 'var(--warn)' : 'var(--danger)'
+/** The mark the bar is measured against: below it, doses are being missed often enough to matter. */
+const TARGET = 0.9
+
+function tone(ratio: number): { kpi: KpiTone; color: string } {
+  if (ratio >= TARGET) return { kpi: 'default', color: 'var(--signal)' }
+  if (ratio >= 0.7) return { kpi: 'warn', color: 'var(--warn)' }
+  return { kpi: 'danger', color: 'var(--danger)' }
 }
 
 export function ConsistencyCard({
   grid,
   streaks,
   last28,
+  prev28,
   hasProtocols,
 }: {
   grid: HeatGrid
   streaks: DoseStreaks
   last28: AdherenceTotal
+  /** The 28 days before, for the change; nothing when nothing was due then. */
+  prev28?: AdherenceTotal
   hasProtocols: boolean
 }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
-  const title = t('progress.consistency.eyebrow', { n: HEAT_WEEKS })
-  const percent = last28.ratio === null ? null : fmtPercent(last28.ratio, locale)
+  const title = t('progress.consistency.title')
+
+  if (!hasProtocols) {
+    return (
+      <section className="card fade-up p-4" aria-label={title}>
+        <h3 className="spec">{title}</h3>
+        <p className="mt-1.5 text-[13px] leading-snug text-ink-2">
+          {t('progress.consistency.empty')}
+        </p>
+      </section>
+    )
+  }
+
+  const ratio = last28.ratio
+  const points =
+    ratio !== null && prev28?.ratio != null
+      ? Math.round(ratio * 100) - Math.round(prev28.ratio * 100)
+      : null
 
   return (
-    <section className="card fade-up p-3.5" aria-label={title}>
-      <h3 className="spec">{title}</h3>
-
-      {hasProtocols ? (
+    <section className="card fade-up p-4" aria-label={title}>
+      {ratio === null ? (
         <>
-          <div className="mt-3 grid grid-cols-[auto_1fr_1fr] items-center gap-x-4">
-            <div className="flex flex-col items-center gap-1.5">
-              <Ring
-                value={last28.ratio ?? 0}
-                size={60}
-                stroke={6}
-                color={ringColor(last28)}
-                label={percent ? `${t('progress.consistency.ring')}: ${percent}` : undefined}
-              >
-                <span className="readout text-[14px] font-semibold leading-none">
-                  {percent ?? '—'}
-                </span>
-              </Ring>
-              <span className="whitespace-nowrap text-[11px] leading-none text-muted">
-                {t('progress.consistency.ring')}
-              </span>
-            </div>
-            <Streak count={streaks.current} label={t('progress.consistency.streak')} />
-            <Streak count={streaks.best} label={t('progress.consistency.best')} />
-          </div>
-          <div className="mt-4">
-            <AdherenceHeatmap grid={grid} />
-          </div>
+          <h3 className="spec">{t('progress.consistency.adherence')}</h3>
+          <p className="mt-1.5 text-[13px] text-ink-2">{t('progress.summary.noDoses')}</p>
         </>
       ) : (
-        <p className="mt-2 text-[13px] text-muted">{t('progress.consistency.empty')}</p>
+        <Kpi
+          label={t('progress.consistency.adherence')}
+          value={fmtNumber(Math.round(ratio * 100), locale, 0)}
+          unit="%"
+          tone={tone(ratio).kpi}
+          aside={
+            points !== null && (
+              <Delta
+                text={t('progress.consistency.points', {
+                  n: `${points > 0 ? '+' : points < 0 ? '−' : ''}${Math.abs(points)}`,
+                })}
+                direction={points > 0 ? 'up' : points < 0 ? 'down' : 'flat'}
+                tone={points > 0 ? 'good' : points < 0 ? 'bad' : 'neutral'}
+              />
+            )
+          }
+          caption={t('charts.adherence.hint', { taken: last28.taken, expected: last28.expected })}
+        >
+          <Meter
+            value={ratio * 100}
+            max={100}
+            target={TARGET * 100}
+            color={tone(ratio).color}
+            label={`${t('progress.consistency.adherence')}: ${fmtPercent(ratio, locale)}`}
+          />
+        </Kpi>
       )}
+
+      <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
+        <Streak label={t('progress.consistency.streak')} count={streaks.current} />
+        <Streak label={t('progress.consistency.best')} count={streaks.best} />
+      </p>
+
+      <div className="mt-4 border-t border-line pt-3.5">
+        <h3 className="spec mb-2">{t('progress.consistency.calendar', { n: HEAT_WEEKS })}</h3>
+        <AdherenceHeatmap grid={grid} />
+      </div>
     </section>
   )
 }
 
-function Streak({ count, label }: { count: number; label: string }) {
+function Streak({ label, count }: { label: string; count: number }) {
   const { t } = useTranslation()
   return (
-    <div className="min-w-0">
-      <div className="readout text-[26px] font-semibold leading-none">
-        {count}
-        <span className="ml-1 text-[12px] font-medium text-muted">
-          {t('progress.consistency.days', { count })}
-        </span>
-      </div>
-      <div className="mt-1.5 text-[11.5px] leading-tight text-muted">{label}</div>
-    </div>
+    <span>
+      {label}{' '}
+      <span className="readout font-semibold text-ink">
+        {count} {t('progress.consistency.days', { count })}
+      </span>
+    </span>
   )
 }

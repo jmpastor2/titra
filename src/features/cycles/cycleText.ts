@@ -10,12 +10,6 @@ import { fmtDate } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { remaining, type WeekReadout } from './readout'
 
-export interface RingText {
-  /** What goes in the middle of the ring; empty for a cycle that is over. */
-  main: string
-  sub: string | null
-}
-
 export function useCycleText() {
   const { t } = useTranslation()
   const { locale } = useLocale()
@@ -43,7 +37,7 @@ export function useCycleText() {
       }
     }
 
-    /** The silkscreen label over a cycle's phase. `escalating` is a plan that ends in maintenance. */
+    /** The quiet label over a cycle's phase. `escalating` is a plan that ends in maintenance. */
     const phaseLabel = (r: WeekReadout, escalating: boolean): string => {
       switch (r.kind) {
         case 'before':
@@ -84,26 +78,6 @@ export function useCycleText() {
       return `${what} ${when}`
     }
 
-    const ring = (r: WeekReadout): RingText => {
-      const weeks = t('protocols.weeksShort')
-      const days = t('units.d')
-      switch (r.kind) {
-        case 'before':
-          return { main: String(r.days), sub: days }
-        case 'dosing':
-          return { main: String(r.week), sub: r.of ? `/${r.of}` : weeks }
-        case 'maintenance':
-          return { main: String(r.week), sub: weeks }
-        case 'rest': {
-          if (r.daysLeft === null) return { main: '∞', sub: null }
-          const left = remaining(r.daysLeft)
-          return { main: String(left.count), sub: left.unit === 'weeks' ? weeks : days }
-        }
-        case 'finished':
-          return { main: '', sub: null }
-      }
-    }
-
     /** "14 semanas · 10 de dosis + 4 de descanso"; just the weeks when there is no rest. */
     const span = (total: number, dose: number, rest: number): string =>
       rest > 0
@@ -119,6 +93,6 @@ export function useCycleText() {
         : t('cycles.weeks.range', { from, to })
     }
 
-    return { phrase, phaseLabel, change, ring, span, weekRange }
+    return { phrase, phaseLabel, change, span, weekRange }
   }, [t, locale])
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fmtSigned, fmtWeightDelta, sentence } from './format'
+import { fmtSigned, fmtWeightDelta, sentence, weightDeltaParts } from './format'
 
 describe('fmtSigned', () => {
   it('writes a real minus, a plus, and no sign for what rounds to zero', () => {
@@ -15,6 +15,11 @@ describe('fmtWeightDelta', () => {
     expect(fmtWeightDelta(-1.25, false, 'es')).toBe('−1,3 kg')
     expect(fmtWeightDelta(-1, true, 'en')).toBe('−2.2 lb')
     expect(fmtWeightDelta(0.5, false, 'en')).toBe('+0.5 kg')
+  })
+
+  it('gives the figure and its unit apart, for a big number with a small unit', () => {
+    expect(weightDeltaParts(-0.5, false, 'es')).toEqual({ value: '−0,5', unit: 'kg' })
+    expect(weightDeltaParts(-1, true, 'en')).toEqual({ value: '−2.2', unit: 'lb' })
   })
 })
 

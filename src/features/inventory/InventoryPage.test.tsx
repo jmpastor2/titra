@@ -65,16 +65,21 @@ describe('inventory page', () => {
     // Opened 20 Sep: the 28 days end on 18 Oct, an estimate.
     expect(reading('Caduca primero')).toBe('≈ 18 oct')
     // Everything runs out on a date; the order goes in three weeks before it.
-    expect(reading('Próximo pedido')).toMatch(/^\d+ \w+$/)
-    expect(screen.getByText('Cobertura de tu stock')).toBeInTheDocument()
+    expect(reading('Pedir')).toMatch(/^(\d+ \w+|Ya)$/)
+    // The cover: days to the first run-out, with a gauge that has the order point on it.
+    expect(screen.getByText('Cobertura')).toBeInTheDocument()
+    expect(
+      screen.getByRole('meter', { name: /Tu stock te llega para \d+ días/ }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/^Lo primero en acabarse: MOTS-c, el /)).toBeInTheDocument()
   })
 
-  it('says so when no protocol takes anything from the stock', async () => {
+  it('says so when no protocol takes anything from the stock, and shows no empty readings', async () => {
     renderInApp(<InventoryPage />, makeStore({ inventory: [Object.assign({}, inUse)] }))
     await card('MOTS-c 10 mg')
     expect(screen.getAllByText('Sin pautas que usen tu stock').length).toBeGreaterThan(0)
-    expect(reading('Próximo pedido')).toBe('—')
-    expect(screen.getByText('Nada que pedir por ahora')).toBeInTheDocument()
+    expect(screen.queryByText('Pedir', { selector: 'dt' })).toBeNull()
+    expect(screen.queryByText('—')).toBeNull()
   })
 
   it('leads with the doses left and shows the units for the current dose', async () => {
@@ -84,15 +89,19 @@ describe('inventory page', () => {
     await waitFor(() => expect(open.getByText('12 U')).toBeInTheDocument())
     expect(open.getByText('tomas')).toBeInTheDocument()
     expect(open.getByText('10 mg/mL')).toBeInTheDocument()
-    // The ring counts the days to the discard date: 13 days from 5 Oct to 18 Oct.
-    expect(open.getByRole('img', { name: 'Caduca en 13 días, fecha estimada' })).toBeInTheDocument()
+    // The use-by date in words: 13 days from 5 Oct to 18 Oct, an estimate.
+    expect(open.getByText('Caduca en 13 días · ≈ dom 18 oct')).toBeInTheDocument()
+    // No rings any more.
+    expect(open.queryByRole('img')).toBeNull()
+    // The label already says "MOTS-c": the substance is not written a second time above it.
+    expect(open.queryByText('MOTS-c', { selector: 'div' })).toBeNull()
   })
 
   it('writes the names of a blend vial out in full, never cut at the side of the card', async () => {
     const blend = vialRow({
       id: 'blend',
       compound_id: 'mod-grf-1-29',
-      label: 'CJC-1295 (sin DAC) + Ipamorelina 10 mg · lote 2026-A reserva',
+      label: 'Vial de las noches de entre semana · lote 2026-A de reserva · 10 mg',
       total_mg: 5,
       remaining_mg: 5,
       components: [{ compoundId: 'ipamorelin', mg: 5 }],

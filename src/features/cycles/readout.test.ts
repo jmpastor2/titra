@@ -2,15 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { cycleInfo } from '@/domain/dosing/cycle'
 import { toProtocolLike } from '@/data/mappers'
 import { cjc, mots, reta } from './fixtures'
-import { buildCycleViews } from './model'
-import {
-  doseProgress,
-  remaining,
-  stepWeeks,
-  summaryLines,
-  titrationWeeks,
-  weekReadout,
-} from './readout'
+import { remaining, stepWeeks, titrationWeeks, weekReadout } from './readout'
 
 const d = (iso: string) => new Date(iso)
 const info = (row: Parameters<typeof toProtocolLike>[0], now: string) =>
@@ -92,29 +84,6 @@ describe('stepWeeks', () => {
   })
 })
 
-describe('doseProgress', () => {
-  it('is the share of dosing days behind us, rest not counting', () => {
-    expect(doseProgress(info(cjc(), '2026-09-21T10:00'), d('2026-09-21T10:00'))).toBe(0)
-    // Two weeks in of 12 dosing weeks.
-    expect(doseProgress(info(cjc(), '2026-10-05T10:00'), d('2026-10-05T10:00'))).toBeCloseTo(
-      14 / 84,
-    )
-    // All dosing done, resting.
-    expect(doseProgress(info(cjc(), '2026-12-16T10:00'), d('2026-12-16T10:00'))).toBe(1)
-  })
-
-  it('fills with the titration of a plan that ends in maintenance', () => {
-    expect(doseProgress(info(reta(), '2026-10-05T10:00'), d('2026-10-05T10:00'))).toBeCloseTo(
-      21 / 35,
-    )
-    expect(doseProgress(info(reta(), '2026-12-01T10:00'), d('2026-12-01T10:00'))).toBe(1)
-  })
-
-  it('is empty before the start', () => {
-    expect(doseProgress(info(cjc(), '2026-09-01T10:00'), d('2026-09-01T10:00'))).toBe(0)
-  })
-})
-
 describe('remaining', () => {
   it('counts weeks above seven days and days below', () => {
     expect(remaining(26)).toEqual({ unit: 'weeks', count: 4 })
@@ -122,18 +91,5 @@ describe('remaining', () => {
     expect(remaining(7)).toEqual({ unit: 'days', count: 7 })
     expect(remaining(1)).toEqual({ unit: 'days', count: 1 })
     expect(remaining(-2)).toEqual({ unit: 'days', count: 0 })
-  })
-})
-
-describe('summaryLines', () => {
-  it('has one line per active protocol, with where it stands and what comes next', () => {
-    const now = d('2026-10-05T10:00')
-    const views = buildCycleViews([cjc(), reta(), mots({ status: 'paused' })], now)
-    const lines = summaryLines(views, now)
-    expect(lines.map((l) => l.name)).toEqual(['Retatrutida', 'CJC-1295 + Ipamorelina'])
-    expect(lines[0]!.readout).toEqual({ kind: 'dosing', week: 4, of: 5 })
-    expect(lines[0]!.next).toMatchObject({ kind: 'increase', doseMg: 1.75, daysAway: 7 })
-    expect(lines[1]!.readout).toEqual({ kind: 'dosing', week: 3, of: 12 })
-    expect(lines[1]!.compoundIds).toEqual(['mod-grf-1-29', 'ipamorelin'])
   })
 })

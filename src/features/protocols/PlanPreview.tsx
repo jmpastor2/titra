@@ -57,12 +57,7 @@ export function PlanPreview({
       : null
 
   return (
-    <Card
-      instrument
-      tone="signal"
-      eyebrow={t('protocols.plan.eyebrow')}
-      title={t('protocols.plan.title')}
-    >
+    <Card tone="signal" eyebrow={t('protocols.plan.eyebrow')} title={t('protocols.plan.title')}>
       <div className="flex flex-col gap-1.5">
         <p className="text-[15px] font-semibold">
           {text.phase(summary)}

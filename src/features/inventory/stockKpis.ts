@@ -10,13 +10,30 @@ import { vialState, type RestockLine } from './vials'
 /** How worried to be about a supply: days left against the usual order lead time. */
 export type SupplyTone = 'ok' | 'warn' | 'danger'
 
-/** A supply gauge is full at this many days ahead. */
-export const COVER_GAUGE_DAYS = 90
+/** A supply gauge is full at two months: the order point (21 days) sits about a third along. */
+export const COVER_GAUGE_DAYS = 60
 
 /** Two weeks or less is urgent, a month or less is worth a look; no run-out date is fine. */
 export function supplyTone(days: number | null): SupplyTone {
   if (days === null) return 'ok'
   return days <= 14 ? 'danger' : days <= 30 ? 'warn' : 'ok'
+}
+
+/** A use-by date: past it is wrong, the last week careful, anything later fine. */
+export function expiryTone(days: number): SupplyTone {
+  return days < 0 ? 'danger' : days <= 7 ? 'warn' : 'ok'
+}
+
+/** The order-by day: gone by means order now, within a week means soon. */
+export function reorderTone(days: number): SupplyTone {
+  return days <= 0 ? 'danger' : days <= 7 ? 'warn' : 'ok'
+}
+
+/** The text colour of a tone: fine stays quiet, the others say it in colour. */
+export const TONE_TEXT: Record<SupplyTone, string> = {
+  ok: 'text-muted',
+  warn: 'text-warn',
+  danger: 'text-danger',
 }
 
 /** The colour token of a tone: good is the signal colour, careful amber, wrong rose. */

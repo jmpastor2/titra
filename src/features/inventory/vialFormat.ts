@@ -2,6 +2,14 @@
 import type { DoseUnit } from '@/domain/types'
 import { fmtNumber, type Locale } from '@/lib/format'
 
+/**
+ * The substance names to print above a vial's label, or null when the label already says
+ * them ("Retatrutida" over "Retatrutida 15 mg" would say it twice).
+ */
+export function namesAboveLabel(names: string, label: string): string | null {
+  return label.toLocaleLowerCase().includes(names.toLocaleLowerCase()) ? null : names
+}
+
 /** "10 mg/mL"; decimals only when the figure is small enough to need them. */
 export function fmtConc(mgPerMl: number, locale: Locale): string {
   return `${fmtNumber(mgPerMl, locale, mgPerMl >= 10 ? 1 : 2)} mg/mL`

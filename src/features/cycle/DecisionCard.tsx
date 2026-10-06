@@ -1,8 +1,7 @@
-import { ArrowUp, CalendarClock, ChevronDown, CircleHelp } from 'lucide-react'
+import { ArrowUp, ChevronDown, CircleHelp } from 'lucide-react'
 import { useId, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
 import { compoundById } from '@/content/compounds'
 import type { InventoryRow, ProtocolRow } from '@/data/database.types'
 import { toProtocolLike } from '@/data/mappers'
@@ -16,17 +15,16 @@ import { decisionDoses, decisionSentence, protocolTitle, whenText } from './text
 const WRAP = 'h-auto! min-h-11 whitespace-normal! px-3! py-1.5 text-[13.5px]! leading-tight'
 
 /**
- * The decision about a change of dose: what changes and when, the person's own rule as a
- * reminder, and the answers. `collapsed` folds it into one line (decided to decide later).
+ * The decision about a change of dose, open: what changes and when, the person's own rule as a
+ * reminder, and the answers (one ink button, the rest quiet). It sits inside the decisions card,
+ * so it draws no panel of its own.
  */
-export function DecisionCard({
+export function DecisionBody({
   protocol,
   decision,
   vials,
   logged,
-  collapsed,
   busy,
-  onExpand,
   onAcknowledge,
   onHold,
   onLater,
@@ -37,9 +35,7 @@ export function DecisionCard({
   vials: readonly InventoryRow[]
   /** The symptoms of the person's own rule that were logged this week. */
   logged: readonly RuleHit[]
-  collapsed: boolean
   busy: boolean
-  onExpand: () => void
   /** Go ahead as planned (or "understood"): the decision is dealt with. */
   onAcknowledge: () => void
   /** One more week on the step: the change moves back a week. */
@@ -53,66 +49,42 @@ export function DecisionCard({
   const pl = useMemo(() => toProtocolLike(protocol), [protocol])
   const unit = compoundById(protocol.compound_id)?.defaultUnit ?? 'mg'
   const sentence = decisionSentence(decision, decisionDoses(decision, pl, vials), unit, t, locale)
-  const name = protocolTitle(protocol)
   const { kind } = decision
   const asks = kind === 'increase' || kind === 'rest'
   const ends = kind === 'end' || kind === 'finished'
 
-  if (collapsed) {
-    return (
-      <button
-        type="button"
-        onClick={onExpand}
-        className="card fade-up flex min-h-14 w-full items-center gap-3 border-warn/30 px-4 py-2.5 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60 active:scale-[0.99]"
-      >
-        <CalendarClock aria-hidden className="size-[18px] shrink-0 text-warn" />
-        <span className="min-w-0 flex-1">
-          <span className="flex items-start gap-1.5 text-[14px] font-semibold leading-snug">
-            <span className="mt-[3px]">
-              <SubstanceDots protocol={protocol} />
-            </span>
-            <span className="min-w-0 break-words">{name}</span>
-          </span>
-          <span className="block text-[12px] text-warn">{t('cycle.decision.pending')}</span>
-        </span>
-        {kind !== 'finished' && (
-          <span className="readout shrink-0 text-[11.5px] font-semibold text-warn">
-            {whenText(decision.daysAway, t)}
-          </span>
-        )}
-        <ChevronDown aria-hidden className="size-4 shrink-0 text-muted" />
-      </button>
-    )
-  }
-
   return (
-    <Card tone={asks ? 'signal' : 'default'} aria-labelledby={titleId}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="spec text-signal">
+    <div role="group" aria-labelledby={titleId}>
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="spec">
           {t(asks ? 'cycle.decision.eyebrow' : 'cycle.decision.eyebrowInfo')}
         </div>
         {kind !== 'finished' && (
-          <span className="readout shrink-0 rounded-full border border-warn/40 bg-warn-soft px-2.5 py-0.5 text-[11.5px] font-semibold text-warn">
+          <span className="readout shrink-0 text-[12.5px] font-semibold text-warn">
             {whenText(decision.daysAway, t)}
           </span>
         )}
       </div>
       <h2
         id={titleId}
-        className="mt-1.5 flex items-center gap-1.5 font-display text-[19px] font-bold leading-tight"
+        className="mt-1 flex items-start gap-2 text-[17px] font-semibold leading-snug"
       >
-        <SubstanceDots protocol={protocol} />
-        <span className="min-w-0">{name}</span>
+        <span className="mt-[8px]">
+          <SubstanceDots protocol={protocol} />
+        </span>
+        <span className="min-w-0 break-words">{protocolTitle(protocol)}</span>
       </h2>
 
-      <p className="mt-3 text-[15px] leading-snug">{sentence}</p>
+      <p className="mt-2 text-[15px] leading-snug">{sentence}</p>
 
       {kind === 'increase' && (
-        <div className="mt-3 flex items-start gap-2.5 rounded-control border border-line bg-panel-2 px-3 py-2.5">
+        <div className="mt-3 flex items-start gap-2.5">
           <CircleHelp aria-hidden className="mt-0.5 size-4 shrink-0 text-signal" />
-          <div>
-            <div className="text-[13.5px] font-semibold">{t('cycle.decision.rule')}</div>
-            <div className="mt-0.5 text-[12px] leading-snug text-muted">
+          <div className="min-w-0">
+            <div className="text-[13.5px] font-semibold leading-snug">
+              {t('cycle.decision.rule')}
+            </div>
+            <div className="mt-0.5 text-[12.5px] leading-snug text-muted">
               {t('cycle.decision.ruleHint')}
             </div>
             {logged.length > 0 && (
@@ -180,6 +152,44 @@ export function DecisionCard({
           </>
         )}
       </div>
-    </Card>
+    </div>
+  )
+}
+
+/**
+ * Something else the cycles ask, folded into one row of the decisions card: the substance, what
+ * it is about in a few words and when. A tap opens it in place of the one that is open.
+ */
+export function EntryRow({
+  protocol,
+  text,
+  when,
+  onExpand,
+}: {
+  protocol: ProtocolRow
+  text: string
+  when: string | null
+  onExpand: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onExpand}
+      className="flex min-h-14 w-full items-center gap-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
+    >
+      <span className="min-w-0 flex-1">
+        <span className="flex items-start gap-2 text-[14px] font-semibold leading-snug">
+          <span className="mt-[6px]">
+            <SubstanceDots protocol={protocol} />
+          </span>
+          <span className="min-w-0 break-words">{protocolTitle(protocol)}</span>
+        </span>
+        <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">{text}</span>
+      </span>
+      {when && (
+        <span className="readout shrink-0 text-[12.5px] font-semibold text-warn">{when}</span>
+      )}
+      <ChevronDown aria-hidden className="size-4 shrink-0 text-muted" />
+    </button>
   )
 }

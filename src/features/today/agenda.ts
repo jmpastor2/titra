@@ -38,10 +38,16 @@ const STATUS_ORDER: Record<AgendaStatus, number> = {
   taken: 4,
 }
 
+/**
+ * The administrations of one day (today unless `day` says otherwise), judged against `now`:
+ * the ones planned for it, the night shot of the evening before that falls after its midnight,
+ * and the doses logged on it that no plan asked for.
+ */
 export function buildToday(
   protocols: readonly ProtocolRow[],
   doses: readonly DoseRow[],
   now: Date,
+  day: Date = now,
 ): TodayItem[] {
   const items: TodayItem[] = []
   for (const protocol of protocols) {
@@ -56,10 +62,10 @@ export function buildToday(
       )
       .map(toDoseEvent)
     // In the small hours, last night's shot (planned after midnight) belongs here too.
-    const lastNight = dayAgenda(pl, history, now, addDays(now, -1)).filter(
-      (a) => a.at >= startOfDay(now),
+    const lastNight = dayAgenda(pl, history, now, addDays(day, -1)).filter(
+      (a) => a.at >= startOfDay(day),
     )
-    const agenda = [...lastNight, ...dayAgenda(pl, history, now)]
+    const agenda = [...lastNight, ...dayAgenda(pl, history, now, day)]
     for (const item of agenda) {
       items.push({
         key: `${protocol.id}:${item.at.getTime()}`,
@@ -74,9 +80,9 @@ export function buildToday(
       })
     }
 
-    // Doses logged today that belong to no planned administration: a rest-day shot, a
-    // second one… A late dose after midnight still belongs to yesterday's evening.
-    const dayStart = startOfDay(now)
+    // Doses logged that day that belong to no planned administration: a rest-day shot, a
+    // second one… A late dose after midnight still belongs to the evening before.
+    const dayStart = startOfDay(day)
     const dayEnd = addDays(dayStart, 1)
     const tolH = matchToleranceH(currentStep(pl, now)?.step, normaliseTimes(pl.times))
     const { extras } = matchDoses(
@@ -113,24 +119,6 @@ export function focusItem(items: readonly TodayItem[]): TodayItem | null {
   )
 }
 
-export interface DaySummary {
-  total: number
-  taken: number
-  pending: number
-  missed: number
-}
-
-export function summarise(items: readonly TodayItem[]): DaySummary {
-  return {
-    total: items.length,
-    taken: items.filter((i) => i.status === 'taken').length,
-    pending: items.filter(
-      (i) => i.status === 'due' || i.status === 'upcoming' || i.status === 'overdue',
-    ).length,
-    missed: items.filter((i) => i.status === 'missed').length,
-  }
-}
-
 /** Before this hour a planned time is "madrugada": a night shot, which belongs to the evening before. */
 export const NIGHT_UNTIL_H = 6
 
@@ -145,19 +133,10 @@ export function slotWhen(at: Date, now: Date, locale: Locale): string {
   return isSameDay(at, now) ? clock : `${fmtDate(at, locale, 'EEE d')} · ${clock}`
 }
 
-/**
- * Whether the agenda adds anything to the "next dose" card: not when its only row is the dose
- * that card already shows.
- */
-export function agendaAddsToHero(items: readonly TodayItem[], focus: TodayItem | null): boolean {
-  return items.length > 1 || (items.length === 1 && items[0] !== focus)
-}
-
-/** "L M X J V S D": the weekday's initial as the protocol screens write it (Wednesday is X). */
-export function weekdayInitial(day: Date, locale: Locale): string {
-  return new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'en-US', {
-    weekday: 'narrow',
-  }).format(day)
+/** The day in words, as a heading: "Domingo, 4 de octubre" / "Sunday, October 4". */
+export function longDate(day: Date, locale: Locale): string {
+  const text = fmtDate(day, locale, locale === 'es' ? "EEEE, d 'de' MMMM" : 'EEEE, MMMM d')
+  return text.charAt(0).toLocaleUpperCase(locale) + text.slice(1)
 }
 
 /** A wait as a clock reads it: "45 min", "3 h 20 min", "12 h", "1 d 4 h". */

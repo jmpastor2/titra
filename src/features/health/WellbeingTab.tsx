@@ -2,6 +2,7 @@ import { Gauge } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
+import { Kpi } from '@/components/kpi/Kpi'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, Skeleton } from '@/components/ui/primitives'
@@ -135,16 +136,13 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {series.map((s) => (
               <Card key={s.kind} padded={false} className="p-3.5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="spec">{t(`health.kinds.${s.kind}`)}</div>
-                    <div className="readout mt-1 text-[24px] font-semibold leading-none">
-                      {fmtNumber(s.last.value, locale, 0)}
-                      <span className="text-[12px] text-muted">/10</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {s.change && (
+                <Kpi
+                  size="sm"
+                  label={t(`health.kinds.${s.kind}`)}
+                  value={fmtNumber(s.last.value, locale, 0)}
+                  unit="/10"
+                  aside={
+                    s.change && (
                       <ChangeValue
                         kind={s.kind}
                         delta={s.change.delta}
@@ -153,12 +151,10 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
                         trim
                         className="text-[13px]"
                       />
-                    )}
-                    <div className="text-[11px] text-muted">
-                      {fmtRelativeDay(s.last.at, locale)}
-                    </div>
-                  </div>
-                </div>
+                    )
+                  }
+                  caption={fmtRelativeDay(s.last.at, locale)}
+                />
                 <TrendChart
                   points={s.pts}
                   unit="/10"

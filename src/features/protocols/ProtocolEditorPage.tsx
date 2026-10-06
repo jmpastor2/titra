@@ -350,11 +350,7 @@ function ProtocolForm({
 
       <div className="flex flex-col gap-3">
         {!existing && (
-          <Card
-            eyebrow="00"
-            title={t('protocols.startFrom')}
-            subtitle={t('protocols.templateHint')}
-          >
+          <Card title={t('protocols.startFrom')} subtitle={t('protocols.templateHint')}>
             <Select value={draft.templateRef} onChange={(e) => applyTemplate(e.target.value)}>
               <option value="">{t('protocols.fromScratch')}</option>
               {mySaved.length > 0 && (
@@ -416,7 +412,7 @@ function ProtocolForm({
         />
 
         {/* 03 · Steps */}
-        <Card eyebrow="03" title={t('protocols.steps')} subtitle={t('protocols.stepsHint')}>
+        <Card title={t('protocols.steps')} subtitle={t('protocols.stepsHint')}>
           {compound && (
             <div className="mb-3 flex flex-col gap-2">
               <EntryToggle
@@ -548,12 +544,7 @@ function ProtocolForm({
         />
 
         {preview && (
-          <Card
-            instrument
-            tone="signal"
-            eyebrow={t('protocols.preview')}
-            title={compound?.names.generic}
-          >
+          <Card tone="signal" eyebrow={t('protocols.preview')} title={compound?.names.generic}>
             <div className="grid grid-cols-3 gap-2 text-center">
               <PreviewStat
                 label={t('protocols.ssTrough')}
@@ -575,8 +566,7 @@ function ProtocolForm({
           </Card>
         )}
 
-        {/* 04 · Details */}
-        <Card eyebrow="04" title={t('protocols.details')}>
+        <Card title={t('protocols.details')}>
           <div className="flex flex-col gap-4">
             <Field label={t('protocols.name')}>
               {(id) => (

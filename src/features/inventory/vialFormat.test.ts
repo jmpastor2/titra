@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fmtConc, fmtMg, fmtPerUnit, fmtUnits } from './vialFormat'
+import { fmtConc, fmtMg, fmtPerUnit, fmtUnits, namesAboveLabel } from './vialFormat'
 
 describe('vial number formats', () => {
   it('writes concentration, units and mg the same way everywhere', () => {
@@ -30,5 +30,19 @@ describe('vial number formats', () => {
 
   it('switches a microgram substance to mg from a milligram up', () => {
     expect(fmtPerUnit(1.2, 'mcg', 'es')).toBe('1,2 mg')
+  })
+})
+
+describe('names above a vial label', () => {
+  it('leaves them out when the label already says them', () => {
+    expect(namesAboveLabel('Retatrutida', 'Retatrutida 15 mg')).toBeNull()
+    expect(namesAboveLabel('MOTS-c', 'mots-c reserva')).toBeNull()
+  })
+
+  it('keeps them when the label is a name of its own or shortens them', () => {
+    expect(namesAboveLabel('MOTS-c', 'Vial de los lunes')).toBe('MOTS-c')
+    expect(
+      namesAboveLabel('CJC-1295 (sin DAC) + Ipamorelina', 'CJC-1295 + Ipamorelina 10 mg'),
+    ).toBe('CJC-1295 (sin DAC) + Ipamorelina')
   })
 })

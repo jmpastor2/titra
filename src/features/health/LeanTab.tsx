@@ -7,7 +7,10 @@ import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Badge, ProgressRing, SectionTitle, Stat } from '@/components/ui/primitives'
+import { Kpi } from '@/components/kpi/Kpi'
+import { Meter } from '@/components/kpi/Meter'
+import { Ticks } from '@/components/kpi/Ticks'
+import { Badge, SectionTitle } from '@/components/ui/primitives'
 import type { MeasurementKind } from '@/data/database.types'
 import { useMeasurements } from '@/data/hooks'
 import { compositionTrend, proteinTarget, rateFlag } from '@/domain/lean/leanMass'
@@ -23,7 +26,7 @@ import { useBodyUnits } from './units'
 const SESSIONS_TARGET = 2
 const DAY_MS = 86_400_000
 
-export function LeanTab({ index }: { index?: string }) {
+export function LeanTab() {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { patientId, patient, readOnly } = usePatientScope()
@@ -73,7 +76,7 @@ export function LeanTab({ index }: { index?: string }) {
 
   return (
     <section>
-      <SectionTitle index={index}>{t('health.lean')}</SectionTitle>
+      <SectionTitle>{t('health.lean')}</SectionTitle>
       <p className="-mt-1 mb-3 px-1 text-[12.5px] leading-relaxed text-muted">{t('lean.intro')}</p>
 
       <div className="flex flex-col gap-3">
@@ -81,55 +84,64 @@ export function LeanTab({ index }: { index?: string }) {
           title={t('lean.proteinTarget')}
           subtitle={t('lean.proteinHint', { gPerKg: fmtNumber(gPerKg, locale, 1) })}
         >
-          <div className="flex items-center gap-4">
-            <ProgressRing fraction={proteinFraction} size={80} stroke={8}>
-              <span className="readout text-[16px] font-bold leading-none">
-                {fmtPercent(proteinFraction, locale)}
-              </span>
-            </ProgressRing>
-            <div className="min-w-0 flex-1">
-              <Stat
-                label={t('lean.proteinToday')}
-                value={`${fmtNumber(proteinToday, locale, 0)} / ${fmtNumber(target, locale, 0)}`}
-                unit="g"
-                tone="brand"
-                hint={
-                  proteinToday >= target
-                    ? t('lean.proteinDone')
-                    : t('lean.proteinLeft', { n: fmtNumber(target - proteinToday, locale, 0) })
-                }
-              />
-              {!readOnly && (
-                <Button
-                  size="sm"
-                  variant="soft"
-                  className="mt-2"
-                  onClick={() => setSheet('protein_g')}
-                >
-                  {t('lean.logProtein')}
-                </Button>
-              )}
-            </div>
-          </div>
+          <Kpi
+            label={t('lean.proteinToday')}
+            value={fmtNumber(proteinToday, locale, 0)}
+            unit={`/ ${fmtNumber(target, locale, 0)} g`}
+            caption={
+              proteinToday >= target
+                ? t('lean.proteinDone')
+                : t('lean.proteinLeft', { n: fmtNumber(target - proteinToday, locale, 0) })
+            }
+          >
+            <Meter
+              value={proteinToday}
+              max={target}
+              label={`${t('lean.proteinToday')}: ${fmtPercent(proteinFraction, locale)}`}
+            />
+          </Kpi>
+          {!readOnly && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="mt-3"
+              onClick={() => setSheet('protein_g')}
+            >
+              {t('lean.logProtein')}
+            </Button>
+          )}
         </Card>
 
         <Card
           title={t('lean.sessionsWeek')}
           subtitle={t('lean.sessionsTarget', { n: SESSIONS_TARGET })}
         >
-          <div className="flex items-end justify-between gap-3">
-            <Stat
-              label={t('lean.last7')}
-              value={fmtNumber(sessions, locale, 0)}
-              unit={`/ ${SESSIONS_TARGET}`}
-              tone={sessions >= SESSIONS_TARGET ? 'ok' : 'warn'}
+          <Kpi
+            label={t('lean.last7')}
+            value={fmtNumber(sessions, locale, 0)}
+            unit={`/ ${SESSIONS_TARGET}`}
+            tone={sessions >= SESSIONS_TARGET ? 'default' : 'warn'}
+          >
+            <Ticks
+              todayLast={false}
+              height={14}
+              className="max-w-[120px]"
+              cells={Array.from({ length: SESSIONS_TARGET }, (_, i) =>
+                i < sessions ? 'full' : 'none',
+              )}
+              label={t('lean.sessionsTarget', { n: SESSIONS_TARGET })}
             />
-            {!readOnly && (
-              <Button size="sm" variant="soft" onClick={() => setSheet('resistance_session')}>
-                {t('lean.logSession')}
-              </Button>
-            )}
-          </div>
+          </Kpi>
+          {!readOnly && (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="mt-3"
+              onClick={() => setSheet('resistance_session')}
+            >
+              {t('lean.logSession')}
+            </Button>
+          )}
         </Card>
 
         <Card title={t('lean.rate')}>
@@ -143,7 +155,7 @@ export function LeanTab({ index }: { index?: string }) {
                   {unit}/{t('progress.trend.weekShort')}
                 </span>
                 {flag && (
-                  <Badge tone={flag === 'ok' ? 'ok' : flag === 'fast' ? 'warn' : 'neutral'}>
+                  <Badge tone={flag === 'ok' ? 'brand' : flag === 'fast' ? 'warn' : 'neutral'}>
                     {flag === 'ok'
                       ? t('lean.rateOk')
                       : flag === 'fast'

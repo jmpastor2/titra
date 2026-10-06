@@ -14,7 +14,6 @@ import type { ScheduleStep } from '@/domain/types'
 import { createQueryClient } from '@/lib/queryClient'
 import { setSupabaseClient } from '@/lib/supabase'
 import { CyclesPage } from './CyclesPage'
-import { CyclesSummaryCard } from './CyclesSummaryCard'
 import { cjc, CJC_VIAL, doseRow, mots, reta, RETA_VIAL, USER, weightRow } from './fixtures'
 
 const NOW = '2026-10-05T10:00' // a Monday: week 3 of the blend cycle, week 4 of the titration
@@ -162,9 +161,13 @@ describe('CyclesPage', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Ciclos' })).toBeInTheDocument()
     expect(await screen.findByText('En curso')).toBeInTheDocument()
 
-    // Week N of M in dosing weeks, per cycle, and the same on the ring.
+    // Week N of M in dosing weeks, per cycle, over the cycle's first and last day.
     expect(screen.getByText('Semana 3 de 12')).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Semana 3 de 12' })).toBeInTheDocument()
+    const strip = screen.getByRole('button', {
+      name: 'Ver los escalones de CJC-1295 + Ipamorelina',
+    })
+    expect(within(strip).getByText('21 sep')).toBeInTheDocument()
+    expect(within(strip).getByText('10 ene 2027')).toBeInTheDocument()
     expect(screen.getByText('Semana 4 de 5')).toBeInTheDocument()
     expect(screen.getByText('Semana 4 de 4')).toBeInTheDocument()
     // The dose now, with the syringe reading from the vial.
@@ -174,10 +177,10 @@ describe('CyclesPage', () => {
     expect(screen.getByText('Sube a 1,75 mg · 17,5 U en 7 días · lun 12 oct')).toBeInTheDocument()
 
     // Adherence over the cycle so far, doses taken and weight since the start of the cycle.
-    expect(screen.getByText('100 %')).toBeInTheDocument()
+    expect(screen.getAllByText('100', { selector: 'dd' }).length).toBeGreaterThan(0)
     expect(screen.getByText('4 de 4 tomas')).toBeInTheDocument()
-    expect(screen.getAllByText('−1 kg').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('desde el inicio del ciclo').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('−1', { selector: 'dd' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('desde el inicio').length).toBeGreaterThan(0)
 
     // History: the finished cycle in brief, and the comparison on the one that followed it.
     expect(screen.getByText('Ciclos anteriores')).toBeInTheDocument()
@@ -196,9 +199,10 @@ describe('CyclesPage', () => {
     const strip = await screen.findByRole('button', {
       name: 'Ver los escalones de CJC-1295 + Ipamorelina',
     })
-    // 12 dosing weeks and 4 of rest: sixteen bars, each dosing week numbered.
-    expect(strip.querySelectorAll('div > span')).toHaveLength(16 + 16)
-    expect(within(strip).getByText('12')).toBeInTheDocument()
+    // 12 dosing weeks and 4 of rest: sixteen bars, today's the third.
+    expect(strip.querySelectorAll('[data-kind]')).toHaveLength(16)
+    expect(strip.querySelectorAll('[data-kind="rest"]')).toHaveLength(4)
+    expect(strip.querySelectorAll('[data-kind]')[2]).toHaveAttribute('data-kind', 'current')
     fireEvent.click(strip)
 
     // It opens on the step in force: dates, dose, syringe reading.
@@ -236,7 +240,7 @@ describe('CyclesPage', () => {
     const db = account()
     mount(<CyclesPage />, db)
     expect(await screen.findByText('Previsto: 4 semanas')).toBeInTheDocument()
-    expect(screen.getByText(/Tu referencia: 4–8 semanas/)).toBeInTheDocument()
+    expect(screen.getByText(/tu referencia: 4–8 semanas/)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Alargar el descanso una semana' }))
     expect(await screen.findByText('Previsto: 5 semanas')).toBeInTheDocument()
@@ -328,38 +332,7 @@ describe('CyclesPage', () => {
     at(NOW)
     mount(<CyclesPage />, makeStore([cjc()]))
     await screen.findByText('Tomas') // the figures have loaded
-    expect(screen.queryByText('desde el inicio del ciclo')).toBeNull()
-  })
-})
-
-describe('CyclesSummaryCard', () => {
-  it('has a line per active protocol with the change that comes next, linking to Ciclos', async () => {
-    at(NOW)
-    mount(<CyclesSummaryCard />, account())
-
-    const link = await screen.findByRole('link')
-    expect(link).toHaveAttribute('href', '/cycles')
-    expect(within(link).getByText('CJC-1295 + Ipamorelina')).toBeInTheDocument()
-    expect(within(link).getByText(/semana 3 de 12/)).toBeInTheDocument()
-    expect(within(link).getByText(/semana 4 de 5/)).toBeInTheDocument()
-    expect(within(link).getByText('Sube a 1,75 mg en 7 días · lun 12 oct')).toBeInTheDocument()
-    expect(
-      within(link).getByText('Empieza el descanso en 70 días · lun 14 dic'),
-    ).toBeInTheDocument()
-    // The finished cycle in history is not a line.
-    expect(within(link).getAllByRole('listitem')).toHaveLength(3)
-  })
-
-  it('shows nothing without a cycle in progress, and does not link when read-only', async () => {
-    at(NOW)
-    const { container } = mount(<CyclesSummaryCard />, makeStore([cjc({ status: 'completed' })]))
-    await waitFor(() => expect(container.querySelector('.skeleton')).toBeNull())
-    expect(container.querySelector('li')).toBeNull()
-    cleanup()
-
-    mount(<CyclesSummaryCard />, makeStore([cjc()]), { readOnly: true })
-    expect(await screen.findByText(/semana 3 de 12/)).toBeInTheDocument()
-    expect(screen.queryByRole('link')).toBeNull()
+    expect(screen.queryByText('desde el inicio')).toBeNull()
   })
 })
 
@@ -371,14 +344,7 @@ describe('with the accounts of the dev lab', () => {
     it(`renders ${name} without a runtime error, a stray value or a missing string`, async () => {
       at(NOW)
       const errors = vi.spyOn(console, 'error').mockImplementation(() => {})
-      mount(
-        <>
-          <CyclesPage />
-          <CyclesSummaryCard />
-        </>,
-        buildStore(new Date(), { empty }),
-        { userId: LAB_USER.id },
-      )
+      mount(<CyclesPage />, buildStore(new Date(), { empty }), { userId: LAB_USER.id })
       await waitFor(() => expect(document.body.textContent).toMatch(expected))
       await screen.findAllByText(empty ? 'Crear una pauta' : /Semana \d+ de \d+/)
       expect(document.body.textContent).not.toMatch(/\bundefined\b|\bNaN\b|\[object Object\]/)

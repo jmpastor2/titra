@@ -45,37 +45,48 @@ describe('vial view', () => {
     expect(none.coverDays).toBeNull()
   })
 
-  it('shows powder as mg, with no expiry ring', () => {
-    const v = vialView(
-      vial({ remaining_mg: 10, concentration_mg_per_ml: null, diluent_ml: null, opened_at: null }),
-      undefined,
-      now,
-    )
+  it('shows powder as mg, with a use-by date only when the label has one', () => {
+    const powder = {
+      remaining_mg: 10,
+      concentration_mg_per_ml: null,
+      diluent_ml: null,
+      opened_at: null,
+    }
+    const v = vialView(vial(powder), undefined, now)
     expect(v.powder).toBe(true)
     expect(v.hero).toEqual({ kind: 'mg', mg: 10 })
     expect(v.expiry).toBeNull()
+    expect(
+      vialView(vial({ ...powder, expires_at: '2027-03-01' }), undefined, now).expiry,
+    ).toMatchObject({
+      estimated: false,
+      tone: 'ok',
+    })
   })
 
-  it('draws the expiry ring from the in-use period', () => {
-    // Opened 25 Sep: the 28 days end on 23 Oct, 18 days from today, of the 28.
+  it('dates the use-by from the in-use period, as an estimate', () => {
+    // Opened 25 Sep: the 28 days end on 23 Oct, 18 days from today.
     const v = vialView(vial(), undefined, now)
-    expect(v.expiry).toMatchObject({ days: 18, estimated: true, tone: 'ok' })
-    expect(v.expiry?.left).toBeCloseTo(18 / 28)
+    expect(v.expiry).toMatchObject({
+      date: new Date(2026, 9, 23),
+      days: 18,
+      estimated: true,
+      tone: 'ok',
+    })
     expect(v.expired).toBe(false)
   })
 
-  it('turns the ring amber in the last week and rose once expired', () => {
+  it('turns the use-by amber in the last week and rose once expired', () => {
     const week = vialView(vial({ opened_at: '2026-09-12' }), undefined, now)
     expect(week.expiry).toMatchObject({ days: 5, tone: 'warn' })
     const old = vialView(vial({ opened_at: '2026-08-01' }), undefined, now)
-    expect(old.expiry).toMatchObject({ days: -37, left: 0, tone: 'danger' })
+    expect(old.expiry).toMatchObject({ days: -37, tone: 'danger' })
     expect(old.expired).toBe(true)
   })
 
   it('uses a label date when it comes first, and does not call it an estimate', () => {
     const v = vialView(vial({ expires_at: '2026-10-12' }), undefined, now)
     expect(v.expiry).toMatchObject({ days: 7, estimated: false, tone: 'warn' })
-    expect(v.expiring).toBe(true)
   })
 
   it('flags a vial that is running low', () => {
@@ -84,6 +95,35 @@ describe('vial view', () => {
     // Nothing planned: a fifth of the vial is what counts.
     expect(vialView(vial({ remaining_mg: 2 }), undefined, now).low).toBe(true)
     expect(vialView(vial({ remaining_mg: 3 }), undefined, now).low).toBe(false)
+  })
+})
+
+describe('the next vial', () => {
+  it('says nothing more when the vial simply lasts until its date, already on the card', () => {
+    expect(vialView(vial(), vialRunway(4, daily(20)), now).nextVial).toBeNull()
+  })
+
+  it('asks for the next one by the run-out day when only two doses are left', () => {
+    const v = vialView(vial({ remaining_mg: 2 }), vialRunway(2, daily(20)), now)
+    expect(v.nextVial).toEqual({ kind: 'readyBy', date: new Date(2026, 9, 8, 9) })
+  })
+
+  it('says it expires before it is used up, without repeating the date', () => {
+    // Opened 12 Sep: it expires on 10 Oct, before the 8 mg run out on the 14th.
+    const v = vialView(
+      vial({ opened_at: '2026-09-12', remaining_mg: 8 }),
+      vialRunway(8, daily(20)),
+      now,
+    )
+    expect(v.expiresFirst).toBe(true)
+    expect(v.nextVial).toEqual({ kind: 'beforeEmpty' })
+  })
+
+  it('gives the date for a powder vial, whose card leads with the mg', () => {
+    const powder = vial({ concentration_mg_per_ml: null, diluent_ml: null, opened_at: null })
+    const v = vialView(powder, vialRunway(4, daily(20)), now)
+    expect(v.hero).toEqual({ kind: 'mg', mg: 4 })
+    expect(v.nextVial).toEqual({ kind: 'readyBy', date: new Date(2026, 9, 10, 9) })
   })
 })
 

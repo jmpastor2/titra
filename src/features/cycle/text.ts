@@ -60,7 +60,8 @@ export function nextText(
   t: TFunction,
   locale: Locale,
 ): string {
-  const day = (d: Date) => fmtDate(d, locale, 'EEE d')
+  // "lun 5" stays on one line wherever the sentence wraps.
+  const day = (d: Date) => fmtDate(d, locale, 'EEE d').replace(' ', '\u00A0')
   switch (n.kind) {
     case 'increase':
     case 'decrease':
@@ -88,6 +89,27 @@ export function decisionDoses(
 ): { from: StepDose | null; to: StepDose | null } {
   const of = (s: CycleStep | null) => (s && !s.pause ? stepDose(protocol, vials, s.doseMg) : null)
   return { from: of(d.from), to: of(d.to) }
+}
+
+/** A decision in a few words, for a folded row: "Sube a 12 U", "Empieza el descanso". */
+export function decisionShort(
+  d: CycleDecision,
+  doses: { from: StepDose | null; to: StepDose | null },
+  unit: DoseUnit,
+  t: TFunction,
+  locale: Locale,
+): string {
+  switch (d.kind) {
+    case 'increase':
+    case 'resume':
+      return doses.to
+        ? t(`cycle.short.${d.kind}`, { dose: doseMain(doses.to, unit, locale) })
+        : t('cycle.decision.pending')
+    case 'rest':
+    case 'end':
+    case 'finished':
+      return t(`cycle.short.${d.kind}`)
+  }
 }
 
 /** The decision in a sentence: "El lunes 5 sube de 9 U a 12 U (150 → 200 mcg)." */

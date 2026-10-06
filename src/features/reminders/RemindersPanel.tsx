@@ -187,7 +187,7 @@ export function RemindersPanel() {
             <DeviceRow state={deviceState}>
               {canTest && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="soft" onClick={() => void test()}>
+                  <Button size="sm" variant="secondary" onClick={() => void test()}>
                     {t('reminders.test')}
                   </Button>
                   {device === 'on' && (
@@ -225,19 +225,18 @@ export function RemindersPanel() {
           </Card>
 
           {upcoming.length > 0 && (
-            <Card padded={false}>
-              <div className="spec px-4 pt-4">{t('reminders.next')}</div>
-              <ul className="mt-2 divide-y divide-line px-4 pb-1">
+            <Card title={t('reminders.next')}>
+              <ul className="-mb-2 divide-y divide-line border-t border-line">
                 {upcoming.map((u) => (
                   <li
                     key={`${u.protocol.id}:${u.at.getTime()}`}
                     className="flex items-center gap-3 py-3"
                   >
-                    <span className="w-[56px] shrink-0">
-                      <span className="readout block text-[15px] font-semibold">
+                    <span className="w-[58px] shrink-0">
+                      <span className="readout block text-[16px] font-semibold leading-tight">
                         {hhmm(u.fireAt)}
                       </span>
-                      <span className="spec block text-[9.5px]">
+                      <span className="block text-[12px] leading-snug text-muted">
                         {fmtDate(u.fireAt, locale, 'EEE d')}
                       </span>
                     </span>
@@ -247,13 +246,14 @@ export function RemindersPanel() {
                           <SubstanceDot key={d.compoundId} color={compoundColor(d.compoundId)} />
                         ))}
                       </span>
-                      <span className="text-[13.5px] font-semibold leading-snug">
+                      <span className="text-[14px] font-semibold leading-snug">
                         {u.doses.map((d) => compoundById(d.compoundId)?.names.generic).join(' + ')}
                       </span>
                     </span>
                     {u.totalUnits !== null && (
-                      <span className="readout shrink-0 text-[14px] font-semibold text-signal">
-                        {fmtNumber(u.totalUnits, locale, 1)} U
+                      <span className="readout shrink-0 text-[15px] font-semibold">
+                        {fmtNumber(u.totalUnits, locale, 1)}
+                        <span className="ml-0.5 text-[12px] font-medium text-muted">U</span>
                       </span>
                     )}
                   </li>

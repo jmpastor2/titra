@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { Meter } from '@/components/kpi/Meter'
 import { Badge } from '@/components/ui/primitives'
 import { DEFAULT_MIN_REST_HOURS, type SiteStatus } from '@/domain/sites/rotation'
 import { useLocale } from '@/lib/useLocale'
@@ -25,7 +26,7 @@ export function RestList({
           <li key={s.siteId} className="py-3">
             <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
               <div className="min-w-[9rem] flex-1">
-                <div className="text-[14.5px] font-medium">
+                <div className="text-[15px] font-medium">
                   {t(`sites.labels.${s.site.labelKey}`)}
                 </div>
                 <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 text-[12.5px] text-muted">
@@ -54,19 +55,14 @@ export function RestList({
               </div>
             </div>
             {s.lastUsedAt && (
-              <div
-                role="meter"
-                aria-label={t('sites.restProgress')}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(rest * 100)}
-                className="mt-2 h-1 overflow-hidden rounded-full bg-panel-3"
-              >
-                <div
-                  className={rest >= 1 ? 'h-full bg-signal' : 'h-full bg-warn'}
-                  style={{ width: `${rest * 100}%` }}
-                />
-              </div>
+              <Meter
+                className="mt-2.5"
+                height={4}
+                value={Math.round(rest * 100)}
+                max={100}
+                color={rest >= 1 ? 'var(--signal)' : 'var(--warn)'}
+                label={t('sites.restProgress')}
+              />
             )}
           </li>
         )

@@ -94,3 +94,23 @@ export function fmtDoseLine(view: DoseView, locale: Locale): string {
   const { units, mass } = fmtDoseView(view, locale)
   return units ? `${units} (${mass})` : mass
 }
+
+export interface DoseFigure {
+  /** The number to show big: "12", "1,5", or "200 + 200" for a blend without a vial. */
+  value: string
+  /** Its unit, set apart: "U", "mg"; null when the dose reads as one string ("2 mg · 100 mcg"). */
+  unit: string | null
+  /** The mass under the units ("200 + 200 mcg"); null when the value is the mass already. */
+  sub: string | null
+}
+
+/** One administration as a big figure: syringe units over the mass, or the mass itself. */
+export function doseFigure(view: DoseView, locale: Locale): DoseFigure {
+  const { mass } = fmtDoseView(view, locale)
+  if (view.units !== null) return { value: fmtNumber(view.units, locale, 1), unit: 'U', sub: mass }
+  // "200 + 200 mcg" shares one unit at its end; "2 mg · 100 mcg" mixes two and stays whole.
+  const split = mass.includes(' · ') ? null : /^(.*\d)\s(\S+)$/.exec(mass)
+  const value = split?.[1]
+  const unit = split?.[2]
+  return value && unit ? { value, unit, sub: null } : { value: mass, unit: null, sub: null }
+}

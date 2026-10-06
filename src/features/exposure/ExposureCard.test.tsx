@@ -29,10 +29,11 @@ describe('ExposureCard · long-acting (retatrutide)', () => {
     expect(screen.getByText('Escalón 3 de 7')).toBeInTheDocument()
     // 15 mg in 1.5 mL is 10 mg/mL: 1.5 mg is 15 U, the draw he reads.
     expect(screen.getByText(/15 U/)).toBeInTheDocument()
-    expect(screen.getByText('A bordo')).toBeInTheDocument()
-    expect(screen.getByText('0,93')).toBeInTheDocument()
-    expect(screen.getByText('70 %')).toBeInTheDocument()
-    expect(screen.getByText('Nivel estable')).toBeInTheDocument()
+    // The level as a share of the steady state, with what is on board beside it: no ring.
+    expect(screen.getByText('Nivel estimado')).toBeInTheDocument()
+    expect(screen.getByText('70')).toBeInTheDocument()
+    expect(screen.getByText('% del estable')).toBeInTheDocument()
+    expect(screen.getByText(/0,93 mg a bordo/)).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Retatrutida' })).toBeNull()
   })
 
@@ -91,8 +92,9 @@ describe('ExposureCard · long-acting (retatrutide)', () => {
     // Friday 9 Oct: the step to 1.75 mg is three days away.
     const soon = labAccount(new Date(2026, 9, 9, 12))
     render(<ExposureCard x={soon.byId('retatrutide')} vials={soon.vials} readOnly />)
+    // A small badge: the decision itself is taken on Hoy and in Ciclos.
     expect(screen.getByText('A decidir')).toBeInTheDocument()
-    expect(screen.getByText(/decide si subes o te quedas una semana más/)).toBeInTheDocument()
+    expect(screen.queryByText(/decide si subes o te quedas una semana más/)).toBeNull()
   })
 })
 
@@ -195,8 +197,7 @@ describe('ExposureCard · edge states', () => {
     const x = deriveExposure([weeklyProtocol()], [], wed)[0]!
     const { container } = render(<ExposureCard x={x} readOnly />)
     expect(container.querySelector('svg[role="img"]')).not.toBeNull()
-    expect(screen.getByText('A bordo')).toBeInTheDocument()
-    expect(screen.getByText('A bordo').parentElement).toHaveTextContent('0')
+    expect(screen.getByText(/a bordo/i)).toBeInTheDocument()
     expect(screen.getByText('Titulación')).toBeInTheDocument()
   })
 

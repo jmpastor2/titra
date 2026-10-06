@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { InventoryRow } from '@/data/database.types'
 import type { ProtocolLike, ScheduleStep } from '@/domain/types'
-import { cycleSummary, doseView, fmtDoseLine, fmtDoseView } from './cycleView'
+import { cycleSummary, doseFigure, doseView, fmtDoseLine, fmtDoseView } from './cycleView'
 
 const d = (iso: string) => new Date(iso)
 const W15 = [1, 2, 3, 4, 5]
@@ -144,5 +144,29 @@ describe('reading a dose', () => {
     expect(fmtDoseView(v, 'es')).toEqual({ units: '12 U', mass: '200 + 200 mcg' })
     expect(fmtDoseLine(v, 'es')).toBe('12 U (200 + 200 mcg)')
     expect(fmtDoseLine(doseView(CJC, 0.2, []), 'en')).toBe('200 + 200 mcg')
+  })
+})
+
+describe('doseFigure', () => {
+  it('reads the syringe units big, with the mass under them', () => {
+    expect(doseFigure(doseView(CJC, 0.15, [vial()]), 'es')).toEqual({
+      value: '9',
+      unit: 'U',
+      sub: '150 + 150 mcg',
+    })
+  })
+
+  it('reads the mass big when the vial is not known, its unit set apart', () => {
+    expect(doseFigure(doseView(CJC, 0.2, []), 'es')).toEqual({
+      value: '200 + 200',
+      unit: 'mcg',
+      sub: null,
+    })
+    const reta: ProtocolLike = { ...CJC, compoundId: 'retatrutide', components: [] }
+    expect(doseFigure(doseView(reta, 1.5, []), 'es')).toEqual({
+      value: '1,5',
+      unit: 'mg',
+      sub: null,
+    })
   })
 })

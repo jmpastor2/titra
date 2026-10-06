@@ -6,7 +6,6 @@
 import { isToday, isTomorrow, isYesterday } from 'date-fns'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Card } from '@/components/ui/Card'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
 import { fmtDate, fmtDose, fmtPercent } from '@/lib/format'
@@ -21,7 +20,7 @@ type Tone = 'good' | 'bad' | 'warn' | 'info'
 type StepItem = Extract<WeekItem, { kind: 'step' }>
 
 const DOT_TONE: Record<Tone, string> = {
-  good: 'var(--ok)',
+  good: 'var(--signal)',
   bad: 'var(--danger)',
   warn: 'var(--warn)',
   info: 'var(--muted)',
@@ -30,34 +29,31 @@ const DOT_TONE: Record<Tone, string> = {
 export function WeekCard({ items }: { items: readonly WeekItem[] }) {
   const { t } = useTranslation()
   const units = useBodyUnits()
+  // The steps ahead are told on Hoy and in Ciclos: here only what already changed.
   const facts = items.filter((i) => i.kind !== 'step')
-  const steps = items.filter((i): i is StepItem => i.kind === 'step')
+  const steps = items.filter((i): i is StepItem => i.kind === 'step' && !i.upcoming)
+  const empty = facts.length === 0 && steps.length === 0
   return (
-    <Card className="mt-2.5" eyebrow={t('progress.week.eyebrow')} title={t('progress.week.title')}>
-      {items.length === 0 ? (
-        <p className="text-[13px] text-muted">{t('progress.week.empty')}</p>
+    <section className="card fade-up mt-2.5 p-4" aria-labelledby="week-card-title">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <h3 id="week-card-title" className="text-[15px] font-semibold text-ink">
+          {t('progress.week.title')}
+        </h3>
+        <span className="text-[12px] text-muted">{t('progress.week.eyebrow')}</span>
+      </div>
+      {empty ? (
+        <p className="mt-2 text-[13px] leading-snug text-muted">{t('progress.week.empty')}</p>
       ) : (
-        <>
-          {facts.length > 0 && (
-            <ul className="flex flex-col gap-2">
-              {facts.map((item) => (
-                <FactLine key={factKey(item)} item={item} units={units} />
-              ))}
-            </ul>
-          )}
-          {steps.length > 0 && (
-            <div className={facts.length > 0 ? 'mt-3 border-t border-line pt-3' : undefined}>
-              <div className="spec mb-2">{t('progress.week.stepsLabel')}</div>
-              <ul className="flex flex-col gap-2">
-                {steps.map((item) => (
-                  <StepLine key={`${item.protocolId}-${item.change.at.getTime()}`} item={item} />
-                ))}
-              </ul>
-            </div>
-          )}
-        </>
+        <ul className="mt-2.5 flex flex-col gap-2">
+          {facts.map((item) => (
+            <FactLine key={factKey(item)} item={item} units={units} />
+          ))}
+          {steps.map((item) => (
+            <StepLine key={`${item.protocolId}-${item.change.at.getTime()}`} item={item} />
+          ))}
+        </ul>
       )}
-    </Card>
+    </section>
   )
 }
 

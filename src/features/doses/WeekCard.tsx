@@ -60,7 +60,7 @@ export function WeekCard({
   const extraCount = days.flatMap((d) => d.cells).filter((c) => c.status === 'extra').length
 
   return (
-    <Card instrument className="mb-4" padded={false}>
+    <Card className="mb-4" padded={false}>
       <div className="flex items-center justify-between px-4 pt-4">
         <div>
           <div className="spec">{t('week.eyebrow')}</div>
@@ -127,7 +127,9 @@ export function WeekCard({
             className={clsx('flex gap-3 px-4 py-2', isSameDay(day, now) && 'bg-signal-soft')}
           >
             <span className="w-9 shrink-0 pt-3">
-              <span className="spec block text-[9.5px]">{fmtDate(day, locale, 'EEE')}</span>
+              <span className="spec block text-[11px] first-letter:uppercase">
+                {fmtDate(day, locale, 'EEE')}
+              </span>
               <span className="readout block text-[15px] font-semibold">{day.getDate()}</span>
             </span>
             {cells.length === 0 ? (
@@ -275,7 +277,7 @@ function Cell({
         <button
           type="button"
           onClick={() => onAssign(extra)}
-          className="mb-1 ml-[1.4rem] inline-flex min-h-11 items-center gap-2 rounded-full border border-accent/40 bg-accent-soft px-3.5 text-[12.5px] font-semibold text-accent transition active:scale-[0.98]"
+          className="mb-1 ml-[1.4rem] inline-flex min-h-11 items-center gap-2 rounded-full bg-accent-soft px-3.5 text-[12.5px] font-semibold text-accent transition active:scale-[0.98]"
         >
           <CalendarCheck className="size-4" aria-hidden />
           {t('doses.assignAsk', { slot: slotDayText(extra.suggested, locale) })}

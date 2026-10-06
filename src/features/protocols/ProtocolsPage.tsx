@@ -104,7 +104,7 @@ export function ProtocolsPage() {
 
       {!readOnly && (saved.data ?? []).length > 0 && (
         <section className="mt-6">
-          <SectionTitle index="◆">{t('protocols.savedTitle')}</SectionTitle>
+          <SectionTitle>{t('protocols.savedTitle')}</SectionTitle>
           <Card padded={false} className="px-4">
             <ul className="divide-y divide-line">
               {(saved.data ?? []).map((s) => {

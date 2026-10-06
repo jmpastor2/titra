@@ -138,7 +138,7 @@ export function AdherenceHeatmap({ grid }: { grid: HeatGrid }) {
           {months.map((m, i) => (
             <span
               key={grid.weeks[i]?.[0]?.day.getTime() ?? i}
-              className="whitespace-nowrap font-mono text-[9.5px] uppercase tracking-[0.06em] text-muted"
+              className="whitespace-nowrap text-[11px] leading-4 text-muted"
             >
               {m ? format(m, 'MMM', { locale: dateLocale }) : ''}
             </span>
@@ -147,7 +147,7 @@ export function AdherenceHeatmap({ grid }: { grid: HeatGrid }) {
 
         <div
           aria-hidden
-          className="mt-1 grid font-mono text-[9.5px] uppercase text-muted"
+          className="mt-1 grid text-[10.5px] text-muted"
           style={{ gridTemplateRows: 'repeat(7, minmax(0, 1fr))', rowGap: GAP }}
         >
           {weekdays.map((c) => (

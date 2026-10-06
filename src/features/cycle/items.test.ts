@@ -128,6 +128,26 @@ describe('attention', () => {
     expect(attention(c, onPlan, new Set(), monday).decision).toMatchObject({ timing: 'today' })
   })
 
+  it('stops asking on the day of the step once its dose was taken at the new dose', () => {
+    // A morning protocol: the Monday step's shot is at 09:00. Before it the question stays;
+    // once it is taken at 200 mcg the person went ahead and there is nothing to decide.
+    const morning = protocol({ times: ['09:00'], time_of_day: '09:00' })
+    const days = ['2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02']
+    const week = days.map((d) => dose(`${d}T09:05`, 0.15))
+    const early = new Date('2026-10-05T08:00')
+    const later = new Date('2026-10-05T10:00')
+    const c = activeCycles([morning], early)[0]!
+    expect(attention(c, week, new Set(), early).decision).toMatchObject({
+      kind: 'increase',
+      timing: 'today',
+    })
+    const ahead = [...week, dose('2026-10-05T09:10', 0.2)]
+    expect(attention(c, ahead, new Set(), later).decision).toBeNull()
+    // Taken at the old dose it is not an answer: the question stays.
+    const held = [...week, dose('2026-10-05T09:10', 0.15)]
+    expect(attention(c, held, new Set(), later).decision).not.toBeNull()
+  })
+
   it('leaves out a decision that was already answered', () => {
     const c = cycle()
     const key = decisionKey('cjc', attention(c, onPlan, new Set(), SUNDAY).decision!)

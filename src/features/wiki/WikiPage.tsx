@@ -1,5 +1,5 @@
 import { ChevronDown, FlaskConical, Search, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { whenIdle } from '@/app/idle'
@@ -7,7 +7,7 @@ import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { controlClass } from '@/components/ui/Field'
-import { Badge, Chip, EmptyState, SectionTitle, SubstanceDot } from '@/components/ui/primitives'
+import { EmptyState, SectionTitle, SubstanceDot } from '@/components/ui/primitives'
 import {
   BLENDS,
   CATEGORY_ORDER,
@@ -21,27 +21,27 @@ import type { CompoundMeta } from '@/content/schema'
 import { categoryColor } from '@/content/substanceColor'
 import { useProtocols } from '@/data/hooks'
 import { protocolCompoundIds } from '@/data/mappers'
-import type { CompoundCategory } from '@/domain/types'
-import { fmtHours } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { evidenceTone } from './tones'
+import { EvidenceTag } from './EvidenceMeter'
 
+interface Family {
+  key: string
+  title: string
+  icon: ReactNode
+  items: readonly CompoundMeta[]
+}
+
+/**
+ * The catalogue: one search field, then what you use and every family folded into one list.
+ * Typing turns the page into a flat list of matches.
+ */
 export function WikiPage() {
   const { t } = useTranslation()
   const { patientId } = usePatientScope()
   const protocols = useProtocols(patientId)
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState<CompoundCategory | 'blends' | 'all'>('all')
 
-  const results = useMemo(
-    () => searchWiki(query, category === 'all' ? undefined : category),
-    [query, category],
-  )
-
-  const categories = useMemo(() => {
-    const present = new Set(COMPOUNDS.map((c) => c.category))
-    return CATEGORY_ORDER.filter((c) => present.has(c))
-  }, [])
+  const results = useMemo(() => searchWiki(query), [query])
 
   const mine = useMemo(() => {
     const ids = new Set((protocols.data ?? []).flatMap(protocolCompoundIds))
@@ -54,12 +54,35 @@ export function WikiPage() {
     return [...substances, ...blends]
   }, [protocols.data])
 
-  const browsing = category === 'all' && !query
-  // A blend that is already under "yours" does not need a second row in the blends list.
-  const otherBlends = useMemo(() => {
+  const families = useMemo<Family[]>(() => {
+    // A blend that is already under "yours" does not need a second row among the blends.
     const yours = new Set(mine.map((c) => c.id))
-    return results.filter((c) => c.blend && !yours.has(c.id))
-  }, [mine, results])
+    const blends = BLENDS.filter((b) => !yours.has(b.id))
+    const byCategory = CATEGORY_ORDER.flatMap((cat) => {
+      const items = COMPOUNDS.filter((c) => c.category === cat)
+      return items.length === 0
+        ? []
+        : [
+            {
+              key: cat,
+              title: t(`wiki.categories.${cat}`),
+              icon: <SubstanceDot color={categoryColor(cat)} size={9} />,
+              items,
+            },
+          ]
+    })
+    return blends.length === 0
+      ? byCategory
+      : [
+          {
+            key: 'blends',
+            title: t('wiki.blends'),
+            icon: <FlaskConical className="size-[15px] text-muted" aria-hidden />,
+            items: blends,
+          },
+          ...byCategory,
+        ]
+  }, [mine, t])
 
   // Most visits open an entry next: fetch its (cached, precached) chunk once the list has painted.
   useEffect(() => whenIdle(() => void preloadCompoundDetails().catch(() => {})), [])
@@ -73,7 +96,7 @@ export function WikiPage() {
         subtitle={t('wiki.count', { count: results.length })}
       />
 
-      <div className="relative mb-3">
+      <div className="relative mb-5">
         <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
         <input
           type="search"
@@ -97,134 +120,102 @@ export function WikiPage() {
         )}
       </div>
 
-      <div className="hide-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4">
-        <Chip active={category === 'all'} onClick={() => setCategory('all')}>
-          {t('wiki.all')}
-        </Chip>
-        <Chip active={category === 'blends'} onClick={() => setCategory('blends')}>
-          <FlaskConical className="size-3.5" aria-hidden />
-          {t('wiki.blends')}
-        </Chip>
-        {categories.map((c) => (
-          <Chip
-            key={c}
-            active={category === c}
-            color={categoryColor(c)}
-            onClick={() => setCategory(c)}
-          >
-            {t(`wiki.categories.${c}`)}
-          </Chip>
-        ))}
-      </div>
-
       {results.length === 0 ? (
         <Card>
-          <EmptyState icon={<Search className="size-7" />} title={t('wiki.noResults')} />
+          <EmptyState title={t('wiki.noResults')} description={t('wiki.noResultsHint')} />
         </Card>
-      ) : browsing ? (
+      ) : query ? (
+        <Card padded={false} className="px-4">
+          <CompoundList items={results} showBrands />
+        </Card>
+      ) : (
         <div className="flex flex-col gap-5">
           {mine.length > 0 && (
             <section>
               <SectionTitle>{t('wiki.mine')}</SectionTitle>
-              <CompoundList items={mine} />
+              <Card padded={false} className="px-4">
+                <CompoundList items={mine} />
+              </Card>
             </section>
           )}
-          {otherBlends.length > 0 && (
-            <section>
-              <SectionTitle action={<span className="spec">{otherBlends.length}</span>}>
-                <span className="inline-flex items-center gap-2">
-                  <FlaskConical className="size-3.5 text-muted" aria-hidden />
-                  {t('wiki.blends')}
-                </span>
-              </SectionTitle>
-              <CompoundList items={otherBlends} />
-            </section>
-          )}
-          {categories.map((cat) => {
-            // Blends have their own section while browsing.
-            const items = results.filter((c) => c.category === cat && !c.blend)
-            if (items.length === 0) return null
-            return (
-              <details key={cat} className="group">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-control border border-line bg-panel px-4 py-2.5 [&::-webkit-details-marker]:hidden">
-                  <span className="inline-flex items-center gap-2 text-[14px] font-semibold">
-                    <SubstanceDot color={categoryColor(cat)} />
-                    {t(`wiki.categories.${cat}`)}
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="spec">{items.length}</span>
-                    <ChevronDown
-                      className="size-4 text-muted transition group-open:rotate-180"
-                      aria-hidden
-                    />
-                  </span>
-                </summary>
-                <div className="mt-2">
-                  <CompoundList items={items} />
-                </div>
-              </details>
-            )
-          })}
+          <section>
+            <SectionTitle>{t('wiki.families')}</SectionTitle>
+            <Card padded={false} className="px-4">
+              <ul className="divide-y divide-line">
+                {families.map((f) => (
+                  <li key={f.key}>
+                    <FamilyFold family={f} />
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </section>
         </div>
-      ) : (
-        <CompoundList items={results} showBrands />
       )}
     </div>
+  )
+}
+
+/** One family: its name and size, and its entries once opened. */
+function FamilyFold({ family }: { family: Family }) {
+  return (
+    <details className="group">
+      <summary className="-mx-2 flex min-h-[52px] cursor-pointer list-none items-center gap-3 rounded-xl px-2 py-2.5 outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60 [&::-webkit-details-marker]:hidden">
+        <span className="grid w-[15px] shrink-0 place-items-center">{family.icon}</span>
+        <span className="min-w-0 flex-1 text-[15px] font-semibold leading-snug">
+          {family.title}
+        </span>
+        <span className="readout text-[13px] text-muted">{family.items.length}</span>
+        <ChevronDown
+          className="size-4 shrink-0 text-muted transition group-open:rotate-180 motion-reduce:transition-none"
+          aria-hidden
+        />
+      </summary>
+      <div className="border-t border-line pl-[27px]">
+        <CompoundList items={family.items} dots={false} />
+      </div>
+    </details>
   )
 }
 
 function CompoundList({
   items,
   showBrands = false,
+  dots = true,
 }: {
   items: readonly CompoundMeta[]
   showBrands?: boolean
+  /** Inside a family the family's dot is already there. */
+  dots?: boolean
 }) {
-  const { t } = useTranslation()
-  const { locale, pick } = useLocale()
+  const { pick } = useLocale()
   const nav = useNavigate()
   return (
-    <Card padded={false} className="px-4">
-      <ul className="divide-y divide-line">
-        {items.map((c) => (
-          <li key={c.id}>
-            <button
-              type="button"
-              onClick={() => nav(`/wiki/${c.id}`)}
-              className="-mx-2 flex min-h-14 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
-            >
-              <SubstanceDot color={categoryColor(c.category)} size={9} />
-              <span className="min-w-0 flex-1">
-                <span className="block text-[15px] font-semibold leading-snug">
-                  {c.names.generic}
-                </span>
-                <span className="mt-0.5 line-clamp-2 block text-[12.5px] leading-snug text-muted">
-                  {c.blend ? (
-                    c.blend.components.map((p) => compoundName(p.compoundId)).join(' + ')
-                  ) : (
-                    <>
-                      {showBrands && c.names.brands.length > 0
-                        ? `${c.names.brands.slice(0, 3).join(' · ')} — `
-                        : ''}
-                      {pick(c.pharmClass)}
-                    </>
-                  )}
-                </span>
+    <ul className="divide-y divide-line">
+      {items.map((c) => (
+        <li key={c.id}>
+          <button
+            type="button"
+            onClick={() => nav(`/wiki/${c.id}`)}
+            className="-mx-2 flex min-h-[60px] w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
+          >
+            {dots && <SubstanceDot color={categoryColor(c.category)} size={9} />}
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-semibold leading-snug">
+                {c.names.generic}
               </span>
-              <span className="flex shrink-0 flex-col items-end gap-1">
-                <Badge tone={evidenceTone(c.evidence)}>
-                  {t(`wiki.evidenceTiers.${c.evidence}`)}
-                </Badge>
-                {c.pk && (
-                  <span className="readout text-[11px] text-muted">
-                    T½ {fmtHours(c.pk.halfLifeH, locale)}
-                  </span>
-                )}
+              <span className="mt-0.5 line-clamp-2 block text-[12.5px] leading-snug text-muted">
+                {c.blend
+                  ? c.blend.components.map((p) => compoundName(p.compoundId)).join(' + ')
+                  : showBrands && c.names.brands.length > 0
+                    ? `${c.names.brands.slice(0, 3).join(' · ')} · ${pick(c.pharmClass)}`
+                    : pick(c.pharmClass)}
               </span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </Card>
+            </span>
+            <EvidenceTag tier={c.evidence} />
+          </button>
+        </li>
+      ))}
+    </ul>
   )
 }

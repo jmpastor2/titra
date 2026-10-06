@@ -75,13 +75,13 @@ function SharedProfile() {
             type="button"
             aria-label={t('common.back')}
             onClick={() => nav('/share')}
-            className="-ml-1.5 grid size-11 shrink-0 place-items-center rounded-full border border-line bg-panel text-ink-2 outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
+            className="-ml-1.5 grid size-11 shrink-0 place-items-center rounded-full bg-panel-2 text-ink outline-none hover:bg-panel-3 focus-visible:ring-2 focus-visible:ring-signal/60"
           >
             <ChevronLeft className="size-5" aria-hidden />
           </button>
           <div className="min-w-0 flex-1">
             <div className="spec">{t('share.readOnly')}</div>
-            <div className="font-display text-[18px] font-bold leading-tight">
+            <div className="break-words font-display text-[20px] font-bold leading-tight tracking-[-0.02em]">
               {patient?.display_name}
             </div>
           </div>

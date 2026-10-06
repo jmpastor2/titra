@@ -18,8 +18,10 @@ export interface DoseMark {
 
 export const AXIS_FONT = 11
 export const LANE_H = 14
+/** The rounded numerals of the readouts, for every figure drawn in a chart. */
+export const NUM_FONT = 'var(--font-num)'
 
-/** Horizontal grid with the value labels at the left; the baseline is drawn solid. */
+/** Horizontal hairlines with the value labels at the left; the baseline a shade stronger. */
 export function YAxisGrid({
   ticks,
   box,
@@ -43,13 +45,14 @@ export function YAxisGrid({
             y1={y(v)}
             y2={y(v)}
             stroke={v === 0 ? 'var(--line-strong)' : 'var(--line)'}
-            strokeDasharray={v === 0 ? undefined : '2 4'}
+            shapeRendering="crispEdges"
           />
           <text
             x={box.x0 - 6}
             y={y(v) + 4}
             textAnchor="end"
             fontSize={AXIS_FONT}
+            fontFamily={NUM_FONT}
             fill="var(--muted)"
             style={{ fontVariantNumeric: 'tabular-nums' }}
           >
@@ -83,12 +86,13 @@ export function XAxisLabels({
         const px = x(t)
         return (
           <g key={t}>
-            <line x1={px} x2={px} y1={baselineY} y2={baselineY + 3} stroke="var(--line-strong)" />
+            <line x1={px} x2={px} y1={baselineY} y2={baselineY + 3} stroke="var(--line)" />
             <text
               x={px}
               y={baselineY + 16}
               textAnchor={px < 20 ? 'start' : px > width - 20 ? 'end' : 'middle'}
               fontSize={AXIS_FONT}
+              fontFamily={NUM_FONT}
               fill="var(--muted)"
             >
               {format(new Date(t), pattern, { locale: dateLocale })}
@@ -127,6 +131,7 @@ export function RailLabels({
             y={11 + p.lane * LANE_H}
             fontSize={label.strong ? 9.5 : 10}
             fontWeight={label.strong ? 700 : 600}
+            fontFamily={NUM_FONT}
             fill="var(--ink-2)"
             style={{ fontVariantNumeric: 'tabular-nums' }}
           >
@@ -160,7 +165,7 @@ export function ReadoutBar({
         lines === 2 ? 'min-h-[36px]' : 'min-h-[20px]',
       )}
     >
-      <span className="spec shrink-0 text-[9.5px]">{unit}</span>
+      <span className="spec shrink-0 text-[11px]">{unit}</span>
       <div aria-live="polite" className="min-w-0 text-right text-[11.5px] leading-tight">
         {children}
       </div>

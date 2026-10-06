@@ -2,17 +2,15 @@ import type { EvidenceTier, RegulatoryStatus } from '@/domain/types'
 
 type Tone = 'neutral' | 'brand' | 'accent' | 'ok' | 'warn' | 'danger'
 
+/** Badge tone of an evidence tier: trials read as "fine", animal or user reports as "careful". */
 export function evidenceTone(e: EvidenceTier): Tone {
   switch (e) {
     case 'fda_approved':
-      return 'ok'
     case 'phase3':
-      return 'brand'
     case 'phase2':
     case 'phase1':
-      return 'accent'
+      return 'brand'
     case 'preclinical':
-      return 'warn'
     case 'anecdotal':
       return 'warn'
     case 'withdrawn':
@@ -20,38 +18,24 @@ export function evidenceTone(e: EvidenceTier): Tone {
   }
 }
 
+/** Colour of the evidence bars and readout, from the same three meanings (tokens only). */
+export function evidenceColor(e: EvidenceTier): string {
+  const tone = evidenceTone(e)
+  return tone === 'warn' ? 'var(--warn)' : tone === 'danger' ? 'var(--danger)' : 'var(--signal)'
+}
+
+/** Quiet unless the status changes what you can do: approved, controlled, not for humans. */
 export function regulatoryTone(r: RegulatoryStatus): Tone {
   switch (r) {
     case 'approved':
-      return 'ok'
-    case 'compounded':
       return 'brand'
-    case 'investigational':
-      return 'accent'
-    case 'research_only':
-      return 'danger'
-    case 'discontinued':
-      return 'neutral'
     case 'controlled':
       return 'warn'
+    case 'research_only':
+      return 'danger'
+    case 'compounded':
+    case 'investigational':
+    case 'discontinued':
+      return 'neutral'
   }
-}
-
-/** Text and fill colour classes of a tone, for readouts and meters (tokens only). */
-export const toneText: Record<Tone, string> = {
-  neutral: 'text-ink-2',
-  brand: 'text-signal',
-  accent: 'text-accent',
-  ok: 'text-signal',
-  warn: 'text-warn',
-  danger: 'text-danger',
-}
-
-export const toneFill: Record<Tone, string> = {
-  neutral: 'bg-muted',
-  brand: 'bg-signal',
-  accent: 'bg-accent',
-  ok: 'bg-signal',
-  warn: 'bg-warn',
-  danger: 'bg-danger',
 }

@@ -126,7 +126,7 @@ function ProtocolTile({
         </span>
       </span>
       {choice.units !== null ? (
-        <span className="readout text-glow shrink-0 text-[20px] font-semibold leading-none text-signal">
+        <span className="readout shrink-0 text-[20px] font-semibold leading-none text-signal">
           {fmtNumber(choice.units, locale, 1)}
           <span className="ml-0.5 text-[11px]">U</span>
         </span>

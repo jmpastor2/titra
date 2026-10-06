@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
-import { Badge, SectionTitle, Skeleton } from '@/components/ui/primitives'
+import { SectionTitle, Skeleton } from '@/components/ui/primitives'
 import { useDoses } from '@/data/hooks'
 import type { SiteUse } from '@/domain/sites/injectionSites'
-import { byRest, rankSites, siteStatuses } from '@/domain/sites/rotation'
+import { byRest, rankSites, siteStatuses, type RankedSite } from '@/domain/sites/rotation'
 import { useNow } from '@/lib/useNow'
 import { BodyMap } from './BodyMap'
 import { RestList } from './RestList'
@@ -33,70 +33,83 @@ export function SitesPage() {
   const statuses = useMemo(() => siteStatuses(history, now), [history, now])
   const next = useMemo(() => rankSites(history, now).slice(0, 3), [history, now])
   const ordered = useMemo(() => byRest(statuses), [statuses])
-  const best = next[0]
+  const [best, ...then] = next
+
+  /** "Sin usar 9 días · Alterna lado": why this site, in one line. */
+  const why = (s: RankedSite) =>
+    [reasonText(t, s.reason), s.balance ? t(`sites.balance.${s.balance}`) : null]
+      .filter(Boolean)
+      .join(' · ')
 
   return (
     <div className="pb-6">
       <PageHeader title={t('sites.title')} back="/more" />
 
-      <Card tone="signal" className="mb-3">
-        <p className="text-[13.5px] leading-relaxed text-ink-2">{t('sites.intro')}</p>
-        <div className="spec mb-1.5 mt-3">{t('sites.next')}</div>
+      <Card className="mb-3">
+        <span className="spec">{t('sites.nextOne')}</span>
         {doses.isLoading ? (
-          <Skeleton className="h-[132px]" />
+          <Skeleton className="mt-2 h-[120px]" />
         ) : (
-          <ol className="space-y-1.5">
-            {next.map((s, i) => (
-              <li
-                key={s.siteId}
-                className="flex items-center gap-3 rounded-control bg-panel px-3 py-2.5"
+          best && (
+            <>
+              <div className="mt-1 text-[26px] font-semibold leading-tight text-signal">
+                {t(`sites.labels.${best.site.labelKey}`)}
+              </div>
+              <p
+                className={
+                  best.resting
+                    ? 'mt-1 text-[13px] leading-snug text-warn'
+                    : 'mt-1 text-[13px] leading-snug text-ink-2'
+                }
               >
-                <span
-                  className={
-                    i === 0
-                      ? 'readout text-[13px] font-bold text-signal'
-                      : 'readout text-[13px] text-muted'
-                  }
-                >
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div
-                    className={
-                      i === 0 ? 'text-[15.5px] font-bold text-signal' : 'text-[14.5px] font-medium'
-                    }
-                  >
-                    {t(`sites.labels.${s.site.labelKey}`)}
-                  </div>
-                  <div
-                    className={s.resting ? 'text-[12.5px] text-warn' : 'text-[12.5px] text-muted'}
-                  >
-                    {reasonText(t, s.reason)}
-                  </div>
+                {why(best)}
+              </p>
+              {best.resting && (
+                <p className="mt-2 flex items-start gap-2 text-[12.5px] leading-snug text-warn">
+                  <AlertTriangle aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+                  {t('sites.allResting')}
+                </p>
+              )}
+              {then.length > 0 && (
+                <div className="mt-4 border-t border-line pt-3">
+                  <span className="spec">{t('sites.then')}</span>
+                  <ol className="mt-1 divide-y divide-line">
+                    {then.map((s) => (
+                      <li
+                        key={s.siteId}
+                        className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-2.5 last:pb-0"
+                      >
+                        <span className="text-[15px] font-medium">
+                          {t(`sites.labels.${s.site.labelKey}`)}
+                        </span>
+                        <span
+                          className={
+                            s.resting ? 'text-[12.5px] text-warn' : 'text-[12.5px] text-muted'
+                          }
+                        >
+                          {why(s)}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
-                {s.balance && <Badge tone="neutral">{t(`sites.balance.${s.balance}`)}</Badge>}
-              </li>
-            ))}
-          </ol>
+              )}
+            </>
+          )
         )}
-        {best?.resting && (
-          <p className="mt-2.5 flex items-start gap-2 text-[12.5px] leading-snug text-warn">
-            <AlertTriangle aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-            {t('sites.allResting')}
-          </p>
-        )}
+        <p className="mt-4 text-[12.5px] leading-snug text-muted">{t('sites.intro')}</p>
       </Card>
 
       <Card className="mb-3">
         <BodyMap statuses={statuses} now={now} suggestedId={best?.siteId} />
       </Card>
 
-      <SectionTitle index="01">{t('sites.byRest')}</SectionTitle>
+      <SectionTitle>{t('sites.byRest')}</SectionTitle>
       <Card padded={false} className="mb-3 px-4">
         <RestList statuses={ordered} now={now} suggestedId={best?.siteId} />
       </Card>
 
-      <SectionTitle index="02">{t('sites.timeline')}</SectionTitle>
+      <SectionTitle>{t('sites.timeline')}</SectionTitle>
       <Card>
         <SiteTimeline history={history} now={now} />
       </Card>

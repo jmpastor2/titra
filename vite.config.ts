@@ -20,18 +20,17 @@ export default defineConfig(({ mode }) => {
         includeAssets: ['icons/*.png', 'icons/*.svg'],
         manifest: {
           id: '/titra/',
-          name: 'Titra · laboratorio de péptidos',
+          name: 'Titra',
           short_name: 'Titra',
-          description:
-            'Tu laboratorio personal de péptidos: pautas, tomas, jeringa, viales, niveles, avisos y wiki.',
+          description: 'Tu control de péptidos: pautas, tomas, jeringa, viales, niveles y avisos.',
           lang: 'es',
           dir: 'ltr',
           start_url: base,
           scope: base,
           display: 'standalone',
           orientation: 'portrait',
-          background_color: '#07080e',
-          theme_color: '#07080e',
+          background_color: '#0a0b10',
+          theme_color: '#0a0b10',
           categories: ['health', 'medical'],
           icons: [
             { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },

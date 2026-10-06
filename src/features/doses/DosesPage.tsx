@@ -31,6 +31,7 @@ import {
 import { fitOf, type Fit } from './delta'
 import { findExtras, type ExtraDose } from './extras'
 import { logKpis } from './logKpis'
+import { punctuality } from './punctuality'
 import { useAssignDose } from './useAssignDose'
 import { doseCells } from './week'
 
@@ -59,7 +60,7 @@ export function DosesPage() {
 
   const admins = useMemo(() => groupAdministrations(doseRows), [doseRows])
   const adminByKey = useMemo(() => new Map(admins.map((a) => [a.key, a])), [admins])
-  // How each dose sits against the plan: the same matching as the week card and the Today ring.
+  // How each dose sits against the plan: the same matching as the week card and Hoy.
   const cells = useMemo(
     () => doseCells(protocolRows, doseRows, addDays(now, -365), now),
     [protocolRows, doseRows, now],
@@ -70,10 +71,8 @@ export function DosesPage() {
     [cells],
   )
 
-  const kpis = useMemo(
-    () => logKpis(protocolRows, doseRows, admins, now),
-    [protocolRows, doseRows, admins, now],
-  )
+  const kpis = useMemo(() => logKpis(protocolRows, doseRows, now), [protocolRows, doseRows, now])
+  const punctual = useMemo(() => punctuality(cells.values(), now), [cells, now])
 
   const [filter, setFilter] = useState('all')
   const [planOpen, setPlanOpen] = useState(false)
@@ -122,7 +121,7 @@ export function DosesPage() {
         <>
           <LogSummary
             kpis={kpis}
-            now={now}
+            punctuality={punctual}
             planOpen={planOpen}
             onTogglePlan={() => setPlanOpen((open) => !open)}
           />
@@ -277,7 +276,7 @@ export function DosesPage() {
 function LogSkeleton() {
   return (
     <div className="flex flex-col gap-4" aria-hidden>
-      <Skeleton className="h-[290px] w-full rounded-card" />
+      <Skeleton className="h-[270px] w-full rounded-card" />
       {[0, 1].map((i) => (
         <section key={i}>
           <Skeleton className="mb-2 ml-1 h-3 w-24" />

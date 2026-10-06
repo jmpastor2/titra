@@ -84,51 +84,52 @@ export function TrialCard({
   const band = ref.band
 
   return (
-    <Card className="p-4" style={{ borderColor: `color-mix(in oklab, ${color} 30%, var(--line))` }}>
-      <ProtocolTitle
-        f={f}
-        title={item.title}
-        compoundIds={item.compoundIds}
-        eyebrow={`${reference.trial} · ${reference.year}`}
-      />
+    <Card padded={false} className="overflow-hidden">
+      <div className="px-4 pt-4">
+        <ProtocolTitle
+          f={f}
+          title={t('outlook.chart.title')}
+          compoundIds={item.compoundIds}
+          eyebrow={`${reference.trial} · ${reference.year}`}
+        />
 
-      {band && ref.doseMg !== null && (
-        <p className="mt-2.5 text-[12.5px] leading-relaxed text-ink-2">
-          {t(`outlook.position.${band.position}`, {
-            dose: fmtDose(ref.doseMg, unit, f.locale),
-            lower: fmtDose(band.lowerDoseMg, 'mg', f.locale),
-            upper: fmtDose(band.upperDoseMg, 'mg', f.locale),
-          })}
-        </p>
-      )}
-
-      {trial.series.length > 1 && (
-        <div className="mt-4">
-          <div className="spec mb-1">{t('outlook.chart.title')}</div>
-          <OutlookChart
-            f={f}
-            color={color}
-            series={trial.series}
-            todayWeeks={trial.todayWeeks}
-            targetWeeks={ref.weeksAtTarget}
-            horizon={horizon}
-            me={chartMe}
-            projection={chartProjection}
-          />
-        </div>
-      )}
-
-      {!trend && !readOnly && (
-        <div className="mt-3 flex items-center gap-3 rounded-[14px] border border-dashed border-line-strong p-3">
-          <Scale className="size-5 shrink-0 text-signal" />
-          <p className="min-w-0 flex-1 text-[12.5px] text-ink-2">
-            {t('outlook.personal.askWeight')}
+        {band && ref.doseMg !== null && (
+          <p className="mt-1.5 text-[12.5px] leading-snug text-muted">
+            {t(`outlook.position.${band.position}`, {
+              dose: fmtDose(ref.doseMg, unit, f.locale),
+              lower: fmtDose(band.lowerDoseMg, 'mg', f.locale),
+              upper: fmtDose(band.upperDoseMg, 'mg', f.locale),
+            })}
           </p>
-          <Button size="sm" variant="soft" onClick={onLogWeight}>
-            {t('outlook.personal.logWeight')}
-          </Button>
-        </div>
-      )}
+        )}
+
+        {trial.series.length > 1 && (
+          <div className="mt-3">
+            <OutlookChart
+              f={f}
+              color={color}
+              series={trial.series}
+              todayWeeks={trial.todayWeeks}
+              targetWeeks={ref.weeksAtTarget}
+              horizon={horizon}
+              me={chartMe}
+              projection={chartProjection}
+            />
+          </div>
+        )}
+
+        {!trend && !readOnly && (
+          <div className="mt-3 flex items-center gap-3 border-t border-line pt-3">
+            <Scale className="size-5 shrink-0 text-muted" aria-hidden />
+            <p className="min-w-0 flex-1 text-[12.5px] leading-snug text-ink-2">
+              {t('outlook.personal.askWeight')}
+            </p>
+            <Button size="sm" variant="secondary" onClick={onLogWeight}>
+              {t('outlook.personal.logWeight')}
+            </Button>
+          </div>
+        )}
+      </div>
 
       <TrialDetails
         f={f}
@@ -141,6 +142,7 @@ export function TrialCard({
   )
 }
 
+/** A card's heading: what it shows, and the trial and substances it is about in a quiet line. */
 export function ProtocolTitle({
   f,
   title,
@@ -154,14 +156,14 @@ export function ProtocolTitle({
 }) {
   return (
     <header>
-      <div className="spec">{eyebrow}</div>
-      <div className="mt-1 flex items-start gap-2">
-        <span className="mt-[9px] flex items-center gap-1">
+      <h2 className="text-[16px] font-semibold leading-snug text-ink">{title}</h2>
+      <div className="mt-1 flex items-start gap-1.5">
+        <span className="mt-[6px] flex items-center gap-1">
           {compoundIds.map((id) => (
-            <SubstanceDot key={id} color={compoundColor(id)} />
+            <SubstanceDot key={id} color={compoundColor(id)} size={7} />
           ))}
         </span>
-        <h2 className="min-w-0 font-display text-[18px] font-semibold leading-snug">{title}</h2>
+        <span className="spec min-w-0 leading-snug">{eyebrow}</span>
       </div>
       <span className="sr-only">
         {f.t('outlook.compounds', { names: compoundIds.map(compoundName).join(', ') })}
@@ -213,15 +215,15 @@ function TrialDetails({
     [t('outlook.trial.source'), reference.source],
   ]
   return (
-    <details className="group mt-4 rounded-[14px] border border-line bg-panel-2">
-      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-[13px] font-semibold text-ink-2">
+    <details className="group mt-4 border-t border-line">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-[13.5px] font-semibold text-ink-2 outline-none focus-visible:bg-panel-2">
         <span className="flex items-center gap-2">
           <FlaskConical className="size-4 text-muted" />
           {t('outlook.trial.open')}
         </span>
         <ChevronRight className="size-4 text-muted transition group-open:rotate-90" />
       </summary>
-      <div className="border-t border-line px-3 pb-3 pt-2.5">
+      <div className="px-4 pb-4">
         <p className="text-[13px] leading-relaxed text-ink-2">{pick(outlook.summary)}</p>
         <div className="mt-3 text-[13px] font-semibold">
           {reference.trial} · {reference.year}

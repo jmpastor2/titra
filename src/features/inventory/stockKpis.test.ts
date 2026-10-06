@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { InventoryRow } from '@/data/database.types'
-import { coverGauge, stockKpis, supplyTone } from './stockKpis'
+import { coverGauge, expiryTone, reorderTone, stockKpis, supplyTone } from './stockKpis'
 import { restockPlan } from './vials'
 
 const vial = (over: Partial<InventoryRow>): InventoryRow =>
@@ -139,10 +139,24 @@ describe('supply tone and gauge', () => {
     expect(supplyTone(null)).toBe('ok')
   })
 
-  it('fills a gauge up to three months and keeps it full when nothing runs out', () => {
+  it('fills a gauge up to two months and keeps it full when nothing runs out', () => {
     expect(coverGauge(null)).toBe(1)
-    expect(coverGauge(45)).toBe(0.5)
+    expect(coverGauge(30)).toBe(0.5)
     expect(coverGauge(400)).toBe(1)
     expect(coverGauge(-3)).toBe(0)
+  })
+
+  it('reads a use-by date as wrong once past, careful in its last week', () => {
+    expect(expiryTone(-1)).toBe('danger')
+    expect(expiryTone(0)).toBe('warn')
+    expect(expiryTone(7)).toBe('warn')
+    expect(expiryTone(8)).toBe('ok')
+  })
+
+  it('reads an order-by day as now once it has come, soon within a week', () => {
+    expect(reorderTone(-16)).toBe('danger')
+    expect(reorderTone(0)).toBe('danger')
+    expect(reorderTone(7)).toBe('warn')
+    expect(reorderTone(8)).toBe('ok')
   })
 })

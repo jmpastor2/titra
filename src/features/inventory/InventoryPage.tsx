@@ -35,7 +35,7 @@ export function InventoryPage() {
   const { toast } = useToast()
   const now = useNow()
   const stock = useStock(patientId, now)
-  const { list, runways, restock } = stock
+  const { list, runways, usable, restock } = stock
   // Archived vials too: they are the history, and the best template for restocking.
   const everything = useInventory(patientId, true)
   const save = useSaveInventory(patientId)
@@ -113,7 +113,7 @@ export function InventoryPage() {
               type="button"
               aria-label={t('inventory.add')}
               onClick={() => setAdding({})}
-              className="glow grid size-11 place-items-center rounded-full bg-signal text-signal-ink outline-none transition hover:brightness-110 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-signal/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+              className="grid size-11 place-items-center rounded-full bg-ink text-canvas outline-none transition hover:opacity-90 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-signal/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
             >
               <Plus className="size-5" aria-hidden />
             </button>
@@ -146,7 +146,7 @@ export function InventoryPage() {
                     key={p.id}
                     type="button"
                     onClick={() => setAdding({ preset: p })}
-                    className="flex min-h-11 items-center gap-1.5 rounded-2xl border border-line-strong bg-panel-2 px-3.5 py-1.5 text-left text-[12.5px] font-semibold leading-tight outline-none transition hover:border-signal/40 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-signal/60"
+                    className="flex min-h-11 items-center gap-1.5 rounded-[18px] border border-line bg-panel-2 px-3.5 py-1.5 text-left text-[13px] font-medium leading-tight outline-none transition hover:border-line-strong active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-signal/60"
                   >
                     <span className="flex shrink-0 gap-1">
                       {p.parts.map((x) => (
@@ -184,6 +184,7 @@ export function InventoryPage() {
                         key={item.id}
                         item={item}
                         runway={runways.get(item.id)}
+                        usable={usable.get(item.id)}
                         nextDoseMg={nextDose.get(item.compound_id)}
                         now={now}
                         readOnly={readOnly}

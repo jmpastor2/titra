@@ -93,8 +93,8 @@ export function ExportPage() {
 
   return (
     <div className="pb-8">
-      <PageHeader eyebrow={t('more.groups.health')} title={t('export.title')} large back="/more" />
-      <p className="-mt-2 mb-4 px-1 text-[13.5px] leading-snug text-muted">
+      <PageHeader title={t('export.title')} back="/more" />
+      <p className="-mt-1 mb-4 px-1 text-[13.5px] leading-snug text-muted">
         {t('settings.exportHint')}
       </p>
 

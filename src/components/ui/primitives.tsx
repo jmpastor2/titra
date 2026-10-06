@@ -4,12 +4,12 @@ import { useId, type HTMLAttributes, type ReactNode } from 'react'
 /* ---------- Badge ---------- */
 type BadgeTone = 'neutral' | 'brand' | 'accent' | 'ok' | 'warn' | 'danger'
 const badgeTones: Record<BadgeTone, string> = {
-  neutral: 'bg-panel-2 text-ink-2 border-line',
-  brand: 'bg-signal-soft text-signal border-signal/20',
-  accent: 'bg-accent-soft text-accent border-accent/20',
-  ok: 'bg-ok-soft text-ok border-ok/20',
-  warn: 'bg-warn-soft text-warn border-warn/25',
-  danger: 'bg-danger-soft text-danger border-danger/25',
+  neutral: 'bg-panel-3 text-ink-2',
+  brand: 'bg-signal-soft text-signal',
+  accent: 'bg-accent-soft text-accent',
+  ok: 'bg-ok-soft text-ok',
+  warn: 'bg-warn-soft text-warn',
+  danger: 'bg-danger-soft text-danger',
 }
 export function Badge({
   tone = 'neutral',
@@ -20,7 +20,7 @@ export function Badge({
   return (
     <span
       className={clsx(
-        'inline-flex items-center gap-1 whitespace-nowrap rounded-full border px-2 py-[3px] font-mono text-[10.5px] font-semibold uppercase tracking-[0.08em]',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-[3px] text-[11.5px] font-semibold leading-tight',
         badgeTones[tone],
         className,
       )}
@@ -70,72 +70,6 @@ export function Stat({
         {unit && <span className="ml-1 text-[12px] font-medium text-muted">{unit}</span>}
       </span>
       {hint && <span className="mt-1.5 text-[12.5px] text-muted">{hint}</span>}
-    </div>
-  )
-}
-
-/* ---------- Progress ring (gauge with a tick bezel) ---------- */
-export function ProgressRing({
-  fraction,
-  size = 88,
-  stroke = 8,
-  children,
-  color = 'var(--signal)',
-  ticks = true,
-}: {
-  fraction: number
-  size?: number
-  stroke?: number
-  children?: ReactNode
-  color?: string
-  ticks?: boolean
-}) {
-  const r = (size - stroke) / 2 - 3
-  const c = 2 * Math.PI * r
-  const f = Math.max(0, Math.min(1, fraction))
-  const cx = size / 2
-  return (
-    <div
-      className="relative grid shrink-0 place-items-center"
-      style={{ width: size, height: size }}
-    >
-      {/* overflow visible: the glow of the arc is not cut off at the edge of the box */}
-      <svg width={size} height={size} className="-rotate-90 overflow-visible" aria-hidden>
-        {ticks &&
-          Array.from({ length: 40 }, (_, i) => {
-            const a = (i / 40) * 2 * Math.PI
-            const r1 = size / 2 - 0.5
-            const r2 = r1 - (i % 5 === 0 ? 3 : 1.5)
-            return (
-              <line
-                key={i}
-                x1={cx + r1 * Math.cos(a)}
-                y1={cx + r1 * Math.sin(a)}
-                x2={cx + r2 * Math.cos(a)}
-                y2={cx + r2 * Math.sin(a)}
-                stroke="var(--line-strong)"
-                strokeWidth={1}
-              />
-            )
-          })}
-        <circle cx={cx} cy={cx} r={r} stroke="var(--panel-3)" strokeWidth={stroke} fill="none" />
-        <circle
-          cx={cx}
-          cy={cx}
-          r={r}
-          stroke={color}
-          strokeWidth={stroke}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={c}
-          strokeDashoffset={c * (1 - f)}
-          style={{
-            transition: 'stroke-dashoffset 700ms cubic-bezier(.2,.8,.2,1)',
-            filter: `drop-shadow(0 0 5px color-mix(in oklab, ${color} 55%, transparent))`,
-          }}
-        />
-      </svg>
-      <div className="absolute inset-0 grid place-items-center">{children}</div>
     </div>
   )
 }
@@ -311,7 +245,7 @@ export function Chip({
         className={clsx(
           'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[13px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60',
           active
-            ? 'border-signal/40 bg-signal-soft text-ink'
+            ? 'border-transparent bg-ink text-canvas'
             : 'border-line bg-panel text-ink-2 group-hover:border-line-strong',
         )}
       >
@@ -704,10 +638,10 @@ export function Divider({ className }: { className?: string }) {
   return <hr className={clsx('border-0 border-t border-line', className)} />
 }
 
-/* ---------- Section title: silkscreen label with an index ---------- */
+/* ---------- Section title ---------- */
+/** `index` ("01", "◆") is accepted for compatibility and no longer drawn: numbered sections were decoration. */
 export function SectionTitle({
   children,
-  index,
   action,
 }: {
   children: ReactNode
@@ -715,10 +649,9 @@ export function SectionTitle({
   action?: ReactNode
 }) {
   return (
-    <div className="mb-2.5 mt-2 flex items-center justify-between px-1">
-      <h2 className="spec flex items-center gap-2">
-        {index && <span className="text-signal">{index}</span>}
-        <span>{children}</span>
+    <div className="mb-2.5 mt-3 flex items-center justify-between gap-3 px-1">
+      <h2 className="flex min-w-0 items-center gap-2 text-[15px] font-semibold tracking-[-0.01em] text-ink">
+        {children}
       </h2>
       {action}
     </div>

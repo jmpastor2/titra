@@ -43,10 +43,13 @@ export function stepState(info: CycleInfo, index: number): TrackState {
 }
 
 export type TrackCell =
-  /** Week `n` of the plan; a week of rest is hatched; the first week of a step opens a group. */
-  | { kind: 'week'; n: number; state: TrackState; rest: boolean; stepStart: boolean }
+  /**
+   * Week `n` of the plan, in step `step` (its index); a week of rest is hatched; the first week
+   * of a step opens a group.
+   */
+  | { kind: 'week'; n: number; step: number; state: TrackState; rest: boolean; stepStart: boolean }
   /** An open-ended step (maintenance) has no weeks to count. */
-  | { kind: 'open'; state: TrackState }
+  | { kind: 'open'; step: number; state: TrackState }
   /** Weeks left out of a long plan: "+N". */
   | { kind: 'more'; state: TrackState; count: number }
 
@@ -58,7 +61,7 @@ export function weekTrack(info: CycleInfo, max: number = TRACK_MAX): TrackCell[]
   let weeks = 0
   const cells = info.steps.flatMap((s): TrackCell[] => {
     const state = stepState(info, s.index)
-    if (s.weeks === null) return [{ kind: 'open', state }]
+    if (s.weeks === null) return [{ kind: 'open', step: s.index, state }]
     const first = weeks
     weeks += Math.max(1, Math.ceil(s.weeks))
     return Array.from({ length: weeks - first }, (_, i): TrackCell => {
@@ -66,6 +69,7 @@ export function weekTrack(info: CycleInfo, max: number = TRACK_MAX): TrackCell[]
       return {
         kind: 'week',
         n: first + inStep,
+        step: s.index,
         rest: s.pause,
         stepStart: i === 0,
         state:

@@ -130,6 +130,9 @@ export interface VialRunway {
   runsOutAt: Date | null
   /** Dose of the next administration, for "your dose → units". */
   nextDoseMg: number | null
+  /** Set by the expiry-aware supply walk (supply.ts): what ends it, and mg thrown away. */
+  limitedBy?: 'expiry' | 'amount' | null
+  wastedMg?: number
 }
 
 /**
@@ -185,11 +188,18 @@ export interface RestockLine {
 
 /**
  * Supply per compound in use: everything in stock, walked against the upcoming doses,
- * so a titration step-up shortens it. `upcoming` is per compound, soonest first.
+ * so a titration step-up shortens it. `upcoming` is per compound, soonest first. `walk`
+ * decides how far the stock goes; by default all the mg are pooled, and the app passes
+ * the expiry-aware walk (supply.ts) so a vial thrown away on its discard date counts.
  */
 export function restockPlan(
   vials: readonly InventoryRow[],
   upcoming: ReadonlyMap<string, readonly { at: Date; doseMg: number }[]>,
+  walk?: (
+    holding: readonly InventoryRow[],
+    compoundId: string,
+    doses: readonly { at: Date; doseMg: number }[],
+  ) => VialRunway,
 ): RestockLine[] {
   return [...upcoming.entries()].map(([compoundId, doses]) => {
     const holding = vials.filter((v) => !v.archived && vialHas(v, compoundId))
@@ -208,7 +218,7 @@ export function restockPlan(
       availableMg,
       vials: holding.filter((v) => Number(v.remaining_mg) > 0).length,
       reserve: holding.filter((v) => needsReconstitution(v) && Number(v.remaining_mg) > 0).length,
-      runway: vialRunway(availableMg, doses),
+      runway: walk ? walk(holding, compoundId, doses) : vialRunway(availableMg, doses),
     }
   })
 }

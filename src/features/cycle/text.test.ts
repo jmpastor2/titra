@@ -5,7 +5,14 @@ import { cycleInfo } from '@/domain/dosing/cycle'
 import type { ProtocolLike, ScheduleStep } from '@/domain/types'
 import { cycleDecision } from './decision'
 import type { StepDose } from './dose'
-import { decisionSentence, headlineText, inDaysText, nextText, whenText } from './text'
+import {
+  decisionSentence,
+  decisionShort,
+  headlineText,
+  inDaysText,
+  nextText,
+  whenText,
+} from './text'
 import { headline, nextLine } from './view'
 
 const d = (iso: string) => new Date(iso)
@@ -52,14 +59,20 @@ describe('nextText', () => {
   const dose = (s: { doseMg: number }) => `${s.doseMg * 100} U`
   const say = (p: ProtocolLike, iso: string) => {
     const n = nextLine(info(p, iso))
-    return nextText(n, dose, t, 'es') + ('days' in n ? ` · ${inDaysText(n.days, t)}` : '')
+    // The day keeps its two words together (a no-break space): compared here as a plain one.
+    const text = nextText(n, dose, t, 'es').replaceAll('\u00A0', ' ')
+    return text + ('days' in n ? ` · ${inDaysText(n.days, t)}` : '')
   }
 
   it('announces the change with its day and how far away it is', () => {
-    expect(say(CJC, '2026-10-04T10:00')).toBe('El lun 5 sube a 20 U · en 1 día')
-    expect(say(CJC, '2026-12-07T10:00')).toBe('El lun 14 empieza el descanso · en 7 días')
-    expect(say(CJC, '2026-12-22T10:00')).toBe('El ciclo termina el lun 11 · en 20 días')
+    expect(say(CJC, '2026-10-04T10:00')).toBe('Sube el lun 5 a 20 U · en 1 día')
+    expect(say(CJC, '2026-12-07T10:00')).toBe('Descanso desde el lun 14 · en 7 días')
+    expect(say(CJC, '2026-12-22T10:00')).toBe('Termina el lun 11 · en 20 días')
     expect(say(CJC, '2026-09-14T10:00')).toBe('Empieza con 10 U · en 7 días')
+  })
+
+  it('never breaks the day of the change across two lines', () => {
+    expect(nextText(nextLine(info(CJC, '2026-10-04T10:00')), dose, t, 'es')).toContain('lun\u00A05')
   })
 
   it('knows when nothing is planned or the plan is over', () => {
@@ -111,6 +124,33 @@ describe('decisionSentence', () => {
     )
     expect(decisionSentence(decide(CJC, '2027-01-20T10:00'), none, 'mcg', t, 'es')).toBe(
       'Descanso terminado: ¿empiezas un nuevo ciclo?',
+    )
+  })
+})
+
+describe('decisionShort', () => {
+  const decide = (p: ProtocolLike, iso: string) => cycleDecision(info(p, iso), d(iso))!
+
+  it('says what changes in a few words, in the units drawn', () => {
+    const up = decide(CJC, '2026-10-04T10:00')
+    expect(decisionShort(up, { from: U(0.15, 9), to: U(0.2, 12) }, 'mcg', t, 'es')).toBe(
+      'Sube a 12 U',
+    )
+    expect(decisionShort(up, { from: U(0.15, null), to: U(0.2, null) }, 'mcg', t, 'es')).toBe(
+      'Sube a 200 mcg',
+    )
+  })
+
+  it('names the rest, the end and a plan that is over', () => {
+    const none = { from: null, to: null }
+    expect(decisionShort(decide(CJC, '2026-12-12T10:00'), none, 'mcg', t, 'es')).toBe(
+      'Empieza el descanso',
+    )
+    expect(decisionShort(decide(CJC, '2027-01-09T10:00'), none, 'mcg', t, 'es')).toBe(
+      'Termina el ciclo',
+    )
+    expect(decisionShort(decide(CJC, '2027-01-20T10:00'), none, 'mcg', t, 'es')).toBe(
+      'Ciclo terminado',
     )
   })
 })

@@ -13,9 +13,22 @@ export function fmtSigned(value: number, locale: Locale, digits: number): string
   return `${value > 0 ? '+' : '−'}${text}`
 }
 
-/** A change in body weight, stored in kg, in the unit the person uses. */
+/** A change in body weight, stored in kg, in the unit the person uses: "−0,5" and "kg". */
+export function weightDeltaParts(
+  deltaKg: number,
+  imperial: boolean,
+  locale: Locale,
+): { value: string; unit: string } {
+  return {
+    value: fmtSigned(imperial ? deltaKg * LB_PER_KG : deltaKg, locale, 1),
+    unit: imperial ? 'lb' : 'kg',
+  }
+}
+
+/** A change in body weight, stored in kg, in the unit the person uses: "−0,5 kg". */
 export function fmtWeightDelta(deltaKg: number, imperial: boolean, locale: Locale): string {
-  return `${fmtSigned(imperial ? deltaKg * LB_PER_KG : deltaKg, locale, 1)} ${imperial ? 'lb' : 'kg'}`
+  const { value, unit } = weightDeltaParts(deltaKg, imperial, locale)
+  return `${value} ${unit}`
 }
 
 /** "semana 3 de 12" → "Semana 3 de 12". */

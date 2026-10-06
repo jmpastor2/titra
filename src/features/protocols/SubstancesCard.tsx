@@ -68,7 +68,7 @@ export function SubstancesCard({
   }
 
   return (
-    <Card eyebrow="01" title={t('protocols.substances')}>
+    <Card title={t('protocols.substances')}>
       <button
         type="button"
         onClick={() => onPick('primary')}

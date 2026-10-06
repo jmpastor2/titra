@@ -9,7 +9,7 @@ import { SlidersHorizontal } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
-import { Badge, Skeleton } from '@/components/ui/primitives'
+import { Badge, SectionTitle, Skeleton } from '@/components/ui/primitives'
 import type { MeasurementKind } from '@/data/database.types'
 import { useDoses, useInventory, useProtocols, useSymptoms } from '@/data/hooks'
 import { CheckInSheet } from '@/features/checkin/CheckInSheet'
@@ -190,17 +190,21 @@ function QuickLogPanel({ className, omit = OMIT_NONE, max = MAX_TILES }: QuickLo
 
   return (
     <section aria-label={t('quick.title')} className={clsx('fade-up', className)}>
-      <header className="mb-2.5 mt-2 flex min-h-7 items-center justify-between gap-3 px-1">
-        <h2 className="spec">{t('quick.title')}</h2>
-        {ready && pendingCount > 0 && (
-          <Badge tone="warn">{t('quick.pending', { count: pendingCount })}</Badge>
-        )}
-      </header>
+      <SectionTitle
+        action={
+          ready &&
+          pendingCount > 0 && (
+            <Badge tone="warn">{t('quick.pending', { count: pendingCount })}</Badge>
+          )
+        }
+      >
+        {t('quick.title')}
+      </SectionTitle>
 
       <div className="@container">
-        <div className="grid grid-cols-2 gap-2 @xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 @xl:grid-cols-4">
           {!ready ? (
-            Array.from({ length: max + 1 }, (_, i) => <Skeleton key={i} className="h-[96px]" />)
+            Array.from({ length: max + 1 }, (_, i) => <Skeleton key={i} className="h-[104px]" />)
           ) : (
             <>
               {visible.map((id) => {

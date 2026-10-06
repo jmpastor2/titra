@@ -1,14 +1,13 @@
 /**
- * The figures at the top of Registro: how the week is going, how the last four weeks went,
- * how long since the last dose and what is next. All of it comes from the same matching as
- * the week card and the Today ring, so the three always agree. Pure; see logKpis.test.ts.
+ * The figures at the top of Registro: how the week is going, how the last four weeks went
+ * and what is next. All of it comes from the same matching as the week card and Hoy, so
+ * they always agree. Pure; see logKpis.test.ts.
  */
 import { addDays, startOfDay, startOfWeek } from 'date-fns'
+import type { TickState } from '@/components/kpi/Ticks'
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
 import { toDoseEvent, toProtocolLike } from '@/data/mappers'
 import { adherence } from '@/domain/dosing/schedule'
-import { fmtHours, type Locale } from '@/lib/format'
-import type { Administration } from './administrations'
 import { protocolDoseRows, weekPlanVsActual, type WeekCell, type WeekDay } from './week'
 
 /** How a day of the week reads on the strip. */
@@ -31,6 +30,9 @@ export type DayMark =
 export interface StripDay {
   day: Date
   mark: DayMark
+  /** Planned administrations of the day, and how many of them are taken. */
+  planned: number
+  taken: number
   /** A dose nobody planned was taken that day. */
   extra: boolean
 }
@@ -59,15 +61,7 @@ export interface LogKpis {
   strip: StripDay[]
   /** The last four weeks of the protocols being followed; null when none has planned doses yet. */
   adherence: { taken: number; expected: number; ratio: number } | null
-  /** The most recent administration that is not in the future. */
-  last: Administration | null
   next: NextDose | null
-}
-
-/** How long ago, as a bare quantity: "45 min", "14 h", "3 d 4 h". */
-export function fmtElapsed(from: Date, now: Date, locale: Locale): string {
-  const min = Math.max(0, Math.round((now.getTime() - from.getTime()) / 60_000))
-  return min < 60 ? `${Math.max(1, min)} min` : fmtHours(min / 60, locale)
 }
 
 const planned = (cells: readonly WeekCell[]) => cells.filter((c) => c.status !== 'extra')
@@ -82,6 +76,17 @@ export function dayMark(cells: readonly WeekCell[]): DayMark {
   if (taken === 0) return 'upcoming'
   if (taken < plan.length) return 'partial'
   return plan.some((c) => c.status === 'late' || c.status === 'early') ? 'late' : 'done'
+}
+
+/**
+ * A day as one bar of the week: all taken is full, some taken half-tone, anything missed
+ * rose, planned but still to come a faint track, nothing planned an outline.
+ */
+export function tickOf(d: Pick<StripDay, 'mark' | 'planned' | 'taken'>): TickState {
+  if (d.planned === 0) return 'rest'
+  if (d.mark === 'missed') return 'missed'
+  if (d.taken >= d.planned) return 'full'
+  return d.taken > 0 ? 'partial' : 'none'
 }
 
 export function weekFigures(days: readonly WeekDay[]): WeekFigures {
@@ -140,26 +145,29 @@ export function overallAdherence(
 }
 
 /**
- * Everything the header needs. `administrations` are the log's, most recent first.
- * Only protocols being followed count: a paused or finished plan expects nothing.
+ * Everything the header needs. Only protocols being followed count: a paused or finished
+ * plan expects nothing.
  */
 export function logKpis(
   protocols: readonly ProtocolRow[],
   doses: readonly DoseRow[],
-  administrations: readonly Administration[],
   now: Date,
 ): LogKpis {
   const following = protocols.filter((p) => p.status === 'active')
   const days = weekPlanVsActual(following, doses, startOfWeek(now, { weekStartsOn: 1 }), now)
   return {
     week: weekFigures(days),
-    strip: days.map((d) => ({
-      day: d.day,
-      mark: dayMark(d.cells),
-      extra: d.cells.some((c) => c.status === 'extra'),
-    })),
+    strip: days.map((d) => {
+      const plan = planned(d.cells)
+      return {
+        day: d.day,
+        mark: dayMark(d.cells),
+        planned: plan.length,
+        taken: plan.filter((c) => c.takenAt).length,
+        extra: d.cells.some((c) => c.status === 'extra'),
+      }
+    }),
     adherence: overallAdherence(following, doses, now),
-    last: administrations.find((a) => a.at <= now) ?? null,
     next: nextDose(following, doses, now),
   }
 }

@@ -5,8 +5,9 @@ import { Card } from '@/components/ui/Card'
 import type { CompoundDetail, ProtocolTemplate } from '@/content/schema'
 import { fmtDose, fmtHours } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { EVIDENCE_RUNGS, evidenceLevel, fmtDoseRange, templateDoseRange } from './facts'
-import { evidenceTone, toneFill, toneText } from './tones'
+import { EvidenceBars } from './EvidenceMeter'
+import { fmtDoseRange, templateDoseRange } from './facts'
+import { evidenceColor } from './tones'
 
 interface Fact {
   key: string
@@ -15,34 +16,13 @@ interface Fact {
   body: ReactNode
 }
 
-function Cell({ fact, wide }: { fact: Fact; wide: boolean }) {
-  return (
-    <div className={clsx('min-w-0 bg-panel p-3.5', wide && 'col-span-2')}>
-      <div className="spec">{fact.label}</div>
-      <div className="mt-1.5">{fact.body}</div>
-      {fact.hint && <div className="mt-1.5 text-[12px] leading-snug text-muted">{fact.hint}</div>}
-    </div>
-  )
-}
-
-/** Seven rungs, filled up to the tier: how much human evidence there is, at a glance. */
-function EvidenceMeter({ level, fill }: { level: number; fill: string }) {
-  return (
-    <div className="mt-2 flex gap-1" aria-hidden>
-      {Array.from({ length: EVIDENCE_RUNGS }, (_, i) => (
-        <span
-          key={i}
-          className={clsx('h-1.5 flex-1 rounded-full', i < level ? fill : 'bg-panel-3')}
-        />
-      ))}
-    </div>
-  )
-}
+const NUMBER = 'readout text-[24px] font-semibold leading-none'
+const WORDS = 'text-[16px] font-semibold leading-snug'
 
 /**
- * The four facts people come to an entry for: how solid the evidence is, how long it stays in
- * the body, what the label or the trials dose it at, and how it goes in. Everything else on
- * the page is folded below.
+ * The four facts people come to an entry for, as one definition grid: how solid the evidence is,
+ * how long it stays in the body, what the label or the trials dose it at, and how it goes in.
+ * Everything else on the page is folded below.
  */
 export function KeyFacts({
   compound,
@@ -53,7 +33,6 @@ export function KeyFacts({
 }) {
   const { t } = useTranslation()
   const { locale, pick } = useLocale()
-  const tone = evidenceTone(compound.evidence)
   const range = templateDoseRange(templates)
   const frequency = compound.dosing.frequency
   const total = compound.blend?.components.reduce((sum, p) => sum + p.mg, 0)
@@ -63,13 +42,17 @@ export function KeyFacts({
     {
       key: 'evidence',
       label: t('wiki.evidence'),
+      hint: t(`wiki.evidenceHints.${compound.evidence}`),
       body: (
-        <>
-          <div className={clsx('text-[19px] font-semibold leading-tight', toneText[tone])}>
+        <span className="flex items-end gap-2.5">
+          <span
+            className="text-[18px] font-semibold leading-none"
+            style={{ color: evidenceColor(compound.evidence) }}
+          >
             {t(`wiki.evidenceTiers.${compound.evidence}`)}
-          </div>
-          <EvidenceMeter level={evidenceLevel(compound.evidence)} fill={toneFill[tone]} />
-        </>
+          </span>
+          <EvidenceBars tier={compound.evidence} height={17} />
+        </span>
       ),
     },
   ]
@@ -82,22 +65,14 @@ export function KeyFacts({
         compound.pk.tmaxH !== undefined
           ? t('wiki.peak', { time: fmtHours(compound.pk.tmaxH, locale) })
           : undefined,
-      body: (
-        <div className="readout text-[22px] font-semibold leading-tight">
-          {fmtHours(compound.pk.halfLifeH, locale)}
-        </div>
-      ),
+      body: <span className={NUMBER}>{fmtHours(compound.pk.halfLifeH, locale)}</span>,
     })
   } else if (total !== undefined) {
     facts.push({
       key: 'perVial',
       label: t('wiki.perVial'),
       hint: t('wiki.parts', { count: parts }),
-      body: (
-        <div className="readout text-[22px] font-semibold leading-tight">
-          {fmtDose(total, 'mg', locale)}
-        </div>
-      ),
+      body: <span className={NUMBER}>{fmtDose(total, 'mg', locale)}</span>,
     })
   }
 
@@ -106,17 +81,13 @@ export function KeyFacts({
       key: 'dose',
       label: t('wiki.doseRange'),
       hint: frequency ? pick(frequency) : t('wiki.doseRangeHint'),
-      body: (
-        <div className="readout text-[20px] font-semibold leading-tight">
-          {fmtDoseRange(range, compound.defaultUnit, locale)}
-        </div>
-      ),
+      body: <span className={NUMBER}>{fmtDoseRange(range, compound.defaultUnit, locale)}</span>,
     })
   } else if (frequency) {
     facts.push({
       key: 'frequency',
       label: t('wiki.usualFrequency'),
-      body: <div className="text-[14.5px] font-semibold leading-snug">{pick(frequency)}</div>,
+      body: <span className={WORDS}>{pick(frequency)}</span>,
     })
   }
 
@@ -124,23 +95,31 @@ export function KeyFacts({
     key: 'routes',
     label: t('wiki.routes'),
     body: (
-      <div className="text-[14.5px] font-semibold leading-snug">
+      <span className={WORDS}>
         {compound.routes.map((r) => t(`wiki.routeNames.${r}`)).join(' · ')}
-      </div>
+      </span>
     ),
   })
 
   return (
-    <Card padded={false} instrument>
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[inherit] bg-line">
+    <Card>
+      <dl className="grid grid-cols-2 gap-x-5 gap-y-5">
         {facts.map((fact, i) => (
-          <Cell
+          <div
             key={fact.key}
-            fact={fact}
-            wide={facts.length % 2 === 1 && i === facts.length - 1}
-          />
+            className={clsx(
+              'flex min-w-0 flex-col',
+              facts.length % 2 === 1 && i === facts.length - 1 && 'col-span-2',
+            )}
+          >
+            <dt className="spec">{fact.label}</dt>
+            <dd className="mt-2 flex min-h-6 items-end">{fact.body}</dd>
+            {fact.hint && (
+              <dd className="mt-1.5 text-[12.5px] leading-snug text-muted">{fact.hint}</dd>
+            )}
+          </div>
         ))}
-      </div>
+      </dl>
     </Card>
   )
 }

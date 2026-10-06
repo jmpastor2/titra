@@ -58,7 +58,7 @@ export function SiteTimeline({ history, now }: { history: readonly SiteUse[]; no
                   scope="col"
                   aria-label={format(d.date, 'PPPP', { locale: dfLocale })}
                   className={clsx(
-                    'pb-1 text-center font-mono text-[9px] font-semibold leading-tight',
+                    'readout pb-1 text-center text-[10px] font-medium leading-tight',
                     today ? 'text-signal' : 'text-muted',
                   )}
                 >
@@ -104,7 +104,7 @@ export function SiteTimeline({ history, now }: { history: readonly SiteUse[]; no
                         {here.length > 1 && (
                           <span
                             aria-hidden
-                            className="font-mono text-[8px] font-bold leading-none text-[var(--panel)]"
+                            className="readout text-[8px] font-bold leading-none text-[var(--panel)]"
                           >
                             {here.length}
                           </span>

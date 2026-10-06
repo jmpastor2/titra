@@ -30,18 +30,19 @@ export function PageHeader({
             type="button"
             aria-label={t('common.back')}
             onClick={() => (typeof back === 'string' ? nav(back) : nav(-1))}
-            className="-ml-1.5 grid size-11 shrink-0 place-items-center rounded-full border border-line bg-panel text-ink-2 outline-none hover:text-signal focus-visible:ring-2 focus-visible:ring-signal/60"
+            className="-ml-1.5 grid size-11 shrink-0 place-items-center rounded-full bg-panel-2 text-ink outline-none hover:bg-panel-3 focus-visible:ring-2 focus-visible:ring-signal/60"
           >
             <ChevronLeft className="size-5" />
           </button>
         )}
         <div className="min-w-0 flex-1">
-          {eyebrow && <div className="spec mb-0.5">{eyebrow}</div>}
+          {/* A page reached with the back button already says where it is: no eyebrow there. */}
+          {eyebrow && !back && <div className="spec mb-0.5">{eyebrow}</div>}
           <h1
             className={
               large
-                ? 'break-words font-display text-[30px] font-bold leading-tight'
-                : 'break-words font-display text-[21px] font-bold leading-tight'
+                ? 'break-words font-display text-[32px] font-bold leading-[1.1] tracking-[-0.03em]'
+                : 'break-words font-display text-[22px] font-bold leading-tight tracking-[-0.025em]'
             }
           >
             {title}

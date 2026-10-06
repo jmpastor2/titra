@@ -1,40 +1,38 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/space-grotesk';
-@import '@fontsource-variable/jetbrains-mono';
 
 /*
- * Titra · Biolab. Dark lab is the identity; light is the "clean bench" variant.
- * See DESIGN.md for the reasoning behind every token.
+ * Titra. Quiet instrument: system type, rounded numerals, one iris accent, no decoration that
+ * does not carry data. See DESIGN.md for the reasoning behind every token.
  */
 
 /* ---------- Tokens: light ---------- */
 :root {
-  --bg: #f4f5fb;
-  --halo-a: rgb(99 102 241 / 0.1);
-  --halo-b: rgb(192 132 252 / 0.08);
+  --bg: #f6f6f9;
+  --halo-a: rgb(88 86 214 / 0.07);
+  --halo-b: rgb(10 132 184 / 0.04);
   --panel: #ffffff;
-  --panel-2: #f0f2fa;
-  --panel-3: #e3e7f4;
-  --line: rgb(13 16 48 / 0.09);
-  --line-strong: rgb(13 16 48 / 0.18);
-  --ink: #0d1030;
-  --ink-2: #363c66;
-  --muted: #5c6490;
-  --signal: #4a52e0;
+  --panel-2: #f2f2f6;
+  --panel-3: #e7e8ef;
+  --line: rgb(17 18 38 / 0.075);
+  --line-strong: rgb(17 18 38 / 0.14);
+  --ink: #111226;
+  --ink-2: #3d4057;
+  --muted: #6c7088;
+  --signal: #5856d6;
   --signal-ink: #ffffff;
-  --signal-soft: rgb(74 82 224 / 0.1);
+  --signal-soft: rgb(88 86 214 / 0.1);
   --signal-glow: 0 0 0 transparent;
   --accent: #0a84b8;
   --accent-soft: rgb(10 132 184 / 0.1);
-  --warn: #9a5a00;
-  --warn-soft: rgb(154 90 0 / 0.12);
-  --danger: #c0345b;
-  --danger-soft: rgb(192 52 91 / 0.1);
-  --ok: #4a52e0;
-  --ok-soft: rgb(74 82 224 / 0.1);
-  --shadow: 0 1px 2px rgb(13 16 48 / 0.06), 0 12px 32px -18px rgb(13 16 48 / 0.25);
-  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.9);
-  --radius: 20px;
+  --warn: #a35f00;
+  --warn-soft: rgb(163 95 0 / 0.11);
+  --danger: #c8325a;
+  --danger-soft: rgb(200 50 90 / 0.1);
+  --ok: #5856d6;
+  --ok-soft: rgb(88 86 214 / 0.1);
+  --shadow: 0 1px 2px rgb(17 18 38 / 0.04), 0 10px 28px -18px rgb(17 18 38 / 0.2);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.8);
+  --radius: 22px;
   --radius-sm: 14px;
 
   /* Substance identity: colour follows the family (names are historical, hues are not green) */
@@ -57,63 +55,63 @@
 
 /* ---------- Tokens: night (dark, default) ---------- */
 :root[data-theme='dark'] {
-  --bg: #07080e;
-  --halo-a: rgb(124 140 255 / 0.2);
-  --halo-b: rgb(192 132 252 / 0.12);
-  --panel: #0f111b;
-  --panel-2: #151826;
-  --panel-3: #1d2133;
-  --line: rgb(168 178 255 / 0.1);
-  --line-strong: rgb(168 178 255 / 0.2);
-  --ink: #eef0fb;
-  --ink-2: #b8bedb;
-  --muted: #8189ae;
-  --signal: #9fadff;
-  --signal-ink: #0a0c24;
-  --signal-soft: rgb(159 173 255 / 0.14);
-  --signal-glow: 0 0 28px rgb(124 140 255 / 0.38);
-  --accent: #5fd0f0;
-  --accent-soft: rgb(95 208 240 / 0.14);
-  --warn: #ffb454;
-  --warn-soft: rgb(255 180 84 / 0.14);
-  --danger: #ff6f98;
-  --danger-soft: rgb(255 111 152 / 0.14);
-  --ok: #9fadff;
-  --ok-soft: rgb(159 173 255 / 0.14);
-  --shadow: 0 1px 0 rgb(0 0 0 / 0.4), 0 18px 40px -24px rgb(0 0 0 / 0.9);
-  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.05);
-  --chart-1: #8392ff;
+  --bg: #0a0b10;
+  --halo-a: rgb(124 128 255 / 0.11);
+  --halo-b: rgb(98 208 236 / 0.05);
+  --panel: #12131a;
+  --panel-2: #191a23;
+  --panel-3: #23252f;
+  --line: rgb(255 255 255 / 0.065);
+  --line-strong: rgb(255 255 255 / 0.13);
+  --ink: #f3f4f8;
+  --ink-2: #c4c7d4;
+  --muted: #8b90a5;
+  --signal: #8f93ff;
+  --signal-ink: #0b0c1f;
+  --signal-soft: rgb(143 147 255 / 0.14);
+  --signal-glow: 0 0 0 transparent;
+  --accent: #62d0ec;
+  --accent-soft: rgb(98 208 236 / 0.13);
+  --warn: #f6b24e;
+  --warn-soft: rgb(246 178 78 / 0.13);
+  --danger: #ff6d8e;
+  --danger-soft: rgb(255 109 142 / 0.13);
+  --ok: #8f93ff;
+  --ok-soft: rgb(143 147 255 / 0.14);
+  --shadow: 0 14px 34px -24px rgb(0 0 0 / 0.9);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.035);
+  --chart-1: #8f93ff;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #07080e;
-    --halo-a: rgb(124 140 255 / 0.2);
-    --halo-b: rgb(192 132 252 / 0.12);
-    --panel: #0f111b;
-    --panel-2: #151826;
-    --panel-3: #1d2133;
-    --line: rgb(168 178 255 / 0.1);
-    --line-strong: rgb(168 178 255 / 0.2);
-    --ink: #eef0fb;
-    --ink-2: #b8bedb;
-    --muted: #8189ae;
-    --signal: #9fadff;
-    --signal-ink: #0a0c24;
-    --signal-soft: rgb(159 173 255 / 0.14);
-    --signal-glow: 0 0 28px rgb(124 140 255 / 0.38);
-    --accent: #5fd0f0;
-    --accent-soft: rgb(95 208 240 / 0.14);
-    --warn: #ffb454;
-    --warn-soft: rgb(255 180 84 / 0.14);
-    --danger: #ff6f98;
-    --danger-soft: rgb(255 111 152 / 0.14);
-    --ok: #9fadff;
-    --ok-soft: rgb(159 173 255 / 0.14);
-    --shadow: 0 1px 0 rgb(0 0 0 / 0.4), 0 18px 40px -24px rgb(0 0 0 / 0.9);
-    --highlight: inset 0 1px 0 rgb(255 255 255 / 0.05);
-    --chart-1: #8392ff;
+    --bg: #0a0b10;
+    --halo-a: rgb(124 128 255 / 0.11);
+    --halo-b: rgb(98 208 236 / 0.05);
+    --panel: #12131a;
+    --panel-2: #191a23;
+    --panel-3: #23252f;
+    --line: rgb(255 255 255 / 0.065);
+    --line-strong: rgb(255 255 255 / 0.13);
+    --ink: #f3f4f8;
+    --ink-2: #c4c7d4;
+    --muted: #8b90a5;
+    --signal: #8f93ff;
+    --signal-ink: #0b0c1f;
+    --signal-soft: rgb(143 147 255 / 0.14);
+    --signal-glow: 0 0 0 transparent;
+    --accent: #62d0ec;
+    --accent-soft: rgb(98 208 236 / 0.13);
+    --warn: #f6b24e;
+    --warn-soft: rgb(246 178 78 / 0.13);
+    --danger: #ff6d8e;
+    --danger-soft: rgb(255 109 142 / 0.13);
+    --ok: #8f93ff;
+    --ok-soft: rgb(143 147 255 / 0.14);
+    --shadow: 0 14px 34px -24px rgb(0 0 0 / 0.9);
+    --highlight: inset 0 1px 0 rgb(255 255 255 / 0.035);
+    --chart-1: #8f93ff;
     color-scheme: dark;
   }
 }
@@ -143,10 +141,17 @@
   --radius-card: var(--radius);
   --radius-control: var(--radius-sm);
   --font-sans:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Text', Inter, 'Segoe UI', Roboto, system-ui,
-    sans-serif;
-  --font-display: 'Space Grotesk Variable', -apple-system, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', 'SF Mono', ui-monospace, Menlo, Consolas, monospace;
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', Roboto,
+    system-ui, sans-serif;
+  --font-display:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI Variable Display', 'Segoe UI',
+    Roboto, system-ui, sans-serif;
+  /* Numerals: SF Pro Rounded on Apple devices (as in Health and Fitness), the system face elsewhere.
+     font-mono maps here too, so every legacy readout gets the same numerals. */
+  --font-num:
+    ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display',
+    'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-mono: var(--font-num);
 }
 
 /*
@@ -176,7 +181,7 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Backdrop: two soft halos on a flat ground. Fixed layer, no repaint on scroll. */
+  /* Backdrop: one soft aurora at the top of the screen on a flat ground. Fixed, no repaint. */
   body::before {
     content: '';
     position: fixed;
@@ -184,15 +189,15 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(60rem 36rem at -10% -10%, var(--halo-a), transparent 60%),
-      radial-gradient(44rem 30rem at 110% -5%, var(--halo-b), transparent 60%), var(--bg);
+      radial-gradient(70rem 26rem at 50% -14rem, var(--halo-a), transparent 70%),
+      radial-gradient(40rem 22rem at 100% -6rem, var(--halo-b), transparent 70%), var(--bg);
   }
 
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.022em;
   }
 
   input[type='number'] {
@@ -240,7 +245,7 @@
     padding-bottom: max(env(safe-area-inset-bottom), 8px);
   }
 
-  /* Instrument panel */
+  /* Panel: flat surface, hairline edge, soft depth only on the light theme. */
   .card {
     position: relative;
     background: var(--panel);
@@ -249,44 +254,25 @@
     box-shadow: var(--highlight), var(--shadow);
   }
 
-  /* Registration marks on the corners of hero instruments */
-  .instrument::before,
-  .instrument::after {
-    content: '';
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    border-color: var(--line-strong);
-    border-style: solid;
-    pointer-events: none;
-  }
-  .instrument::before {
-    top: 8px;
-    left: 8px;
-    border-width: 1px 0 0 1px;
-    border-top-left-radius: 4px;
-  }
-  .instrument::after {
-    right: 8px;
-    bottom: 8px;
-    border-width: 0 1px 1px 0;
-    border-bottom-right-radius: 4px;
+  /* Kept for compatibility: hero panels no longer carry corner marks. */
+  .instrument {
+    isolation: isolate;
   }
 
-  /* Silkscreen label: mono, uppercase, wide tracking */
+  /* Quiet label: sentence case, small, muted. Numbers and names carry the weight. */
   .spec {
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
     color: var(--muted);
   }
 
   /*
-   * A small silkscreen link ("Ver todo", "Gestionar") keeps its look but answers a 44 px
-   * target: the box grows with padding and gives the room back with a negative margin, so
-   * nothing around it moves. Also available as .tap-link for other small controls.
+   * A small text link ("Ver todo", "Gestionar") keeps its look but answers a 44 px target:
+   * the box grows with padding and gives the room back with a negative margin, so nothing
+   * around it moves. Also available as .tap-link for other small controls.
    */
   a.spec,
   button.spec,
@@ -295,10 +281,11 @@
     margin-block: -15px;
   }
 
+  /* Readout: rounded tabular numerals, slightly tight. */
   .readout {
-    font-family: var(--font-mono);
+    font-family: var(--font-num);
     font-variant-numeric: tabular-nums;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
   }
 
   .tabular {
@@ -309,7 +296,7 @@
     box-shadow: var(--signal-glow);
   }
   .text-glow {
-    text-shadow: 0 0 18px color-mix(in oklab, var(--signal) 45%, transparent);
+    text-shadow: none;
   }
 
   .hide-scrollbar {

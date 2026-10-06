@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { groupAdministrations } from './administrations'
-import { dayMark, fmtElapsed, logKpis, nextDose, overallAdherence, weekFigures } from './logKpis'
-import { blendDose, cjcProtocol, doseRow, retaProtocol } from './testData'
+import { dayMark, logKpis, nextDose, overallAdherence, tickOf, weekFigures } from './logKpis'
+import { blendDose, cjcProtocol, retaProtocol } from './testData'
 import { weekPlanVsActual } from './week'
 
 // Mon–Fri nights (01:00 of the next morning): Tue–Fri taken, Monday 28's forgotten, and an
@@ -19,13 +18,13 @@ function doses() {
 describe('logKpis', () => {
   it('counts the week: planned against taken, what was missed and the extra shot', () => {
     const rows = doses()
-    const k = logKpis([cjcProtocol], rows, groupAdministrations(rows), sunday)
+    const k = logKpis([cjcProtocol], rows, sunday)
     expect(k.week).toEqual({ planned: 5, taken: 4, missed: 1, remaining: 0, extras: 1 })
   })
 
   it('marks each day of the strip, Monday to Sunday', () => {
     const rows = doses()
-    const k = logKpis([cjcProtocol], rows, groupAdministrations(rows), sunday)
+    const k = logKpis([cjcProtocol], rows, sunday)
     expect(k.strip.map((d) => d.mark)).toEqual([
       'missed',
       'done',
@@ -36,6 +35,7 @@ describe('logKpis', () => {
       'rest',
     ])
     expect(k.strip.map((d) => d.extra)).toEqual([false, false, false, false, false, false, true])
+    expect(k.strip.map(tickOf)).toEqual(['missed', 'full', 'full', 'full', 'full', 'rest', 'rest'])
   })
 
   it('reads a dose taken off its time as late, and a half-taken day as partial', () => {
@@ -75,22 +75,23 @@ describe('logKpis', () => {
   it('ignores protocols that are not being followed', () => {
     const rows = doses()
     const paused = { ...cjcProtocol, status: 'paused' as const }
-    const k = logKpis([paused], rows, groupAdministrations(rows), sunday)
+    const k = logKpis([paused], rows, sunday)
     expect(k.week.planned).toBe(0)
     expect(k.adherence).toBeNull()
     expect(k.next).toBeNull()
-    // The log itself still has its last dose.
-    expect(k.last?.at).toEqual(new Date('2026-10-04T08:00'))
+    expect(k.strip.every((d) => tickOf(d) === 'rest')).toBe(true)
   })
+})
 
-  it('takes the last dose that is not in the future', () => {
-    const rows = [doseRow('2026-10-03T09:00'), doseRow('2026-10-05T09:00')]
-    const k = logKpis([], rows, groupAdministrations(rows), sunday)
-    expect(k.last?.at).toEqual(new Date('2026-10-03T09:00'))
-  })
-
-  it('has no last dose in an empty log', () => {
-    expect(logKpis([], [], [], sunday).last).toBeNull()
+describe('tickOf', () => {
+  it('draws a day as full, half-tone, missed, still to come or with nothing planned', () => {
+    expect(tickOf({ mark: 'done', planned: 2, taken: 2 })).toBe('full')
+    expect(tickOf({ mark: 'late', planned: 1, taken: 1 })).toBe('full')
+    expect(tickOf({ mark: 'partial', planned: 2, taken: 1 })).toBe('partial')
+    expect(tickOf({ mark: 'missed', planned: 2, taken: 1 })).toBe('missed')
+    expect(tickOf({ mark: 'due', planned: 1, taken: 0 })).toBe('none')
+    expect(tickOf({ mark: 'upcoming', planned: 1, taken: 0 })).toBe('none')
+    expect(tickOf({ mark: 'rest', planned: 0, taken: 0 })).toBe('rest')
   })
 })
 
@@ -122,18 +123,5 @@ describe('overallAdherence', () => {
   it('is null before anything was due', () => {
     expect(overallAdherence([cjcProtocol], [], new Date('2026-09-20T12:00'))).toBeNull()
     expect(overallAdherence([], [], sunday)).toBeNull()
-  })
-})
-
-describe('fmtElapsed', () => {
-  const at = new Date('2026-10-04T08:00')
-  it('reads minutes, then hours, then days', () => {
-    expect(fmtElapsed(at, new Date('2026-10-04T08:00:20'), 'es')).toBe('1 min')
-    expect(fmtElapsed(at, new Date('2026-10-04T08:45'), 'es')).toBe('45 min')
-    expect(fmtElapsed(at, new Date('2026-10-04T22:10'), 'es')).toBe('14 h')
-    expect(fmtElapsed(at, new Date('2026-10-07T12:00'), 'es')).toBe('3 d 4 h')
-  })
-  it('never goes negative', () => {
-    expect(fmtElapsed(at, new Date('2026-10-04T07:00'), 'es')).toBe('1 min')
   })
 })

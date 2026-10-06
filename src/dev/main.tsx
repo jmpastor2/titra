@@ -15,6 +15,7 @@ import { createQueryClient } from '@/lib/queryClient'
 import { setSupabaseClient } from '@/lib/supabase'
 import { bootTheme } from '@/lib/theme'
 import { createFakeSupabase } from './fakeSupabase'
+import { KitGallery } from './KitGallery'
 import { buildStore, LAB_USER } from './fixtures'
 import { loadRealAccount } from './snapshot'
 
@@ -62,13 +63,19 @@ const session: SessionState = {
 const client = createQueryClient()
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryClientProvider client={client}>
-      <FixedSessionProvider value={session}>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
-      </FixedSessionProvider>
-    </QueryClientProvider>
-  </StrictMode>,
+  params.has('kit') ? (
+    <StrictMode>
+      <KitGallery />
+    </StrictMode>
+  ) : (
+    <StrictMode>
+      <QueryClientProvider client={client}>
+        <FixedSessionProvider value={session}>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </FixedSessionProvider>
+      </QueryClientProvider>
+    </StrictMode>
+  ),
 )

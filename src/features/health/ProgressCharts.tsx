@@ -4,6 +4,7 @@
  */
 import { clsx } from 'clsx'
 import { addMonths, format } from 'date-fns'
+import { ArrowDownRight, ArrowRight, ArrowUpRight } from 'lucide-react'
 import { enUS, es } from 'date-fns/locale'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -45,44 +46,36 @@ export function RangePicker({
   const { t } = useTranslation()
   const { locale } = useLocale()
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-3 px-1">
-        <span className="spec">{t('charts.range.label')}</span>
-        <span className="text-[11.5px] text-muted">
-          {t('charts.range.span', { from: fmtDate(from, locale, 'd MMM') })}
-        </span>
-      </div>
-      <div
-        role="radiogroup"
-        aria-label={t('charts.range.label')}
-        className="mt-1.5 inline-flex h-[46px] w-full items-stretch rounded-full border border-line bg-panel-2"
-      >
-        {RANGES.filter((r) => r !== 'cycle' || hasCycle).map((r) => {
-          const active = r === value
-          return (
-            // The button fills the 46 px of the track to be easy to hit; the pill inside is smaller.
-            <button
-              key={r}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => onChange(r)}
-              className="group flex min-w-0 flex-1 items-center justify-center px-0.5 outline-none"
+    <div
+      role="radiogroup"
+      aria-label={`${t('charts.range.label')}: ${t('charts.range.span', {
+        from: fmtDate(from, locale, 'd MMM'),
+      })}`}
+      className="flex w-full items-stretch gap-1"
+    >
+      {RANGES.filter((r) => r !== 'cycle' || hasCycle).map((r) => {
+        const active = r === value
+        return (
+          // The button is a 44 px target; the pill inside is smaller.
+          <button
+            key={r}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(r)}
+            className="group flex min-h-11 min-w-0 flex-1 items-center justify-center outline-none"
+          >
+            <span
+              className={clsx(
+                'flex h-8 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-full px-2 text-[13px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60',
+                active ? 'bg-panel-3 text-ink' : 'text-muted group-hover:text-ink-2',
+              )}
             >
-              <span
-                className={clsx(
-                  'flex h-[34px] w-full min-w-0 items-center justify-center rounded-full px-2 text-[12.5px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60',
-                  active
-                    ? 'bg-panel text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'
-                    : 'text-muted group-hover:text-ink-2',
-                )}
-              >
-                {t(`charts.range.${r}`)}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+              {t(`charts.range.${r}`)}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -167,7 +160,7 @@ export function ProtocolStrip({
                   return (
                     <span
                       key={`l${s.index}-${s.start.getTime()}`}
-                      className="absolute top-0 truncate text-center font-mono text-[9.5px] leading-3 text-muted"
+                      className="readout absolute top-0 overflow-hidden whitespace-nowrap text-center text-[10.5px] leading-3 text-muted"
                       style={{ left: `${left}%`, width: `${width}%` }}
                     >
                       {label(s)}
@@ -185,10 +178,7 @@ export function ProtocolStrip({
         )
       })}
       {showDates && (
-        <div
-          className="flex justify-between font-mono text-[9.5px] uppercase tracking-[0.08em] text-muted"
-          style={pad}
-        >
+        <div className="readout flex justify-between text-[11px] text-muted" style={pad}>
           <span>{fmtDate(span.from, locale, 'd MMM')}</span>
           <span>{t('common.today')}</span>
         </div>
@@ -199,9 +189,10 @@ export function ProtocolStrip({
 
 /* ------------------------------------------------------------ change readouts */
 
-const TONE_CLASS = { good: 'text-ok', bad: 'text-danger', neutral: 'text-ink-2' } as const
+/** Good news in the accent, a change for the worse in amber: never red and green. */
+const TONE_CLASS = { good: 'text-signal', bad: 'text-warn', neutral: 'text-ink-2' } as const
 
-/** "Energía ▲ +2,1": arrow + sign + tone, so the change never relies on colour alone. */
+/** "Energía ↗ +2,1": arrow + sign + tone, so the change never relies on colour alone. */
 export function ChangeValue({
   kind,
   delta,
@@ -221,12 +212,23 @@ export function ChangeValue({
   className?: string
 }) {
   const { locale } = useLocale()
-  const tone = changeTone(kind, delta, threshold)
   const flat = Math.abs(delta) < threshold
   const text = trim ? fmtSigned(delta, locale, digits) : fmtSignedFixed(delta, locale, digits)
+  const Icon = flat ? ArrowRight : delta > 0 ? ArrowUpRight : ArrowDownRight
   return (
-    <span className={clsx('readout whitespace-nowrap font-semibold', TONE_CLASS[tone], className)}>
-      {flat ? '=' : delta > 0 ? '▲' : '▼'} {text}
+    <span
+      className={clsx(
+        'readout whitespace-nowrap font-semibold',
+        TONE_CLASS[changeTone(kind, delta, threshold)],
+        className,
+      )}
+    >
+      <Icon
+        className="mr-0.5 inline-block size-[1.05em] align-[-0.15em]"
+        strokeWidth={2.4}
+        aria-hidden
+      />
+      {text}
       {unit && <span className="ml-1 text-[0.85em] font-medium text-muted">{unit}</span>}
     </span>
   )

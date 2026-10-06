@@ -204,7 +204,7 @@ describe('body tiles', () => {
 })
 
 describe('counter tiles', () => {
-  it('shows water against the goal, with the ring and what is left', () => {
+  it('shows water against the goal, with its gauge and what is left', () => {
     const rows = [
       row('hydration_ml', 250, '2026-10-05T08:00', 'ml'),
       row('hydration_ml', 500, '2026-10-05T11:00', 'ml'),
@@ -214,7 +214,7 @@ describe('counter tiles', () => {
       value: { text: '750', unit: 'ml' },
       // The figure and its unit stay together when the caption wraps.
       caption: 'Faltan 1,75\u00A0L',
-      visual: { kind: 'ring', fraction: 0.3, done: false },
+      visual: { kind: 'gauge', fraction: 0.3, done: false },
     })
     expect(v.aria).toContain('Toca para añadir 250 ml')
   })
@@ -246,7 +246,7 @@ describe('counter tiles', () => {
     expect(view('protein', { rows })).toMatchObject({
       value: { text: '55', unit: 'g' },
       caption: 'Faltan 68\u00A0g',
-      visual: { kind: 'ring', fraction: 55 / 123 },
+      visual: { kind: 'gauge', fraction: 55 / 123 },
     })
   })
 

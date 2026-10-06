@@ -83,7 +83,7 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
 
       <ProgressSummary />
 
-      <SectionTitle index="02">{t('progress.evolution')}</SectionTitle>
+      <SectionTitle>{t('progress.evolution')}</SectionTitle>
       <EvolutionTabs<Tab>
         value={tab}
         onChange={changeTab}

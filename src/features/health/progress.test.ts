@@ -9,6 +9,7 @@ import {
   monthlyMeans,
   fmtSigned,
   fmtSignedFixed,
+  fmtSignedPct,
   laneMarks,
   monthDelta,
   progressScope,
@@ -209,5 +210,9 @@ describe('monthDelta / fmtSigned', () => {
     expect(fmtSignedFixed(-3.449, 'en', 1)).toBe('−3.4')
     expect(fmtSignedFixed(0.04, 'es', 1)).toBe('0,0')
     expect(fmtSignedFixed(-0.004, 'es', 2)).toBe('0,00')
+  })
+  it('writes a signed percentage the way each language spaces it', () => {
+    expect(fmtSignedPct(-0.645, 'es', 1)).toBe('−0,6\u00a0%')
+    expect(fmtSignedPct(4, 'en', 0)).toBe('+4%')
   })
 })

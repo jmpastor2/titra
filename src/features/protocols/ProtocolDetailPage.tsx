@@ -6,8 +6,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { Kpi } from '@/components/kpi/Kpi'
+import { Steps } from '@/components/kpi/Steps'
 import { Card } from '@/components/ui/Card'
-import { Ring } from '@/components/kpi/Ring'
 import { Badge, SubstanceDot, Skeleton, Vial } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
@@ -15,16 +16,18 @@ import type { DoseRow, InventoryRow, ProtocolRow, ProtocolStatus } from '@/data/
 import { useDoses, useInventory, useProtocols } from '@/data/hooks'
 import { protocolCompoundIds, toDoseEvent } from '@/data/mappers'
 import { adherence } from '@/domain/dosing/schedule'
+import { ladderSteps } from '@/features/cycles/ladder'
+import { phaseWeeks } from '@/features/cycles/phase'
+import { Fact, FactRow } from '@/features/doses/Fact'
 import { weekPlanVsActual, type WeekCell, type WeekStatus } from '@/features/doses/week'
 import { activeVial, concentrationFor, vialLook } from '@/features/inventory/vials'
 import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
 import { useCycleText } from './cycleText'
-import { doseView, fmtDoseView, type DoseView } from './cycleView'
+import { doseFigure, doseView, fmtDoseView, type DoseView } from './cycleView'
 import { fmtPerUnit } from './doseUnits'
-import { DecisionBand } from './DecisionBand'
-import { NextChange } from './NextChange'
+import { DecisionBadge } from './DecisionBand'
 import { PlanTimeline } from './PlanTimeline'
 import { DetailActions } from './ProtocolButtons'
 import { ProtocolSheets } from './ProtocolSheets'
@@ -101,7 +104,15 @@ function ProtocolDetail({
   const scheduleLabel = useScheduleLabel()
   const actions = useProtocolActions({ protocol: p, vials, now, offerUndo: undo.show })
   const { pl, summary } = actions
-  const deciding = canEdit && Boolean(actions.hold && summary?.info.decisionDue)
+  const deciding = Boolean(canEdit && actions.hold && summary?.info.decisionDue && summary.next)
+  const figure = summary?.dose ? doseFigure(summary.dose, locale) : null
+  // A plan with a single step has no staircase to draw.
+  const ladder = useMemo(
+    () =>
+      summary && summary.info.steps.length > 1 ? ladderSteps(phaseWeeks(summary.info, now)) : null,
+    [summary, now],
+  )
+  const line = summary ? text.line(summary, now) : null
   const ids = protocolCompoundIds(p)
   const color = compoundColor(p.compound_id)
   const names = ids.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
@@ -134,54 +145,55 @@ function ProtocolDetail({
       />
 
       {summary && (
-        <Card instrument tone="signal">
-          <div className="flex items-center gap-4">
-            {summary.info.fraction !== null && (
-              <Ring
-                value={summary.info.fraction}
-                size={84}
-                stroke={8}
-                color={color}
-                label={text.phase(summary)}
-              >
-                <span className="readout text-[16px] font-semibold">
-                  {Math.round(summary.info.fraction * 100)}%
-                </span>
-              </Ring>
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                {ids.map((id) => (
-                  <SubstanceDot key={id} color={compoundColor(id)} />
-                ))}
-                <span className="spec">{scheduleLabel(pl.steps, pl.times)}</span>
-              </div>
-              <div className="mt-1 font-display text-[24px] font-bold leading-tight">
-                {text.phase(summary)}
-              </div>
-              <div className="readout mt-0.5 text-[12px] text-muted">
-                {fmtDate(summary.info.startsOn, locale, 'd MMM yyyy')}
-                {summary.info.endsOn
-                  ? ` → ${fmtDate(addDays(summary.info.endsOn, -1), locale, 'd MMM yyyy')}`
-                  : ` · ${t('protocols.timeline.noEnd')}`}
-              </div>
-            </div>
+        <Card>
+          <div className="flex items-center gap-1.5">
+            {ids.map((id) => (
+              <SubstanceDot key={id} color={compoundColor(id)} />
+            ))}
+            <span className="readout text-[12.5px] text-muted">
+              {scheduleLabel(pl.steps, pl.times)}
+            </span>
           </div>
 
-          {summary.dose && <DoseNow actions={actions} />}
-
-          {summary.next && !deciding && (
-            <p className="mt-3 text-[14px] font-medium leading-snug text-ink">
-              <NextChange summary={summary} />
-            </p>
+          {figure ? (
+            <Kpi
+              className="mt-3"
+              size="lg"
+              label={t('protocolDetail.doseNow')}
+              value={figure.value}
+              unit={figure.unit}
+              caption={figure.sub}
+            />
+          ) : (
+            <p className="mt-2 text-[24px] font-semibold leading-tight">{text.phase(summary)}</p>
           )}
 
-          {canEdit && <DecisionBand actions={actions} inset />}
+          {ladder && (
+            <div className="mt-4">
+              <Steps steps={ladder} color={color} height={26} label={text.phase(summary)} />
+              <div className="readout mt-1 flex justify-between gap-3 text-[11.5px] text-muted">
+                <span>{fmtDate(summary.info.startsOn, locale, 'd MMM yyyy')}</span>
+                <span>
+                  {summary.info.endsOn
+                    ? fmtDate(addDays(summary.info.endsOn, -1), locale, 'd MMM yyyy')
+                    : t('protocols.timeline.noEnd')}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {line && <p className="mt-3 text-[14px] leading-snug text-ink">{line}</p>}
+
+          {deciding && (
+            <div className="mt-3">
+              <DecisionBadge summary={summary} />
+            </div>
+          )}
 
           {(summary.info.phase === 'finished' || summary.info.phase === 'rest') && (
             <Link
               to="/cycles"
-              className="mt-3 flex min-h-11 items-center justify-between rounded-control border border-line-strong bg-panel-2 px-3.5 text-[14px] font-semibold text-signal"
+              className="tap-link mt-2 inline-flex items-center gap-0.5 text-[14px] font-semibold text-signal"
             >
               {t('protocolDetail.seeCycles')}
               <ChevronRight aria-hidden className="size-4" />
@@ -222,25 +234,6 @@ function ProtocolDetail({
       )}
 
       {canEdit && <ProtocolSheets actions={actions} />}
-    </div>
-  )
-}
-
-/** The dose in force, as drawn and as mass. */
-function DoseNow({ actions: a }: { actions: ReturnType<typeof useProtocolActions> }) {
-  const { t } = useTranslation()
-  const { locale } = useLocale()
-  const dose = a.summary?.dose ? fmtDoseView(a.summary.dose, locale) : null
-  if (!dose) return null
-  return (
-    <div className="mt-4">
-      <div className="spec">{t('protocolDetail.doseNow')}</div>
-      <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-        <span className="readout text-[34px] font-semibold leading-none">
-          {dose.units ?? dose.mass}
-        </span>
-        {dose.units && <span className="readout text-[14px] text-muted">({dose.mass})</span>}
-      </div>
     </div>
   )
 }
@@ -310,36 +303,25 @@ function WeekCard({
           : undefined
       }
     >
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <div className="spec">{t('protocolDetail.weekTaken')}</div>
-          <div className="readout mt-1 text-[24px] font-semibold leading-none">
-            {taken}
-            <span className="text-[14px] text-muted">/{planned.length}</span>
-            {extras > 0 && (
-              <span className="ml-1.5 text-[12px] font-medium text-accent">
-                {t('protocolDetail.weekExtras', { count: extras })}
-              </span>
-            )}
-          </div>
-        </div>
-        {adh && adh.expected > 0 && (
-          <div>
-            <div className="spec">{t('protocols.adherence')}</div>
-            <div
-              className={clsx(
-                'readout mt-1 text-[24px] font-semibold leading-none',
-                adh.ratio >= 0.9 ? 'text-signal' : 'text-warn',
-              )}
-            >
-              {Math.round(adh.ratio * 100)}%
-              <span className="ml-1.5 text-[12px] font-medium text-muted">
-                {adh.taken}/{adh.expected}
-              </span>
-            </div>
-          </div>
+      <FactRow bare count={(planned.length > 0 ? 1 : 0) + (adh && adh.expected > 0 ? 1 : 0)}>
+        {planned.length > 0 && (
+          <Fact
+            label={t('protocolDetail.weekTaken')}
+            value={taken}
+            unit={t('doses.kpi.ofPlanned', { count: planned.length })}
+            caption={extras > 0 ? t('protocolDetail.weekExtras', { count: extras }) : undefined}
+          />
         )}
-      </div>
+        {adh && adh.expected > 0 && (
+          <Fact
+            label={t('protocols.adherence')}
+            value={fmtNumber(Math.round(adh.ratio * 100), locale, 0)}
+            unit="%"
+            tone={adh.ratio >= 0.9 ? 'signal' : 'warn'}
+            caption={t('doses.kpi.doneOf', { taken: adh.taken, planned: adh.expected })}
+          />
+        )}
+      </FactRow>
 
       {cells.length === 0 ? (
         <p className="mt-3 text-[13px] text-muted">{t('protocolDetail.weekNone')}</p>

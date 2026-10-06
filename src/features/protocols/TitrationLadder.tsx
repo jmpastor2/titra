@@ -26,7 +26,7 @@ const shortDose = (mg: number, unit: DoseUnit, locale: 'es' | 'en', display?: La
 
 /**
  * The protocol's dose steps as a staircase: width is duration, height is dose. The
- * current step glows and carries a marker for how far into it today is; below, when
+ * current step is solid and carries a marker for how far into it today is; below, when
  * the dose changes next.
  */
 export function TitrationLadder({
@@ -127,9 +127,6 @@ export function TitrationLadder({
                   borderColor: w.step.pause
                     ? 'var(--line-strong)'
                     : `color-mix(in oklab, ${color} ${isCurrent ? 100 : 45}%, transparent)`,
-                  boxShadow: isCurrent
-                    ? `0 0 14px color-mix(in oklab, ${color} 55%, transparent)`
-                    : undefined,
                 }}
               />
               {progress !== null && (

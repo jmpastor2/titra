@@ -9,7 +9,7 @@ export function Splash({ error }: { error?: string }) {
         <img
           src={`${import.meta.env.BASE_URL}icons/icon-192.png`}
           alt=""
-          className="glow size-16 rounded-2xl border border-line-strong"
+          className="size-16 rounded-[18px]"
         />
         <div>
           <div className="text-[22px] font-bold tracking-tight">{t('app.name')}</div>

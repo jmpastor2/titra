@@ -27,7 +27,7 @@ export function DrawGuide({ plan }: { plan: DrawPlan }) {
         <span className="spec">U-100 · {fmtNumber(capacity / 100, locale, 1)} mL</span>
       </div>
       <div className="mt-1 flex items-baseline gap-1.5">
-        <span className="readout text-glow text-[34px] font-semibold leading-none text-signal">
+        <span className="readout text-[34px] font-semibold leading-none text-signal">
           {u(plan.totalUnits)}
         </span>
         <span className="readout text-[15px] font-semibold text-signal">U</span>

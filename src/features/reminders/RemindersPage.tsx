@@ -6,11 +6,7 @@ export function RemindersPage() {
   const { t } = useTranslation()
   return (
     <div className="pb-8">
-      <PageHeader
-        eyebrow={t('more.groups.health')}
-        title={t('more.items.reminders')}
-        back="/more"
-      />
+      <PageHeader title={t('more.items.reminders')} back="/more" />
       <RemindersPanel />
     </div>
   )

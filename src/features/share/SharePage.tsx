@@ -1,4 +1,4 @@
-import { Copy, Eye, Share2, UserMinus } from 'lucide-react'
+import { ChevronRight, Copy, Share2, UserMinus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -69,22 +69,26 @@ export function SharePage() {
 
   return (
     <div className="pb-8">
-      <PageHeader eyebrow={t('more.groups.health')} title={t('share.title')} large back="/more" />
+      <PageHeader title={t('share.title')} back="/more" />
 
       <div className="flex flex-col gap-4">
-        <Card instrument tone="signal" eyebrow={t('share.myCode')} subtitle={t('share.myCodeHint')}>
-          <button
-            type="button"
-            onClick={copy}
-            className="flex min-h-16 w-full items-center justify-between gap-3 rounded-control border border-signal/30 bg-panel px-4 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
-          >
-            <span className="readout text-glow text-[28px] font-bold tracking-[0.3em] text-signal">
+        <Card>
+          <div className="spec">{t('share.myCode')}</div>
+          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <span className="readout text-[34px] font-semibold leading-none tracking-[0.08em]">
               {patient?.clinic_code ?? '······'}
             </span>
-            <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] font-semibold text-signal">
-              <Copy className="size-4" aria-hidden /> {t('clinic.copyCode')}
-            </span>
-          </button>
+            <Button
+              size="sm"
+              variant="secondary"
+              leading={<Copy className="size-4" aria-hidden />}
+              disabled={!patient?.clinic_code}
+              onClick={copy}
+            >
+              {t('clinic.copyCode')}
+            </Button>
+          </div>
+          <p className="mt-3 text-[13px] leading-snug text-muted">{t('share.myCodeHint')}</p>
         </Card>
 
         <Card title={t('share.shareMine')} subtitle={t('share.shareMineHint')}>
@@ -95,7 +99,7 @@ export function SharePage() {
               placeholder="ABC234"
               maxLength={6}
               aria-label={t('onboarding.clinicCode')}
-              className="readout min-w-0 uppercase tracking-[0.3em]"
+              className="readout min-w-0 tracking-[0.08em]"
             />
             <Button
               className="shrink-0"
@@ -166,7 +170,10 @@ export function SharePage() {
                       onClick={() => nav(`/shared/${s.patient.id}`)}
                       className="flex min-h-[68px] w-full items-center gap-3 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
                     >
-                      <span className="grid size-10 shrink-0 place-items-center rounded-full border border-line-strong bg-panel-2 font-display text-[14px] font-bold text-signal">
+                      <span
+                        aria-hidden
+                        className="grid size-10 shrink-0 place-items-center rounded-full bg-panel-3 text-[15px] font-semibold text-ink-2"
+                      >
                         {s.patient.display_name.charAt(0).toUpperCase()}
                       </span>
                       <span className="min-w-0 flex-1">
@@ -181,7 +188,7 @@ export function SharePage() {
                           ))}
                         </span>
                       </span>
-                      <Eye className="size-4 shrink-0 text-muted" aria-hidden />
+                      <ChevronRight className="size-4 shrink-0 text-muted/70" aria-hidden />
                     </button>
                   </li>
                 ))}

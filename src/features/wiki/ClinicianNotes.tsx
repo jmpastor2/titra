@@ -38,12 +38,14 @@ export function ClinicianNotes({
   if (!isClinician) {
     if (others.length === 0) return null
     return (
-      <Card title={t('wiki.clinicianNote')} tone="accent">
-        {others.map((n) => (
-          <p key={n.id} className="whitespace-pre-wrap text-[13.5px] leading-relaxed">
-            {n.body}
-          </p>
-        ))}
+      <Card title={t('wiki.clinicianNote')}>
+        <div className="flex flex-col gap-2.5">
+          {others.map((n) => (
+            <p key={n.id} className="whitespace-pre-wrap text-[14px] leading-relaxed text-ink-2">
+              {n.body}
+            </p>
+          ))}
+        </div>
       </Card>
     )
   }
@@ -52,7 +54,6 @@ export function ClinicianNotes({
     <Card
       title={t('wiki.myNote')}
       subtitle={t('wiki.myNoteHint')}
-      tone="accent"
       action={
         !editing && (
           <Button
@@ -93,9 +94,9 @@ export function ClinicianNotes({
           </div>
         </>
       ) : mine ? (
-        <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed">{mine.body}</p>
+        <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-ink-2">{mine.body}</p>
       ) : (
-        <p className="text-[13px] text-muted">—</p>
+        <p className="text-[13px] text-muted">{t('wiki.myNoteEmpty')}</p>
       )}
     </Card>
   )

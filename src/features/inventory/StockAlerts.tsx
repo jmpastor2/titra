@@ -26,26 +26,28 @@ import { alertKey, IN_USE_DAYS, type StockAlert, type StockAlertKind } from './a
 import { useReconstituteSheet } from './useReconstituteSheet'
 
 const ICON: Record<StockAlertKind, ReactNode> = {
-  expired: <TimerOff className="size-4" />,
-  expiresSoon: <CalendarClock className="size-4" />,
-  expiresBeforeEmpty: <CalendarClock className="size-4" />,
-  runsOut: <AlertTriangle className="size-4" />,
-  reconstitute: <FlaskConical className="size-4" />,
-  reorder: <PackagePlus className="size-4" />,
-  leftover: <Droplet className="size-4" />,
+  expired: <TimerOff className="size-[18px]" />,
+  expiresSoon: <CalendarClock className="size-[18px]" />,
+  expiresBeforeEmpty: <CalendarClock className="size-[18px]" />,
+  runsOut: <AlertTriangle className="size-[18px]" />,
+  reconstitute: <FlaskConical className="size-[18px]" />,
+  reorder: <PackagePlus className="size-[18px]" />,
+  leftover: <Droplet className="size-[18px]" />,
 }
 
-const TONE: Record<StockAlert['severity'], string> = {
-  danger: 'border-danger/40 bg-danger-soft text-danger',
-  warn: 'border-warn/40 bg-warn-soft text-warn',
-  info: 'border-line bg-panel-2 text-signal',
+/** The severity is in the icon's colour (and in the words): no coloured boxes. */
+const ICON_TONE: Record<StockAlert['severity'], string> = {
+  danger: 'text-danger',
+  warn: 'text-warn',
+  info: 'text-signal',
 }
 
-const ACTION =
-  'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold outline-none transition active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-signal/60 disabled:opacity-50'
+/** A small text action under an alert: quiet, but a full 44 px target. */
+const ALERT_ACTION =
+  'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold outline-none transition active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-signal/60 disabled:opacity-50'
 
 /** The icon, the title and the sentence of an alert, whether pending or already read. */
-export function AlertBody({ alert: a }: { alert: StockAlert }) {
+export function AlertBody({ alert: a, muted = false }: { alert: StockAlert; muted?: boolean }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const names = a.compoundIds.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
@@ -59,19 +61,33 @@ export function AlertBody({ alert: a }: { alert: StockAlert }) {
   })
   return (
     <div className="flex items-start gap-3">
-      <span className="mt-0.5 shrink-0">{ICON[a.kind]}</span>
+      <span className={clsx('mt-px shrink-0', muted ? 'text-muted' : ICON_TONE[a.severity])}>
+        {ICON[a.kind]}
+      </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-start gap-1.5 text-[13.5px] font-semibold text-ink">
-          <span className="mt-[5px] flex shrink-0 gap-1">
+        <span
+          className={clsx(
+            'flex items-start gap-1.5 text-[14px] font-semibold leading-snug',
+            muted ? 'text-ink-2' : 'text-ink',
+          )}
+        >
+          <span className="mt-[6px] flex shrink-0 gap-1">
             {a.compoundIds.map((id) => (
-              <SubstanceDot key={id} color={compoundColor(id)} />
+              <SubstanceDot key={id} color={compoundColor(id)} size={7} />
             ))}
           </span>
           <span className="min-w-0">{t(`stock.title.${a.kind}`)}</span>
         </span>
-        <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-2">{body}</span>
+        <span
+          className={clsx(
+            'mt-0.5 block text-[13px] leading-snug',
+            muted ? 'text-muted' : 'text-ink-2',
+          )}
+        >
+          {body}
+        </span>
         {a.estimated && (
-          <span className="mt-0.5 block text-[11px] text-muted">
+          <span className="mt-0.5 block text-[12px] leading-snug text-muted">
             {t('stock.estimated', { days: IN_USE_DAYS })}
           </span>
         )}
@@ -81,19 +97,22 @@ export function AlertBody({ alert: a }: { alert: StockAlert }) {
 }
 
 /**
- * Stock alerts as a compact list; `linkTo` makes each row open the inventory. Every alert
- * can be marked as read ("Entendido") and then never comes back for the same situation;
- * the ones about a vial offer what to do with it (reconstitute the reserve, archive).
+ * Stock alerts as rows of one list; `linkTo` makes each row open the inventory. Every alert
+ * can be marked as read ("Entendido") and then never comes back for the same situation; the
+ * ones about a vial offer what to do with it (reconstitute the reserve, archive). On its own
+ * the list sits in a card; `bare` leaves the card to the caller (the inventory's alert card).
  */
 export function StockAlerts({
   alerts,
   limit,
   linkTo,
+  bare = false,
   className,
 }: {
   alerts: readonly StockAlert[]
   limit?: number
   linkTo?: string
+  bare?: boolean
   className?: string
 }) {
   const { t } = useTranslation()
@@ -125,33 +144,36 @@ export function StockAlerts({
   return (
     <>
       {shown.length > 0 && (
-        <ul className={clsx('flex flex-col gap-2', className)}>
+        <ul
+          className={clsx(
+            'flex flex-col divide-y divide-line',
+            !bare && 'card fade-up px-4 py-1',
+            className,
+          )}
+        >
           {shown.map((a) => {
             const vial = vialOf(a.vialId)
             const reserve = a.kind === 'reconstitute' ? vialOf(a.reserveVialId) : undefined
             const body = <AlertBody alert={a} />
             return (
-              <li
-                key={alertKey(a)}
-                className={clsx('overflow-hidden rounded-control border', TONE[a.severity])}
-              >
+              <li key={alertKey(a)} className={clsx('py-3', bare && 'first:pt-0 last:pb-0')}>
                 {linkTo ? (
-                  <Link to={linkTo} className={clsx('block px-3.5 pt-3', canAct ? 'pb-1' : 'pb-3')}>
+                  <Link
+                    to={linkTo}
+                    className="block rounded-control outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
+                  >
                     {body}
                   </Link>
                 ) : (
-                  <div className={clsx('px-3.5 pt-3', canAct ? 'pb-1' : 'pb-3')}>{body}</div>
+                  body
                 )}
                 {canAct && (
-                  <div className="flex flex-wrap items-center justify-end gap-1 px-2 pb-1.5">
+                  <div className="-mb-2 -mr-2 flex flex-wrap items-center justify-end">
                     {reserve && (
                       <button
                         type="button"
                         onClick={() => reconstitution.reconstitute(reserve)}
-                        className={clsx(
-                          ACTION,
-                          'border border-signal/25 bg-signal-soft text-signal',
-                        )}
+                        className={clsx(ALERT_ACTION, 'text-signal hover:bg-signal-soft')}
                       >
                         <FlaskConical className="size-4" aria-hidden />
                         {t('reconstitute.button')}
@@ -161,7 +183,7 @@ export function StockAlerts({
                       <button
                         type="button"
                         onClick={() => archiveVial(vial)}
-                        className={clsx(ACTION, 'text-ink-2 hover:bg-panel-2')}
+                        className={clsx(ALERT_ACTION, 'text-ink-2 hover:bg-panel-2')}
                       >
                         <Archive className="size-4" aria-hidden />
                         {t('inventory.archive')}
@@ -171,7 +193,7 @@ export function StockAlerts({
                       type="button"
                       aria-label={`${t('stock.dismiss')}: ${t(`stock.title.${a.kind}`)}`}
                       onClick={() => markRead(a)}
-                      className={clsx(ACTION, 'text-ink-2 hover:bg-panel-2')}
+                      className={clsx(ALERT_ACTION, 'text-ink-2 hover:bg-panel-2')}
                     >
                       <Check className="size-4" aria-hidden />
                       {t('stock.dismiss')}
@@ -182,8 +204,11 @@ export function StockAlerts({
             )
           })}
           {limit && alerts.length > limit && linkTo && (
-            <li>
-              <Link to={linkTo} className="spec block px-1 text-signal">
+            <li className="py-1">
+              <Link
+                to={linkTo}
+                className="flex min-h-11 items-center text-[13px] font-semibold text-signal"
+              >
                 {t('stock.more', { count: alerts.length - limit })}
               </Link>
             </li>

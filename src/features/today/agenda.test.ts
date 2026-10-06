@@ -1,14 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
-import {
-  agendaAddsToHero,
-  buildToday,
-  fmtWait,
-  focusItem,
-  isNightSlot,
-  slotWhen,
-  summarise,
-} from './agenda'
+import { buildToday, fmtWait, focusItem, isNightSlot, longDate, slotWhen } from './agenda'
 
 const protocol = (over: Partial<ProtocolRow>): ProtocolRow => ({
   id: 'p',
@@ -80,13 +72,39 @@ describe('buildToday', () => {
   })
 })
 
-describe('focus and summary', () => {
-  it('focuses the due item and counts the day', () => {
+describe('focusItem', () => {
+  it('focuses the due item, the earlier first, and never one already taken', () => {
     const now = new Date('2026-03-03T21:50')
     const items = buildToday([CJC, BPC], [dose('bpc-157', '2026-03-03T08:10', 'bpc')], now)
     // Both the 20:00 BPC and the 22:00 stack are due; the earlier one comes first.
     expect(focusItem(items)!.protocol.id).toBe('bpc')
-    expect(summarise(items)).toEqual({ total: 3, taken: 1, pending: 2, missed: 0 })
+    expect(focusItem(items)!.at.getHours()).toBe(20)
+    expect(items.filter((i) => i.status === 'taken')).toHaveLength(1)
+  })
+})
+
+describe('another day', () => {
+  it("lists tomorrow's administrations, judged against now", () => {
+    const now = new Date('2026-03-03T21:50') // Tuesday
+    const tomorrow = buildToday([CJC, BPC], [], now, new Date('2026-03-04T12:00'))
+    expect(tomorrow.map((i) => [i.at.getDate(), i.at.getHours(), i.status])).toEqual([
+      [4, 8, 'upcoming'],
+      [4, 20, 'upcoming'],
+      [4, 22, 'upcoming'],
+    ])
+  })
+
+  it('keeps the doses of that day only, extras included', () => {
+    const now = new Date('2026-03-07T12:00') // Saturday: no CJC planned
+    const friday = buildToday(
+      [CJC],
+      [dose('mod-grf-1-29', '2026-03-06T22:03')],
+      now,
+      new Date('2026-03-06T09:00'),
+    )
+    expect(friday.map((i) => i.status)).toEqual(['taken'])
+    const extra = buildToday([CJC], [dose('mod-grf-1-29', '2026-03-07T10:00')], now)
+    expect(extra.map((i) => [i.extra, i.status])).toEqual([[true, 'taken']])
   })
 })
 
@@ -136,23 +154,11 @@ describe('how a planned time reads', () => {
   })
 })
 
-describe('agendaAddsToHero', () => {
-  const at = new Date('2026-03-03T12:00')
-  it('is false when the only row is the dose the hero already shows', () => {
-    const items = buildToday([BPC], [dose('bpc-157', '2026-03-03T08:05', 'bpc')], at)
-    const focus = focusItem(items)
-    expect(items).toHaveLength(2)
-    expect(agendaAddsToHero(items, focus)).toBe(true)
-    const one = items.filter((i) => i.at.getHours() === 20)
-    expect(agendaAddsToHero(one, focusItem(one))).toBe(false)
-  })
-
-  it('is true for a lone row that is not the focus (a dose already taken) and for none at all', () => {
-    const taken = buildToday([BPC], [dose('bpc-157', '2026-03-03T08:05', 'bpc')], at).filter(
-      (i) => i.status === 'taken',
-    )
-    expect(agendaAddsToHero(taken, focusItem(taken))).toBe(true)
-    expect(agendaAddsToHero([], null)).toBe(false)
+describe('longDate', () => {
+  it('writes the day in words, with a capital, in both languages', () => {
+    const sunday = new Date(2026, 9, 4, 20, 30)
+    expect(longDate(sunday, 'es')).toBe('Domingo, 4 de octubre')
+    expect(longDate(sunday, 'en')).toBe('Sunday, October 4')
   })
 })
 
