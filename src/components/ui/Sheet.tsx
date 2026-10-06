@@ -22,6 +22,13 @@ interface Viewport {
   keyboard: boolean
 }
 
+/** A hardware keyboard and a precise pointer: focusing a field will not pop a keyboard up. */
+export function canAutoFocusFields(): boolean {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    : true
+}
+
 /**
  * The part of the screen left above the on-screen keyboard, or null while there is none. On
  * iOS the layout viewport does not shrink when the keyboard opens, so a sheet sized to it ends
@@ -65,20 +72,47 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
   const ref = useRef<HTMLDialogElement>(null)
   const { t } = useTranslation()
   const vp = useKeyboardViewport(open)
+  // The panel is drawn off screen first and only then slides in. A keyframe animation that
+  // starts when the dialog appears showed it in place for a frame on iOS before it slid in
+  // from below: the sheet seemed to appear and then jump.
+  const [entered, setEntered] = useState(false)
 
   useEffect(() => {
     const el = ref.current
     if (!el) return
     if (open && !el.open) {
+      const panel = el.querySelector<HTMLElement>('[role="document"]')
+      // The panel takes the dialog's first focus, so showModal() does not focus (and scroll
+      // to) the close button.
+      panel?.setAttribute('autofocus', '')
       el.showModal()
-      // showModal() focuses the first control (the close button). Prefer the field the
-      // sheet marks with data-autofocus, else the panel itself, so no stray focus ring.
-      const target =
-        el.querySelector<HTMLElement>('[data-autofocus]') ??
-        el.querySelector<HTMLElement>('[role="document"]')
-      target?.focus({ preventScroll: true })
+      // A field marked data-autofocus gets the focus where there is a hardware keyboard; on a
+      // phone that would open the on-screen keyboard over the sheet the moment it appears.
+      const field = canAutoFocusFields() ? el.querySelector<HTMLElement>('[data-autofocus]') : null
+      ;(field ?? panel)?.focus({ preventScroll: true })
     }
     if (!open && el.open) el.close()
+  }, [open])
+
+  // Two frames after opening: the off-screen position has been drawn, so the change to the
+  // resting one is a transition. Its own effect, so a re-run (Strict Mode) schedules it again.
+  useEffect(() => {
+    if (!open) {
+      setEntered(false)
+      return
+    }
+    if (typeof requestAnimationFrame !== 'function') {
+      setEntered(true)
+      return
+    }
+    let second = 0
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => setEntered(true))
+    })
+    return () => {
+      cancelAnimationFrame(first)
+      cancelAnimationFrame(second)
+    }
   }, [open])
 
   useEffect(() => {
@@ -105,7 +139,8 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
         if (e.target === ref.current) onClose()
       }}
       className={clsx(
-        'm-0 max-h-none max-w-none bg-transparent p-0 backdrop:bg-black/60 backdrop:backdrop-blur-[3px]',
+        // No blur behind: blurring the whole page every frame of the slide made it stutter on phones.
+        'm-0 max-h-none max-w-none bg-transparent p-0 backdrop:bg-black/65',
         'fixed inset-0 h-full w-full',
       )}
     >
@@ -117,9 +152,12 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
           <div
             role="document"
             tabIndex={-1}
+            data-entered={entered || undefined}
             className={clsx(
-              'outline-none',
-              'sheet-in flex w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-line-strong bg-panel shadow-2xl sm:rounded-[28px]',
+              'outline-none will-change-transform',
+              'flex w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-line-strong bg-panel shadow-2xl sm:rounded-[28px]',
+              'transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none',
+              entered ? 'translate-y-0' : 'translate-y-full',
               vp?.keyboard ? 'h-full' : tall ? 'h-[92dvh]' : 'max-h-[92dvh]',
             )}
           >

@@ -2,6 +2,7 @@ import { clsx } from 'clsx'
 import { Minus, Plus } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { canAutoFocusFields } from '@/components/ui/Sheet'
 import { fmtNumber, type Locale } from '@/lib/format'
 import { HOLD_MS, parseNumber, repeatStep, stepValue, type StepSpec } from './stepper'
 import { fmtFixed } from './text'
@@ -121,7 +122,8 @@ export function NumberStepper({
   // The sheet focuses the field it opens with; this covers one that only becomes empty
   // (no earlier reading) once its data has arrived.
   useEffect(() => {
-    if (autoFocus) input.current?.focus({ preventScroll: true })
+    // Not on a phone: the on-screen keyboard would cover the sheet as it opens.
+    if (autoFocus && canAutoFocusFields()) input.current?.focus({ preventScroll: true })
   }, [autoFocus])
 
   const step = useCallback(

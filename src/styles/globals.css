@@ -309,9 +309,6 @@
   .fade-up {
     animation: fade-up 0.22s ease-out both;
   }
-  .sheet-in {
-    animation: sheet-in 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
-  }
   .pulse-ring {
     animation: pulse-ring 1.8s ease-out infinite;
   }
@@ -322,23 +319,14 @@
   }
 }
 
+/* Cards fade in where they stand: rising a few pixels made every screen seem to jump as
+   its data arrived. */
 @keyframes fade-up {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes sheet-in {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: none;
   }
 }
 
