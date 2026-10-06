@@ -57,7 +57,7 @@ export function DrawGuide({ plan }: { plan: DrawPlan }) {
                   {i + 1}
                 </span>
                 <SubstanceDot color={compoundColor(l.compoundId)} />
-                <span className="min-w-0 flex-1 truncate font-semibold">
+                <span className="min-w-0 flex-1 break-words font-semibold">
                   {l.compoundIds.map(nameOf).join(' + ')}
                 </span>
                 <span className="readout shrink-0 text-[12px] text-muted">

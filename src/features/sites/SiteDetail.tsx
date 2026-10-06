@@ -18,7 +18,7 @@ export function CompoundNames({ ids, className }: { ids: readonly string[]; clas
       {ids.map((id) => (
         <span key={id} className="inline-flex min-w-0 items-center gap-1">
           <SubstanceDot color={compoundColor(id)} size={6} />
-          <span className="truncate">{compoundName(id)}</span>
+          <span>{compoundName(id)}</span>
         </span>
       ))}
     </span>

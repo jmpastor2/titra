@@ -73,8 +73,8 @@ describe('OutlookChart · what it says', () => {
 
   it('has a legend for what is drawn, and says the dots are the published data', () => {
     chart()
-    expect(screen.getByText('Ensayo (franja de tu dosis)')).toBeInTheDocument()
-    expect(screen.getByText('Placebo')).toBeInTheDocument()
+    expect(screen.getByText('Franja del ensayo')).toBeInTheDocument()
+    expect(screen.queryByText('Placebo')).toBeNull()
     expect(screen.getByText('Tus pesajes')).toBeInTheDocument()
     expect(screen.getByText('Tu tendencia')).toBeInTheDocument()
     expect(screen.getByText(/Los puntos son datos publicados/)).toBeInTheDocument()
@@ -82,13 +82,30 @@ describe('OutlookChart · what it says', () => {
 })
 
 describe('OutlookChart · what it draws', () => {
-  it('draws the band, the placebo, the published points and the weigh-ins', () => {
+  it('draws the band, the published points, the weigh-ins joined by a line, and the line forward', () => {
     const { container } = chart()
     expect(container.querySelector('path[fill-opacity="0.18"]')?.getAttribute('d')).toMatch(/Z$/)
     // Two published time points, a dot at each end of the band.
     expect(container.querySelectorAll('[data-part="published"] circle')).toHaveLength(4)
     expect(container.querySelectorAll('[data-part="me"] circle')).toHaveLength(3)
-    expect(container.querySelector('path[stroke-dasharray="1 3"]')).not.toBeNull()
+    expect(container.querySelector('[data-part="me-line"]')).not.toBeNull()
+    expect(
+      container.querySelector('[data-part="projection"]')?.getAttribute('stroke-dasharray'),
+    ).toBe('5 4')
+  })
+
+  it('writes where the line forward ends, beside its last point', () => {
+    const { container } = chart()
+    const end = container.querySelector('[data-part="projection-end"]')
+    expect(end?.querySelector('circle')).not.toBeNull()
+    expect(flat(end?.textContent ?? '')).toBe('−8 %')
+  })
+
+  it('draws no line, end point or label for a person who has not weighed in', () => {
+    const { container } = chart({ me: [], projection: [] })
+    expect(container.querySelector('[data-part="me-line"]')).toBeNull()
+    expect(container.querySelector('[data-part="projection"]')).toBeNull()
+    expect(container.querySelector('[data-part="projection-end"]')).toBeNull()
   })
 
   it('marks today, and the horizon when it is ahead', () => {

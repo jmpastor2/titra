@@ -1,24 +1,19 @@
 import { clsx } from 'clsx'
 import { useTranslation } from 'react-i18next'
-import { Badge, Vial } from '@/components/ui/primitives'
+import { Ring } from '@/components/kpi/Ring'
 import { Card } from '@/components/ui/Card'
+import { Badge, Vial } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
 import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { inUseProgress, vialOutlook } from './alerts'
+import { TONE_COLOR } from './stockKpis'
 import { fmtMg } from './vialFormat'
 import { VialActions } from './VialActions'
 import { VialFacts } from './VialFacts'
-import {
-  fillOf,
-  needsReconstitution,
-  vialContents,
-  vialLook,
-  vialState,
-  type VialRunway,
-} from './vials'
+import { vialView, type VialExpiry } from './vialView'
+import { fillOf, vialContents, vialLook, type VialRunway } from './vials'
 
 interface Props {
   item: InventoryRow
@@ -35,8 +30,9 @@ interface Props {
 }
 
 /**
- * One vial as an instrument: what it is and how much is left, its state at a glance,
- * the units to draw for the current dose, the in-use countdown and what to do next.
+ * One vial in a glance: what it is, one big number (the doses it still covers, or the mg
+ * left), how much of it is used, how long it lasts and, once reconstituted, how long it
+ * is good for. Below, the units for your dose and what to do with it.
  */
 export function VialCard({
   item,
@@ -53,18 +49,27 @@ export function VialCard({
   const { locale } = useLocale()
   const color = compoundColor(item.compound_id)
   const fill = fillOf(item)
-  const powder = needsReconstitution(item)
-  const reserve = vialState(item) === 'reserve'
-  const outlook = vialOutlook(item, runway, now)
-  const progress = inUseProgress(item, now)
+  const view = vialView(item, runway, now)
+  const { hero, expiry, needBy, short } = view
   const names = vialContents(item)
     .map((c) => compoundById(c.compoundId)?.names.generic ?? c.compoundId)
     .join(' + ')
-  const { expiry, expiryDays, short, runningLow, expiresFirst, needBy } = outlook
-  // Running low: the runway says so, or (no protocol uses it) a fifth of it is left.
-  const low = runningLow || (!runway && !powder && fill <= 0.2)
-  const expired = expiryDays !== null && expiryDays < 0
-  const expiring = expiryDays !== null && expiryDays >= 0 && expiryDays <= 30
+  const total = fmtMg(view.totalMg, locale)
+
+  const support = (() => {
+    if (view.powder) return t('inventory.card.powderHint')
+    if (hero.kind === 'doses' && view.coverDate) {
+      if (hero.count === 0) return t('inventory.card.cannotCover')
+      // The first dose it cannot cover can be later today: it lasts until then.
+      if (view.coverDays === 0) return t('inventory.card.lastsToday')
+      return t('inventory.card.lasts', {
+        count: view.coverDays ?? 0,
+        date: fmtDate(view.coverDate, locale, 'd MMM'),
+      })
+    }
+    if (runway) return t('inventory.card.coversAll')
+    return t('inventory.card.ofTotalPct', { total, pct: fmtNumber(fill * 100, locale, 0) })
+  })()
 
   return (
     <Card
@@ -76,94 +81,79 @@ export function VialCard({
         type="button"
         disabled={readOnly}
         onClick={onEdit}
-        className="flex w-full gap-4 p-4 text-left"
+        className="block w-full p-4 text-left"
       >
-        <Vial {...vialLook(item)} size={72} low={low || short} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <span className="spec truncate">{names}</span>
-            <Badge tone={reserve ? 'neutral' : 'brand'} className="shrink-0">
-              <span
-                aria-hidden
-                className={clsx(
-                  'size-1.5 rounded-full',
-                  reserve ? 'border border-current' : 'bg-current',
+        <div className="flex gap-3.5">
+          <Vial {...vialLook(item)} size={64} low={view.low || short} />
+          <div className="min-w-0 flex-1">
+            <div className="spec leading-snug">{names}</div>
+            <div className="mt-1 text-[16px] font-semibold leading-snug">{item.label}</div>
+            {(view.low || view.expired || (view.expiring && !expiry)) && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {view.low && <Badge tone="warn">{t('inventory.low')}</Badge>}
+                {view.expired && <Badge tone="danger">{t('inventory.expired')}</Badge>}
+                {view.expiring && !expiry && (
+                  <Badge tone="warn">
+                    {view.expiryEstimated ? '≈ ' : ''}
+                    {t('inventory.expiresSoon', { days: view.expiryDays ?? 0 })}
+                  </Badge>
                 )}
-              />
-              {reserve ? t('inventory.statusReserve') : t('inventory.statusInUse')}
-            </Badge>
+              </div>
+            )}
           </div>
-          <div className="mt-0.5 truncate text-[16px] font-semibold leading-snug">{item.label}</div>
-          <div className="readout mt-2 flex items-baseline gap-1 leading-none">
-            <span className="text-[26px] font-semibold" style={{ color }}>
-              {fmtNumber(Number(item.remaining_mg), locale, 2)}
-            </span>
-            <span className="text-[12px] text-muted">/ {fmtMg(Number(item.total_mg), locale)}</span>
-          </div>
-          <div
-            role="img"
-            aria-label={t('inventory.fillAria', { pct: Math.round(fill * 100) })}
-            className="mt-2 h-[3px] overflow-hidden rounded-full bg-panel-3"
-          >
-            <div
-              className="h-full rounded-full"
-              style={{ width: `${fill * 100}%`, background: color }}
-            />
-          </div>
-          {(low || expired || expiring) && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {low && <Badge tone="warn">{t('inventory.low')}</Badge>}
-              {expired && <Badge tone="danger">{t('inventory.expired')}</Badge>}
-              {expiring && (
-                <Badge tone="warn">
-                  {expiry?.estimated ? '≈ ' : ''}
-                  {t('inventory.expiresSoon', { days: expiryDays })}
-                </Badge>
-              )}
-            </div>
-          )}
         </div>
+
+        <div className="mt-4 flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="readout flex items-baseline gap-1.5 leading-none">
+              <span className="text-[36px] font-semibold" style={{ color }}>
+                {hero.kind === 'doses' ? hero.count : fmtNumber(hero.mg, locale, 2)}
+              </span>
+              <span className="text-[14px] font-semibold text-ink-2">
+                {hero.kind === 'doses'
+                  ? t('inventory.card.dosesUnit', { count: hero.count })
+                  : 'mg'}
+              </span>
+            </div>
+            <span className="mt-2 block text-[13px] leading-snug text-ink-2">{support}</span>
+          </div>
+          {expiry && <ExpiryRing expiry={expiry} />}
+        </div>
+
+        {!view.powder && (
+          <>
+            <div
+              role="img"
+              aria-label={t('inventory.fillAria', { pct: Math.round(fill * 100) })}
+              className="mt-4 h-[5px] overflow-hidden rounded-full bg-panel-3"
+            >
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${fill * 100}%`, background: color }}
+              />
+            </div>
+            {hero.kind === 'doses' && (
+              <div className="readout mt-1.5 text-[11.5px] text-muted">
+                {t('inventory.card.mgOfTotal', {
+                  left: fmtMg(view.leftMg, locale),
+                  total,
+                })}
+              </div>
+            )}
+          </>
+        )}
       </button>
 
-      <VialFacts item={item} runway={runway} nextDoseMg={nextDoseMg} short={short} />
-
-      {progress && (
-        <div className="flex items-center gap-3 border-t border-line px-4 py-2.5">
-          <span className="spec shrink-0">
-            {t('inventory.dayOf', { day: progress.day, of: progress.of })}
-          </span>
-          <div
-            role="img"
-            aria-label={t('inventory.dayOf', { day: progress.day, of: progress.of })}
-            className="h-[3px] min-w-0 flex-1 overflow-hidden rounded-full bg-panel-3"
-          >
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${progress.fraction * 100}%`,
-                background: progress.over
-                  ? 'var(--danger)'
-                  : progress.fraction >= 0.85
-                    ? 'var(--warn)'
-                    : 'var(--signal)',
-              }}
-            />
-          </div>
-          <span className="readout shrink-0 text-[11.5px] text-muted">
-            {progress.estimated ? '≈ ' : ''}
-            {fmtDate(progress.endsAt, locale, 'd MMM')}
-          </span>
-        </div>
-      )}
+      <VialFacts item={item} runway={runway} nextDoseMg={nextDoseMg} />
 
       {runway && needBy && (
         <div
           className={clsx(
-            'border-t border-line px-4 py-2 text-[12px]',
+            'border-t border-line px-4 py-2.5 text-[12.5px] leading-snug',
             short ? 'bg-warn-soft font-semibold text-warn' : 'text-muted',
           )}
         >
-          {t(expiresFirst ? 'inventory.expiresBeforeEmpty' : 'inventory.nextVialBy', {
+          {t(view.expiresFirst ? 'inventory.expiresBeforeEmpty' : 'inventory.nextVialBy', {
             date: fmtDate(needBy, locale, 'EEE d MMM'),
           })}
         </div>
@@ -172,12 +162,45 @@ export function VialCard({
       {!readOnly && (
         <VialActions
           label={item.label}
-          powder={powder}
+          powder={view.powder}
           onReconstitute={onReconstitute}
           onAddSame={onAddSame}
           onArchive={onArchive}
         />
       )}
     </Card>
+  )
+}
+
+/** Days left of the vial's use-by period: the ring empties as it gets old. */
+function ExpiryRing({ expiry }: { expiry: VialExpiry }) {
+  const { t } = useTranslation()
+  const expired = expiry.days < 0
+  const label = [
+    expired
+      ? t('inventory.card.expiredAria', { count: -expiry.days })
+      : t('inventory.card.expiryAria', { count: expiry.days }),
+    expiry.estimated ? t('inventory.card.estimated') : null,
+  ]
+    .filter(Boolean)
+    .join(', ')
+  return (
+    <div className="flex shrink-0 flex-col items-center gap-1">
+      <Ring value={expiry.left} size={56} stroke={5} color={TONE_COLOR[expiry.tone]} label={label}>
+        <div className="flex flex-col items-center leading-none">
+          <span className="readout text-[16px] font-semibold">{Math.max(0, expiry.days)}</span>
+          <span className="mt-0.5 text-[9.5px] text-muted">{t('inventory.card.dayShort')}</span>
+        </div>
+      </Ring>
+      <span className={clsx('spec text-[9px]', expired && 'text-danger')}>
+        {expired
+          ? t('inventory.card.expiredCaption')
+          : t(
+              expiry.estimated
+                ? 'inventory.card.expiryCaptionEstimated'
+                : 'inventory.card.expiryCaption',
+            )}
+      </span>
+    </div>
   )
 }

@@ -89,18 +89,12 @@ describe('strength week', () => {
     const w = strengthWeek(rows, NOW)
     expect(w.count).toBe(2)
     expect(w.last?.minutes).toBe(45)
-    // 29 Sep … 5 Oct: sessions on the 1st and the 4th.
-    expect(w.days).toEqual([false, false, true, false, false, true, false])
   })
   it('reads a session without a duration as no minutes', () => {
     expect(strengthWeek([rows[1]!], NOW).last?.minutes).toBeNull()
   })
   it('is empty on a new account', () => {
-    expect(strengthWeek([], NOW)).toEqual({
-      count: 0,
-      last: null,
-      days: Array.from({ length: 7 }, () => false),
-    })
+    expect(strengthWeek([], NOW)).toEqual({ count: 0, last: null })
   })
 })
 
@@ -118,7 +112,6 @@ describe('check-in summary', () => {
     expect(c.doneToday).toBe(true)
     expect(c.streak).toBe(3)
     expect(c.ageDays).toBe(0)
-    expect(c.strip.slice(-3)).toEqual([true, true, true])
     expect(c.last).toEqual({ energy: 7, mood: 8 })
   })
   it('keeps the streak alive until today is over', () => {

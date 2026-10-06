@@ -16,10 +16,10 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "public" / "splash"
 OUT.mkdir(parents=True, exist_ok=True)
 
-BG = (5, 11, 13)
-MINT = (92, 242, 196)
+BG = (7, 8, 14)
+MINT = (159, 173, 255)
 VIOLET = (134, 114, 240)
-INK = (230, 251, 244)
+INK = (238, 240, 251)
 
 # (css width, css height, device pixel ratio) of the iPhones in use today.
 DEVICES = [

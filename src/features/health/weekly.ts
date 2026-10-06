@@ -17,10 +17,8 @@ export type WeekItem =
   | { kind: 'body'; metric: 'weight' | 'waist'; delta: number }
   /** Days with a weigh-in this week, when there is nothing to compare them with yet. */
   | { kind: 'weighIns'; count: number }
-  | { kind: 'adherence'; taken: number; expected: number }
-  /** Doses taken more than an hour from their planned time. */
-  | { kind: 'offTime'; count: number }
-  | { kind: 'allOnTime'; count: number }
+  /** Doses taken against doses due; `offTime` counts those taken more than an hour from their time (null: not known). */
+  | { kind: 'adherence'; taken: number; expected: number; offTime: number | null }
   /** The wellbeing dimension that moved the most against last week. */
   | { kind: 'score'; metric: MeasurementKind; delta: number }
   | { kind: 'checkIns'; count: number }
@@ -126,11 +124,8 @@ export function weekChanges(input: WeekInput): WeekItem[] {
       kind: 'adherence',
       taken: input.adherence.taken,
       expected: input.adherence.expected,
+      offTime: input.timing ? input.timing.offTime : null,
     })
-  }
-  if (input.timing) {
-    if (input.timing.offTime > 0) out.push({ kind: 'offTime', count: input.timing.offTime })
-    else if (input.timing.onTime > 0) out.push({ kind: 'allOnTime', count: input.timing.onTime })
   }
 
   const score = scoreItem(input.scores, now)

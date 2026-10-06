@@ -40,7 +40,7 @@ describe('UpdatesCard', () => {
 
   it('explains, instead of offering a button, where there is no service worker', () => {
     render(<UpdatesCard />)
-    expect(screen.getByText(/no hay actualizaciones que buscar/)).toBeInTheDocument()
+    expect(screen.getByText(/Aquí no hay actualizaciones/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Buscar actualización' })).toBeNull()
   })
 

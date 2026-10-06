@@ -23,7 +23,7 @@ import { useBodyUnits } from './units'
 const SESSIONS_TARGET = 2
 const DAY_MS = 86_400_000
 
-export function LeanTab({ index }: { index: string }) {
+export function LeanTab({ index }: { index?: string }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { patientId, patient, readOnly } = usePatientScope()

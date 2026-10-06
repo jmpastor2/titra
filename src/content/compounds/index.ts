@@ -54,7 +54,10 @@ export function blendsContaining(compoundId: string): CompoundMeta[] {
   return BLENDS.filter((b) => b.blend?.components.some((p) => p.compoundId === compoundId))
 }
 
-/** Case/diacritic-insensitive search over names, brands, aliases, class and tags. */
+/**
+ * Case/diacritic-insensitive search over names, brands, aliases, class and tags. Every word of
+ * the query has to match somewhere in the entry, in any order ("cjc ipamorelina" finds the blend).
+ */
 export function searchCompounds(query: string, category?: CompoundCategory): CompoundMeta[] {
   return search(COMPOUNDS, query, category)
 }
@@ -65,30 +68,41 @@ export function searchWiki(query: string, filter?: CompoundCategory | 'blends'):
   return search(WIKI_ENTRIES, query, filter)
 }
 
+/** The searchable text of an entry, normalised once: typing re-filters without re-building it. */
+const haystacks = new WeakMap<CompoundMeta, string>()
+
+function haystack(c: CompoundMeta): string {
+  let hay = haystacks.get(c)
+  if (hay === undefined) {
+    hay = normalize(
+      [
+        c.names.generic,
+        ...c.names.brands,
+        ...c.names.aliases,
+        c.id,
+        c.pharmClass.es,
+        c.pharmClass.en,
+        ...c.tags,
+      ].join(' '),
+    )
+    haystacks.set(c, hay)
+  }
+  return hay
+}
+
+const byName = (a: CompoundMeta, b: CompoundMeta) => a.names.generic.localeCompare(b.names.generic)
+
 function search(
   entries: readonly CompoundMeta[],
   query: string,
   category?: CompoundCategory,
 ): CompoundMeta[] {
-  const q = normalize(query)
+  const words = normalize(query).split(/\s+/).filter(Boolean)
   return entries
-    .filter((c) => {
-      if (category && c.category !== category) return false
-      if (!q) return true
-      const hay = normalize(
-        [
-          c.names.generic,
-          ...c.names.brands,
-          ...c.names.aliases,
-          c.id,
-          c.pharmClass.es,
-          c.pharmClass.en,
-          ...c.tags,
-        ].join(' '),
-      )
-      return hay.includes(q)
-    })
-    .toSorted((a, b) => a.names.generic.localeCompare(b.names.generic))
+    .filter(
+      (c) => (!category || c.category === category) && words.every((w) => haystack(c).includes(w)),
+    )
+    .toSorted(byName)
 }
 
 function normalize(s: string): string {

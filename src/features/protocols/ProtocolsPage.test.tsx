@@ -33,16 +33,28 @@ function open(rows: Parameters<typeof storeWith>[0] = {}) {
 describe('ProtocolsPage', () => {
   it('says where each protocol stands: week, dose in units and what changes next', async () => {
     open()
-    expect(await screen.findByText('Semana 2 de 12')).toBeInTheDocument()
+    // The ring says the week, the hero the dose in units and, under it, in mass.
+    const ring = await screen.findByRole('img', { name: 'Semana 2 de 12' })
+    expect(within(ring).getByText('2')).toBeInTheDocument()
     expect(screen.getByText('9 U')).toBeInTheDocument()
-    expect(screen.getByText('(150 + 150 mcg)')).toBeInTheDocument()
-    expect(screen.getByText(/El lun 5 oct sube a 12 U/)).toBeInTheDocument()
-    expect(screen.getByText(/Toca decidir: el lun 5 oct sube a 12 U/)).toBeInTheDocument()
+    expect(screen.getByText('150 + 150 mcg')).toBeInTheDocument()
+    // With the step-up close, the decision says it once, and what to do.
+    expect(screen.getByText(/Toca decidir/)).toBeInTheDocument()
+    expect(screen.getAllByText(/El lun 5 oct sube a 12 U/)).toHaveLength(1)
+    expect(screen.getByText('Si no haces nada, sube ese día.')).toBeInTheDocument()
+  })
+
+  it('says what comes next where there is nothing to decide yet', async () => {
+    vi.setSystemTime(new Date('2026-10-06T10:00:00'))
+    open()
+    await screen.findByRole('img', { name: 'Semana 3 de 12' })
+    expect(screen.queryByText(/Toca decidir/)).not.toBeInTheDocument()
+    expect(screen.getByText(/El lun 14 dic empieza el descanso/)).toBeInTheDocument()
   })
 
   it('shows Edit and the menu on the card, both as big as a thumb', async () => {
     const { router } = open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByRole('img', { name: 'Semana 2 de 12' })
     expect(screen.getByRole('button', { name: 'Más acciones' })).toHaveClass('size-11')
     fireEvent.click(screen.getByRole('button', { name: 'Editar' }))
     expect(router.state.location.pathname).toBe('/protocols/cjc/edit')
@@ -50,7 +62,7 @@ describe('ProtocolsPage', () => {
 
   it('keeps this week after showing before and after, and undoes it', async () => {
     const { store } = open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByRole('img', { name: 'Semana 2 de 12' })
     fireEvent.click(screen.getAllByRole('button', { name: 'Mantener una semana más' })[0]!)
 
     const sheet = await screen.findByRole('dialog')
@@ -64,7 +76,7 @@ describe('ProtocolsPage', () => {
 
     fireEvent.click(within(sheet).getByRole('button', { name: 'Mantener una semana más' }))
     await waitFor(() => expect(weeks(store.protocols[0])).toEqual([1, 2, 10, 4]))
-    expect(await screen.findByText('Semana 2 de 13')).toBeInTheDocument()
+    expect(await screen.findByRole('img', { name: 'Semana 2 de 13' })).toBeInTheDocument()
     expect(screen.getByText(/El lun 12 oct sube a 12 U/)).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent(
       'Mantienes esta semana. El próximo cambio pasa al lun 12 oct.',
@@ -72,14 +84,14 @@ describe('ProtocolsPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Deshacer' }))
     await waitFor(() => expect(weeks(store.protocols[0])).toEqual([1, 1, 10, 4]))
-    expect(await screen.findByText('Semana 2 de 12')).toBeInTheDocument()
+    expect(await screen.findByRole('img', { name: 'Semana 2 de 12' })).toBeInTheDocument()
   })
 
   it('moves up a week sooner from the menu', async () => {
     // Monday Oct 5: week 1 of the ten-week step.
     vi.setSystemTime(new Date('2026-10-05T10:00:00'))
     const { store } = open()
-    await screen.findByText('Semana 3 de 12')
+    await screen.findByRole('img', { name: 'Semana 3 de 12' })
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     fireEvent.click(await screen.findByRole('button', { name: /Subir una semana antes/ }))
     const sheet = await screen.findByRole('dialog')
@@ -101,7 +113,7 @@ describe('ProtocolsPage', () => {
       steps: [{ doseMg: 2.5, intervalDays: 1, weekdays: [1], durationWeeks: null }],
     })
     open({ protocols: [reta], inventory: [] })
-    expect(await screen.findByText('Mantenimiento · semana 2')).toBeInTheDocument()
+    expect(await screen.findByRole('img', { name: 'Mantenimiento · semana 2' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Mantener una semana más' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     const menu = await screen.findByRole('dialog')
@@ -111,7 +123,7 @@ describe('ProtocolsPage', () => {
 
   it('changes the dose of the step in force, in units, showing before and after', async () => {
     const { store } = open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByRole('img', { name: 'Semana 2 de 12' })
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     fireEvent.click(await screen.findByRole('button', { name: /Cambiar dosis de este escalón/ }))
 
@@ -133,7 +145,7 @@ describe('ProtocolsPage', () => {
 
   it('archives after asking, and brings it back on undo', async () => {
     const { store } = open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByRole('img', { name: 'Semana 2 de 12' })
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     fireEvent.click(await screen.findByRole('button', { name: /Archivar/ }))
     const sheet = await screen.findByRole('dialog')
@@ -152,12 +164,12 @@ describe('ProtocolsPage', () => {
     await screen.findByText('Pausado')
     fireEvent.click(screen.getByRole('button', { name: 'Reanudar' }))
     await waitFor(() => expect(store.protocols[0]?.status).toBe('active'))
-    expect(await screen.findByText('Activo')).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByText('Pausado')).not.toBeInTheDocument())
   })
 
   it('pauses at once and undoes it', async () => {
     const { store } = open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByRole('img', { name: 'Semana 2 de 12' })
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     fireEvent.click(await screen.findByRole('button', { name: /Pausar/ }))
     await waitFor(() => expect(store.protocols[0]?.status).toBe('paused'))
@@ -167,7 +179,7 @@ describe('ProtocolsPage', () => {
 
   it('saves it as a reusable protocol, and the undo takes it away again', async () => {
     const { store } = open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByRole('img', { name: 'Semana 2 de 12' })
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     fireEvent.click(await screen.findByRole('button', { name: /Guardar como pauta reutilizable/ }))
     await waitFor(() => expect(store.saved_protocols).toHaveLength(1))
@@ -182,7 +194,7 @@ describe('ProtocolsPage', () => {
 
   it('duplicates into a new protocol that starts from this one', async () => {
     const { router } = open()
-    await screen.findByText('Semana 2 de 12')
+    await screen.findByRole('img', { name: 'Semana 2 de 12' })
     fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
     fireEvent.click(await screen.findByRole('button', { name: /Duplicar/ }))
     expect(router.state.location.pathname).toBe('/protocols/new')

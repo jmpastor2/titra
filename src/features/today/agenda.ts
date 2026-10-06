@@ -4,7 +4,7 @@
  */
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
 import { toDoseEvent, toProtocolLike } from '@/data/mappers'
-import { fmtDate, toTimeInputValue, type Locale } from '@/lib/format'
+import { fmtDate, fmtHours, toTimeInputValue, type Locale } from '@/lib/format'
 import { addDays, isSameDay, startOfDay } from 'date-fns'
 import {
   componentsAt,
@@ -158,4 +158,14 @@ export function weekdayInitial(day: Date, locale: Locale): string {
   return new Intl.DateTimeFormat(locale === 'es' ? 'es-ES' : 'en-US', {
     weekday: 'narrow',
   }).format(day)
+}
+
+/** A wait as a clock reads it: "45 min", "3 h 20 min", "12 h", "1 d 4 h". */
+export function fmtWait(ms: number, locale: Locale): string {
+  const min = Math.max(0, Math.round(ms / 60_000))
+  if (min >= 6 * 60) return fmtHours(min / 60, locale)
+  const h = Math.floor(min / 60)
+  const rest = min % 60
+  if (h === 0) return `${rest} min`
+  return rest === 0 ? `${h} h` : `${h} h ${rest} min`
 }

@@ -1,7 +1,7 @@
 import { BookOpen, ExternalLink, FlaskConical, Package, Syringe } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -32,7 +32,6 @@ export function SubstancePage() {
   const { compoundId = '' } = useParams()
   const { t } = useTranslation()
   const { locale, pick } = useLocale()
-  const nav = useNavigate()
   const { patientId, readOnly } = usePatientScope()
   const clock = useNow()
   const exposure = useExposure(patientId, clock)
@@ -157,7 +156,6 @@ export function SubstancePage() {
 
         <section>
           <SectionTitle
-            index="01"
             action={
               !readOnly && (
                 <Link to={`/protocols/new?compound=${compoundId}`} className="spec text-signal">
@@ -186,8 +184,8 @@ export function SubstancePage() {
                     className="card flex items-center justify-between gap-3 p-3.5"
                   >
                     <div className="min-w-0">
-                      <div className="truncate text-[14.5px] font-semibold">{p.name}</div>
-                      <div className="readout truncate text-[12px] text-muted">
+                      <div className="text-[14.5px] font-semibold leading-snug">{p.name}</div>
+                      <div className="readout mt-0.5 text-[12px] leading-snug text-muted">
                         {scheduleLabel(pl.steps, pl.times)}
                       </div>
                     </div>
@@ -203,7 +201,6 @@ export function SubstancePage() {
 
         <section>
           <SectionTitle
-            index="02"
             action={
               !readOnly && (
                 <Link to="/inventory" className="spec text-signal">
@@ -227,7 +224,9 @@ export function SubstancePage() {
                 <div key={v.id} className="card flex w-[200px] shrink-0 items-center gap-3 p-3.5">
                   <Vial {...vialLook(v)} size={48} low={low && v.id === open?.id} />
                   <div className="min-w-0">
-                    <div className="truncate text-[13.5px] font-semibold">{v.label}</div>
+                    <div className="line-clamp-2 text-[13.5px] font-semibold leading-snug">
+                      {v.label}
+                    </div>
                     <div className="readout text-[16px] font-semibold" style={{ color }}>
                       {fmtNumber(Number(v.remaining_mg), locale, 2)} mg
                     </div>
@@ -240,7 +239,7 @@ export function SubstancePage() {
 
         {recent.length > 0 && (
           <section>
-            <SectionTitle index="03">{t('substance.recent')}</SectionTitle>
+            <SectionTitle>{t('substance.recent')}</SectionTitle>
             <Card padded={false} className="px-4">
               <ul className="divide-y divide-line">
                 {recent.map((r) => (
@@ -250,7 +249,7 @@ export function SubstancePage() {
                     </span>
                     <span className="flex min-w-0 items-center gap-2">
                       {r.siteId && (
-                        <span className="spec truncate">{t(`sites.labels.${r.siteId}`)}</span>
+                        <span className="spec text-right">{t(`sites.labels.${r.siteId}`)}</span>
                       )}
                       <span className="readout shrink-0 text-[14px] font-semibold">
                         {describeDoses(r.doses, locale)}
@@ -264,8 +263,11 @@ export function SubstancePage() {
         )}
 
         <section>
-          <SectionTitle index="04">{t('today.learn')}</SectionTitle>
-          <Card className="cursor-pointer" onClick={() => nav(`/wiki/${compoundId}`)}>
+          <SectionTitle>{t('today.learn')}</SectionTitle>
+          <Link
+            to={`/wiki/${compoundId}`}
+            className="card block p-4 outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
+          >
             <div className="mb-2 flex flex-wrap gap-1.5">
               <Badge tone={evidenceTone(compound.evidence)} className={WRAP}>
                 {t(`wiki.evidenceTiers.${compound.evidence}`)}
@@ -293,7 +295,7 @@ export function SubstancePage() {
                 <BookOpen className="size-3" /> {t('today.readMore')}
               </span>
             </div>
-          </Card>
+          </Link>
         </section>
       </div>
 

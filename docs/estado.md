@@ -1,28 +1,31 @@
-# Estado del proyecto (2026-10-05)
+# Estado del proyecto (2026-10-06)
 
 Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Actions al hacer push a `main`).
 
 ## Hecho
 
-- Registro: editar, borrar y asignar una toma extra a la toma retrasada que sustituye (`doses.planned_at`).
-- Hoy: semana de cada ciclo, decisión semanal (subir o mantener), panel de registro rápido, carga en paralelo.
-- Ciclos (`/cycles`), pautas editables (`/protocols/:id`, `/edit`), inventario con reconstitución y alertas leídas.
-- Gráficas de niveles en SVG, toast único con Deshacer, datos leídos completos más allá del límite de 1000 filas.
-- Migración 5 aplicada en Supabase y función `send-reminders` redesplegada (etiqueta propia para decisiones).
-- Segunda tanda a medias pero estable (tsc, lint y 1523 tests en verde, build correcto): arranque más ligero
-  (entrada JS 327 kB a 194 kB, precache 93 a 70 entradas), catálogo de compuestos partido en ligero y detalle,
-  pulido visual de muchas pantallas y tarjeta "Versión y actualizaciones" en Ajustes.
+- Primera tanda: editar, borrar y asignar tomas, ciclos, pautas editables, inventario con reconstitución,
+  alertas leídas, registro rápido, gráficas SVG, toast con Deshacer, lectura completa de tablas.
+- Segunda tanda: arranque ligero, catálogo partido en ligero y detalle, Recharts eliminado, tarjeta de versión.
+- Tercera tanda (Titra 2):
+  - Paleta nueva sin verde (grafito + índigo, acento cian), sin cuadrícula; iconos y splash regenerados.
+  - Teclado de iOS: las hojas siguen el viewport visual y los campos usan 16 px (no hay zoom al escribir).
+  - Hoy: hero con anillo del día, racha, adherencia, semana de ciclo, días de stock, niveles a ancho completo.
+  - Registro: cabecera con anillo semanal y KPIs, filtro de una línea, filas sin texto cortado.
+  - Pautas y Ciclos: tarjetas con anillo, tira de fases, decisión semanal unificada.
+  - Inventario: sin texto cortado, tarjetas de un solo número, cobertura de stock, caducidad en anillo.
+  - Progreso: constancia (calendario 12 semanas, rachas), total administrado, peso con ritmo y objetivo.
+  - Futuro: un rango grande, gráfica con tendencia, lista única de qué medir.
+  - Más: grupos con insignias en vivo. Wiki: 44 entradas, categorías plegadas, fichas escaneables.
+  - Primitivas: `components/kpi/Ring`, `PageHeader`/filas sin truncado, `Segmented` escala a 320 px.
 
-## Pendiente (en este orden)
+## Pendiente
 
-1. (Hecho) Recharts eliminado; teclado iOS en hojas (visualViewport + campos de 16 px); wiki con categorías plegadas.
-2. Repasar con la cuenta real (`?real=1` en `lab.html`, exportando antes una copia a `src/dev/real-snapshot.json`,
-   que está ignorada por git y se borra al terminar) el pulido de todas las pantallas: pestañas de Progreso,
-   huecos de toque de 44 px, texto largo, claro/oscuro.
-3. Podar las traducciones sin uso (script en el historial de la sesión: buscar claves sin referencia en `src`).
-4. Actualizar `DESIGN.md` con lo nuevo (estado "extra", ciclos, toast con acción) y la nota de `content:meta`.
-5. Avisos push: el usuario los activa en el iPhone (Más, Avisos).
-6. Apagar el equipo solo cuando el usuario lo pida tras terminar todo.
+1. Probar el teclado de las hojas (viales, agua) en el iPhone real.
+2. Repasar con la cuenta real (`?real=1`, exportar copia a `src/dev/real-snapshot.json`, git-ignorada).
+3. Poda de claves i18n sin uso: el script automático borra claves construidas dinámicamente
+   (`cycle.decision.increase*`); hacerlo a mano o mejorar el script.
+4. Avisos push: se activan en el iPhone (Más, Avisos).
 
 ## Cómo trabajar
 

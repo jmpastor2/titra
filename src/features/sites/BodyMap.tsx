@@ -91,130 +91,146 @@ export function BodyMap({
 
   return (
     <figure className={clsx('m-0', className)}>
-      <div className="relative mx-auto" style={{ maxWidth: compact ? 288 : 360 }}>
-        <svg
-          viewBox={compact ? VIEWBOX.compact : VIEWBOX.full}
-          className="block w-full select-none"
-          role={selectable ? 'radiogroup' : 'group'}
-          aria-label={t('sites.title')}
+      {/*
+        The tap targets are 44 units of a 300-wide map: on a 320 px phone the map would be
+        narrower than that and they would shrink under 44 px. It keeps its 300 and, being
+        centred, spills into the empty margin of the card on both sides.
+      */}
+      <div className="flex justify-center">
+        <div
+          className="relative w-full shrink-0"
+          style={{ maxWidth: compact ? 288 : 360, minWidth: compact ? undefined : 300 }}
         >
-          <Figure cx={FRONT} />
-          <Figure cx={BACK} back />
+          <svg
+            viewBox={compact ? VIEWBOX.compact : VIEWBOX.full}
+            className="block w-full select-none"
+            role={selectable ? 'radiogroup' : 'group'}
+            aria-label={t('sites.title')}
+          >
+            <Figure cx={FRONT} />
+            <Figure cx={BACK} back />
 
-          {!compact &&
-            [FRONT, BACK].map((cx) => (
-              <g
-                key={cx}
-                className="spec"
-                fontSize={8.5}
-                fill="var(--muted)"
-                letterSpacing="0.12em"
-              >
-                <text x={cx - 44} y={300} textAnchor="middle">
-                  {t('sites.leftShort')}
-                </text>
-                <text x={cx} y={300} textAnchor="middle" fill="var(--ink-2)" fontWeight={700}>
-                  {cx === FRONT ? t('sites.front') : t('sites.back')}
-                </text>
-                <text x={cx + 44} y={300} textAnchor="middle">
-                  {t('sites.rightShort')}
-                </text>
-              </g>
-            ))}
+            {!compact &&
+              [FRONT, BACK].map((cx) => (
+                <g
+                  key={cx}
+                  className="spec"
+                  fontSize={8.5}
+                  fill="var(--muted)"
+                  letterSpacing="0.12em"
+                >
+                  <text x={cx - 44} y={300} textAnchor="middle">
+                    {t('sites.leftShort')}
+                  </text>
+                  <text x={cx} y={300} textAnchor="middle" fill="var(--ink-2)" fontWeight={700}>
+                    {cx === FRONT ? t('sites.front') : t('sites.back')}
+                  </text>
+                  <text x={cx + 44} y={300} textAnchor="middle">
+                    {t('sites.rightShort')}
+                  </text>
+                </g>
+              ))}
 
-          {SPOTS.map((s) => {
-            const status = byId.get(s.id)
-            const heat = status?.heat ?? 'never'
-            const colors = HEAT[heat]
-            const suggested = s.id === suggestedId
-            const focused = s.id === focusId
-            const label = t(`sites.labels.${s.id}`)
-            return (
-              <g
-                key={s.id}
-                role={selectable ? 'radio' : 'button'}
-                aria-checked={selectable ? s.id === selectedId : undefined}
-                aria-pressed={selectable ? undefined : focused}
-                aria-label={label}
-                tabIndex={0}
-                onClick={() => pick(s.id)}
-                onKeyDown={(e) => onKey(e, s.id)}
-                className="group cursor-pointer outline-none"
-              >
-                <rect x={s.hit.x} y={s.hit.y} width={s.hit.w} height={s.hit.h} fill="transparent" />
-                <circle
-                  cx={s.cx}
-                  cy={s.cy}
-                  r={15.5}
-                  fill="none"
-                  stroke="var(--signal)"
-                  strokeWidth={2}
-                  className="opacity-0 group-focus-visible:opacity-100"
-                />
-                {suggested && (
+            {SPOTS.map((s) => {
+              const status = byId.get(s.id)
+              const heat = status?.heat ?? 'never'
+              const colors = HEAT[heat]
+              const suggested = s.id === suggestedId
+              const focused = s.id === focusId
+              const label = t(`sites.labels.${s.id}`)
+              return (
+                <g
+                  key={s.id}
+                  role={selectable ? 'radio' : 'button'}
+                  aria-checked={selectable ? s.id === selectedId : undefined}
+                  aria-pressed={selectable ? undefined : focused}
+                  aria-label={label}
+                  tabIndex={0}
+                  onClick={() => pick(s.id)}
+                  onKeyDown={(e) => onKey(e, s.id)}
+                  className="group cursor-pointer outline-none"
+                >
+                  <rect
+                    x={s.hit.x}
+                    y={s.hit.y}
+                    width={s.hit.w}
+                    height={s.hit.h}
+                    fill="transparent"
+                  />
                   <circle
                     cx={s.cx}
                     cy={s.cy}
-                    r={12.5}
+                    r={15.5}
                     fill="none"
                     stroke="var(--signal)"
-                    strokeWidth={1.8}
-                    strokeDasharray="3 2.5"
-                    className={clsx(compact && !focused && 'motion-safe:animate-pulse')}
+                    strokeWidth={2}
+                    className="opacity-0 group-focus-visible:opacity-100"
                   />
-                )}
-                {focused && (
+                  {suggested && (
+                    <circle
+                      cx={s.cx}
+                      cy={s.cy}
+                      r={12.5}
+                      fill="none"
+                      stroke="var(--signal)"
+                      strokeWidth={1.8}
+                      strokeDasharray="3 2.5"
+                      className={clsx(compact && !focused && 'motion-safe:animate-pulse')}
+                    />
+                  )}
+                  {focused && (
+                    <circle
+                      cx={s.cx}
+                      cy={s.cy}
+                      r={suggested ? 10 : 11}
+                      fill="none"
+                      stroke="var(--ink)"
+                      strokeWidth={2}
+                    />
+                  )}
                   <circle
                     cx={s.cx}
                     cy={s.cy}
-                    r={suggested ? 10 : 11}
-                    fill="none"
-                    stroke="var(--ink)"
-                    strokeWidth={2}
+                    r={8}
+                    style={{ fill: colors.fill }}
+                    stroke={heat === 'never' ? 'var(--line-strong)' : 'none'}
+                    strokeWidth={1.2}
+                    className="transition-[fill] duration-300 group-active:opacity-75"
                   />
-                )}
-                <circle
-                  cx={s.cx}
-                  cy={s.cy}
-                  r={8}
-                  style={{ fill: colors.fill }}
-                  stroke={heat === 'never' ? 'var(--line-strong)' : 'none'}
-                  strokeWidth={1.2}
-                  className="transition-[fill] duration-300 group-active:opacity-75"
-                />
-                <text
-                  x={s.cx}
-                  y={s.cy + 2.5}
-                  textAnchor="middle"
-                  fontSize={7}
-                  fontWeight={700}
-                  fill={colors.ink}
-                  fontFamily="var(--font-mono)"
-                  aria-hidden
-                  className="pointer-events-none"
-                >
-                  {ageShort(status?.hoursSince ?? null)}
-                </text>
-              </g>
-            )
-          })}
-        </svg>
+                  <text
+                    x={s.cx}
+                    y={s.cy + 2.5}
+                    textAnchor="middle"
+                    fontSize={7}
+                    fontWeight={700}
+                    fill={colors.ink}
+                    fontFamily="var(--font-mono)"
+                    aria-hidden
+                    className="pointer-events-none"
+                  >
+                    {ageShort(status?.hoursSince ?? null)}
+                  </text>
+                </g>
+              )
+            })}
+          </svg>
 
-        {compact && (
-          <div aria-hidden className="relative h-3.5">
-            {COMPACT_CAPTION_X.map((x, i) => (
-              <div
-                key={x}
-                className="spec absolute top-0 flex -translate-x-1/2 gap-2 text-[9px] leading-none"
-                style={{ left: `${x * 100}%` }}
-              >
-                <span>{t('sites.leftShort')}</span>
-                <span className="text-ink-2">{i === 0 ? t('sites.front') : t('sites.back')}</span>
-                <span>{t('sites.rightShort')}</span>
-              </div>
-            ))}
-          </div>
-        )}
+          {compact && (
+            <div aria-hidden className="relative h-3.5">
+              {COMPACT_CAPTION_X.map((x, i) => (
+                <div
+                  key={x}
+                  className="spec absolute top-0 flex -translate-x-1/2 gap-2 text-[9px] leading-none"
+                  style={{ left: `${x * 100}%` }}
+                >
+                  <span>{t('sites.leftShort')}</span>
+                  <span className="text-ink-2">{i === 0 ? t('sites.front') : t('sites.back')}</span>
+                  <span>{t('sites.rightShort')}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {!compact && (

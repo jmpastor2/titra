@@ -23,8 +23,8 @@ export function RestList({
         const rest = s.hoursSince === null ? 1 : Math.min(1, s.hoursSince / DEFAULT_MIN_REST_HOURS)
         return (
           <li key={s.siteId} className="py-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
+            <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+              <div className="min-w-[9rem] flex-1">
                 <div className="text-[14.5px] font-medium">
                   {t(`sites.labels.${s.site.labelKey}`)}
                 </div>
@@ -37,7 +37,7 @@ export function RestList({
                   <CompoundNames ids={s.lastCompoundIds} />
                 </div>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
+              <div className="ml-auto flex shrink-0 flex-col items-end gap-1">
                 {s.siteId === suggestedId && <Badge tone="brand">{t('sites.suggested')}</Badge>}
                 {s.resting && s.restUntil ? (
                   <span className="text-right text-[12px] text-warn">

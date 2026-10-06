@@ -32,7 +32,6 @@ import { fmtVolume, splitVolume } from './water'
 
 export type TileVisual =
   | { kind: 'ring'; fraction: number; done: boolean; icon: LucideIcon }
-  | { kind: 'strip'; marks: boolean[] }
   /** How far through a wait, 0 to 1. */
   | { kind: 'bar'; fraction: number }
   | { kind: 'spark'; values: number[] }
@@ -66,6 +65,9 @@ export interface TileContext {
   lastMeal: Date | null
   tiers: ReadonlyMap<TileId, Tier>
 }
+
+/** A figure and its unit stay on one line in a caption that wraps. */
+const nbsp = (reading: string) => reading.replace(' ', '\u00A0')
 
 const toneOf = (tier: Tier): TileTone =>
   tier >= 3 ? 'urgent' : tier === 2 ? 'attention' : tier === 0 ? 'done' : 'idle'
@@ -159,7 +161,7 @@ function waterView(ctx: TileContext): TileView {
     value: { text: reading.value, unit: reading.unit },
     caption: reached
       ? t('quick.water.tileDone')
-      : t('quick.counter.left', { amount: fmtVolume(goalMl - total, locale) }),
+      : t('quick.counter.left', { amount: nbsp(fmtVolume(goalMl - total, locale)) }),
     visual: { kind: 'ring', fraction: total / goalMl, done: reached, icon: Droplets },
     hint: t('quick.water.tileHint', {
       goal: fmtVolume(goalMl, locale),
@@ -206,12 +208,10 @@ function bodyView(
 function checkInView(ctx: TileContext): TileView {
   const { t, now, data } = ctx
   const c = data.checkIn
-  const strip: TileVisual = { kind: 'strip', marks: c.strip }
   if (c.doneToday) {
     return build(ctx, 'checkin', Gauge, {
       value: { text: t('quick.checkin.done'), word: true },
       caption: t('quick.checkin.streak', { count: c.streak }),
-      visual: strip,
     })
   }
   if (c.ageDays === null) {
@@ -228,7 +228,6 @@ function checkInView(ctx: TileContext): TileView {
         : c.lastAt
           ? agoLabel(t, c.lastAt, now)
           : undefined,
-    visual: strip,
   })
 }
 
@@ -270,7 +269,7 @@ function proteinView(ctx: TileContext): TileView {
         ? t('quick.protein.noTargetShort')
         : reached
           ? t('quick.protein.tileDone')
-          : t('quick.counter.left', { amount: `${fmtNumber(target - total, locale, 0)} g` }),
+          : t('quick.counter.left', { amount: nbsp(`${fmtNumber(target - total, locale, 0)} g`) }),
     visual: {
       kind: 'ring',
       fraction: target ? total / target : 0,
@@ -286,7 +285,6 @@ function strengthView(ctx: TileContext): TileView {
   return build(ctx, 'strength', Dumbbell, {
     value: { text: String(w.count), unit: `/ ${STRENGTH_WEEKLY_TARGET}` },
     caption: w.last ? agoLabel(t, w.last.at, now) : t('quick.strength.none'),
-    visual: { kind: 'strip', marks: w.days },
   })
 }
 

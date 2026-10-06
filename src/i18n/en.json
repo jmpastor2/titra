@@ -12,12 +12,9 @@
     "edit": "Edit",
     "add": "Add",
     "back": "Back",
-    "next": "Next",
     "done": "Done",
-    "confirm": "Confirm",
     "search": "Search",
     "loading": "Loading…",
-    "saving": "Saving…",
     "retry": "Retry",
     "optional": "optional",
     "notes": "Notes",
@@ -25,48 +22,23 @@
     "time": "Time",
     "today": "Today",
     "yesterday": "Yesterday",
-    "all": "All",
-    "none": "None",
-    "yes": "Yes",
-    "no": "No",
     "seeAll": "See all",
     "showMore": "Show more",
-    "showLess": "Show less",
     "offline": "Offline · showing saved data",
     "updateAvailable": "A new version of Titra is available",
     "update": "Update",
     "deleteConfirm": "Delete this entry? This cannot be undone.",
     "saved": "Saved",
-    "deleted": "Deleted",
     "error": "Something went wrong. Please try again.",
     "copied": "Copied",
-    "days_one": "{{count}} day",
-    "days_other": "{{count}} days",
     "weeks_one": "{{count}} week",
     "weeks_other": "{{count}} weeks",
-    "hours_one": "{{count}} hour",
-    "hours_other": "{{count}} hours",
-    "week": "Week",
-    "perWeek": "/ week",
-    "perDay": "/ day",
-    "every": "every",
-    "range": {
-      "7": "7 d",
-      "14": "14 d",
-      "30": "30 d",
-      "90": "90 d",
-      "180": "6 mo",
-      "365": "1 y"
-    }
+    "week": "Week"
   },
   "nav": {
-    "home": "Home",
     "log": "Log",
-    "health": "Health",
     "wiki": "Wiki",
     "more": "More",
-    "patients": "Patients",
-    "clinic": "Clinic",
     "main": "Main",
     "today": "Today",
     "progress": "Progress"
@@ -88,14 +60,7 @@
     "resetSent": "We sent you an email to reset your password.",
     "magicLink": "Send magic link",
     "magicSent": "Check your inbox: we sent you a sign-in link.",
-    "noAccount": "No account? Sign up",
-    "haveAccount": "Already have an account? Sign in",
-    "signOut": "Sign out",
     "confirmEmail": "Account created. Confirm your email to continue.",
-    "iAm": "I am a",
-    "rolePatient": "Patient",
-    "roleClinician": "Clinician",
-    "roleHint": "Clinicians see a panel of their linked patients; patients log doses and health data.",
     "errors": {
       "invalid": "Incorrect email or password.",
       "weak": "Password is too short.",
@@ -118,64 +83,18 @@
     "sexO": "Other",
     "heightCm": "Height",
     "goalWeight": "Goal weight",
-    "linkClinician": "Link with your clinician",
-    "linkClinicianHint": "If your clinician uses Titra, enter their clinic code to share your records.",
     "clinicCode": "Clinic code",
-    "skip": "Not now",
-    "clinicianIntro": "As a clinician you get a clinic code your patients enter to share their data with you.",
     "finish": "Get started",
     "setup": "Setup"
   },
   "dashboard": {
-    "greeting": "Hi, {{name}}",
-    "onBoard": "Drug on board",
-    "onBoardHint": "Estimated amount in the body right now",
-    "steadyState": "Steady state",
-    "steadyStateOf": "of the stable level at {{dose}}",
-    "reached": "Reached",
-    "toReach": "{{time}} to 90%",
-    "nextDose": "Next dose",
-    "due": "Due now",
-    "overdue": "Overdue by {{time}}",
-    "in": "In {{time}}",
-    "logNow": "Log dose",
-    "noProtocol": "No active protocol",
-    "noProtocolHint": "Create a protocol to see your curve, steady state and next dose.",
-    "createProtocol": "Create protocol",
-    "curve": "Exposure curve",
-    "curveHint": "Estimated drug on board (mg) from your doses. Dashed line: projection.",
-    "history": "History",
-    "projection": "Projection",
-    "symptomsOverlay": "Symptoms",
-    "titration": "Titration",
-    "step": "Step {{n}} of {{total}}",
-    "maintenance": "Maintenance",
-    "nextStep": "Next: {{dose}} in {{days}}",
-    "adherence": "Adherence 28 d",
-    "adherenceHint": "{{taken}} of {{expected}} doses",
-    "weight": "Weight",
-    "weightDelta": "{{delta}} in {{days}} d",
-    "lastSymptom": "Last symptom",
-    "quickActions": "Quick actions",
-    "logSymptom": "Symptom",
-    "logWeight": "Weight",
-    "whatIf": "Simulator",
-    "noDosesYet": "No doses logged yet",
-    "pkNotAvailable": "This compound has no pharmacokinetic parameters for the curve.",
-    "clinicianNotes": "Shared notes",
-    "steadyStateShort": "Steady state"
+    "noProtocolHint": "Create a protocol to see your curve, steady state and next dose."
   },
   "doses": {
-    "title": "Dose log",
     "log": "Log a dose",
     "logTitle": "Log administration",
-    "compound": "Compound",
-    "protocol": "Protocol",
-    "noProtocolOption": "No protocol (one-off)",
     "dose": "Dose",
     "site": "Injection site",
-    "suggestedSite": "Suggested",
-    "siteTooRecent": "Every site was used less than 3 days ago",
     "inventory": "Deduct from",
     "noInventory": "Do not deduct",
     "when": "When",
@@ -183,12 +102,7 @@
     "logged": "Dose logged",
     "empty": "No doses logged",
     "emptyHint": "Log your first dose to start seeing the curve.",
-    "skipped": "Skipped",
-    "planned": "Planned",
-    "taken": "Taken",
-    "history": "History",
     "filterAll": "All",
-    "deleteDose": "Delete dose",
     "confirm": "Log dose",
     "otherTime": "Other time",
     "sameSyringe": "Same syringe",
@@ -228,13 +142,6 @@
       "left": "{{amount}} left",
       "powder": "Not reconstituted"
     },
-    "fit": {
-      "onTime": "on time",
-      "extra": "extra",
-      "lateDays": "{{days}} d late",
-      "earlyDays": "{{days}} d early",
-      "covers": "covers the {{slot}} one"
-    },
     "summary": {
       "late_one": "{{count}} late",
       "late_other": "{{count}} late",
@@ -242,19 +149,54 @@
       "extra_other": "{{count}} extras"
     },
     "emptyAction": "Log my first dose",
-    "emptyFilter": "No doses match this filter"
+    "emptyFilter": "No doses match this filter",
+    "kpi": {
+      "eyebrow": "This week",
+      "noPlan": "No doses planned",
+      "left_one": "{{count}} dose left",
+      "left_other": "{{count}} doses left",
+      "doneOf": "{{taken}} of {{planned}} doses",
+      "complete": "Week complete",
+      "taken_one": "{{count}} taken",
+      "taken_other": "{{count}} taken",
+      "missed_one": "{{count}} missed",
+      "missed_other": "{{count}} missed",
+      "extras_one": "{{count}} extra",
+      "extras_other": "{{count}} extras",
+      "adherence": "Adherence",
+      "adherenceSub": "28 days · {{taken}} of {{expected}}",
+      "noData": "No data yet",
+      "last": "Last dose",
+      "noneYet": "None yet",
+      "next": "Next dose",
+      "now": "Now",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "nothingNext": "Nothing planned",
+      "plan": "Week plan"
+    },
+    "filter": {
+      "label": "Show",
+      "all": "All doses"
+    },
+    "status": {
+      "onTime": "On time",
+      "late": "{{gap}} late",
+      "early": "{{gap}} early",
+      "makeUp": "Make-up",
+      "ahead": "Taken ahead",
+      "extra": "Extra",
+      "daysLate": "{{days}} d late",
+      "daysEarly": "{{days}} d early",
+      "covers": "Covers {{slot}} · {{gap}}"
+    }
   },
   "protocols": {
     "title": "Protocols",
     "new": "New protocol",
     "edit": "Edit protocol",
-    "fromTemplate": "From template",
-    "custom": "Custom",
-    "template": "Template",
     "templateHint": "Templates reproduce published labels and trial arms. They are a reference: Titra does not recommend doses.",
     "name": "Name",
-    "compound": "Compound",
-    "route": "Route",
     "startDate": "Start date",
     "timeOfDay": "Usual time",
     "steps": "Steps",
@@ -265,7 +207,6 @@
     "openEnded": "Maintenance (open-ended)",
     "addStep": "Add step",
     "removeStep": "Remove",
-    "status": "Status",
     "statuses": {
       "active": "Active",
       "paused": "Paused",
@@ -274,13 +215,8 @@
     },
     "empty": "No protocols",
     "emptyHint": "A protocol sets the substance, dose, days, times and steps.",
-    "createdBy": "Created by {{name}}",
-    "byClinician": "Shared proposal",
-    "activate": "Activate",
     "pause": "Pause",
-    "complete": "Mark completed",
     "archive": "Archive",
-    "summary": "{{steps}} steps · started {{date}}",
     "weekly": "weekly",
     "daily": "daily",
     "everyNDays": "every {{n}} days",
@@ -291,7 +227,6 @@
     "ssAvg": "Average",
     "ssTime": "90% in {{time}}",
     "notes": "Notes",
-    "onlyOneActive": "Only one active protocol per substance.",
     "openEndedLastOnly": "Only the last step can be open-ended maintenance. Give the earlier steps a duration.",
     "eyebrow": "Lab",
     "startFrom": "Start from",
@@ -332,7 +267,6 @@
       "startsOn": "Starts {{date}}"
     },
     "adherence": "Adherence 28 d",
-    "adherenceValue": "{{taken}}/{{expected}} · {{pct}} %",
     "ladderPreview": "Dose ladder",
     "nightShift": "The night dose falls after midnight",
     "nightShiftHint": "Times before 06:00 count for the day before: Saturday 01:00 is Friday's dose.",
@@ -346,7 +280,6 @@
       "week": "Week {{n}}",
       "inDays_one": "tomorrow",
       "inDays_other": "in {{count}} days",
-      "decision": "Time to decide: on {{date}} it steps up to {{dose}}. Step up, or hold one more week?",
       "today": "today"
     },
     "next": {
@@ -417,6 +350,10 @@
     "sticky": {
       "dirty": "Unsaved changes",
       "clean": "No changes"
+    },
+    "decision": {
+      "title": "Time to decide",
+      "hint": "If you do nothing, it goes up that day."
     }
   },
   "symptoms": {
@@ -424,7 +361,6 @@
     "log": "Log symptom",
     "kind": "Type",
     "severity": "Severity",
-    "severityScale": "0 = none · 10 = unbearable",
     "when": "When",
     "empty": "No symptoms logged",
     "emptyHint": "Log nausea, fullness or discomfort to see them on the exposure curve.",
@@ -448,8 +384,6 @@
       "palpitations": "Palpitations",
       "other": "Other"
     },
-    "last7": "Last 7 days",
-    "severe": "Severe",
     "addNote": "Add a note",
     "more": "More symptoms",
     "sameAgo": "Same as {{when}}",
@@ -521,7 +455,6 @@
     "aboveRange": "Above range"
   },
   "lean": {
-    "title": "Lean mass guard",
     "intro": "On GLP-1 therapy, up to 25–40% of weight lost can be muscle without resistance training and enough protein.",
     "proteinTarget": "Protein target",
     "proteinHint": "{{gPerKg}} g/kg · adjustable in Settings",
@@ -556,9 +489,7 @@
     },
     "totalMg": "Total content",
     "remainingMg": "Remaining",
-    "concentration": "Concentration",
     "openedAt": "Opened on",
-    "expiresAt": "Expires on",
     "lot": "Lot",
     "storage": "Storage",
     "empty": "No inventory",
@@ -569,38 +500,26 @@
     "dosesLeft_one": "{{count}} dose",
     "dosesLeft_other": "{{count}} doses",
     "archive": "Archive",
-    "inUse": "In use for {{days}} d",
-    "inUseWarning": "Beyond the recommended {{days}} d after opening",
     "eyebrow": "Lab",
-    "diluent": "Bacteriostatic water",
-    "diluentHint": "With the vial content, Titra works out concentration and units.",
     "remainingHint": "Leave empty if the vial is full.",
-    "openedShort": "In use",
-    "expiresShort": "Expires",
-    "yourDose": "Dose {{dose}}",
-    "covers": "Covers",
     "nextVialBy": "Have the next vial ready by {{date}}",
-    "openedFor_one": "opened {{count}} day ago",
-    "openedFor_other": "opened {{count}} days ago",
     "lyophilised": "Lyophilised",
     "expiresBeforeEmpty": "Expires before it runs out: have another ready by {{date}}",
     "blendPresets": "Common shortcuts",
     "blendTitle": "Blend",
     "blendHint": "If the vial comes premixed with other substances, add them with their mg. They are drawn together, in one draw.",
     "blendAdd": "Add another substance in the vial",
-    "totalOf": "{{name}} (mg)",
+    "totalOf": "mg of {{name}} in the vial",
     "needsMigration4": "Saving blends needs migration 4 in Supabase.",
     "restockEyebrow": "Restock",
-    "restockTitle": "How long your stock lasts",
+    "restockTitle": "How long each substance lasts",
     "vialsCount_one": "{{count}} vial",
     "vialsCount_other": "{{count}} vials",
     "reserveCount_one": "{{count}} in reserve",
     "reserveCount_other": "{{count}} in reserve",
     "until": "until {{date}}",
     "orderNow": "Order now",
-    "plenty": "8+ months",
-    "reconstituteHint": "when you reconstitute it, tap the vial and enter the water you add.",
-    "expiresInUse": "+ Expires {{days}} days after reconstitution",
+    "plenty": "You are well stocked",
     "startWith": "Start with a common one",
     "addSame": "Add another like this",
     "addSameAria": "Add another like this: {{label}}",
@@ -615,23 +534,14 @@
     "finished": "Finished",
     "finishedCount": "Finished and archived ({{count}})",
     "statusInUse": "In use",
-    "statusReserve": "Reserve",
     "statusFinished": "Finished",
-    "strip": {
-      "inUse": "In use",
-      "reserve": "Reserve",
-      "finished": "Finished"
-    },
     "sectionInUse": "In use",
     "sectionReserve": "Reserve",
     "fillAria": "{{pct}} % of the product left",
-    "content": "Content",
-    "labelExpiry": "Expires (label)",
+    "labelExpiry": "Expiry (label)",
     "inWater": "in {{water}} mL",
     "yourDoseShort": "Your dose",
     "eachUnit": "Per U",
-    "left": "Left",
-    "dayOf": "Day {{day}} of {{of}}",
     "noAlerts": "All clear: no pending alerts.",
     "alertsTitle": "Inventory alerts",
     "alertsCount_one": "{{count}} alert",
@@ -647,18 +557,76 @@
     "reconstitutedAt": "Reconstituted on",
     "needsWater": "Enter the water you added.",
     "sizes": "Vial size",
-    "presetNote": "Usual amounts for {{name}}. Edit them if your vial is different."
+    "presetNote": "Usual amounts for {{name}}. Edit them if your vial is different.",
+    "kpi": {
+      "coverTitle": "Your stock cover",
+      "dayUnit_one": "day",
+      "dayUnit_other": "days",
+      "plentyValue": "+8",
+      "plentyUnit": "months",
+      "coverAria_one": "Your stock lasts {{count}} day",
+      "coverAria_other": "Your stock lasts {{count}} days",
+      "coverAriaPlenty": "Your stock lasts more than 8 months",
+      "coverUntil": "Lasts until {{date}}",
+      "coverFirst": "Runs out first: {{names}}",
+      "coverNow": "{{names}} no longer covers your next dose",
+      "coverNowHint": "Order more or open another vial soon.",
+      "plentyHint": "At your current schedule nothing runs out in the next 8 months.",
+      "coverNone": "No protocol uses your stock",
+      "coverNoneHint": "Once a protocol uses these substances you will see here how long they last.",
+      "inUse": "In use",
+      "inUseSub": "Open vials",
+      "reserve": "Reserve",
+      "reserveSub": "Unopened",
+      "expiry": "Expires first",
+      "expiryNone": "No vial has an expiry date",
+      "reorder": "Next order",
+      "reorderNow": "Now",
+      "reorderSub": "{{names}} · runs out {{date}}",
+      "reorderNone": "Nothing to order for now"
+    },
+    "rel": {
+      "today": "today",
+      "tomorrow": "tomorrow",
+      "in_one": "in {{count}} day",
+      "in_other": "in {{count}} days",
+      "ago_one": "{{count}} day ago",
+      "ago_other": "{{count}} days ago"
+    },
+    "card": {
+      "dosesUnit_one": "dose",
+      "dosesUnit_other": "doses",
+      "lasts_one": "Lasts {{count}} day, until {{date}}",
+      "lasts_other": "Lasts {{count}} days, until {{date}}",
+      "cannotCover": "Not enough for your next dose",
+      "coversAll": "Covers all your planned doses",
+      "ofTotalPct": "of {{total}} · {{pct}}% left",
+      "powderHint": "Lyophilised, no water yet",
+      "mgOfTotal": "{{left}} of {{total}}",
+      "expiryCaption": "expires",
+      "expiryCaptionEstimated": "expires ≈",
+      "expiredCaption": "expired",
+      "dayShort": "d",
+      "expiryAria_one": "Expires in {{count}} day",
+      "expiryAria_other": "Expires in {{count}} days",
+      "expiredAria_one": "Expired {{count}} day ago",
+      "expiredAria_other": "Expired {{count}} days ago",
+      "estimated": "estimated date",
+      "lastsToday": "Lasts only until today"
+    },
+    "noDate": "No date",
+    "alertsLess": "Show fewer",
+    "labelAuto": "If you leave it empty it will be called \"{{label}}\"."
   },
   "calculator": {
     "title": "Reconstitution calculator",
     "intro": "For lyophilised vials. Enter vial content, bacteriostatic water volume and the dose you want to draw.",
-    "vialMg": "Vial content",
-    "diluentMl": "Bacteriostatic water",
+    "vialMg": "Content",
+    "diluentMl": "Water added",
     "doseMcg": "Desired dose",
     "concentration": "Concentration",
-    "perUnit": "per unit (U-100)",
+    "perUnit": "Per unit",
     "draw": "Draw",
-    "units": "units",
     "unitsRounded": "Syringe mark",
     "actualDose": "Actual dose",
     "dosesPerVial": "Doses per vial",
@@ -666,24 +634,14 @@
     "penClicks": "Pen clicks",
     "mgPerClick": "mg per click",
     "clicks": "clicks",
-    "warning": "Always check the vial label and your protocol before drawing up."
+    "warning": "Always check the vial label and your protocol before drawing up.",
+    "eyebrow": "Reconstitution",
+    "pageTitle": "Calculator"
   },
   "sites": {
     "title": "Injection sites",
     "intro": "Rotate sites to avoid lipodystrophy and irritation. Titra suggests the most rested site, never one you already used today, and alternates side and region.",
     "suggested": "Next suggested",
-    "lastUsed": "Last used {{when}}",
-    "neverUsed": "Never used",
-    "uses_one": "{{count}} use",
-    "uses_other": "{{count}} uses",
-    "rotation": "Active rotation",
-    "regions": {
-      "abdomen": "Abdomen",
-      "thigh": "Thigh",
-      "arm": "Arm",
-      "glute": "Glute",
-      "other": "Other"
-    },
     "labels": {
       "abd_ul": "Upper left abdomen",
       "abd_ur": "Upper right abdomen",
@@ -755,7 +713,6 @@
     "count_one": "{{count}} compound",
     "count_other": "{{count}} compounds",
     "noResults": "No results",
-    "summary": "Summary",
     "mechanism": "Mechanism",
     "indications": "Indications and uses",
     "pk": "Pharmacokinetics",
@@ -771,7 +728,6 @@
     "templates": "Protocol templates",
     "reconstitution": "Reconstitution",
     "storage": "Storage",
-    "adverse": "Adverse effects",
     "common": "Common",
     "serious": "Serious",
     "contraindications": "Contraindications",
@@ -783,7 +739,6 @@
     "aliases": "Also known as",
     "routes": "Routes",
     "evidence": "Evidence",
-    "regulatory": "Regulatory status",
     "us": "US",
     "eu": "EU",
     "lastReviewed": "Reviewed {{date}}",
@@ -846,7 +801,21 @@
     "blendUnits": "Units drawn",
     "blendPerDraw": "{{units}} U = {{ml}} mL. Always check your vial's label.",
     "inBlends": "Also in these blends",
-    "loadFailed": "Couldn't load this entry. Check your connection and try again."
+    "loadFailed": "Couldn't load this entry. Check your connection and try again.",
+    "watch": "Cautions",
+    "watchMore_one": "And {{count}} more under Safety",
+    "watchMore_other": "And {{count}} more under Safety",
+    "safety": "Safety",
+    "storageRecon": "Reconstitution and storage",
+    "doseRange": "Template range",
+    "doseRangeHint": "From the label or trials. Not a recommendation.",
+    "usualFrequency": "Usual frequency",
+    "peak": "Peak at {{time}}",
+    "perVial": "Per vial",
+    "parts_one": "{{count}} component",
+    "parts_other": "{{count}} components",
+    "more": "Read more",
+    "less": "Read less"
   },
   "simulator": {
     "title": "Simulator",
@@ -855,14 +824,11 @@
     "planned": "Follow the regimen",
     "skipNext": "Skip the next dose",
     "stop": "Stop now",
-    "switch": "Switch compound",
     "switchTo": "Switch to",
-    "switchAt": "Switch date",
     "switchTemplate": "Regimen for the new compound",
     "levelAfterSkip": "Lowest level after skipping",
     "washout": "Washout",
     "washoutHint": "Time to fall to 10% of the current level",
-    "atDay": "Day {{n}}",
     "needProtocol": "You need an active protocol with logged doses.",
     "tabSkip": "Skip one",
     "tabStop": "Stop",
@@ -876,14 +842,7 @@
     "onlyLongActing": "The simulator only works with long-acting substances that have pharmacokinetic data, such as weekly ones."
   },
   "clinic": {
-    "title": "Patients",
-    "clinicCode": "Your clinic code",
-    "clinicCodeHint": "Share it with your patients: they enter it in Titra to link with you.",
     "copyCode": "Copy code",
-    "empty": "No linked patients yet",
-    "emptyHint": "When a patient enters your code they will appear here.",
-    "patients_one": "{{count}} patient",
-    "patients_other": "{{count}} patients",
     "flags": {
       "overdue": "Dose overdue",
       "severe": "Severe symptoms",
@@ -892,40 +851,19 @@
       "lowAdherence": "Low adherence",
       "noData": "No recent data"
     },
-    "sort": {
-      "flags": "Priority",
-      "name": "Name",
-      "lastDose": "Last dose"
-    },
-    "lastDose": "Last dose",
-    "noDoses": "No doses",
-    "overview": "Overview",
-    "doses": "Doses",
-    "symptoms": "Symptoms",
-    "health": "Health",
-    "protocols": "Protocols",
     "notes": "Notes",
     "addNote": "Add note",
     "noteVisible": "Visible to patient",
     "noteHidden": "Only for me",
     "notesEmpty": "No clinical notes",
-    "prescribe": "New regimen for this patient",
-    "unlink": "Unlink patient",
-    "unlinkConfirm": "Unlink? You will stop seeing their data. The patient can relink with your code.",
     "linkedSince": "Linked since {{date}}",
-    "readOnly": "Patient view (read-only)",
-    "myClinician": "Your clinician",
-    "linkedWith": "Linked with {{name}}",
-    "notLinked": "You are not linked with a clinician",
-    "link": "Link with code",
     "unlinkMine": "Stop sharing",
     "unlinkMineConfirm": "Stop sharing your data with this clinician?",
     "linkErrors": {
       "invalid_code": "Invalid code.",
       "self_link": "You cannot link with yourself.",
       "generic": "Could not link."
-    },
-    "linked": "Linked successfully"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -938,28 +876,16 @@
     "language": "Language",
     "units": "Units",
     "proteinGPerKg": "Protein",
-    "notifications": "Reminders",
-    "notificationsHint": "Reminders require installing Titra on the home screen (iOS 16.4+).",
-    "enablePush": "Enable reminders",
-    "pushEnabled": "Reminders enabled",
-    "pushUnsupported": "This browser does not support push notifications.",
-    "data": "Data",
-    "export": "Export data",
-    "exportHint": "Download a CSV with doses, symptoms and measurements for your appointment.",
-    "exportJson": "JSON backup",
-    "about": "About",
-    "version": "Version {{v}}",
-    "installHint": "Install Titra: Safari → Share → Add to Home Screen",
-    "dangerZone": "Danger zone",
+    "exportHint": "CSV of doses, symptoms, measurements and labs for your visit.",
+    "installHint": "Safari → Share → Add to Home Screen. It opens full screen and can send you reminders.",
     "signOut": "Sign out",
-    "role": "Role",
     "syringe": "Your injection syringe",
-    "syringeHint": "The app draws this syringe with its own marks. U‑100: 1 U = 0.01 mL.",
+    "syringeHint": "The app draws this syringe with its marks. U‑100: 1 U = 0.01 mL.",
     "syringeAuto": "Auto",
     "invalidNumber": "Check the number",
     "updates": {
       "title": "Version and updates",
-      "hint": "Titra checks for updates by itself; here you can check right now.",
+      "hint": "It updates itself. You can check right now.",
       "version": "Version",
       "build": "build {{build}}",
       "dev": "Development",
@@ -970,48 +896,73 @@
       "available": "A new version is ready: apply it",
       "apply": "Apply update",
       "applying": "Applying…",
-      "unsupported": "There is no service worker here (dev server, private mode or an unsupported browser), so there is nothing to update.",
+      "unsupported": "No updates here: this happens in dev mode, private mode or a browser without support.",
       "error": "Could not check. Check your connection and try again."
-    }
+    },
+    "installTitle": "Install Titra"
   },
   "more": {
     "title": "More",
-    "protocols": "Protocols",
-    "inventory": "Inventory",
-    "calculator": "Calculator",
-    "sites": "Injection sites",
-    "simulator": "Simulator",
-    "clinician": "My clinician",
     "settings": "Settings",
-    "export": "Export",
     "eyebrow": "Titra",
-    "lab": "Lab",
-    "tools": "Tools",
-    "account": "Account",
-    "protocolsHint": "Substances, doses, days and cycles",
-    "inventoryHint": "Remaining, concentration and expiry",
-    "sitesHint": "Rotation and usage map",
-    "calculatorHint": "Reconstitution and U-100 units",
-    "simulatorHint": "What if I skip a dose or switch drug?",
-    "share": "Share",
-    "shareHint": "Show your control to your clinician",
-    "exportHint": "CSV and backup",
-    "settingsHint": "Profile, theme and language",
-    "reminders": "Reminders",
-    "remindersHint": "When each protocol is due and how many units to draw",
-    "outlook": "Outlook",
-    "outlookHint": "What to expect in 3, 6 and 12 months"
+    "groups": {
+      "plan": "My plan",
+      "tools": "Tools",
+      "health": "Health",
+      "app": "App"
+    },
+    "items": {
+      "protocols": "Protocols",
+      "cycles": "Cycles",
+      "inventory": "Inventory",
+      "calculator": "Calculator",
+      "simulator": "Simulator",
+      "sites": "Injection sites",
+      "outlook": "Outlook",
+      "reminders": "Reminders",
+      "share": "Share",
+      "export": "Export",
+      "settings": "Settings"
+    },
+    "hints": {
+      "protocols": "Substances, doses and days",
+      "cycles": "Week, rest and what is next",
+      "inventory": "Vials, what is left and expiry",
+      "calculator": "Reconstitution and U‑100 units",
+      "simulator": "What if I skip a dose?",
+      "sites": "Rotation and usage map",
+      "outlook": "What to expect at 3, 6 and 12 months",
+      "reminders": "A reminder when each dose is due",
+      "share": "Show your log to your doctor",
+      "export": "CSV and backup",
+      "settings": "Profile, theme and language"
+    },
+    "badge": {
+      "active_one": "{{count}} active",
+      "active_other": "{{count}} active",
+      "weekOf": "Wk {{week}} of {{total}}",
+      "week": "Week {{week}}",
+      "decide": "Decision due",
+      "rest": "Rest",
+      "finished": "Finished",
+      "alerts_one": "{{count}} alert",
+      "alerts_other": "{{count}} alerts",
+      "vials_one": "{{count}} vial",
+      "vials_other": "{{count}} vials",
+      "on": "On",
+      "off": "Off"
+    }
   },
   "export": {
     "title": "Export",
-    "csvDoses": "Doses (CSV)",
-    "csvSymptoms": "Symptoms (CSV)",
-    "csvMeasurements": "Measurements (CSV)",
-    "csvLabs": "Labs (CSV)",
-    "json": "Everything (JSON)",
-    "downloading": "Preparing…",
-    "report": "Visit report",
-    "reportHint": "Printable summary of the last 90 days: curve, adherence, symptoms and weight."
+    "csvDoses": "Doses",
+    "csvSymptoms": "Symptoms",
+    "csvMeasurements": "Measurements",
+    "csvLabs": "Labs",
+    "rows_one": "{{count}} record",
+    "rows_other": "{{count}} records",
+    "backup": "Backup",
+    "backupHint": "Everything together, in one file."
   },
   "units": {
     "kg": "kg",
@@ -1035,14 +986,11 @@
   "errors": {
     "required": "Required",
     "positive": "Must be greater than 0",
-    "invalidNumber": "Invalid number",
-    "network": "Offline. Changes will sync when you are back online.",
     "notFound": "Not found"
   },
   "today": {
     "title": "Today",
     "dayN": "day {{n}}",
-    "doses": "doses",
     "next": "Next",
     "dueNow": "Due now",
     "inTime": "In {{time}}",
@@ -1051,26 +999,16 @@
     "takenAt": "Taken {{time}}",
     "taken": "Taken",
     "logNow": "Log now",
-    "allDone": "All done for today. Nice work.",
     "nothingToday": "Nothing scheduled today.",
     "agenda": "Agenda",
     "levels": "Levels",
     "manage": "Manage",
-    "quick": "Quick log",
-    "freeDose": "One-off dose",
-    "checkin": "Check-in",
     "learn": "Learn",
     "readMore": "Read entry",
-    "onBoard": "On board",
-    "lastDose": "Last dose",
-    "strip": "Today's doses across the day",
     "remindersOff": "Turn on reminders",
-    "remindersOffHint": "We tell you when each protocol is due and how many units to draw.",
     "extraAt": "Off schedule · {{time}}",
     "onlyExtra_one": "Nothing was due today. You logged {{count}} off-schedule dose.",
     "onlyExtra_other": "Nothing was due today. You logged {{count}} off-schedule doses.",
-    "last7": "7 days",
-    "extraShort": "extra",
     "legend": {
       "onTime": "on time",
       "late": "off time",
@@ -1078,10 +1016,40 @@
       "upcoming": "pending",
       "extra": "extra"
     },
-    "afterMidnight": "☾ small hours",
     "stock": "Stock",
     "week": "Last 7 days",
-    "night": "small hours"
+    "night": "small hours",
+    "state": "Status",
+    "late": "Late",
+    "left": "In",
+    "draw": "Draw",
+    "dose": "Dose",
+    "logOther": "Log another dose",
+    "missedN_one": "{{count}} missed",
+    "missedN_other": "{{count}} missed",
+    "free": "free",
+    "done": "done",
+    "day": "today",
+    "ringAria": "{{taken}} of {{total}} doses today",
+    "kpis": "How you are doing",
+    "streak": "Streak",
+    "streakUnit_one": "day",
+    "streakUnit_other": "days",
+    "streakHint": "with every dose taken",
+    "streakNone": "no streak right now",
+    "adherence": "Adherence",
+    "adherenceHint": "{{taken}} of {{planned}} doses in 7 days",
+    "cycle": "Cycle week",
+    "cycleRest": "Cycle rest",
+    "cover": "Supply for",
+    "coverPlenty": "All covered",
+    "coverUnit": {
+      "d_one": "day",
+      "d_other": "days",
+      "mo_one": "month",
+      "mo_other": "months"
+    },
+    "trailAria": "Last 7 days: {{done}} complete"
   },
   "setupLab": {
     "title": "Set up your lab",
@@ -1091,7 +1059,7 @@
     "vial": "Register your vial",
     "vialHint": "Content and bacteriostatic water: Titra works out syringe units.",
     "learn": "Learn what you take",
-    "learnHint": "Entries for 99 compounds with mechanism, half-life and evidence.",
+    "learnHint": "Entries for each compound with mechanism, half-life and evidence.",
     "freeDose": "Log a one-off dose"
   },
   "picker": {
@@ -1104,7 +1072,6 @@
     "nothing": "Move at least one slider",
     "emptyTitle": "No check-ins yet",
     "emptyHint": "Energy, sleep, mood, recovery… One minute a day shows you what each protocol does.",
-    "deltaHint": "The arrow compares against your first week of entries.",
     "before": "was {{value}}",
     "doneToday": "You already did it today: you can update it.",
     "keep": "Keep {{what}} at {{value}}",
@@ -1148,7 +1115,10 @@
       "streak_other": "days in a row",
       "checkinNow": "Check in",
       "stripDays": "{{n}} of {{total}} days logged",
-      "stripDoses": "{{n}} of {{total}} days with every dose"
+      "stripDoses": "{{n}} of {{total}} days with every dose",
+      "bodyFat": "Body fat",
+      "noBodyFat": "Measure your body fat",
+      "goalPath": "{{pct}} of the way to {{goal}}"
     },
     "trend": {
       "label": "Trend",
@@ -1159,16 +1129,12 @@
     },
     "week": {
       "eyebrow": "Last 7 days",
-      "title": "What changed this week",
+      "title": "What changed",
       "empty": "Log weight, doses or a check-in and this is where you will see what changes each week.",
       "vsLast": "vs last week",
-      "weighIns_one": "Weighed in on {{count}} day this week: next week you can compare",
-      "weighIns_other": "Weighed in on {{count}} days this week: next week you can compare",
-      "adherence": "Adherence {{pct}} ({{taken}}/{{expected}})",
-      "offTime_one": "{{count}} dose off schedule (over 1 h)",
-      "offTime_other": "{{count}} doses off schedule (over 1 h)",
-      "allOnTime_one": "The dose was on time",
-      "allOnTime_other": "All {{count}} doses on time",
+      "weighIns_one": "{{count}} weigh-in day: next week you can compare",
+      "weighIns_other": "{{count}} weigh-in days: next week you can compare",
+      "adherence": "Adherence {{pct}} · {{taken}}/{{expected}} doses",
       "checkIns_one": "{{count}} check-in this week",
       "checkIns_other": "{{count}} check-ins this week",
       "symptoms_one": "{{count}} symptom logged",
@@ -1191,7 +1157,11 @@
         "tomorrow": "tomorrow",
         "yesterday": "yesterday",
         "weekday": "on {{weekday}}"
-      }
+      },
+      "stepsLabel": "Doses",
+      "adherenceOn": "Adherence {{pct}} · {{taken}}/{{expected}} doses, all on time",
+      "adherenceOff_one": "Adherence {{pct}} · {{taken}}/{{expected}} doses, {{count}} off time",
+      "adherenceOff_other": "Adherence {{pct}} · {{taken}}/{{expected}} doses, {{count}} off time"
     },
     "baseline": {
       "eyebrow": "Wellbeing",
@@ -1203,12 +1173,6 @@
       "mean": "Mean",
       "srCompare": "Started at {{base}}, now {{latest}}"
     },
-    "nudge": {
-      "title_one": "Your last check-in was {{count}} day ago",
-      "title_other": "Your last check-in was {{count}} days ago",
-      "body": "One minute is enough to see how each protocol suits you.",
-      "action": "Check in"
-    },
     "evolution": "Evolution",
     "bodyView": {
       "change": "Change",
@@ -1218,15 +1182,41 @@
       "paceWindow": "last 4 weeks",
       "records": "Readings",
       "showingLast": "Showing the last {{count}}."
+    },
+    "consistency": {
+      "eyebrow": "Consistency · {{n}} weeks",
+      "ring": "Last 28 d",
+      "streak": "Current streak",
+      "best": "Best streak",
+      "days_one": "day",
+      "days_other": "days",
+      "hint": "Streak: days in a row with every dose taken. Tap a day for details.",
+      "dayTaken": "{{date}} · {{taken}} of {{expected}} doses",
+      "dayNone": "{{date}} · nothing scheduled",
+      "dayFuture": "{{date}} · not yet",
+      "aria": "{{weeks}}-week calendar. {{full}} days with every dose taken, {{some}} with some and {{missed}} with none.",
+      "legend": {
+        "full": "All doses",
+        "some": "Some",
+        "missed": "None",
+        "none": "Nothing due"
+      },
+      "empty": "With an active protocol, every dose shows here, day by day."
+    },
+    "total": {
+      "eyebrow": "Total administered",
+      "hint": "One bar per week, the last {{n}}; the latest is still in progress.",
+      "caption_one": "{{count}} dose · since {{date}}",
+      "caption_other": "{{count}} doses · since {{date}}",
+      "barsAria": "{{name}}, per week, oldest to current: {{values}}"
     }
   },
   "share": {
-    "eyebrow": "Ecosystem",
     "title": "Share",
     "myCode": "Your code",
-    "myCodeHint": "Give it to anyone who wants to share their control with you. Your code gives no access to your data.",
+    "myCodeHint": "Whoever has it can share their log with you. It gives no access to your data.",
     "shareMine": "Share my control",
-    "shareMineHint": "Enter the code of whoever will see it, for example your clinician. Read-only, and you can revoke it any time.",
+    "shareMineHint": "Enter your doctor's code. They will see your log read-only and you can withdraw it any time.",
     "share": "Share",
     "linked": "Control shared",
     "viewers": "Who sees my control",
@@ -1237,7 +1227,6 @@
     "propose": "Propose protocol"
   },
   "substance": {
-    "noCurve": "No human pharmacokinetic data to draw its curve. Titra still tracks doses, sites and what is left.",
     "protocols": "Protocols",
     "noProtocol": "Not in any protocol.",
     "vials": "Vials",
@@ -1268,9 +1257,6 @@
     "overflowsYours": "It does not fit your {{units}} U syringe: use a bigger one or split it into two injections."
   },
   "reminders": {
-    "eyebrow": "Reminders",
-    "title": "Dose reminders",
-    "subtitle": "A notification when each protocol is due, with the dose and the units to draw.",
     "toggle": "Remind me when it is due",
     "lead": "Lead time",
     "onTime": "On time",
@@ -1281,9 +1267,9 @@
     "enabled": "Reminders on",
     "disabled": "Reminders off",
     "next": "Next reminders",
-    "serverOk_one": "{{count}} reminder scheduled on the server for the next 14 days.",
-    "serverOk_other": "{{count}} reminders scheduled on the server for the next 14 days.",
-    "serverMissing": "The reminder server is not set up yet (docs/notificaciones.md). Meanwhile you get reminders while the app is open.",
+    "serverOk_one": "{{count}} reminder scheduled for the next 14 days.",
+    "serverOk_other": "{{count}} reminders scheduled for the next 14 days.",
+    "serverMissing": "The reminder server is not active yet (docs/notificaciones.md). Meanwhile you get reminders while the app is open.",
     "serverError": "Could not schedule reminders: {{message}}",
     "serverPending": "Scheduling reminders…",
     "pushTitle": "Time for {{names}}",
@@ -1300,9 +1286,9 @@
       "server": "Could not save this device on the server."
     },
     "device": {
-      "checking": "Checking this device…",
-      "on": "This device gets reminders",
-      "off": "This device is not subscribed",
+      "checking": "Checking…",
+      "on": "Receives reminders",
+      "off": "No reminders on this device",
       "denied": "Notifications blocked",
       "no-sw": "No service worker here",
       "ios-install": "Install Titra to get reminders",
@@ -1313,16 +1299,18 @@
       "checking": "One moment.",
       "on": "They arrive even when the app is closed.",
       "off": "Turn it on to get reminders here.",
-      "denied": "On iPhone: Settings → Notifications → Titra → Allow Notifications. On a computer, in the browser's site permissions. Then come back here.",
+      "denied": "On iPhone: Settings → Notifications → Titra → Allow. Then come back here.",
       "no-sw": "The dev server does not install it. The published app does.",
-      "ios-install": "On iPhone: Safari → Share → Add to Home Screen. Open Titra from the icon and turn reminders on here (iOS 16.4 or later).",
+      "ios-install": "Safari → Share → Add to Home Screen. Open Titra from its icon (iOS 16.4 or later).",
       "unsupported": "Use Safari with the installed app on iPhone, or Chrome or Edge.",
-      "local": "Once the reminder server is set up (migration 3) they also arrive with the app closed."
+      "local": "Once the reminder server is on (migration 3) they also reach you with the app closed."
     },
     "hourBefore": "1 h",
     "decisionTitle": "The dose goes up tomorrow",
     "decisionBody": "{{name}}: from {{from}} to {{to}}. Go up, or hold one more week?",
-    "decisionsHint": "The evening before each dose increase, at 8 pm, we also remind you so you can decide whether to go up or hold one more week."
+    "decisionsHint": "The evening before each dose increase, at 8 pm, we remind you to decide.",
+    "toggleHint": "With the dose and the units to draw.",
+    "deviceTitle": "This device"
   },
   "charts": {
     "now": "Now",
@@ -1343,26 +1331,17 @@
       "due": "Due now",
       "planned": "Planned"
     },
-    "level": {
-      "nextIn": "Next in {{time}}",
-      "daysShort": "{{n}} d",
-      "stripAria": "{{taken}} of {{planned}} planned doses in the last {{days}} days"
-    },
     "range": {
       "label": "Range",
-      "1m": "1 m",
-      "3m": "3 m",
-      "6m": "6 m",
-      "cycle": "Cycle"
+      "1m": "1 mo",
+      "3m": "3 mo",
+      "6m": "6 mo",
+      "cycle": "Cycle",
+      "span": "{{from}} – today"
     },
     "progress": {
       "timeline": "Protocols in range",
       "noProtocols": "No active protocols in this range.",
-      "sinceCycle": "Since cycle start · {{date}}",
-      "sinceDate": "Change since {{date}}",
-      "changeCycle": "Since cycle start",
-      "changeRange": "Change in range",
-      "needTwo": "Check in on at least two different days to see the change.",
       "noneInRange": "No check-ins in this range",
       "noneInRangeShort": "No entries in this range",
       "monthly": "Monthly average",
@@ -1476,7 +1455,6 @@
       "extra": "Extra",
       "onTime": "On time"
     },
-    "logIt": "log it",
     "tapToLog": "tap to log",
     "tapHint": "Tap a dose to edit or delete it.",
     "legend": {
@@ -1520,7 +1498,9 @@
     "headline": {
       "in": "In {{n}} months",
       "you": "You, at this pace",
-      "bandNote": "body weight · trial reference at {{week}} weeks"
+      "bandNote": "of body weight · trial at {{week}} weeks",
+      "expected": "Expected in {{n}} months",
+      "kg": "≈ {{range}} on your {{weight}}"
     },
     "range": "{{a}} to {{b}}",
     "compounds": "Substances: {{names}}",
@@ -1530,24 +1510,20 @@
       "noData": "No human data"
     },
     "band": {
-      "label": "Trial reference",
-      "at": "Observed at {{week}} weeks",
       "noneShort": "No reference yet",
       "firstAt": "The first published data point is at {{week}} weeks; you reach it on {{date}}.",
-      "none": "No published data for this regimen.",
-      "withWeight": "Kilograms use your starting weight ({{weight}})."
+      "none": "No published data for this regimen."
     },
     "position": {
-      "between": "Your dose on that date ({{dose}}) sits between the {{lower}} and {{upper}} arms: this is the band between them, not a prediction for you.",
-      "exact": "Your dose on that date ({{dose}}) matches the {{lower}} arm: this is the mean observed in that arm.",
-      "below": "Your dose on that date ({{dose}}) is below the lowest arm ({{upper}}): the band runs from placebo to that arm.",
-      "above": "Your dose on that date ({{dose}}) is above the highest arm ({{lower}}): that arm is shown, but your dose is outside what was studied."
+      "between": "Your dose ({{dose}}) is between the {{lower}} and {{upper}} arms: a range, not a prediction.",
+      "exact": "Your dose ({{dose}}) matches the {{lower}} arm: it is that arm's observed mean.",
+      "below": "Your dose ({{dose}}) is below the lowest arm ({{upper}}): the range runs from placebo to that arm.",
+      "above": "Your dose ({{dose}}) is above the highest arm ({{lower}}): it is outside what was studied."
     },
     "personal": {
       "label": "At this pace",
       "badge": "Extrapolation",
       "badgeWeak": "Long extrapolation",
-      "extrapolationNote": "Your weight trend drawn forward as a straight line; real change is rarely linear.",
       "weak": "Little data for that far ahead: read it with caution.",
       "short": {
         "no_data": "Log your weight",
@@ -1565,8 +1541,7 @@
       "summary": "You are in week {{today}}. At {{week}} weeks the trial observed {{band}} body weight.",
       "weekTick": "w{{n}}",
       "today": "today",
-      "band": "Trial (your dose band)",
-      "placebo": "Placebo",
+      "band": "Trial range",
       "you": "Your weigh-ins",
       "projection": "Your trend",
       "observedOnly": "Dots are published data; lines only join them.",
@@ -1577,10 +1552,11 @@
         "placebo": "placebo {{pct}}",
         "you": "Your weigh-in · week {{week}}",
         "projection": "Your trend · week {{week}}"
-      }
+      },
+      "title": "Your weight vs the trial"
     },
     "trial": {
-      "open": "See the trial",
+      "open": "Trial and notes",
       "population": "Population",
       "regimen": "Regimen",
       "outcome": "Outcome",
@@ -1591,19 +1567,19 @@
       "means": "Group means versus starting weight; they do not show the spread between people."
     },
     "noData": {
-      "kpiLabel": "What to expect",
       "title": "No human outcome data",
-      "titleMixed": "No quantitative reference",
-      "body": "No trials have measured body-composition or metabolic changes at these doses. Your own records are the best way to find out."
+      "body": "No trials at these doses. Your own records are the best way to find out."
     },
     "measure": {
       "title": "What to measure to find out",
       "count_one": "{{count}} entry",
       "count_other": "{{count}} entries",
-      "none": "None yet",
+      "none": "Pending",
       "lab": "Lab test",
       "note": "Notes",
-      "since": "Entries since {{date}}"
+      "since": "Entries since {{date}}",
+      "progress": "{{done}} of {{total}} recorded",
+      "log": "Log"
     },
     "empty": {
       "title": "No active protocols",
@@ -1612,13 +1588,11 @@
     },
     "disclaimer": {
       "title": "How to read this",
-      "body": "Figures are means observed in trials with groups of people, not a prediction for you, and your trend is an extrapolation of your own data. This is not medical advice."
+      "body": "Averages from trials of groups of people, not a prediction for you. Your line is your own trend drawn straight ahead. Not medical advice."
     },
     "card": {
-      "noData": "No human data: {{names}}. See what to measure."
-    },
-    "sinceWeek": "Since {{date}} · week {{n}}",
-    "startsOn": "Starts on {{date}}"
+      "noData": "No trial reference: {{names}}"
+    }
   },
   "stock": {
     "title": {
@@ -1691,9 +1665,6 @@
       "eyebrow": "This week's decision",
       "pending": "Decision pending",
       "increase": "On {{date}} it goes up from {{from}} to {{to}}.",
-      "increaseDetail": "On {{date}} it goes up from {{from}} to {{to}} ({{detail}}).",
-      "increaseToday": "Today it goes up from {{from}} to {{to}}.",
-      "increaseTodayDetail": "Today it goes up from {{from}} to {{to}} ({{detail}}).",
       "rest": "End of the dosing weeks: the rest begins on {{date}}.",
       "restToday": "End of the dosing weeks: the rest begins today.",
       "resume": "The rest ends on {{date}} and you go back to {{dose}}.",
@@ -1705,7 +1676,10 @@
       "rule": "No nausea or vomiting this week?",
       "ruleHint": "Your rule: with nausea or vomiting, you do not go up.",
       "eyebrowInfo": "Cycle",
-      "logged": "This week you logged: {{list}}."
+      "logged": "This week you logged: {{list}}.",
+      "increaseDetail": "On {{date}} it goes up from {{from}} to {{to}} ({{detail}}).",
+      "increaseToday": "Today it goes up from {{from}} to {{to}}.",
+      "increaseTodayDetail": "Today it goes up from {{from}} to {{to}} ({{detail}})."
     },
     "action": {
       "up": "Go up as planned",
@@ -1822,11 +1796,8 @@
   "cycles": {
     "eyebrow": "Lab",
     "title": "Cycles",
-    "menu": "Cycles",
-    "menuHint": "Which week you are in, the rest and the next cycle",
     "cycleN": "Cycle {{n}}",
     "now": "Now",
-    "decisionDue": "Step-up soon",
     "pausedNote": "On hold: adherence is not counted.",
     "noChange": "No changes planned",
     "noneCurrent": "No cycle is running right now.",
@@ -1873,24 +1844,6 @@
       "range": "Weeks {{from}}–{{to}}",
       "one": "Week {{n}}",
       "from": "From week {{from}}"
-    },
-    "timeline": {
-      "title": "Timeline",
-      "hint": "Tap a block for the details of that step.",
-      "goToday": "Go to today",
-      "today": "Today",
-      "aria": "Timeline of your cycles. Scroll sideways.",
-      "block": "{{name}}, {{dose}}, {{from}} to {{to}}",
-      "blockOpen": "{{name}}, {{dose}}, from {{from}}, no end date",
-      "blockRest": "{{name}}, rest, {{from}} to {{to}}",
-      "rest": "Rest",
-      "maintenance": "maintenance",
-      "legendRest": "Rest",
-      "legendDose": "Stronger colour, higher dose",
-      "legendPlanned": "Still to come",
-      "older_one": "{{count}} older cycle does not fit here: see its card.",
-      "older_other": "{{count}} older cycles do not fit here: see their cards.",
-      "endedAgo": "{{count}} wk ago"
     },
     "stat": {
       "adherence": "Adherence",
@@ -1972,7 +1925,9 @@
         "current": "Current",
         "future": "Upcoming",
         "skipped": "Not reached"
-      }
+      },
+      "previous": "Previous step",
+      "next": "Next step"
     },
     "summary": {
       "title": "Cycles",
@@ -1985,7 +1940,10 @@
       "hint": "Create a protocol with its steps and rests, and here you will see which week you are in and when each change is due.",
       "cta": "Create a protocol"
     },
-    "statsError": "Your doses could not be loaded."
+    "statsError": "Your doses could not be loaded.",
+    "strip": {
+      "open": "See the steps of {{name}}"
+    }
   },
   "protocolDetail": {
     "eyebrow": "Protocol",
@@ -2220,10 +2178,6 @@
     "overdue": "Overdue by {{time}}",
     "noPlan": "No active protocol",
     "spark": {
-      "back": "{{n}} d",
-      "ahead": "+{{n}} d",
-      "real": "actual",
-      "planned": "planned",
       "aria": "Level over the last {{past}} days and the planned next {{ahead}}"
     },
     "strip": {

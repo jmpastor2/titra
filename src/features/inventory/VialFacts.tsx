@@ -7,61 +7,59 @@ import { roundUnits } from '@/domain/dosing/draw'
 import { mgToUnits } from '@/domain/dosing/reconstitution'
 import { fmtDate, fmtDose, fmtNumber, type Locale } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { fmtConc, fmtMg, fmtPerUnit, fmtUnits } from './vialFormat'
-import { concentrationOf, fillOf, needsReconstitution, waterOf, type VialRunway } from './vials'
+import { fmtConc, fmtPerUnit, fmtUnits } from './vialFormat'
+import { concentrationOf, needsReconstitution, waterOf, type VialRunway } from './vials'
 
-/** A date-only column as "5 oct 26", or a dash when there is none. */
-function dayText(iso: string | null, locale: Locale): string {
-  return iso ? fmtDate(new Date(`${iso}T12:00`), locale, 'd MMM yy') : '—'
+/** A date-only column as "5 oct 26", or "sin fecha" when there is none. */
+function dayText(iso: string | null, locale: Locale, none: string): string {
+  return iso ? fmtDate(new Date(`${iso}T12:00`), locale, 'd MMM yy') : none
 }
 
 /**
- * The readings under a vial's name. Powder: its content and label date. Reconstituted: the
- * concentration, the units for the current dose and how far it goes. A pen or tablets,
- * which have nothing to mix: the facts of the pack.
+ * The readings under a vial's numbers, as plain label and value rows that wrap instead of
+ * being cut. Reconstituted: the units for the current dose and the concentration. Powder,
+ * a pen or tablets, which have nothing to mix: the dates of the pack.
  */
 export function VialFacts({
   item,
   runway,
   nextDoseMg,
-  short,
 }: {
   item: InventoryRow
   runway: VialRunway | undefined
   /** The next dose of this compound, for any reconstituted vial of it. */
   nextDoseMg: number | null | undefined
-  /** Running low or expiring first: the supply reading is flagged. */
-  short: boolean
 }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
-  const total = Number(item.total_mg)
-  const remaining = Number(item.remaining_mg)
   const conc = concentrationOf(item)
+  const none = t('inventory.noDate')
 
   if (needsReconstitution(item))
     return (
-      <Grid cols={2}>
-        <Cell
-          label={t('inventory.content')}
-          value={fmtMg(total, locale)}
-          sub={t('inventory.lyophilised')}
-        />
-        <Cell
+      <Facts>
+        <Fact
           label={t('inventory.labelExpiry')}
-          value={dayText(item.expires_at, locale)}
-          sub={item.expires_at ? undefined : t('common.optional')}
+          value={dayText(item.expires_at, locale, none)}
+          muted={!item.expires_at}
         />
-      </Grid>
+      </Facts>
     )
 
   if (!conc)
     return (
-      <Grid cols={3}>
-        <Cell label={t('inventory.content')} value={fmtMg(total, locale)} />
-        <Cell label={t('inventory.openedShort')} value={dayText(item.opened_at, locale)} />
-        <Cell label={t('inventory.labelExpiry')} value={dayText(item.expires_at, locale)} />
-      </Grid>
+      <Facts>
+        <Fact
+          label={t('inventory.openedAt')}
+          value={dayText(item.opened_at, locale, none)}
+          muted={!item.opened_at}
+        />
+        <Fact
+          label={t('inventory.labelExpiry')}
+          value={dayText(item.expires_at, locale, none)}
+          muted={!item.expires_at}
+        />
+      </Facts>
     )
 
   const unit = compoundById(item.compound_id)?.defaultUnit ?? 'mg'
@@ -69,84 +67,56 @@ export function VialFacts({
   const units = doseMg ? roundUnits(mgToUnits(doseMg, conc)) : null
   const water = waterOf(item)
   return (
-    <Grid cols={3}>
-      <Cell
-        label={t('calculator.concentration')}
-        value={fmtConc(conc, locale)}
-        sub={water ? t('inventory.inWater', { water: fmtNumber(water, locale, 2) }) : undefined}
-      />
+    <Facts>
       {units !== null && doseMg ? (
-        <Cell
+        <Fact
           label={t('inventory.yourDoseShort')}
           value={fmtUnits(units, locale)}
           sub={fmtDose(doseMg, unit, locale)}
           accent
         />
       ) : (
-        <Cell label={t('inventory.eachUnit')} value={fmtPerUnit(conc / 100, unit, locale)} />
+        <Fact label={t('inventory.eachUnit')} value={fmtPerUnit(conc / 100, unit, locale)} />
       )}
-      {runway ? (
-        <Cell
-          label={t('inventory.covers')}
-          value={t('inventory.dosesLeft', { count: runway.doses })}
-          sub={
-            runway.runsOutAt
-              ? t('inventory.until', { date: fmtDate(runway.runsOutAt, locale, 'd MMM') })
-              : undefined
-          }
-          warn={short}
-        />
-      ) : (
-        <Cell
-          label={t('inventory.left')}
-          value={`${fmtNumber(fillOf(item) * 100, locale, 0)} %`}
-          sub={fmtMg(remaining, locale)}
-        />
-      )}
-    </Grid>
+      <Fact
+        label={t('calculator.concentration')}
+        value={fmtConc(conc, locale)}
+        sub={water ? t('inventory.inWater', { water: fmtNumber(water, locale, 2) }) : undefined}
+      />
+    </Facts>
   )
 }
 
-function Grid({ cols, children }: { cols: 2 | 3; children: ReactNode }) {
-  return (
-    <div
-      className={clsx(
-        'grid gap-px border-t border-line bg-line text-center',
-        cols === 2 ? 'grid-cols-2' : 'grid-cols-3',
-      )}
-    >
-      {children}
-    </div>
-  )
+function Facts({ children }: { children: ReactNode }) {
+  return <dl className="divide-y divide-line border-t border-line px-4">{children}</dl>
 }
 
-function Cell({
+function Fact({
   label,
   value,
   sub,
   accent,
-  warn,
+  muted,
 }: {
   label: string
   value: string
   sub?: string | undefined
   accent?: boolean
-  warn?: boolean
+  muted?: boolean
 }) {
   return (
-    <div className="min-w-0 bg-panel px-1.5 py-2.5">
-      <div className="spec truncate text-[9.5px]">{label}</div>
-      <div
+    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-2.5">
+      <dt className="spec">{label}</dt>
+      <dd
         className={clsx(
-          'readout mt-1 truncate font-semibold leading-tight',
-          // A long reading ("166,7 mg/mL") steps down rather than being cut.
-          value.length > 10 ? 'text-[14px]' : 'text-[16px]',
-          warn ? 'text-warn' : accent ? 'text-signal' : '',
+          'readout text-right text-[15px] font-semibold',
+          accent && 'text-signal',
+          muted && 'font-normal text-muted',
         )}
       >
         {value}
-      </div>
-      {sub && <div className="readout mt-0.5 truncate text-[11px] text-muted">{sub}</div>}
+        {sub && <span className="ml-2 text-[12px] font-normal text-muted">{sub}</span>}
+      </dd>
     </div>
   )
 }

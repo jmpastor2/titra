@@ -2,15 +2,13 @@ import { differenceInCalendarDays, startOfDay } from 'date-fns'
 import { Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
-import { SubstanceDot } from '@/components/ui/primitives'
+import { Badge, SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
+import { coverGauge, supplyTone, TONE_COLOR } from './stockKpis'
 import type { RestockLine } from './vials'
-
-/** The supply gauge is full at this many days ahead. */
-const GAUGE_DAYS = 90
 
 /** Supply per substance in use, across every vial: when to order more, and add it when it arrives. */
 export function RestockCard({
@@ -38,16 +36,13 @@ export function RestockCard({
       <ul className="flex flex-col divide-y divide-line">
         {lines.map((l) => {
           const days = l.runway.runsOutAt
-            ? differenceInCalendarDays(l.runway.runsOutAt, today)
+            ? Math.max(0, differenceInCalendarDays(l.runway.runsOutAt, today))
             : null
-          const urgent = days !== null && days <= 14
-          const soon = days !== null && days <= 30
+          const tone = supplyTone(days)
           const names = l.partners.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
-          const tone = urgent ? 'var(--danger)' : soon ? 'var(--warn)' : 'var(--signal)'
-          const gauge = days === null ? 1 : Math.max(0.04, Math.min(1, days / GAUGE_DAYS))
           return (
-            <li key={l.compoundId} className="py-3 first:pt-0 last:pb-0">
-              <div className="flex items-center gap-3">
+            <li key={l.compoundId} className="py-3.5 first:pt-0 last:pb-0">
+              <div className="flex items-start gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start gap-2.5">
                     <span className="mt-[5px] flex">
@@ -55,25 +50,28 @@ export function RestockCard({
                     </span>
                     <span className="min-w-0 text-[15px] font-semibold leading-snug">{names}</span>
                   </div>
-                  <div className="readout mt-0.5 pl-5 text-[13px] font-semibold leading-snug">
-                    {l.runway.runsOutAt ? (
-                      <>
-                        <span className={urgent ? 'text-danger' : soon ? 'text-warn' : 'text-ink'}>
-                          {t('inventory.until', {
-                            date: fmtDate(l.runway.runsOutAt, locale, 'd MMM'),
-                          })}
-                        </span>
-                        <span
-                          className={`spec ml-2 align-middle text-[9.5px] ${urgent ? 'text-danger' : ''}`}
-                        >
-                          {urgent
-                            ? t('inventory.orderNow')
-                            : t('inventory.dosesLeft', { count: l.runway.doses })}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-signal">{t('inventory.plenty')}</span>
-                    )}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 pl-5">
+                    <span
+                      className="readout flex items-baseline gap-1.5 leading-none"
+                      style={{ color: tone === 'ok' ? undefined : TONE_COLOR[tone] }}
+                    >
+                      <span className="text-[24px] font-semibold">
+                        {days === null ? t('inventory.kpi.plentyValue') : days}
+                      </span>
+                      <span className="text-[12.5px] font-semibold">
+                        {days === null
+                          ? t('inventory.kpi.plentyUnit')
+                          : t('inventory.kpi.dayUnit', { count: days })}
+                      </span>
+                    </span>
+                    {tone === 'danger' && <Badge tone="danger">{t('inventory.orderNow')}</Badge>}
+                  </div>
+                  <div className="mt-1 pl-5 text-[13px] leading-snug text-ink-2">
+                    {l.runway.runsOutAt
+                      ? `${t('inventory.until', {
+                          date: fmtDate(l.runway.runsOutAt, locale, 'd MMM'),
+                        })} · ${t('inventory.dosesLeft', { count: l.runway.doses })}`
+                      : t('inventory.plenty')}
                   </div>
                   <div className="readout mt-0.5 pl-5 text-[11.5px] leading-snug text-muted">
                     {fmtNumber(l.availableMg, locale, 2)} mg ·{' '}
@@ -95,11 +93,14 @@ export function RestockCard({
               <div
                 role="img"
                 aria-label={t('inventory.supplyAria', { names })}
-                className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-panel-3"
+                className="mt-3 h-[5px] overflow-hidden rounded-full bg-panel-3"
               >
                 <div
                   className="h-full rounded-full"
-                  style={{ width: `${gauge * 100}%`, background: tone }}
+                  style={{
+                    width: `${Math.max(0.04, coverGauge(days)) * 100}%`,
+                    background: TONE_COLOR[tone],
+                  }}
                 />
               </div>
             </li>

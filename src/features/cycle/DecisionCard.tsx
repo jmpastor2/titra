@@ -13,7 +13,7 @@ import { SubstanceDots } from './SubstanceDots'
 import { decisionDoses, decisionSentence, protocolTitle, whenText } from './text'
 
 /** Buttons that may carry a longer label than a pill is tall for: two lines are fine. */
-const WRAP = 'h-auto! min-h-11 whitespace-normal px-3! py-1.5 text-[13.5px]! leading-tight'
+const WRAP = 'h-auto! min-h-11 whitespace-normal! px-3! py-1.5 text-[13.5px]! leading-tight'
 
 /**
  * The decision about a change of dose: what changes and when, the person's own rule as a
@@ -63,17 +63,17 @@ export function DecisionCard({
       <button
         type="button"
         onClick={onExpand}
-        className="card fade-up flex w-full items-center gap-3 border-warn/30 px-4 py-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60 active:scale-[0.99]"
+        className="card fade-up flex min-h-14 w-full items-center gap-3 border-warn/30 px-4 py-2.5 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60 active:scale-[0.99]"
       >
-        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-warn/40 bg-warn-soft text-warn">
-          <CalendarClock aria-hidden className="size-[18px]" />
-        </span>
+        <CalendarClock aria-hidden className="size-[18px] shrink-0 text-warn" />
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5 text-[13.5px] font-semibold">
-            <SubstanceDots protocol={protocol} />
-            <span className="truncate">{name}</span>
+          <span className="flex items-start gap-1.5 text-[14px] font-semibold leading-snug">
+            <span className="mt-[3px]">
+              <SubstanceDots protocol={protocol} />
+            </span>
+            <span className="min-w-0 break-words">{name}</span>
           </span>
-          <span className="spec mt-0.5 block text-warn">{t('cycle.decision.pending')}</span>
+          <span className="block text-[12px] text-warn">{t('cycle.decision.pending')}</span>
         </span>
         {kind !== 'finished' && (
           <span className="readout shrink-0 text-[11.5px] font-semibold text-warn">
@@ -86,7 +86,7 @@ export function DecisionCard({
   }
 
   return (
-    <Card instrument tone={asks ? 'signal' : 'default'} aria-labelledby={titleId}>
+    <Card tone={asks ? 'signal' : 'default'} aria-labelledby={titleId}>
       <div className="flex items-center justify-between gap-3">
         <div className="spec text-signal">
           {t(asks ? 'cycle.decision.eyebrow' : 'cycle.decision.eyebrowInfo')}

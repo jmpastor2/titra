@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
@@ -21,6 +22,7 @@ import { contentMgOf, reconstitutionPatch } from './reconstitute'
 import { ReconstitutionFields } from './ReconstitutionFields'
 import { useWaterEntry } from './useWaterEntry'
 import { isLyophilised, waterOf, type VialFields } from './vials'
+import { VialLabelInput } from './VialLabelInput'
 import { PresetChips, PresetNote } from './VialPresets'
 
 const FORMS: InventoryForm[] = ['vial', 'pen', 'cartridge', 'tablet']
@@ -206,7 +208,8 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId, preset }: Omi
             <BlendEditor parts={blend} onChange={setBlend} onAdd={() => setPicker('blend')} />
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* A blend's label is long ("mg de CJC-1295 (sin DAC) en el vial"): the two fields stack. */}
+          <div className={clsx('grid gap-3', blend.length > 0 ? 'grid-cols-1' : 'grid-cols-2')}>
             <Field label={t('inventory.form')}>
               {(id) => (
                 <Select
@@ -277,13 +280,22 @@ function InventoryFormSheet({ onClose, editing, defaultCompoundId, preset }: Omi
             </Field>
           )}
 
-          <Field label={t('inventory.label')}>
-            {(id) => (
-              <Input
+          {/* The name it will get is written out under the field: a placeholder would be cut off. */}
+          <Field
+            label={t('inventory.label')}
+            hint={
+              autoLabel && !label.trim()
+                ? t('inventory.labelAuto', { label: autoLabel })
+                : undefined
+            }
+          >
+            {(id, describedBy) => (
+              <VialLabelInput
                 id={id}
+                describedBy={describedBy}
                 value={label}
-                onChange={(e) => setLabel(e.target.value)}
-                placeholder={autoLabel || t('inventory.labelPlaceholder')}
+                onChange={setLabel}
+                placeholder={t('inventory.labelPlaceholder')}
               />
             )}
           </Field>

@@ -12,13 +12,10 @@ import { CheckInSheet } from '@/features/checkin/CheckInSheet'
 import { WELLBEING } from '@/features/checkin/wellbeing'
 import { TREND_INSET } from '@/features/exposure/chartScale'
 import { TrendChart } from '@/features/exposure/TrendChart'
-import { fmtDate, fmtNumber, fmtRelativeDay } from '@/lib/format'
+import { fmtNumber, fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { useNow } from '@/lib/useNow'
 import { wellbeingBaseline } from './baseline'
-import { BaselineCard, CheckInNudge } from './BaselineCard'
-import { CHECKIN_STALE_DAYS, daySet, daysSinceLast } from './consistency'
-import { KIND_DIGITS } from './kinds'
+import { BaselineCard } from './BaselineCard'
 import {
   changeSince,
   inWindow,
@@ -29,52 +26,36 @@ import {
   type TimePoint,
 } from './progress'
 import { ChangeValue, MonthTable, ProtocolStrip, type MonthRow } from './ProgressCharts'
-import { baselineChange } from './trend'
-import { useBodyUnits } from './units'
 
 /** Score changes smaller than this read as "no change". */
 const SCORE_THRESHOLD = 0.5
-/** Body metrics summarised next to the wellbeing changes, so one line tells the story. */
-const BODY_SUMMARY: readonly MeasurementKind[] = ['weight', 'waist']
 
 /**
- * Wellbeing over the chosen range: the protocol timeline and change since its start on
- * top, one small multiple per dimension on a shared 0–10 axis and time window, then the
- * month-by-month means.
+ * Wellbeing over the chosen range: the protocol timeline on top, where the person started, one
+ * small multiple per dimension on a shared 0–10 axis and time window (each with its change over
+ * the range), then the month-by-month means.
  */
 export function WellbeingTab({ scope }: { scope: ProgressScope }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { patientId, readOnly } = usePatientScope()
   const measurements = useMeasurements(patientId, 365)
-  const units = useBodyUnits()
   const [open, setOpen] = useState(false)
-  const now = useNow(5 * 60_000)
   const { window: win, lanes, since } = scope
 
-  // Body readings are converted to the person's unit here, scores are left as they are.
   const all = useMemo(() => {
     const m = new Map<MeasurementKind, TimePoint[]>()
     for (const row of measurements.data ?? []) {
-      const body = BODY_SUMMARY.includes(row.kind)
-      if (!WELLBEING.includes(row.kind) && !body) continue
+      if (!WELLBEING.includes(row.kind)) continue
       const list = m.get(row.kind) ?? []
-      const stored = Number(row.value)
-      list.push({
-        at: new Date(row.measured_at),
-        value: body ? units.show(row.kind, stored) : stored,
-      })
+      list.push({ at: new Date(row.measured_at), value: Number(row.value) })
       m.set(row.kind, list)
     }
     return m
-  }, [measurements.data, units])
+  }, [measurements.data])
 
   // The first check-in ever is the baseline, whatever range is in view.
   const baseline = useMemo(() => wellbeingBaseline(all, WELLBEING), [all])
-  const checkInAgo = useMemo(
-    () => daysSinceLast(daySet(WELLBEING.flatMap((k) => (all.get(k) ?? []).map((p) => p.at))), now),
-    [all, now],
-  )
 
   const series = useMemo(
     () =>
@@ -110,48 +91,8 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
     [series, t],
   )
 
-  const changes = useMemo(() => {
-    // Weight and waist read as in the summary: the latest reading against where the range starts.
-    const body = BODY_SUMMARY.flatMap((kind) => {
-      const c = baselineChange(all.get(kind) ?? [], since)
-      return c?.delta != null
-        ? [
-            {
-              kind,
-              delta: c.delta,
-              digits: KIND_DIGITS[kind],
-              unit: units.unit(kind),
-              threshold: 0.2,
-              trim: false,
-            },
-          ]
-        : []
-    })
-    const scores = series.flatMap((s) =>
-      s.change
-        ? [
-            {
-              kind: s.kind,
-              delta: s.change.delta,
-              digits: 1,
-              unit: undefined,
-              threshold: SCORE_THRESHOLD,
-              trim: true,
-            },
-          ]
-        : [],
-    )
-    return [...scores, ...body]
-  }, [all, series, since, units])
-  const hasScores = series.length > 0
   const hasHistory = baseline.some((b) => b.delta !== null)
-  const sinceLabel =
-    scope.range === 'cycle' && scope.cycle
-      ? t('charts.progress.sinceCycle', { date: fmtDate(since, locale, 'd MMM') })
-      : t('charts.progress.sinceDate', { date: fmtDate(since, locale, 'd MMM') })
-  // The nudge already carries the button: showing a second one under it is just noise.
-  const nudged = !readOnly && checkInAgo !== null && checkInAgo >= CHECKIN_STALE_DAYS
-  const checkInButton = !readOnly && !nudged && (
+  const checkInButton = !readOnly && (
     <Button variant="soft" leading={<Gauge className="size-4" />} onClick={() => setOpen(true)}>
       {t('checkin.title')}
     </Button>
@@ -162,33 +103,8 @@ export function WellbeingTab({ scope }: { scope: ProgressScope }) {
       <Card padded={false} className="p-3.5">
         <div className="spec mb-2">{t('charts.progress.timeline')}</div>
         <ProtocolStrip lanes={lanes} span={win} inset={TREND_INSET} showDates />
-        {(hasScores || changes.length > 0) && (
-          <div className="mt-3 border-t border-line pt-3">
-            <div className="spec mb-1.5">{sinceLabel}</div>
-            {changes.length > 0 ? (
-              <ul className="flex flex-wrap gap-x-3 gap-y-1 text-[12.5px]">
-                {changes.map((s) => (
-                  <li key={s.kind} className="inline-flex items-baseline gap-1.5">
-                    <span className="text-ink-2">{t(`health.kinds.${s.kind}`)}</span>
-                    <ChangeValue
-                      kind={s.kind}
-                      delta={s.delta}
-                      digits={s.digits}
-                      unit={s.unit}
-                      threshold={s.threshold}
-                      trim={s.trim}
-                    />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-[12.5px] text-muted">{t('charts.progress.needTwo')}</p>
-            )}
-          </div>
-        )}
       </Card>
 
-      {nudged && <CheckInNudge days={checkInAgo} onCheckIn={() => setOpen(true)} />}
       {baseline.length > 0 && <BaselineCard rows={baseline} />}
 
       {measurements.isPending ? (

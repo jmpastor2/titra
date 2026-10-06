@@ -92,40 +92,71 @@ export function ExportPage() {
   ]
 
   return (
-    <div>
-      <PageHeader title={t('export.title')} subtitle={t('settings.exportHint')} back="/more" />
+    <div className="pb-8">
+      <PageHeader eyebrow={t('more.groups.health')} title={t('export.title')} large back="/more" />
+      <p className="-mt-2 mb-4 px-1 text-[13.5px] leading-snug text-muted">
+        {t('settings.exportHint')}
+      </p>
 
-      <Card padded={false} className="px-4">
-        <ul className="divide-y divide-line">
-          {items.map((item) => (
-            <li key={item.label} className="flex items-center justify-between py-3">
-              <div>
-                <div className="text-[15px] font-medium">{item.label}</div>
-                <div className="text-[12.5px] text-muted">{item.count}</div>
-              </div>
-              <Button
-                size="sm"
-                variant="secondary"
+      <div className="flex flex-col gap-4">
+        <Card padded={false} className="px-4">
+          <ul className="divide-y divide-line">
+            {items.map((item) => (
+              <ExportRow
+                key={item.label}
+                title={item.label}
+                hint={t('export.rows', { count: item.count })}
+                action="CSV"
                 disabled={item.count === 0}
-                leading={<Download className="size-4" />}
                 onClick={item.onClick}
-              >
-                CSV
-              </Button>
-            </li>
-          ))}
-        </ul>
-      </Card>
+              />
+            ))}
+          </ul>
+        </Card>
 
-      <Button
-        className="mt-4"
-        block
-        variant="soft"
-        leading={<Download className="size-4" />}
-        onClick={exportJson}
-      >
-        {t('export.json')}
-      </Button>
+        <Card padded={false} className="px-4">
+          <ul>
+            <ExportRow
+              title={t('export.backup')}
+              hint={t('export.backupHint')}
+              action="JSON"
+              onClick={exportJson}
+            />
+          </ul>
+        </Card>
+      </div>
     </div>
+  )
+}
+
+function ExportRow({
+  title,
+  hint,
+  action,
+  disabled,
+  onClick,
+}: {
+  title: string
+  hint: string
+  action: string
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <li className="flex min-h-[68px] items-center justify-between gap-3 py-3">
+      <div className="min-w-0">
+        <div className="text-[15px] font-semibold leading-snug">{title}</div>
+        <div className="mt-0.5 text-[12.5px] leading-snug text-muted">{hint}</div>
+      </div>
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={disabled}
+        leading={<Download className="size-4" />}
+        onClick={onClick}
+      >
+        {action}
+      </Button>
+    </li>
   )
 }

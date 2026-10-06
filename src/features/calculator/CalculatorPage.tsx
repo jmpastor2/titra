@@ -1,3 +1,4 @@
+import { clsx } from 'clsx'
 import { AlertTriangle } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -65,7 +66,11 @@ export function CalculatorPage() {
 
   return (
     <div className="pb-6">
-      <PageHeader title={t('calculator.title')} back="/more" />
+      <PageHeader
+        eyebrow={t('calculator.eyebrow')}
+        title={t('calculator.pageTitle')}
+        back="/more"
+      />
 
       <Segmented<Mode>
         value={mode}
@@ -125,64 +130,60 @@ export function CalculatorPage() {
           </Card>
 
           {result && (
-            <>
-              <Card tone="signal">
-                <div className="grid grid-cols-2 gap-4">
-                  <Result
-                    label={t('calculator.concentration')}
-                    value={`${fmtNumber(result.rec.concentrationMgPerMl, locale, 3)}`}
-                    unit="mg/mL"
-                  />
-                  <Result
-                    label={t('calculator.perUnit')}
-                    value={`${fmtNumber(result.rec.mcgPerUnit, locale, 1)}`}
-                    unit="mcg/U"
-                  />
-                  <Result
-                    label={t('calculator.unitsRounded')}
-                    value={fmtNumber(result.draw.unitsRounded, locale, 1)}
-                    unit="U"
-                    big
-                  />
-                  <Result
-                    label={t('calculator.actualDose')}
-                    value={fmtNumber(result.draw.actualDoseMcg, locale, 1)}
-                    unit="mcg"
-                    big
-                  />
-                  <Result
-                    label={t('calculator.draw')}
-                    value={fmtNumber(result.draw.volumeMl, locale, 3)}
-                    unit="mL"
-                  />
-                  <Result
-                    label={t('calculator.dosesPerVial')}
-                    value={String(result.draw.dosesPerVial)}
-                    unit=""
-                  />
-                </div>
-              </Card>
-
-              <Card eyebrow={`U-100 · ${fmtNumber(barrel.capacity / 100, locale, 1)} mL`}>
-                <div className="readout text-glow text-[30px] font-semibold leading-none text-signal">
-                  {fmtNumber(result.draw.unitsRounded, locale, 1)}
-                  <span className="ml-1 text-[14px]">U</span>
-                </div>
-                <Syringe
-                  capacity={barrel.capacity}
-                  loads={[{ from: 0, to: result.draw.unitsRounded, color: 'var(--signal)' }]}
-                  label={t('draw.aria', {
-                    capacity: barrel.capacity,
-                    units: fmtNumber(result.draw.unitsRounded, locale, 1),
-                  })}
-                  className="mt-1 w-full"
+            <Card
+              tone="signal"
+              eyebrow={`U-100 · ${fmtNumber(barrel.capacity / 100, locale, 1)} mL`}
+            >
+              <dl className="grid grid-cols-2 items-end gap-4">
+                <Result
+                  label={t('calculator.unitsRounded')}
+                  value={fmtNumber(result.draw.unitsRounded, locale, 1)}
+                  unit="U"
+                  big
+                  glow
                 />
-                <p className="mt-1 text-center text-[11.5px] text-muted">
-                  {t('calculator.unitsRounded')}
-                  {result.draw.unitsRounded > 100 ? ` · ${t('draw.notFits')}` : ''}
-                </p>
-              </Card>
-            </>
+                <Result
+                  label={t('calculator.actualDose')}
+                  value={fmtNumber(result.draw.actualDoseMcg, locale, 1)}
+                  unit="mcg"
+                  big
+                />
+              </dl>
+              <Syringe
+                capacity={barrel.capacity}
+                loads={[{ from: 0, to: result.draw.unitsRounded, color: 'var(--signal)' }]}
+                label={t('draw.aria', {
+                  capacity: barrel.capacity,
+                  units: fmtNumber(result.draw.unitsRounded, locale, 1),
+                })}
+                className="mt-3 w-full"
+              />
+              {result.draw.unitsRounded > 100 && (
+                <p className="mt-1 text-center text-[12.5px] text-warn">{t('draw.notFits')}</p>
+              )}
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-4">
+                <Result
+                  label={t('calculator.concentration')}
+                  value={fmtNumber(result.rec.concentrationMgPerMl, locale, 3)}
+                  unit="mg/mL"
+                />
+                <Result
+                  label={t('calculator.perUnit')}
+                  value={fmtNumber(result.rec.mcgPerUnit, locale, 1)}
+                  unit="mcg/U"
+                />
+                <Result
+                  label={t('calculator.draw')}
+                  value={fmtNumber(result.draw.volumeMl, locale, 3)}
+                  unit="mL"
+                />
+                <Result
+                  label={t('calculator.dosesPerVial')}
+                  value={String(result.draw.dosesPerVial)}
+                  unit=""
+                />
+              </dl>
+            </Card>
           )}
         </div>
       ) : (
@@ -215,7 +216,7 @@ export function CalculatorPage() {
           </Card>
           {pen && (
             <Card tone="signal">
-              <div className="grid grid-cols-2 gap-4">
+              <dl className="grid grid-cols-2 gap-4">
                 <Result label={t('calculator.clicks')} value={String(pen.clicks)} unit="" big />
                 <Result
                   label={t('calculator.actualDose')}
@@ -223,7 +224,7 @@ export function CalculatorPage() {
                   unit="mg"
                   big
                 />
-              </div>
+              </dl>
             </Card>
           )}
         </div>
@@ -244,23 +245,28 @@ function Result({
   value,
   unit,
   big,
+  glow,
 }: {
   label: string
   value: string
   unit: string
   big?: boolean
+  /** The reading to look at first: signal colour. */
+  glow?: boolean
 }) {
   return (
-    <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{label}</div>
-      <div
-        className={
-          big ? 'tabular text-[26px] font-bold leading-tight' : 'tabular text-[17px] font-bold'
-        }
+    <div className="min-w-0">
+      <dt className="spec leading-snug">{label}</dt>
+      <dd
+        className={clsx(
+          'readout mt-1.5 font-semibold leading-none',
+          big ? 'text-[30px]' : 'text-[18px]',
+          glow && 'text-glow text-signal',
+        )}
       >
         {value}
-        {unit && <span className="ml-1 text-[12px] font-semibold text-muted">{unit}</span>}
-      </div>
+        {unit && <span className="ml-1 text-[13px] font-semibold text-muted">{unit}</span>}
+      </dd>
     </div>
   )
 }

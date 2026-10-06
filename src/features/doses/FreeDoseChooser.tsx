@@ -120,8 +120,8 @@ function ProtocolTile({
         ))}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-semibold">{choice.protocol.name}</span>
-        <span className="readout block truncate text-[12.5px] text-muted">
+        <span className="block break-words text-[15px] font-semibold">{choice.protocol.name}</span>
+        <span className="readout block break-words text-[12.5px] text-muted">
           {planned.length ? fmtDoseList(planned, locale) : t('doses.choose.resting')}
         </span>
       </span>
@@ -155,8 +155,8 @@ function VialTile({
     >
       <Vial {...vialLook(vial)} size={44} className="shrink-0" />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[14.5px] font-semibold">{vial.label}</span>
-        <span className="readout mt-0.5 block truncate text-[12px] text-muted">
+        <span className="block break-words text-[14.5px] font-semibold">{vial.label}</span>
+        <span className="readout mt-0.5 block break-words text-[12px] text-muted">
           {choice.liquid
             ? t('doses.choose.left', {
                 amount: `${fmtNumber(Number(vial.remaining_mg), locale, 2)} mg`,

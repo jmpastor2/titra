@@ -3,9 +3,7 @@
  * point marked and the latest score filled in. With a single check-in it is simply the
  * baseline, so the first minute spent already produces something to look at.
  */
-import { Gauge } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
@@ -54,7 +52,7 @@ export function BaselineCard({ rows }: { rows: readonly DimensionBaseline[] }) {
           const value = compare ? r.latest : r.baseline
           return (
             <li key={r.kind} className="grid grid-cols-[6.5rem_1fr_auto] items-center gap-2.5">
-              <span className="truncate text-[12.5px] text-ink-2">
+              <span className="text-[12.5px] leading-tight text-ink-2">
                 {t(`health.kinds.${r.kind}`)}
               </span>
               <span className="relative h-2 rounded-full bg-panel-3" aria-hidden>
@@ -99,24 +97,6 @@ export function BaselineCard({ rows }: { rows: readonly DimensionBaseline[] }) {
         })}
       </ul>
       {compare && <p className="mt-3 text-[11.5px] text-muted">{t('progress.baseline.legend')}</p>}
-    </Card>
-  )
-}
-
-/** Friendly reminder when the last check-in is a few days old. */
-export function CheckInNudge({ days, onCheckIn }: { days: number; onCheckIn: () => void }) {
-  const { t } = useTranslation()
-  return (
-    <Card tone="signal" padded={false} className="flex items-center gap-3 p-3.5">
-      <div className="min-w-0 flex-1">
-        <p className="text-[13.5px] font-semibold text-ink">
-          {t('progress.nudge.title', { count: days })}
-        </p>
-        <p className="mt-0.5 text-[12.5px] text-muted">{t('progress.nudge.body')}</p>
-      </div>
-      <Button size="sm" leading={<Gauge className="size-4" />} onClick={onCheckIn}>
-        {t('progress.nudge.action')}
-      </Button>
     </Card>
   )
 }

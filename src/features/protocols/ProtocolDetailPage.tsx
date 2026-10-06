@@ -6,9 +6,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Badge, ProgressRing, SubstanceDot, Skeleton, Vial } from '@/components/ui/primitives'
+import { Ring } from '@/components/kpi/Ring'
+import { Badge, SubstanceDot, Skeleton, Vial } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { DoseRow, InventoryRow, ProtocolRow, ProtocolStatus } from '@/data/database.types'
@@ -23,6 +23,7 @@ import { useNow } from '@/lib/useNow'
 import { useCycleText } from './cycleText'
 import { doseView, fmtDoseView, type DoseView } from './cycleView'
 import { fmtPerUnit } from './doseUnits'
+import { DecisionBand } from './DecisionBand'
 import { NextChange } from './NextChange'
 import { PlanTimeline } from './PlanTimeline'
 import { DetailActions } from './ProtocolButtons'
@@ -100,6 +101,7 @@ function ProtocolDetail({
   const scheduleLabel = useScheduleLabel()
   const actions = useProtocolActions({ protocol: p, vials, now, offerUndo: undo.show })
   const { pl, summary } = actions
+  const deciding = canEdit && Boolean(actions.hold && summary?.info.decisionDue)
   const ids = protocolCompoundIds(p)
   const color = compoundColor(p.compound_id)
   const names = ids.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
@@ -135,11 +137,17 @@ function ProtocolDetail({
         <Card instrument tone="signal">
           <div className="flex items-center gap-4">
             {summary.info.fraction !== null && (
-              <ProgressRing fraction={summary.info.fraction} size={88} stroke={7} color={color}>
-                <span className="readout text-[15px] font-semibold">
+              <Ring
+                value={summary.info.fraction}
+                size={84}
+                stroke={8}
+                color={color}
+                label={text.phase(summary)}
+              >
+                <span className="readout text-[16px] font-semibold">
                   {Math.round(summary.info.fraction * 100)}%
                 </span>
-              </ProgressRing>
+              </Ring>
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
@@ -162,30 +170,13 @@ function ProtocolDetail({
 
           {summary.dose && <DoseNow actions={actions} />}
 
-          {summary.next && (
+          {summary.next && !deciding && (
             <p className="mt-3 text-[14px] font-medium leading-snug text-ink">
               <NextChange summary={summary} />
             </p>
           )}
 
-          {canEdit && actions.hold && summary.info.decisionDue && summary.next && (
-            <div className="mt-3 rounded-control border border-warn/30 bg-warn-soft px-3.5 py-3">
-              <p className="text-[13px] font-medium leading-snug text-ink">
-                {t('protocols.cycle.decision', {
-                  date: text.day(summary.next.change.on),
-                  dose: summary.next.dose ? text.doseShort(summary.next.dose) : '',
-                })}
-              </p>
-              <Button
-                size="md"
-                variant="secondary"
-                className="mt-2.5"
-                onClick={() => actions.open('hold')}
-              >
-                {t('protocolMenu.hold')}
-              </Button>
-            </div>
-          )}
+          {canEdit && <DecisionBand actions={actions} inset />}
 
           {(summary.info.phase === 'finished' || summary.info.phase === 'rest') && (
             <Link
@@ -445,7 +436,7 @@ function VialsCard({
                   size={48}
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14.5px] font-semibold">{vial.label}</div>
+                  <div className="break-words text-[14.5px] font-semibold">{vial.label}</div>
                   <div className="readout text-[12px] text-muted">
                     {t('protocolDetail.vialLeft', {
                       left: fmtNumber(Number(vial.remaining_mg), locale, 2),

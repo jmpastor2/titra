@@ -20,21 +20,20 @@ export function PresetChips({
       <div className="spec mb-2 flex items-center gap-1.5">
         <Layers className="size-3.5" /> {t('inventory.blendPresets')}
       </div>
-      <div className="hide-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5">
+      <div className="flex flex-wrap gap-2">
         {BLEND_PRESETS.map((p) => (
           <button
             key={p.id}
             type="button"
-            onClick={(e) => {
-              onPick(p)
-              e.currentTarget.scrollIntoView?.({ inline: 'nearest', block: 'nearest' })
-            }}
+            onClick={() => onPick(p)}
             aria-pressed={activeId === p.id}
-            className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-line-strong bg-panel-2 px-3.5 text-[12.5px] font-semibold aria-pressed:border-signal/50 aria-pressed:bg-signal-soft"
+            className="flex min-h-11 max-w-full items-center gap-1.5 rounded-2xl border border-line-strong bg-panel-2 px-3.5 py-1.5 text-left text-[12.5px] font-semibold leading-tight aria-pressed:border-signal/50 aria-pressed:bg-signal-soft"
           >
-            {p.parts.map((x) => (
-              <SubstanceDot key={x.compoundId} color={compoundColor(x.compoundId)} />
-            ))}
+            <span className="flex shrink-0 gap-1">
+              {p.parts.map((x) => (
+                <SubstanceDot key={x.compoundId} color={compoundColor(x.compoundId)} />
+              ))}
+            </span>
             {p.name}
           </button>
         ))}

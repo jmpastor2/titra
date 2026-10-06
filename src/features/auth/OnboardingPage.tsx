@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/Toast'
 import type { ProfileRow } from '@/data/database.types'
 import { useProfile, useUpdateProfile } from '@/data/hooks'
 import { setLocale, type AppLocale } from '@/i18n'
+import { goalText, parseGoal } from '@/features/settings/profileForm'
 import { useSession } from './SessionProvider'
 
 export function OnboardingPage() {
@@ -48,9 +49,16 @@ function OnboardingForm({
   const [birthYear, setBirthYear] = useState(initial.birth_year?.toString() ?? '')
   const [sex, setSex] = useState<'M' | 'F' | 'O' | ''>(initial.sex ?? '')
   const [height, setHeight] = useState(initial.height_cm?.toString() ?? '')
-  const [goal, setGoal] = useState(initial.goal_weight_kg?.toString() ?? '')
+  const [goal, setGoal] = useState(
+    goalText(initial.goal_weight_kg, initial.unit_system === 'imperial', initial.locale),
+  )
+  const [goalInvalid, setGoalInvalid] = useState(false)
 
   async function finish() {
+    // The goal is typed in the unit chosen above and stored in kg.
+    const goalKg = parseGoal(goal, units === 'imperial')
+    setGoalInvalid(!goalKg.ok)
+    if (!goalKg.ok) return
     try {
       await update.mutateAsync({
         display_name: name.trim() || initial.display_name,
@@ -59,7 +67,7 @@ function OnboardingForm({
         birth_year: birthYear ? Number(birthYear) : null,
         sex: sex || null,
         height_cm: height ? Number(height) : null,
-        goal_weight_kg: goal ? Number(goal) : null,
+        goal_weight_kg: goalKg.kg,
         onboarded: true,
       })
       setLocale(locale)
@@ -106,61 +114,58 @@ function OnboardingForm({
             />
           )}
         </Field>
-        {
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t('onboarding.birthYear')}>
-                {(id) => (
-                  <Input
-                    id={id}
-                    inputMode="numeric"
-                    value={birthYear}
-                    onChange={(e) => setBirthYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="1985"
-                  />
-                )}
-              </Field>
-              <Field label={t('onboarding.sex')}>
-                {(id) => (
-                  <Select
-                    id={id}
-                    value={sex}
-                    onChange={(e) => setSex(e.target.value as typeof sex)}
-                  >
-                    <option value="">—</option>
-                    <option value="M">{t('onboarding.sexM')}</option>
-                    <option value="F">{t('onboarding.sexF')}</option>
-                    <option value="O">{t('onboarding.sexO')}</option>
-                  </Select>
-                )}
-              </Field>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t('onboarding.heightCm')}>
-                {(id) => (
-                  <Input
-                    id={id}
-                    inputMode="decimal"
-                    value={height}
-                    onChange={(e) => setHeight(e.target.value)}
-                    suffix="cm"
-                  />
-                )}
-              </Field>
-              <Field label={t('onboarding.goalWeight')}>
-                {(id) => (
-                  <Input
-                    id={id}
-                    inputMode="decimal"
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    suffix="kg"
-                  />
-                )}
-              </Field>
-            </div>
-          </>
-        }
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t('onboarding.birthYear')}>
+            {(id) => (
+              <Input
+                id={id}
+                inputMode="numeric"
+                value={birthYear}
+                onChange={(e) => setBirthYear(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                placeholder="1985"
+              />
+            )}
+          </Field>
+          <Field label={t('onboarding.sex')}>
+            {(id) => (
+              <Select id={id} value={sex} onChange={(e) => setSex(e.target.value as typeof sex)}>
+                <option value="">—</option>
+                <option value="M">{t('onboarding.sexM')}</option>
+                <option value="F">{t('onboarding.sexF')}</option>
+                <option value="O">{t('onboarding.sexO')}</option>
+              </Select>
+            )}
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t('onboarding.heightCm')}>
+            {(id) => (
+              <Input
+                id={id}
+                inputMode="decimal"
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                suffix="cm"
+              />
+            )}
+          </Field>
+          <Field
+            label={t('onboarding.goalWeight')}
+            error={goalInvalid ? t('settings.invalidNumber') : undefined}
+          >
+            {(id, describedBy) => (
+              <Input
+                id={id}
+                aria-describedby={describedBy}
+                inputMode="decimal"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                invalid={goalInvalid}
+                suffix={units === 'imperial' ? 'lb' : 'kg'}
+              />
+            )}
+          </Field>
+        </div>
       </div>
 
       <Button size="lg" block className="mt-6" loading={update.isPending} onClick={finish}>

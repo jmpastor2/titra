@@ -40,13 +40,13 @@ export function PageHeader({
           <h1
             className={
               large
-                ? 'truncate font-display text-[30px] font-bold leading-tight'
-                : 'truncate font-display text-[21px] font-bold leading-tight'
+                ? 'break-words font-display text-[30px] font-bold leading-tight'
+                : 'break-words font-display text-[21px] font-bold leading-tight'
             }
           >
             {title}
           </h1>
-          {subtitle && <p className="mt-0.5 truncate text-[13px] text-muted">{subtitle}</p>}
+          {subtitle && <p className="mt-0.5 break-words text-[13px] text-muted">{subtitle}</p>}
         </div>
         {action && <div className="shrink-0">{action}</div>}
       </div>

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { fitOf, fmtDeltaMin, wholeDays } from './delta'
+import { fitOf, fmtDeltaMin, fmtGap, wholeDays } from './delta'
+
+describe('fmtGap', () => {
+  it('is the size of the gap without its sign', () => {
+    expect(fmtGap(122)).toBe('2 h 02')
+    expect(fmtGap(-125)).toBe('2 h 05')
+    expect(fmtGap(-40)).toBe('40 min')
+    expect(fmtGap(127 * 60)).toBe('5 d 7 h')
+  })
+})
 
 describe('fmtDeltaMin', () => {
   it('reads small gaps as minutes and hours', () => {

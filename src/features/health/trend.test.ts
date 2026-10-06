@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { baselineChange, dailyMeans, ema, EMA_TAU_DAYS, meanIn, weeklyRate } from './trend'
+import {
+  baselineChange,
+  dailyMeans,
+  ema,
+  EMA_TAU_DAYS,
+  goalProgress,
+  meanIn,
+  weeklyRate,
+} from './trend'
 
 const at = (d: number, h = 8) => new Date(2026, 8, d, h)
 const p = (d: number, value: number, h = 8) => ({ at: at(d, h), value })
@@ -95,5 +103,29 @@ describe('meanIn', () => {
     expect(meanIn(pts, at(28, 12), 7)).toBe(77.5)
     expect(meanIn(pts, at(21, 12), 7)).toBe(80)
     expect(meanIn(pts, at(10, 12), 7)).toBeNull()
+  })
+})
+
+describe('goalProgress', () => {
+  it('measures the way done from the start towards a lower goal', () => {
+    const g = goalProgress(82, 77, 72)
+    expect(g?.fraction).toBeCloseTo(0.5, 9)
+    expect(g?.remaining).toBeCloseTo(5, 9)
+  })
+
+  it('works towards a higher goal too', () => {
+    const g = goalProgress(60, 63, 66)
+    expect(g?.fraction).toBeCloseTo(0.5, 9)
+    expect(g?.remaining).toBeCloseTo(3, 9)
+  })
+
+  it('stays at the ends of the bar when the weight went the wrong way or past the goal', () => {
+    expect(goalProgress(82, 84, 72)).toEqual({ fraction: 0, remaining: 12 })
+    expect(goalProgress(82, 70, 72)).toEqual({ fraction: 1, remaining: 0 })
+  })
+
+  it('has nothing to measure when the goal is where the person started, or is not a number', () => {
+    expect(goalProgress(72, 72, 72)).toBeNull()
+    expect(goalProgress(82, Number.NaN, 72)).toBeNull()
   })
 })

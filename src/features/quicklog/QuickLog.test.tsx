@@ -703,11 +703,15 @@ describe('QuickLog', () => {
     }
   })
 
-  it('takes a class name and a section number for the lead to place it', async () => {
-    const { view } = renderQuick({ props: { className: 'mt-4', index: '04' } })
+  it('takes a class name and a size for the screen that places it', async () => {
+    const { view } = renderQuick({ props: { className: 'mt-4', max: 5 } })
     await tile(/^Agua\./)
     const panel = view.container.querySelector('section')
-    expect(panel).toHaveClass('card', 'instrument', 'mt-4')
-    expect(screen.getByRole('heading', { name: /^04\s*Registro rápido$/ })).toBeInTheDocument()
+    expect(panel).toHaveClass('mt-4')
+    expect(panel).not.toHaveClass('card')
+    // The five that are always there and "Más": what asks for a look waits in the sheet.
+    expect(tileNames()).toHaveLength(6)
+    expect(tileNames().some((n) => n.startsWith('Check-in'))).toBe(false)
+    expect(screen.getByRole('heading', { name: 'Registro rápido' })).toBeInTheDocument()
   })
 })

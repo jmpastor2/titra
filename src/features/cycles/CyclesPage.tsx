@@ -1,16 +1,14 @@
 import { CalendarRange } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { EmptyState, SectionTitle, Skeleton } from '@/components/ui/primitives'
-import { useLocale } from '@/lib/useLocale'
+import { useUndoOffer } from '@/features/protocols/useUndoOffer'
 import { useNow } from '@/lib/useNow'
 import { CycleCard } from './CycleCard'
-import { CyclesTimeline } from './CyclesTimeline'
-import { blockLabels, type DoseLabel } from './doseLabel'
 import type { CycleView } from './model'
 import { NewCycleSheet } from './NewCycleSheet'
 import { PastCycleCard } from './PastCycleCard'
@@ -18,40 +16,26 @@ import { StepSheet } from './StepSheet'
 import { useCyclesData } from './useCyclesData'
 
 /**
- * Ciclos: every protocol on one weekly timeline, a card per cycle with where it stands and
- * what has happened in it, the rest between cycles and the way to start the next one.
+ * Ciclos: a card per cycle with the ring, the phase it is in and its weeks one by one, the
+ * decision when a step-up is close and what has happened in it; then the cycles behind and
+ * the way to start the next one.
  */
 export function CyclesPage() {
   const { t } = useTranslation()
-  const { locale } = useLocale()
   const nav = useNavigate()
   const now = useNow()
   const data = useCyclesData(now)
-  const { current, past, timeline, vials } = data
+  const { current, past } = data
+  const undo = useUndoOffer()
   const [step, setStep] = useState<{ id: string; index: number } | null>(null)
   const [continuing, setContinuing] = useState<string | null>(null)
 
-  const entries = useMemo(() => [...current, ...past], [current, past])
-  const labels = useMemo(
-    () =>
-      timeline
-        ? blockLabels(
-            timeline,
-            entries.map((e) => e.view),
-            vials,
-            locale,
-          )
-        : new Map<string, DoseLabel>(),
-    [timeline, entries, vials, locale],
-  )
+  const entries = [...current, ...past]
   const viewOf = (id: string | undefined) => entries.find((e) => e.view.row.id === id)?.view
 
   const stepView = viewOf(step?.id)
   const nextFrom = viewOf(continuing ?? undefined) ?? null
   const startNext = (view: CycleView) => setContinuing(view.row.id)
-  // The timeline is 01; the sections that follow number on from it.
-  let section = data.timeline ? 1 : 0
-  const nextIndex = () => String(++section).padStart(2, '0')
 
   return (
     <div className="pb-6">
@@ -85,18 +69,8 @@ export function CyclesPage() {
         </Card>
       ) : (
         <div className="flex flex-col gap-5">
-          {data.timeline && (
-            <Card instrument padded={false} className="overflow-hidden">
-              <CyclesTimeline
-                timeline={data.timeline}
-                labels={labels}
-                onSelect={(id, index) => setStep({ id, index })}
-              />
-            </Card>
-          )}
-
           <section>
-            <SectionTitle index={nextIndex()}>{t('cycles.sections.current')}</SectionTitle>
+            <SectionTitle>{t('cycles.sections.current')}</SectionTitle>
             {data.current.length === 0 ? (
               <p className="px-1 text-[13.5px] text-muted">{t('cycles.noneCurrent')}</p>
             ) : (
@@ -111,6 +85,8 @@ export function CyclesPage() {
                     imperial={data.imperial}
                     canEdit={!data.readOnly}
                     onNewCycle={startNext}
+                    onOpenStep={(view, index) => setStep({ id: view.row.id, index })}
+                    offerUndo={undo.show}
                   />
                 ))}
               </div>
@@ -119,7 +95,7 @@ export function CyclesPage() {
 
           {data.past.length > 0 && (
             <section>
-              <SectionTitle index={nextIndex()}>{t('cycles.sections.past')}</SectionTitle>
+              <SectionTitle>{t('cycles.sections.past')}</SectionTitle>
               <div className="flex flex-col gap-3">
                 {data.past.map((entry) => (
                   <PastCycleCard
@@ -144,6 +120,7 @@ export function CyclesPage() {
           view={stepView}
           stepIndex={step.index}
           onClose={() => setStep(null)}
+          onStep={(index) => setStep({ id: stepView.row.id, index })}
           now={now}
           vials={data.vials}
           input={data.inputOf(stepView)}

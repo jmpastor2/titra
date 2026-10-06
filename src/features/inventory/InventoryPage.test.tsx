@@ -52,20 +52,62 @@ const card = async (label: string) => {
   return within(section)
 }
 
+/** The big number of one reading of the stock strip, found by its label. */
+const reading = (label: string) =>
+  screen.getByText(label, { selector: 'dt' }).parentElement?.querySelector('dd > span')?.textContent
+
 describe('inventory page', () => {
-  it('counts vials in use, in reserve and finished at a glance', async () => {
+  it('reads the stock at a glance: vials open and waiting, what expires first, when to order', async () => {
     renderInApp(<InventoryPage />, store())
     await card('MOTS-c 10 mg')
-    expect(screen.getAllByRole('definition').map((d) => d.textContent)).toEqual(['1', '1', '1'])
+    expect(reading('En uso')).toBe('1')
+    expect(reading('Reserva')).toBe('1')
+    // Opened 20 Sep: the 28 days end on 18 Oct, an estimate.
+    expect(reading('Caduca primero')).toBe('≈ 18 oct')
+    // Everything runs out on a date; the order goes in three weeks before it.
+    expect(reading('Próximo pedido')).toMatch(/^\d+ \w+$/)
+    expect(screen.getByText('Cobertura de tu stock')).toBeInTheDocument()
   })
 
-  it('shows the units for the current dose and the day of the in-use period', async () => {
+  it('says so when no protocol takes anything from the stock', async () => {
+    renderInApp(<InventoryPage />, makeStore({ inventory: [Object.assign({}, inUse)] }))
+    await card('MOTS-c 10 mg')
+    expect(screen.getAllByText('Sin pautas que usen tu stock').length).toBeGreaterThan(0)
+    expect(reading('Próximo pedido')).toBe('—')
+    expect(screen.getByText('Nada que pedir por ahora')).toBeInTheDocument()
+  })
+
+  it('leads with the doses left and shows the units for the current dose', async () => {
     renderInApp(<InventoryPage />, store())
     const open = await card('MOTS-c 10 mg')
-    // 1.2 mg from a 10 mg/mL vial: 12 U. Opened 20 Sep: day 16 of 28.
+    // 1.2 mg from a 10 mg/mL vial: 12 U. 4 mg left covers three of those doses.
     await waitFor(() => expect(open.getByText('12 U')).toBeInTheDocument())
-    expect(open.getByText('Día 16 de 28')).toBeInTheDocument()
+    expect(open.getByText('tomas')).toBeInTheDocument()
     expect(open.getByText('10 mg/mL')).toBeInTheDocument()
+    // The ring counts the days to the discard date: 13 days from 5 Oct to 18 Oct.
+    expect(open.getByRole('img', { name: 'Caduca en 13 días, fecha estimada' })).toBeInTheDocument()
+  })
+
+  it('writes the names of a blend vial out in full, never cut at the side of the card', async () => {
+    const blend = vialRow({
+      id: 'blend',
+      compound_id: 'mod-grf-1-29',
+      label: 'CJC-1295 (sin DAC) + Ipamorelina 10 mg · lote 2026-A reserva',
+      total_mg: 5,
+      remaining_mg: 5,
+      components: [{ compoundId: 'ipamorelin', mg: 5 }],
+    })
+    renderInApp(<InventoryPage />, makeStore({ inventory: [blend] }))
+    const vialCard = await card(blend.label)
+    const label = vialCard.getByText(blend.label)
+    const eyebrow = vialCard.getByText('CJC-1295 (sin DAC) + Ipamorelina')
+    for (const el of [label, eyebrow]) {
+      // Nothing between the text and the card may cut it off with an ellipsis.
+      for (let n: HTMLElement | null = el; n && n.tagName !== 'SECTION'; n = n.parentElement)
+        expect(n.className).not.toMatch(/truncate|line-clamp|text-ellipsis/)
+    }
+    // A blend is a vial of both substances: 10 mg, not just the first one's 5.
+    expect(vialCard.getByText('10')).toBeInTheDocument()
   })
 
   it('reconstitutes a powder vial from its card', async () => {
@@ -105,9 +147,8 @@ describe('inventory page', () => {
       archived: false,
     })
     // It shows up as one more in reserve.
-    await waitFor(() =>
-      expect(screen.getAllByRole('definition').map((d) => d.textContent)).toEqual(['1', '2', '1']),
-    )
+    await waitFor(() => expect(reading('Reserva')).toBe('2'))
+    expect(reading('En uso')).toBe('1')
   })
 
   it('archives a vial and restores it from the finished ones', async () => {

@@ -1,9 +1,10 @@
 import { clsx } from 'clsx'
 import { addDays, subDays } from 'date-fns'
-import { useId, useMemo, type CSSProperties } from 'react'
+import { useId, useMemo, type CSSProperties, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Skeleton, Vial } from '@/components/ui/primitives'
+import { Ring } from '@/components/kpi/Ring'
+import { Skeleton, SubstanceDot } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
 import { exposureCurve } from '@/domain/pk/engine'
@@ -22,23 +23,22 @@ import {
   type Spark,
 } from '@/features/exposure/levelSummary'
 import type { CompoundExposure } from '@/features/exposure/useExposure'
-import { vialLook } from '@/features/inventory/vials'
 import { fmtAgo } from '@/features/exposure/relative'
 import { fmtHours, fmtNumber, fmtPercent } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 
-/** Card and trace geometry: every card is the same size, whatever it shows. */
-const CARD = 'h-[184px] w-[156px]'
-const SPARK = { width: 128, height: 32, pad: 4 }
+/** The trace's own box: the card is as wide as the screen, so the drawing is too. */
+const SPARK = { width: 300, height: 36, pad: 4 }
 const PAST_DAYS = 10
 const AHEAD_DAYS = 4
 const STRIP_DAYS = 14
 
 /**
- * Compact per-substance instrument on Today. Long-acting compounds show the amount on
- * board and a 14-day trace (10 days back, 4 projected) with the current point lit;
- * everything else shows when it was last taken and a 14-day strip of its administrations.
- * Both end with when the next one is, and the vial it comes from wears its stock.
+ * One substance in the levels list of Hoy. Long-acting compounds show the amount on board, how
+ * far that is toward the steady level of the plan and a 14-day trace (10 days back, 4
+ * projected) with the current point lit; everything else shows when it was last taken and a
+ * 14-day strip of its administrations. Both end with when the next one is, and warn when the
+ * vial it comes from runs low.
  */
 export function LevelCard({
   x,
@@ -104,58 +104,71 @@ export function LevelCard({
   const stripExpected =
     days?.filter((d) => d.state === 'taken' || d.state === 'late' || d.state === 'missed').length ??
     0
+  const dots = [x.compoundId, ...x.partners.map((p) => p.compoundId)]
 
   return (
     <Link
       to={`/substance/${x.compoundId}`}
-      className={clsx('card flex shrink-0 flex-col p-3.5 transition active:scale-[0.98]', CARD)}
+      className="card block p-4 transition active:scale-[0.99]"
       style={{ borderColor: `color-mix(in oklab, ${color} 30%, var(--line))` }}
     >
-      <div className="flex h-8 items-start justify-between gap-2">
-        <span className="line-clamp-2 text-[13.5px] font-semibold leading-[1.15]">
-          {title ?? x.title}
-        </span>
-        <span className="mt-px shrink-0">
-          {vial ? (
-            <Vial {...vialLook(vial)} size={30} low={low} />
-          ) : (
-            <Vial color={color} fill={0.001} size={30} className="opacity-40" />
-          )}
-          <span className="sr-only">{vialText}</span>
-        </span>
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start gap-2">
+            <span className="mt-[7px] flex shrink-0 items-center gap-1" aria-hidden>
+              {dots.map((id) => (
+                <SubstanceDot key={id} color={compoundColor(id)} />
+              ))}
+            </span>
+            <span className="min-w-0 break-words text-[15px] font-semibold leading-snug">
+              {title ?? x.title}
+            </span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            {amount ? (
+              <>
+                <span className="readout text-[26px] font-semibold leading-none">
+                  {fmtNumber(amount.value, locale, amount.digits)}
+                  <span className="ml-1 text-[12px] font-medium text-muted">{amount.label}</span>
+                </span>
+                <span className="text-[12.5px] text-muted">{t('levels.onBoard')}</span>
+              </>
+            ) : (
+              <>
+                <span className="readout text-[20px] font-semibold leading-none">{lastText}</span>
+                <span className="text-[12.5px] text-muted">
+                  {x.lastDose ? t('levels.lastDose') : t('levels.noDoses')}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+        {amount && x.progress ? (
+          <Gauge
+            fraction={x.progress.fraction}
+            color={color}
+            label={t('levels.steady')}
+            aria={t('levels.steadyAria', { pct: steady })}
+          >
+            {steady}
+          </Gauge>
+        ) : days && stripExpected > 0 ? (
+          <Gauge
+            fraction={stripTaken / stripExpected}
+            color={color}
+            label={t('levels.strip.span', { n: days.length })}
+            aria={t('levels.strip.aria', {
+              taken: stripTaken,
+              planned: stripExpected,
+              days: days.length,
+            })}
+          >
+            {stripTaken}/{stripExpected}
+          </Gauge>
+        ) : null}
       </div>
 
-      <div className="mt-2 flex h-[40px] flex-col justify-between">
-        <div className="readout truncate font-semibold leading-none text-ink">
-          {amount ? (
-            <span className="text-[22px]">
-              {fmtNumber(amount.value, locale, amount.digits)}
-              <span className="ml-1 text-[11px] font-medium text-muted">{amount.label}</span>
-            </span>
-          ) : (
-            <span className={clsx(lastText.length > 11 ? 'text-[14px]' : 'text-[16px]')}>
-              {lastText}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center justify-between gap-2 leading-none">
-          <span className="spec truncate">
-            {amount ? t('levels.onBoard') : x.lastDose ? t('levels.lastDose') : t('levels.noDoses')}
-          </span>
-          {amount && x.progress ? (
-            <span
-              className="readout inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-ink-2"
-              title={t('levels.steadyAria', { pct: steady })}
-            >
-              <MiniRing fraction={x.progress.fraction} color={color} />
-              {steady}
-              <span className="sr-only"> {t('levels.steady')}</span>
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="mt-2 h-[30px]">
+      <div className="mt-3">
         {spark ? (
           <Sparkline
             spark={spark}
@@ -163,85 +176,80 @@ export function LevelCard({
             label={t('levels.spark.aria', { past: PAST_DAYS, ahead: AHEAD_DAYS })}
           />
         ) : days ? (
-          <DayStrip days={days} color={color} taken={stripTaken} expected={stripExpected} />
+          <>
+            <DayStrip days={days} color={color} taken={stripTaken} expected={stripExpected} />
+            <StripLegend days={days} color={color} />
+          </>
         ) : null}
       </div>
 
-      <div className="mt-1 h-[10px]">
-        {spark ? (
-          <SparkCaption spark={spark} />
-        ) : days ? (
-          <StripCaption days={days} taken={stripTaken} expected={stripExpected} />
-        ) : null}
-      </div>
-
-      <div className="mt-1 h-[11px]">
-        {spark ? (
-          <SparkLegend color={color} />
-        ) : days ? (
-          <StripLegend days={days} color={color} />
-        ) : null}
-      </div>
-
-      <div
-        className={clsx(
-          'mt-auto truncate text-[11.5px] leading-none',
-          next?.kind === 'overdue'
-            ? 'text-danger'
-            : next?.kind === 'due'
-              ? 'text-warn'
-              : 'text-muted',
-        )}
-      >
-        {next
-          ? next.kind === 'overdue'
-            ? t('levels.overdue', { time: fmtHours(next.hours, locale) })
-            : next.kind === 'due'
-              ? t('levels.dueNow')
-              : t('levels.nextIn', { time: fmtHours(next.hours, locale) })
-          : x.protocol
-            ? ' '
-            : t('levels.noPlan')}
+      <div className="mt-2.5 flex items-center justify-between gap-3 text-[12.5px] leading-snug">
+        <span
+          className={clsx(
+            next?.kind === 'overdue'
+              ? 'font-semibold text-danger'
+              : next?.kind === 'due'
+                ? 'font-semibold text-warn'
+                : 'text-muted',
+          )}
+        >
+          {next
+            ? next.kind === 'overdue'
+              ? t('levels.overdue', { time: fmtHours(next.hours, locale) })
+              : next.kind === 'due'
+                ? t('levels.dueNow')
+                : t('levels.nextIn', { time: fmtHours(next.hours, locale) })
+            : x.protocol
+              ? ' '
+              : t('levels.noPlan')}
+        </span>
+        <span className={clsx('text-right', low ? 'font-semibold text-warn' : 'sr-only')}>
+          {vialText}
+        </span>
       </div>
     </Link>
   )
 }
 
-/** The loading shape: same size as the card, so nothing moves when the levels arrive. */
+/** The loading shape, about as tall as a card, so little moves when the levels arrive. */
 export function LevelCardSkeleton() {
   return (
-    <div className={clsx('card flex shrink-0 flex-col gap-2 p-3.5', CARD)} aria-hidden>
-      <div className="flex justify-between gap-2">
-        <Skeleton className="h-8 w-20" />
-        <Skeleton className="h-[30px] w-[19px]" />
-      </div>
-      <Skeleton className="mt-1 h-9 w-24" />
-      <Skeleton className="mt-1 h-[30px] w-full" />
+    <div className="card flex h-[150px] flex-col gap-2 p-4" aria-hidden>
+      <Skeleton className="h-4 w-28" />
+      <Skeleton className="mt-1 h-7 w-24" />
+      <Skeleton className="mt-2 h-8 w-full" />
       <Skeleton className="mt-auto h-3 w-20" />
     </div>
   )
 }
 
-/** How far toward the steady level the amount on board is: a 12 px gauge next to the figure. */
-function MiniRing({ fraction, color }: { fraction: number; color: string }) {
-  const r = 4.5
-  const c = 2 * Math.PI * r
-  const f = Math.max(0, Math.min(1, fraction))
+/**
+ * A small gauge at the right of the reading: how far toward the steady level, or how many of
+ * the planned doses were taken, with what it measures under it.
+ */
+function Gauge({
+  fraction,
+  color,
+  label,
+  aria,
+  children,
+}: {
+  fraction: number
+  color: string
+  label: string
+  aria: string
+  children: ReactNode
+}) {
   return (
-    <svg width="12" height="12" viewBox="0 0 12 12" className="-rotate-90" aria-hidden>
-      <circle cx="6" cy="6" r={r} fill="none" stroke="var(--panel-3)" strokeWidth="2" />
-      <circle
-        cx="6"
-        cy="6"
-        r={r}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={c * (1 - f)}
-      />
-    </svg>
+    <div className="flex shrink-0 flex-col items-center gap-1" title={aria}>
+      <Ring value={fraction} size={50} stroke={5} color={color}>
+        <span className="readout text-[11px] font-semibold text-ink">{children}</span>
+      </Ring>
+      <span className="spec text-[9px]" aria-hidden>
+        {label}
+      </span>
+      <span className="sr-only">{aria}</span>
+    </div>
   )
 }
 
@@ -253,7 +261,7 @@ function Sparkline({ spark, color, label }: { spark: Spark; color: string; label
   return (
     <svg
       viewBox={`0 0 ${SPARK.width} ${SPARK.height}`}
-      className="h-[30px] w-full overflow-visible"
+      className="w-full overflow-visible"
       role="img"
       aria-label={label}
     >
@@ -320,63 +328,6 @@ function Sparkline({ spark, color, label }: { spark: Spark; color: string; label
   )
 }
 
-const CAPTION =
-  'relative h-full font-mono text-[8.5px] uppercase leading-[10px] tracking-[0.1em] text-muted'
-
-/** "10 d" at the start and "hoy" under the lit point; the dashed part ahead is in the legend. */
-function SparkCaption({ spark }: { spark: Spark }) {
-  const { t } = useTranslation()
-  return (
-    <div className={CAPTION} aria-hidden>
-      <span className="absolute left-0">{t('levels.spark.back', { n: PAST_DAYS })}</span>
-      <span
-        className="absolute -translate-x-1/2"
-        style={{ left: `${((spark.now?.x ?? SPARK.width / 2) / SPARK.width) * 100}%` }}
-      >
-        {t('common.today')}
-      </span>
-    </div>
-  )
-}
-
-function StripCaption({
-  days,
-  taken,
-  expected,
-}: {
-  days: DayCell[]
-  taken: number
-  expected: number
-}) {
-  const { t } = useTranslation()
-  return (
-    <div className={clsx(CAPTION, 'flex justify-between')} aria-hidden>
-      <span>
-        {expected > 0
-          ? t('levels.strip.caption', { n: days.length, taken, expected })
-          : t('levels.strip.span', { n: days.length })}
-      </span>
-      <span>{t('common.today')}</span>
-    </div>
-  )
-}
-
-function SparkLegend({ color }: { color: string }) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex items-center gap-2.5 text-[9px] leading-[11px] text-muted" aria-hidden>
-      <span className="inline-flex items-center gap-1">
-        <span className="h-[2px] w-3 rounded" style={{ background: color }} />
-        {t('levels.spark.real')}
-      </span>
-      <span className="inline-flex items-center gap-1">
-        <span className="w-3 border-t-2 border-dotted" style={{ borderColor: color }} />
-        {t('levels.spark.planned')}
-      </span>
-    </div>
-  )
-}
-
 /**
  * How a day of the strip reads: filled when taken, with an amber top when off the hour, a
  * diamond for an extra, a red outline when missed, a hollow cell while today's is pending.
@@ -392,9 +343,9 @@ function DayMark({
 }) {
   if (state === 'extra') {
     return (
-      <span className={clsx('flex items-center justify-center', className)}>
+      <span className={clsx('inline-flex items-center justify-center', className)}>
         <span
-          className="size-[55%] min-w-[5px] rotate-45 rounded-[1.5px] ring-1 ring-accent"
+          className="size-[60%] min-w-[6px] rotate-45 rounded-[1.5px] ring-1 ring-accent"
           style={{ background: color }}
         />
       </span>
@@ -410,7 +361,12 @@ function DayMark({
           : state === 'planned'
             ? { className: 'border-[1.5px] bg-panel', style: { borderColor: color } }
             : { className: 'bg-panel-3' }
-  return <span className={clsx('rounded-[3px]', look.className, className)} style={look.style} />
+  return (
+    <span
+      className={clsx('inline-block rounded-[3px]', look.className, className)}
+      style={look.style}
+    />
+  )
 }
 
 function DayStrip({
@@ -429,14 +385,14 @@ function DayStrip({
     <div
       role="img"
       aria-label={t('levels.strip.aria', { taken, planned: expected, days: days.length })}
-      className="flex h-full items-center gap-[2px]"
+      className="flex h-4 items-center gap-[3px]"
     >
       {days.map((d) => (
         <DayMark
           key={d.day.getTime()}
           state={d.state}
           color={color}
-          className="h-3 min-w-0 flex-1"
+          className="h-4 min-w-0 flex-1"
         />
       ))}
     </div>
@@ -449,11 +405,15 @@ const LEGEND_ORDER: readonly DayState[] = ['missed', 'late', 'extra', 'planned']
 function StripLegend({ days, color }: { days: DayCell[]; color: string }) {
   const { t } = useTranslation()
   const shown = LEGEND_ORDER.filter((s) => days.some((d) => d.state === s)).slice(0, 3)
+  if (shown.length === 0) return null
   return (
-    <div className="flex items-center gap-2.5 text-[9px] leading-[11px] text-muted" aria-hidden>
+    <div
+      className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted"
+      aria-hidden
+    >
       {shown.map((s) => (
-        <span key={s} className="inline-flex items-center gap-1">
-          <DayMark state={s} color={color} className="inline-block size-[8px] shrink-0" />
+        <span key={s} className="inline-flex items-center gap-1.5">
+          <DayMark state={s} color={color} className="size-3 shrink-0" />
           {t(`levels.strip.${s}`)}
         </span>
       ))}

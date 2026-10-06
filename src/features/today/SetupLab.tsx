@@ -19,7 +19,7 @@ export function SetupLab({ readOnly, onFreeDose }: { readOnly?: boolean; onFreeD
     { n: '03', title: t('setupLab.learn'), body: t('setupLab.learnHint'), to: '/wiki' },
   ]
   return (
-    <Card instrument>
+    <Card>
       <div className="flex items-center gap-3">
         <span className="glow grid size-12 shrink-0 place-items-center rounded-2xl border border-signal/30 bg-signal-soft text-signal">
           <FlaskConical aria-hidden className="size-6" />

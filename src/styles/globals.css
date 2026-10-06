@@ -7,46 +7,45 @@
  * See DESIGN.md for the reasoning behind every token.
  */
 
-/* ---------- Tokens: clean bench (light) ---------- */
+/* ---------- Tokens: light ---------- */
 :root {
-  --bg: #eef4f2;
-  --grid: rgb(6 80 66 / 0.06);
-  --halo-a: rgb(10 143 108 / 0.1);
-  --halo-b: rgb(134 114 240 / 0.08);
+  --bg: #f4f5fb;
+  --halo-a: rgb(99 102 241 / 0.1);
+  --halo-b: rgb(192 132 252 / 0.08);
   --panel: #ffffff;
-  --panel-2: #f1f6f4;
-  --panel-3: #e4ece9;
-  --line: rgb(6 32 27 / 0.1);
-  --line-strong: rgb(6 32 27 / 0.2);
-  --ink: #06201b;
-  --ink-2: #2d4a44;
-  --muted: #55706a;
-  --signal: #07795a;
+  --panel-2: #f0f2fa;
+  --panel-3: #e3e7f4;
+  --line: rgb(13 16 48 / 0.09);
+  --line-strong: rgb(13 16 48 / 0.18);
+  --ink: #0d1030;
+  --ink-2: #363c66;
+  --muted: #5c6490;
+  --signal: #4a52e0;
   --signal-ink: #ffffff;
-  --signal-soft: rgb(7 121 90 / 0.1);
+  --signal-soft: rgb(74 82 224 / 0.1);
   --signal-glow: 0 0 0 transparent;
-  --accent: #6a55e0;
-  --accent-soft: rgb(106 85 224 / 0.1);
+  --accent: #0a84b8;
+  --accent-soft: rgb(10 132 184 / 0.1);
   --warn: #9a5a00;
   --warn-soft: rgb(154 90 0 / 0.12);
   --danger: #c0345b;
   --danger-soft: rgb(192 52 91 / 0.1);
-  --ok: #07795a;
-  --ok-soft: rgb(7 121 90 / 0.1);
-  --shadow: 0 1px 2px rgb(6 32 27 / 0.06), 0 12px 32px -18px rgb(6 32 27 / 0.25);
+  --ok: #4a52e0;
+  --ok-soft: rgb(74 82 224 / 0.1);
+  --shadow: 0 1px 2px rgb(13 16 48 / 0.06), 0 12px 32px -18px rgb(13 16 48 / 0.25);
   --highlight: inset 0 1px 0 rgb(255 255 255 / 0.9);
   --radius: 20px;
   --radius-sm: 14px;
 
-  /* Substance identity (validated; see DESIGN.md) */
-  --sub-mint: #12a980;
-  --sub-violet: #8672f0;
-  --sub-orange: #d85c35;
-  --sub-sky: #2789c9;
-  --sub-amber: #c07e16;
-  --sub-pink: #d14f8a;
-  --sub-lime: #68a52b;
-  --sub-gray: #7f8f93;
+  /* Substance identity: colour follows the family (names are historical, hues are not green) */
+  --sub-mint: #1fb7dc;
+  --sub-violet: #b57cf5;
+  --sub-orange: #e8683c;
+  --sub-sky: #4a7cf6;
+  --sub-amber: #e59a1d;
+  --sub-pink: #e0558f;
+  --sub-lime: #c9aa2c;
+  --sub-gray: #8089a3;
 
   --chart-1: var(--signal);
   --chart-2: var(--sub-violet);
@@ -56,67 +55,65 @@
   color-scheme: light;
 }
 
-/* ---------- Tokens: night lab (dark, default) ---------- */
+/* ---------- Tokens: night (dark, default) ---------- */
 :root[data-theme='dark'] {
-  --bg: #050b0d;
-  --grid: rgb(92 242 196 / 0.055);
-  --halo-a: rgb(18 169 128 / 0.26);
-  --halo-b: rgb(134 114 240 / 0.18);
-  --panel: #0b1619;
-  --panel-2: #10201f;
-  --panel-3: #16292a;
-  --line: rgb(120 255 222 / 0.1);
-  --line-strong: rgb(120 255 222 / 0.2);
-  --ink: #e6fbf4;
-  --ink-2: #b3cdc6;
-  --muted: #7b9892;
-  --signal: #5cf2c4;
-  --signal-ink: #03211a;
-  --signal-soft: rgb(92 242 196 / 0.12);
-  --signal-glow: 0 0 24px rgb(92 242 196 / 0.35);
-  --accent: #a99bff;
-  --accent-soft: rgb(169 155 255 / 0.14);
-  --warn: #ffb347;
-  --warn-soft: rgb(255 179 71 / 0.14);
-  --danger: #ff6b93;
-  --danger-soft: rgb(255 107 147 / 0.14);
-  --ok: #5cf2c4;
-  --ok-soft: rgb(92 242 196 / 0.12);
+  --bg: #07080e;
+  --halo-a: rgb(124 140 255 / 0.2);
+  --halo-b: rgb(192 132 252 / 0.12);
+  --panel: #0f111b;
+  --panel-2: #151826;
+  --panel-3: #1d2133;
+  --line: rgb(168 178 255 / 0.1);
+  --line-strong: rgb(168 178 255 / 0.2);
+  --ink: #eef0fb;
+  --ink-2: #b8bedb;
+  --muted: #8189ae;
+  --signal: #9fadff;
+  --signal-ink: #0a0c24;
+  --signal-soft: rgb(159 173 255 / 0.14);
+  --signal-glow: 0 0 28px rgb(124 140 255 / 0.38);
+  --accent: #5fd0f0;
+  --accent-soft: rgb(95 208 240 / 0.14);
+  --warn: #ffb454;
+  --warn-soft: rgb(255 180 84 / 0.14);
+  --danger: #ff6f98;
+  --danger-soft: rgb(255 111 152 / 0.14);
+  --ok: #9fadff;
+  --ok-soft: rgb(159 173 255 / 0.14);
   --shadow: 0 1px 0 rgb(0 0 0 / 0.4), 0 18px 40px -24px rgb(0 0 0 / 0.9);
-  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.04);
-  --chart-1: #12a980;
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --chart-1: #8392ff;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #050b0d;
-    --grid: rgb(92 242 196 / 0.055);
-    --halo-a: rgb(18 169 128 / 0.26);
-    --halo-b: rgb(134 114 240 / 0.18);
-    --panel: #0b1619;
-    --panel-2: #10201f;
-    --panel-3: #16292a;
-    --line: rgb(120 255 222 / 0.1);
-    --line-strong: rgb(120 255 222 / 0.2);
-    --ink: #e6fbf4;
-    --ink-2: #b3cdc6;
-    --muted: #7b9892;
-    --signal: #5cf2c4;
-    --signal-ink: #03211a;
-    --signal-soft: rgb(92 242 196 / 0.12);
-    --signal-glow: 0 0 24px rgb(92 242 196 / 0.35);
-    --accent: #a99bff;
-    --accent-soft: rgb(169 155 255 / 0.14);
-    --warn: #ffb347;
-    --warn-soft: rgb(255 179 71 / 0.14);
-    --danger: #ff6b93;
-    --danger-soft: rgb(255 107 147 / 0.14);
-    --ok: #5cf2c4;
-    --ok-soft: rgb(92 242 196 / 0.12);
+    --bg: #07080e;
+    --halo-a: rgb(124 140 255 / 0.2);
+    --halo-b: rgb(192 132 252 / 0.12);
+    --panel: #0f111b;
+    --panel-2: #151826;
+    --panel-3: #1d2133;
+    --line: rgb(168 178 255 / 0.1);
+    --line-strong: rgb(168 178 255 / 0.2);
+    --ink: #eef0fb;
+    --ink-2: #b8bedb;
+    --muted: #8189ae;
+    --signal: #9fadff;
+    --signal-ink: #0a0c24;
+    --signal-soft: rgb(159 173 255 / 0.14);
+    --signal-glow: 0 0 28px rgb(124 140 255 / 0.38);
+    --accent: #5fd0f0;
+    --accent-soft: rgb(95 208 240 / 0.14);
+    --warn: #ffb454;
+    --warn-soft: rgb(255 180 84 / 0.14);
+    --danger: #ff6f98;
+    --danger-soft: rgb(255 111 152 / 0.14);
+    --ok: #9fadff;
+    --ok-soft: rgb(159 173 255 / 0.14);
     --shadow: 0 1px 0 rgb(0 0 0 / 0.4), 0 18px 40px -24px rgb(0 0 0 / 0.9);
-    --highlight: inset 0 1px 0 rgb(255 255 255 / 0.04);
-    --chart-1: #12a980;
+    --highlight: inset 0 1px 0 rgb(255 255 255 / 0.05);
+    --chart-1: #8392ff;
     color-scheme: dark;
   }
 }
@@ -179,7 +176,7 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Lab backdrop: graph paper + two bioluminescent halos. Fixed layer, no repaint on scroll. */
+  /* Backdrop: two soft halos on a flat ground. Fixed layer, no repaint on scroll. */
   body::before {
     content: '';
     position: fixed;
@@ -188,10 +185,7 @@
     pointer-events: none;
     background:
       radial-gradient(60rem 36rem at -10% -10%, var(--halo-a), transparent 60%),
-      radial-gradient(44rem 30rem at 110% -5%, var(--halo-b), transparent 60%),
-      linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 28px 28px,
-      var(--bg);
+      radial-gradient(44rem 30rem at 110% -5%, var(--halo-b), transparent 60%), var(--bg);
   }
 
   h1,

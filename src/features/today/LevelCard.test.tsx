@@ -55,10 +55,17 @@ describe('LevelCard · long-acting compound', () => {
     expect(last).toBe(`${glow!.getAttribute('cx')} ${glow!.getAttribute('cy')}`)
   })
 
-  it('wears the warning tick when the vial is about to expire', () => {
-    const { container } = card('retatrutide')
-    expect(container.querySelector('circle[fill="var(--warn)"]')).not.toBeNull()
-    expect(screen.getByText('Vial casi agotado')).toBeInTheDocument()
+  it('warns in amber, in words, when the vial is about to expire', () => {
+    card('retatrutide')
+    const warning = screen.getByText('Vial casi agotado')
+    expect(warning).toBeInTheDocument()
+    expect(warning).toHaveClass('text-warn')
+    expect(warning).not.toHaveClass('sr-only')
+  })
+
+  it('says nothing about a vial that is fine, except to a screen reader', () => {
+    card('mod-grf-1-29')
+    expect(screen.getByText(/Vial: queda el/)).toHaveClass('sr-only')
   })
 })
 
@@ -69,7 +76,9 @@ describe('LevelCard · substance without a level', () => {
     expect(link).toHaveTextContent('MOTS-c')
     expect(link).toHaveTextContent('hace 3 días')
     expect(link).toHaveTextContent('Última toma')
-    expect(link).toHaveTextContent('14 d · 5/5')
+    // The gauge at the right counts the doses taken of those planned in 14 days.
+    expect(link).toHaveTextContent('5/5')
+    expect(link).toHaveTextContent('14 d')
     expect(link).toHaveTextContent('Próxima en 9 h')
     const strip = within(link).getByRole('img', {
       name: /5 de 5 tomas previstas en los últimos 14 días/,
@@ -84,7 +93,7 @@ describe('LevelCard · substance without a level', () => {
     const link = screen.getByRole('link')
     expect(link).toHaveAttribute('href', '/substance/mod-grf-1-29')
     expect(link).toHaveTextContent('CJC-1295 + Ipamorelina')
-    expect(link).toHaveTextContent('14 d · 4/5')
+    expect(link).toHaveTextContent('4/5')
     expect(link).toHaveTextContent('perdida')
     expect(link).toHaveTextContent('Próxima en 1 d')
     // The vial is the striped blend icon, not low.
@@ -93,19 +102,17 @@ describe('LevelCard · substance without a level', () => {
 })
 
 describe('LevelCard · layout and clock', () => {
-  it('is the same size whatever it shows, and so is its loading shape', () => {
-    const sizes = ['retatrutide', 'mots-c', 'mod-grf-1-29'].map((id) => {
-      const { container } = card(id)
-      const cls = (container.firstElementChild as HTMLElement).className
-      cleanup()
-      return cls.match(/h-\[\d+px\] w-\[\d+px\]/)?.[0]
-    })
-    expect(new Set(sizes).size).toBe(1)
-    expect(sizes[0]).toBeTruthy()
+  it('lets a long name wrap instead of cutting it', () => {
+    const name = 'CJC-1295 (sin DAC) + Ipamorelina 10 mg'
+    const { container } = card('mod-grf-1-29', name)
+    expect(screen.getByText(name)).toBeInTheDocument()
+    expect(container.querySelector('.truncate')).toBeNull()
+  })
+
+  it('has a loading shape that takes the place of the card without a link', () => {
     const { container } = render(<LevelCardSkeleton />)
-    expect((container.firstElementChild as HTMLElement).className).toContain(
-      sizes[0]!.split(' ')[0],
-    )
+    expect(container.firstElementChild).toHaveAttribute('aria-hidden', 'true')
+    expect(container.querySelector('a')).toBeNull()
   })
 
   it('reads the entry at its own clock, not at a stale prop', () => {

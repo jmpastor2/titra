@@ -123,6 +123,27 @@ export function baselineChange(
   return { latest, baseline: first, delta, pct: first.value !== 0 ? delta / first.value : null }
 }
 
+export interface GoalProgress {
+  /** How much of the way from the starting value to the goal is done, 0 to 1. */
+  fraction: number
+  /** What is left, always positive; 0 once the goal is reached or passed. */
+  remaining: number
+}
+
+/**
+ * Progress towards a goal from where the person started, in either direction (losing weight or
+ * gaining it). Null when the goal is where they started, or when any value is not a number.
+ */
+export function goalProgress(start: number, latest: number, goal: number): GoalProgress | null {
+  if (![start, latest, goal].every(Number.isFinite) || start === goal) return null
+  const towards = (goal - start) / Math.abs(goal - start)
+  const done = ((latest - start) * towards) / Math.abs(goal - start)
+  return {
+    fraction: Math.min(1, Math.max(0, done)),
+    remaining: Math.max(0, (goal - latest) * towards),
+  }
+}
+
 /** Mean of the readings in (to − days, to], or null when there are none. */
 export function meanIn(points: readonly TimePoint[], to: Date, days: number): number | null {
   const from = to.getTime() - days * DAY_MS

@@ -52,11 +52,15 @@ export function PastCycleCard({
       <div className="p-4">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              {cycleCompoundIds(view).map((id) => (
-                <SubstanceDot key={id} color={compoundColor(id)} />
-              ))}
-              <h3 className="truncate font-display text-[16px] font-semibold">{row.name}</h3>
+            <div className="flex items-start gap-1.5">
+              <span className="flex shrink-0 items-center gap-1 pt-[7px]">
+                {cycleCompoundIds(view).map((id) => (
+                  <SubstanceDot key={id} color={compoundColor(id)} />
+                ))}
+              </span>
+              <h3 className="break-words font-display text-[16px] font-semibold leading-snug">
+                {row.name}
+              </h3>
             </div>
             {view.siblings > 1 && (
               <div className="spec mt-1">{t('cycles.cycleN', { n: view.ordinal })}</div>

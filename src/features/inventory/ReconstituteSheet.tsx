@@ -96,11 +96,11 @@ function ReconstituteForm({
       }
     >
       <div className="flex flex-col gap-4 py-1">
-        <div className="flex items-center gap-3.5 rounded-control border border-line bg-panel-2 p-3">
+        <div className="flex items-start gap-3.5 rounded-control border border-line bg-panel-2 p-3">
           <Vial {...vialLook(vial)} size={52} />
           <div className="min-w-0 flex-1">
-            <div className="spec truncate">{names}</div>
-            <div className="mt-0.5 truncate text-[15px] font-semibold">{vial.label}</div>
+            <div className="spec leading-snug">{names}</div>
+            <div className="mt-0.5 text-[15px] font-semibold leading-snug">{vial.label}</div>
             <div className="readout mt-0.5 text-[12.5px] text-muted">
               {fmtMg(contentMgOf(vial), locale)} ·{' '}
               {correcting ? t('inventory.statusInUse') : t('inventory.lyophilised')}

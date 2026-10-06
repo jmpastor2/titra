@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
-import { weekPlanVsActual, summariseWeek } from '@/features/doses/week'
+import { weekPlanVsActual } from '@/features/doses/week'
 import i18n from '@/i18n'
 import { weekdayInitial } from './agenda'
-import { WeekGrid, WeekRing } from './WeekPulse'
+import { WeekGrid } from './WeekPulse'
 
 const cjc: ProtocolRow = {
   id: 'cjc',
@@ -60,14 +60,9 @@ describe('WeekPulse', () => {
       new Date('2026-09-20T00:00'),
       now,
     )
-    render(
-      <>
-        <WeekRing summary={summariseWeek(days)} extras={1} />
-        <WeekGrid days={days} protocols={[cjc]} now={now} />
-      </>,
-    )
+    render(<WeekGrid days={days} protocols={[cjc]} now={now} />)
     expect(screen.getByText('CJC-1295 + Ipamorelina')).toBeTruthy()
-    expect(screen.getByText(/\+1/)).toBeTruthy()
+    expect(screen.getByText('extra')).toBeTruthy()
   })
 
   it('explains only the marks that are on the grid', () => {
@@ -79,10 +74,10 @@ describe('WeekPulse', () => {
       now,
     )
     render(<WeekGrid days={days} protocols={[cjc]} now={now} />)
-    expect(screen.getByText('a su hora')).toBeTruthy()
     expect(screen.getByText('perdida')).toBeTruthy()
     expect(screen.getByText('extra')).toBeTruthy()
-    // Nothing late and nothing pending in this week.
+    // A dose on its hour needs no entry; nothing late and nothing pending in this week.
+    expect(screen.queryByText('a su hora')).toBeNull()
     expect(screen.queryByText('fuera de hora')).toBeNull()
     expect(screen.queryByText('pendiente')).toBeNull()
   })

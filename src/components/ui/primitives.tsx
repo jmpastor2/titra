@@ -267,13 +267,15 @@ export function Segmented<T extends string>({
             <span
               className={clsx(
                 'flex w-full min-w-0 items-center justify-center rounded-full px-2 font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60',
-                size === 'sm' ? 'h-[34px] text-[12.5px]' : 'h-[38px] text-[14px]',
+                size === 'sm'
+                  ? 'h-[34px] text-[clamp(11.5px,3.4vw,12.5px)]'
+                  : 'h-[38px] text-[clamp(12px,3.7vw,14px)]',
                 active
                   ? 'bg-panel text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'
                   : 'text-muted group-hover:text-ink-2',
               )}
             >
-              <span className="min-w-0 truncate">{o.label}</span>
+              <span className="min-w-0 whitespace-nowrap">{o.label}</span>
             </span>
           </button>
         )
@@ -687,8 +689,10 @@ export function Row({
     >
       {leading && <div className="shrink-0">{leading}</div>}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[15px] font-medium">{title}</div>
-        {subtitle && <div className="truncate text-[13px] text-muted">{subtitle}</div>}
+        <div className="line-clamp-2 break-words text-[15px] font-medium">{title}</div>
+        {subtitle && (
+          <div className="line-clamp-2 break-words text-[13px] text-muted">{subtitle}</div>
+        )}
       </div>
       {trailing && <div className="shrink-0 text-right text-[13px] text-muted">{trailing}</div>}
     </Comp>

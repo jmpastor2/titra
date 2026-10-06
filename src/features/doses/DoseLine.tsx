@@ -28,6 +28,9 @@ export interface PartnerDose {
 
 const NO_PARTNERS: readonly PartnerDose[] = []
 
+/** A vial name longer than this does not fit its menu on a phone. */
+const LONG_LABEL = 22
+
 /**
  * One draw of a dose form: the amount typed in syringe units, mg or mcg (the same dose
  * shown in the other units as you type), the vial it comes from and, for a blend, what its
@@ -140,7 +143,7 @@ export function DoseLine({
         {partnerDoses.map((p) => (
           <SubstanceDot key={p.compoundId} color={compoundColor(p.compoundId)} />
         ))}
-        <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold">
+        <span className="min-w-0 flex-1 break-words text-[14.5px] font-semibold">
           {shortNames([line.compoundId, ...partnerDoses.map((p) => p.compoundId)])}
         </span>
         {partnerDoses.length > 0 && <Badge tone="brand">{t('doses.blend')}</Badge>}
@@ -228,6 +231,12 @@ export function DoseLine({
           </div>
         ) : (
           <span className="font-mono text-[11.5px] text-muted">{t('doses.noVial')}</span>
+        )}
+        {/* A menu shows a long name cut short: say it in full underneath. */}
+        {vial && vial.label.length > LONG_LABEL && (
+          <p className="mt-1.5 break-words px-1 text-[12px] leading-snug text-muted">
+            {vial.label}
+          </p>
         )}
       </div>
       {partnerDoses.length > 0 && (

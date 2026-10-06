@@ -5,7 +5,7 @@
  * it reads and writes through the shared hooks and renders its own sheets.
  */
 import { clsx } from 'clsx'
-import { Ellipsis, SlidersHorizontal } from 'lucide-react'
+import { SlidersHorizontal } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { usePatientScope } from '@/app/scope'
@@ -25,11 +25,11 @@ import { ProteinSheet, WaterSheet } from './CounterSheet'
 import { doseGlance } from './doseGlance'
 import { FastingSheet } from './FastingSheet'
 import { MoreSheet, type HiddenTile, type MoreTarget } from './MoreSheet'
-import { QuickTile, TileAction, Word } from './QuickTile'
+import { MoreTile, TileAction } from './QuickTile'
 import { buildRanks } from './ranks'
 import { StrengthSheet } from './StrengthSheet'
 import { TileCell } from './TileCell'
-import { rankTiles, type TileId } from './tiles'
+import { MAX_TILES, rankTiles, type TileId } from './tiles'
 import { summaryOf, tileView, type TileContext } from './tileViews'
 import { useQuickActions } from './useQuickActions'
 import { useQuickData } from './useQuickData'
@@ -44,24 +44,24 @@ type Active =
 
 interface QuickLogProps {
   className?: string
-  /** Section number in the silkscreen style of the other sections of the screen ("04"). */
-  index?: string
   /**
    * Tiles the screen already says in its own way (the next dose has its card, an open fast
    * has its own): left out of the grid, so nothing is said twice.
    */
   omit?: readonly TileId[]
+  /** Tiles in the grid, "Más" aside; what does not fit waits in the "Más" sheet. */
+  max?: number
 }
 
 const OMIT_NONE: readonly TileId[] = []
 
 /** The panel; nothing at all in a shared, read-only view. */
-export function QuickLog({ className, index, omit }: QuickLogProps) {
+export function QuickLog({ className, omit, max }: QuickLogProps) {
   const { readOnly } = usePatientScope()
-  return readOnly ? null : <QuickLogPanel className={className} index={index} omit={omit} />
+  return readOnly ? null : <QuickLogPanel className={className} omit={omit} max={max} />
 }
 
-function QuickLogPanel({ className, index, omit = OMIT_NONE }: QuickLogProps) {
+function QuickLogPanel({ className, omit = OMIT_NONE, max = MAX_TILES }: QuickLogProps) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { patientId, patient } = usePatientScope()
@@ -101,7 +101,7 @@ function QuickLogPanel({ className, index, omit = OMIT_NONE }: QuickLogProps) {
     () => buildRanks({ data, glance, goalMl, now }).filter((r) => !omit.includes(r.id)),
     [data, glance, goalMl, now, omit],
   )
-  const ranked = useMemo(() => rankTiles(ranks), [ranks])
+  const ranked = useMemo(() => rankTiles(ranks, max), [ranks, max])
   const { order, touch } = useStableOrder(ranked.shown, ready)
   const visible = order.filter((id) => ranks.some((r) => r.id === id))
   const hiddenIds = rankTiles(ranks, ranks.length).shown.filter((id) => !visible.includes(id))
@@ -180,7 +180,7 @@ function QuickLogPanel({ className, index, omit = OMIT_NONE }: QuickLogProps) {
     const v = views.get(id)
     return v ? [{ id, icon: v.icon, label: v.label, summary: summaryOf(v) }] : []
   })
-  // What the grid highlights is what it counts: a fast already done is a green tile, not a to-do.
+  // What the grid highlights is what it counts: a fast already done is a finished tile, not a to-do.
   const asking = (id: TileId) => {
     const tone = views.get(id)?.tone
     return tone === 'attention' || tone === 'urgent'
@@ -189,15 +189,9 @@ function QuickLogPanel({ className, index, omit = OMIT_NONE }: QuickLogProps) {
   const doseKey = sheet?.kind === 'dose' ? (sheet.protocolId ?? 'free') : 'closed'
 
   return (
-    <section
-      aria-label={t('quick.title')}
-      className={clsx('card instrument fade-up p-4', className)}
-    >
-      <header className="mb-3 flex min-h-7 items-center justify-between gap-3 pl-1.5">
-        <h2 className="spec flex items-center gap-2">
-          {index && <span className="text-signal">{index}</span>}
-          <span>{t('quick.title')}</span>
-        </h2>
+    <section aria-label={t('quick.title')} className={clsx('fade-up', className)}>
+      <header className="mb-2.5 mt-2 flex min-h-7 items-center justify-between gap-3 px-1">
+        <h2 className="spec">{t('quick.title')}</h2>
         {ready && pendingCount > 0 && (
           <Badge tone="warn">{t('quick.pending', { count: pendingCount })}</Badge>
         )}
@@ -206,7 +200,7 @@ function QuickLogPanel({ className, index, omit = OMIT_NONE }: QuickLogProps) {
       <div className="@container">
         <div className="grid grid-cols-2 gap-2 @xl:grid-cols-4">
           {!ready ? (
-            Array.from({ length: 8 }, (_, i) => <Skeleton key={i} className="h-[92px]" />)
+            Array.from({ length: max + 1 }, (_, i) => <Skeleton key={i} className="h-[96px]" />)
           ) : (
             <>
               {visible.map((id) => {
@@ -231,11 +225,9 @@ function QuickLogPanel({ className, index, omit = OMIT_NONE }: QuickLogProps) {
                   />
                 ) : null
               })}
-              <QuickTile
-                icon={Ellipsis}
-                label={t('quick.tile.more')}
-                value={<Word>{t('quick.more.tileValue')}</Word>}
-                caption={t('quick.more.tileHint')}
+              <MoreTile
+                label={t('quick.more.tileValue')}
+                hint={t('quick.more.tileHint')}
                 dot={hiddenIds.some(asking)}
                 ariaLabel={`${t('quick.tile.more')}. ${t('quick.more.tileHint')}`}
                 onPress={() => {

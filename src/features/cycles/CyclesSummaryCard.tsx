@@ -74,7 +74,7 @@ export function CyclesSummaryCard({ className }: { className?: string }) {
                     <SubstanceDot key={id} color={compoundColor(id)} />
                   ))}
                 </span>
-                <span className="min-w-0 truncate text-[14px] font-semibold">{line.name}</span>
+                <span className="min-w-0 break-words text-[14px] font-semibold">{line.name}</span>
                 <span
                   className={clsx(
                     'shrink-0 text-[13px]',

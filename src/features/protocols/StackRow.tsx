@@ -42,7 +42,7 @@ export function StackRow({
     <div className="mt-2.5 rounded-control border border-line bg-panel-2 p-3">
       <div className="flex items-center gap-2">
         <SubstanceDot color={compoundColor(comp.compoundId)} />
-        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold">{name}</span>
+        <span className="min-w-0 flex-1 break-words text-[14px] font-semibold">{name}</span>
         <button
           type="button"
           aria-label={t('common.delete')}

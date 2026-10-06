@@ -23,11 +23,12 @@ function Tile({
 }) {
   return (
     <div className="min-w-0 rounded-control border border-line bg-panel-2 px-3 py-2.5">
-      <div className="spec truncate text-[9.5px] tracking-[0.08em]">{label}</div>
+      <div className="spec text-[9.5px] leading-snug tracking-[0.08em]">{label}</div>
       <div
         className={clsx(
           'readout mt-1 font-semibold leading-tight',
-          text ? 'break-words text-[14.5px]' : 'truncate text-[17px]',
+          text ? 'text-[14.5px]' : 'text-[17px]',
+          'break-words',
           tone === 'good' && 'text-signal',
           tone === 'warn' && 'text-warn',
         )}
@@ -112,7 +113,12 @@ export function CycleFigures({
   if (tiles.length === 0) return null
 
   return (
-    <div className={clsx('grid gap-2', tiles.length === 3 ? 'grid-cols-3' : 'grid-cols-2')}>
+    <div
+      className={clsx(
+        'grid gap-2',
+        tiles.length === 3 ? 'grid-cols-1 min-[360px]:grid-cols-3' : 'grid-cols-2',
+      )}
+    >
       {tiles}
     </div>
   )

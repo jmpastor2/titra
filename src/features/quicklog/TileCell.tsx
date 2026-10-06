@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
 import { Sparkline } from '@/features/health/Spark'
-import { DayStrip, MiniBar, MiniRing, QuickTile, Readout, Word } from './QuickTile'
+import { MiniBar, MiniRing, QuickTile, Readout, Word } from './QuickTile'
 import type { TileView } from './tileViews'
 
 /** One tile of the grid, dressed from its view: the reading, its caption and its visual. */
@@ -59,13 +59,7 @@ export function TileCell({
           <Sparkline values={visual.values} height={26} className="w-[46px] shrink-0" />
         ) : undefined
       }
-      foot={
-        visual?.kind === 'strip' ? (
-          <DayStrip marks={visual.marks} />
-        ) : visual?.kind === 'bar' ? (
-          <MiniBar fraction={visual.fraction} />
-        ) : undefined
-      }
+      foot={visual?.kind === 'bar' ? <MiniBar fraction={visual.fraction} /> : undefined}
     />
   )
 }

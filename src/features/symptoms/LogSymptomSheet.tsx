@@ -219,7 +219,7 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
                   aria-label={`${n}/5, ${t(`symptoms.level.${n}`)}`}
                   onClick={() => setLevel(n)}
                   className={clsx(
-                    'flex h-[62px] touch-manipulation flex-col items-center justify-center rounded-control border transition active:scale-[0.97]',
+                    'flex min-h-[68px] touch-manipulation flex-col items-center justify-center rounded-control border px-0.5 py-1.5 transition active:scale-[0.97]',
                     active ? 'border-signal bg-signal-soft' : 'border-line bg-panel-2',
                   )}
                 >
@@ -234,7 +234,7 @@ function LogSymptomForm({ onClose }: { onClose: () => void }) {
                   </span>
                   <span
                     aria-hidden
-                    className="mt-1 max-w-full truncate px-0.5 text-[10.5px] leading-none text-muted"
+                    className="mt-1 text-center text-[10.5px] leading-[1.1] text-muted"
                   >
                     {t(`symptoms.level.${n}`)}
                   </span>

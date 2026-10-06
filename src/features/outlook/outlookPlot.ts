@@ -153,7 +153,9 @@ export interface OutlookLayout {
   /** Labels of today and the horizon, in lanes above the plot, and their text. */
   placed: PlacedLabel[]
   rail: Map<string, RailLabel>
-  paths: { band: string; upper: string; lower: string; placebo: string; projection: string }
+  paths: { band: string; upper: string; lower: string; me: string; projection: string }
+  /** The value at the end of the line drawn forward, written beside its last point. */
+  endLabel: { x: number; y: number; text: string; anchor: 'start' | 'end' } | null
   /** Position of each stop, in order. */
   stopX: number[]
   /** Radius of the dots of the person's weigh-ins: smaller when they crowd together. */
@@ -166,6 +168,8 @@ export interface OutlookTexts {
   horizon: string
   /** A signed whole number for the value axis: "−5", "+5", "0". */
   signed: (v: number) => string
+  /** A percentage for the end of the line drawn forward: "−8 %". */
+  percent: (v: number) => string
   /** "s12". */
   week: (n: number) => string
 }
@@ -215,6 +219,12 @@ export function layoutOutlook(
     model.band.map((p) => point(p.week, pick(p)))
   const upper = line((p) => p.upperPct)
   const lower = line((p) => p.lowerPct)
+  const [from, end] = model.projection
+  const endX = end ? x(end.week) : 0
+  const endY = end ? y(end.pct) : 0
+  // The label goes on the side the line is not on: under a line that falls, over one that rises.
+  const below = from && end ? end.pct <= from.pct : true
+  const labelY = below && endY + 18 <= box.y1 ? endY + 17 : endY - 10
   return {
     box,
     x,
@@ -227,9 +237,17 @@ export function layoutOutlook(
       band: bandPath(upper, lower),
       upper: linePath(upper),
       lower: linePath(lower),
-      placebo: linePath(line((p) => p.placeboPct)),
+      me: model.me.length > 1 ? linePath(model.me.map((p) => point(p.week, p.pct))) : '',
       projection: linePath(model.projection.map((p) => point(p.week, p.pct))),
     },
+    endLabel: end
+      ? {
+          x: endX,
+          y: labelY,
+          text: texts.percent(end.pct),
+          anchor: endX > box.x1 - 48 ? 'end' : 'start',
+        }
+      : null,
     stopX: model.stops.map((s) => x(s.week)),
     meRadius: weighInRadius(model.me.map((p) => x(p.week))),
   }

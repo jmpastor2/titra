@@ -36,3 +36,22 @@ export function regulatoryTone(r: RegulatoryStatus): Tone {
       return 'warn'
   }
 }
+
+/** Text and fill colour classes of a tone, for readouts and meters (tokens only). */
+export const toneText: Record<Tone, string> = {
+  neutral: 'text-ink-2',
+  brand: 'text-signal',
+  accent: 'text-accent',
+  ok: 'text-signal',
+  warn: 'text-warn',
+  danger: 'text-danger',
+}
+
+export const toneFill: Record<Tone, string> = {
+  neutral: 'bg-muted',
+  brand: 'bg-signal',
+  accent: 'bg-accent',
+  ok: 'bg-signal',
+  warn: 'bg-warn',
+  danger: 'bg-danger',
+}

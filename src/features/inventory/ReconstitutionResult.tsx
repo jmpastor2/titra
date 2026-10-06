@@ -59,9 +59,11 @@ export function ReconstitutionResult({
           <Row label={t('reconstitute.perUnit')}>
             <ul className="flex flex-col gap-1.5">
               {preview.compounds.map((c) => (
-                <li key={c.compoundId} className="flex items-center gap-2 text-[13.5px]">
-                  <SubstanceDot color={compoundColor(c.compoundId)} />
-                  <span className="min-w-0 flex-1 truncate font-semibold">
+                <li key={c.compoundId} className="flex items-start gap-2 text-[13.5px]">
+                  <span className="mt-[6px] flex">
+                    <SubstanceDot color={compoundColor(c.compoundId)} />
+                  </span>
+                  <span className="min-w-0 flex-1 font-semibold leading-snug">
                     {nameOf(c.compoundId)}
                   </span>
                   <span className="readout shrink-0 font-semibold">
@@ -80,10 +82,10 @@ export function ReconstitutionResult({
                 {preview.draws.map((d) => (
                   <li key={d.protocolId} className="flex items-center gap-3">
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13.5px] font-semibold">
+                      <span className="block text-[13.5px] font-semibold leading-snug">
                         {d.protocolName}
                       </span>
-                      <span className="readout block truncate text-[12px] text-muted">
+                      <span className="readout block text-[12px] leading-snug text-muted">
                         {fmtDoseList(
                           d.parts.map((p) => ({ valueMg: p.doseMg, unit: unitOf(p.compoundId) })),
                           locale,

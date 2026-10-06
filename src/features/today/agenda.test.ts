@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { DoseRow, ProtocolRow } from '@/data/database.types'
-import { agendaAddsToHero, buildToday, focusItem, isNightSlot, slotWhen, summarise } from './agenda'
+import {
+  agendaAddsToHero,
+  buildToday,
+  fmtWait,
+  focusItem,
+  isNightSlot,
+  slotWhen,
+  summarise,
+} from './agenda'
 
 const protocol = (over: Partial<ProtocolRow>): ProtocolRow => ({
   id: 'p',
@@ -145,5 +153,22 @@ describe('agendaAddsToHero', () => {
     )
     expect(agendaAddsToHero(taken, focusItem(taken))).toBe(true)
     expect(agendaAddsToHero([], null)).toBe(false)
+  })
+})
+
+describe('fmtWait', () => {
+  const min = (n: number) => n * 60_000
+  it('counts minutes up to an hour, then hours with the minutes left', () => {
+    expect(fmtWait(min(0), 'es')).toBe('0 min')
+    expect(fmtWait(min(45), 'es')).toBe('45 min')
+    expect(fmtWait(min(60), 'es')).toBe('1 h')
+    expect(fmtWait(min(200), 'es')).toBe('3 h 20 min')
+  })
+  it('rounds to whole hours past six, and speaks days past a day', () => {
+    expect(fmtWait(min(12 * 60 + 20), 'es')).toBe('12 h')
+    expect(fmtWait(min(28 * 60), 'en')).toBe('1 d 4 h')
+  })
+  it('never goes negative', () => {
+    expect(fmtWait(-min(5), 'es')).toBe('0 min')
   })
 })

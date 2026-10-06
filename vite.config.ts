@@ -30,8 +30,8 @@ export default defineConfig(({ mode }) => {
           scope: base,
           display: 'standalone',
           orientation: 'portrait',
-          background_color: '#050b0d',
-          theme_color: '#050b0d',
+          background_color: '#07080e',
+          theme_color: '#07080e',
           categories: ['health', 'medical'],
           icons: [
             { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },

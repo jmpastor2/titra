@@ -9,13 +9,7 @@ import { Card } from '@/components/ui/Card'
 import { EmptyState, SectionTitle, Skeleton, SubstanceDot } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { compoundColor } from '@/content/substanceColor'
-import {
-  useDeleteSavedProtocol,
-  useDoses,
-  useInventory,
-  useProtocols,
-  useSavedProtocols,
-} from '@/data/hooks'
+import { useDeleteSavedProtocol, useInventory, useProtocols, useSavedProtocols } from '@/data/hooks'
 import { parseComponents, parseSteps } from '@/data/mappers'
 import { useSession } from '@/features/auth/SessionProvider'
 import { useNow } from '@/lib/useNow'
@@ -30,7 +24,6 @@ export function ProtocolsPage() {
   const { toast } = useToast()
   const { patientId, readOnly, canPrescribe } = usePatientScope()
   const protocols = useProtocols(patientId)
-  const doses = useDoses(patientId, 60)
   const inventory = useInventory(patientId)
   const saved = useSavedProtocols(user?.id)
   const delSaved = useDeleteSavedProtocol(user?.id ?? '')
@@ -85,7 +78,6 @@ export function ProtocolsPage() {
             <ProtocolCard
               key={p.id}
               p={p}
-              doses={doses.data}
               vials={vials}
               now={now}
               canEdit={canEdit}
@@ -133,9 +125,9 @@ export function ProtocolsPage() {
                         {ids.map((id) => (
                           <SubstanceDot key={id} color={compoundColor(id)} />
                         ))}
-                        <span className="truncate text-[14.5px] font-semibold">{s.name}</span>
+                        <span className="break-words text-[14.5px] font-semibold">{s.name}</span>
                       </div>
-                      <div className="readout truncate text-[12px] text-muted">
+                      <div className="readout text-[12px] text-muted">
                         {scheduleLabel(parseSteps(s.steps), s.times)}
                         {!mine && ` · ${t('protocols.shared')}`}
                       </div>

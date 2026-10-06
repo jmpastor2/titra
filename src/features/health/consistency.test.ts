@@ -8,6 +8,7 @@ import {
   dayStrip,
   daysSinceLast,
   daysWithRecord,
+  doseStreaks,
   presenceMarks,
   protocolHistory,
   streak,
@@ -167,5 +168,60 @@ describe('adherence across protocols', () => {
       'full', // Wed so far: MOTS-c; tonight's CJC not due yet
     ])
     expect(days[4]).toMatchObject({ taken: 1, expected: 2 })
+  })
+})
+
+describe('doseStreaks', () => {
+  const marks = (...m: ('none' | 'full' | 'partial' | 'missed')[]) => m.map((mark) => ({ mark }))
+
+  it('counts dosing days in a row with every dose taken, up to today', () => {
+    expect(doseStreaks(marks('full', 'full', 'full'))).toEqual({ current: 3, best: 3 })
+  })
+
+  it('keeps the best run after a miss ended it', () => {
+    expect(doseStreaks(marks('full', 'full', 'full', 'missed', 'full'))).toEqual({
+      current: 1,
+      best: 3,
+    })
+  })
+
+  it('does not let a rest day break a streak, or count as part of it', () => {
+    expect(doseStreaks(marks('full', 'none', 'none', 'full', 'none'))).toEqual({
+      current: 2,
+      best: 2,
+    })
+  })
+
+  it('ends the run on a day with only some of the doses taken', () => {
+    expect(doseStreaks(marks('full', 'full', 'partial'))).toEqual({ current: 0, best: 2 })
+  })
+
+  it('starts a new run after a miss', () => {
+    expect(doseStreaks(marks('full', 'partial', 'full', 'full'))).toEqual({ current: 2, best: 2 })
+  })
+
+  it('has no streak with nothing scheduled', () => {
+    expect(doseStreaks([])).toEqual({ current: 0, best: 0 })
+    expect(doseStreaks(marks('none', 'none'))).toEqual({ current: 0, best: 0 })
+  })
+
+  it('reads the real day marks: a Monday dose missed breaks the run through the week', () => {
+    const mots = protocol({
+      id: 'mots',
+      steps: [{ doseMg: 5, intervalDays: 1, weekdays: [1, 3, 5], durationWeeks: null }],
+    })
+    // MOTS-c Mon/Wed/Fri: taken Fri 25 and Wed 30, missed Mon 28.
+    const doses = [dose('mots-c', day(25, 9)), dose('mots-c', day(30, 9, 5))]
+    const days = adherenceDays([mots], doses, now, 7)
+    expect(days.map((d) => d.mark)).toEqual([
+      'none', // Thu 24
+      'full', // Fri 25
+      'none',
+      'none',
+      'missed', // Mon 28
+      'none',
+      'full', // Wed 30
+    ])
+    expect(doseStreaks(days)).toEqual({ current: 1, best: 1 })
   })
 })

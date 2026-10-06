@@ -67,19 +67,28 @@ describe('weekChanges', () => {
     expect(items).toEqual([{ kind: 'weighIns', count: 3 }])
   })
 
-  it('reports adherence and doses off time', () => {
+  it('reports adherence, with how many doses were off time', () => {
     const items = weekChanges(
       input({
         adherence: { taken: 8, expected: 8, ratio: 1 },
         timing: { onTime: 6, offTime: 2 },
       }),
     )
-    expect(items).toEqual([
-      { kind: 'adherence', taken: 8, expected: 8 },
-      { kind: 'offTime', count: 2 },
+    expect(items).toEqual([{ kind: 'adherence', taken: 8, expected: 8, offTime: 2 }])
+  })
+
+  it('says every dose was on time with a zero, and nothing about timing when it is not known', () => {
+    const adherence = { taken: 8, expected: 8, ratio: 1 }
+    expect(weekChanges(input({ adherence, timing: { onTime: 8, offTime: 0 } }))).toEqual([
+      { kind: 'adherence', taken: 8, expected: 8, offTime: 0 },
     ])
-    const onTime = weekChanges(input({ timing: { onTime: 8, offTime: 0 } }))
-    expect(onTime).toEqual([{ kind: 'allOnTime', count: 8 }])
+    expect(weekChanges(input({ adherence }))).toEqual([
+      { kind: 'adherence', taken: 8, expected: 8, offTime: null },
+    ])
+  })
+
+  it('has no adherence line when nothing was due, even with doses taken', () => {
+    expect(weekChanges(input({ timing: { onTime: 3, offTime: 0 } }))).toEqual([])
   })
 
   it('names the wellbeing dimension that moved most, else counts check-ins', () => {

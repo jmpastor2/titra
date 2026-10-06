@@ -141,6 +141,31 @@ export function adherenceTotal(
 
 export interface AdherenceDay extends AdherenceTotal, DayCell {}
 
+export interface DoseStreaks {
+  /** Dosing days in a row with every dose taken, up to today. */
+  current: number
+  /** The longest such run in the days given. */
+  best: number
+}
+
+/**
+ * Streaks of dosing days with every dose taken, from days oldest first. A day with nothing
+ * scheduled neither extends nor breaks a streak (a rest day is not a miss); a day with a
+ * dose missed ends it. `adherenceDays` only counts what is already due, so today is a miss
+ * only once a dose's window has really passed.
+ */
+export function doseStreaks(days: readonly Pick<DayCell, 'mark'>[]): DoseStreaks {
+  let current = 0
+  let best = 0
+  for (const { mark } of days) {
+    if (mark === 'full') {
+      current += 1
+      best = Math.max(best, current)
+    } else if (mark !== 'none') current = 0
+  }
+  return { current, best }
+}
+
 /**
  * A dosing day runs 06:00 to 06:00, so a night shot after midnight ("24:30") and the
  * lateness allowed to a 23:00 shot both land on the evening they belong to.

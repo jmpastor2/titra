@@ -1,6 +1,6 @@
 /**
  * Everything the Ciclos screen shows, derived once from the protocols, the doses, the
- * weight readings and the vials: the cycles with their figures and the timeline. The
+ * weight readings and the vials: the cycles with their figures. The
  * heavy part runs when the data changes (and once a minute for the clock), not per render.
  */
 import { startOfDay, subDays } from 'date-fns'
@@ -21,7 +21,6 @@ import {
   type StatsInput,
   type WindowStats,
 } from './stats'
-import { buildTimeline, type Timeline } from './timeline'
 
 /** How far back the weigh-ins are loaded, so an old cycle still finds its starting weight. */
 const WEIGHT_WINDOW_DAYS = 730
@@ -49,7 +48,6 @@ export interface CyclesData {
   statsState: 'pending' | 'ready' | 'error'
   current: CycleEntry[]
   past: CycleEntry[]
-  timeline: Timeline | null
   vials: readonly InventoryRow[]
   imperial: boolean
   readOnly: boolean
@@ -65,7 +63,6 @@ export function useCyclesData(now: Date): CyclesData {
   const inventory = useInventory(patientId)
 
   const views = useMemo(() => buildCycleViews(protocols.data ?? [], now), [protocols.data, now])
-  const timeline = useMemo(() => buildTimeline(views, now), [views, now])
   const readings = useMemo(() => weightReadings(measurements.data ?? []), [measurements.data])
   const histories = useMemo(
     () =>
@@ -122,7 +119,6 @@ export function useCyclesData(now: Date): CyclesData {
     statsState,
     current,
     past,
-    timeline,
     vials: inventory.data ?? NO_VIALS,
     imperial: patient?.unit_system === 'imperial',
     readOnly,

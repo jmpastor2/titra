@@ -1,12 +1,13 @@
 import { clsx } from 'clsx'
-import { Check, type LucideIcon } from 'lucide-react'
+import { Check, Ellipsis, type LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { ProgressRing } from '@/components/ui/primitives'
 import type { TileTone } from './tiles'
 
 const TONE: Record<TileTone, string> = {
-  idle: 'border-line bg-panel-2',
-  attention: 'border-warn/35 bg-panel-2',
+  idle: 'border-line bg-panel',
+  // What asks for a look is told by the amber mark beside its label, not by a second outline.
+  attention: 'border-line bg-panel',
   // The one pulse of the panel: only what needs the person right now.
   urgent: 'pulse-ring border-warn/55 bg-warn-soft',
   done: 'border-signal/25 bg-signal-soft',
@@ -24,7 +25,7 @@ export interface QuickTileProps {
   lead?: ReactNode
   /** A small visual at the right of the reading (a sparkline). */
   trail?: ReactNode
-  /** A small visual at the right of the caption (a strip of days). */
+  /** A small visual at the right of the caption (a bar for a wait). */
   foot?: ReactNode
   /** The tile read out as one sentence. */
   ariaLabel: string
@@ -56,7 +57,7 @@ export function QuickTile({
 }: QuickTileProps) {
   const line = (caption || foot) && (
     <div className="mt-1.5 flex items-end justify-between gap-2">
-      <div aria-hidden className="min-w-0 truncate text-[11.5px] leading-tight text-muted">
+      <div aria-hidden className="min-w-0 break-words text-[12px] leading-tight text-muted">
         {caption}
       </div>
       {foot}
@@ -66,7 +67,7 @@ export function QuickTile({
     <div
       className={clsx(
         // isolate: the layers inside never climb over anything else on the page.
-        'relative isolate h-[92px] min-w-0 overflow-hidden rounded-control border transition-colors',
+        'relative isolate min-h-[96px] min-w-0 overflow-hidden rounded-control border transition-colors',
         TONE[tone],
       )}
     >
@@ -76,10 +77,10 @@ export function QuickTile({
         onClick={onPress}
         className="absolute inset-0 z-0 rounded-[inherit] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-signal/60 active:bg-ink/5"
       />
-      <div className="pointer-events-none relative z-10 flex h-full flex-col justify-between px-3 pb-2.5 pt-2.5">
+      <div className="pointer-events-none relative z-10 flex h-full min-h-[96px] flex-col justify-between gap-2 px-3 pb-3 pt-2.5">
         <div aria-hidden className={clsx('flex items-center gap-1.5', corner && 'pr-10')}>
           <Icon className="size-3.5 shrink-0 text-muted" />
-          <span className="spec truncate">{label}</span>
+          <span className="spec">{label}</span>
           {dot && <span className="size-1.5 shrink-0 rounded-full bg-warn" />}
           {tone === 'done' && <Check className="size-3.5 shrink-0 text-signal" strokeWidth={3} />}
         </div>
@@ -88,7 +89,7 @@ export function QuickTile({
           <div className="flex items-end gap-2.5">
             {lead}
             <div className="min-w-0 flex-1">
-              <div aria-hidden className="truncate">
+              <div aria-hidden className="break-words">
                 {value}
               </div>
               {line}
@@ -98,10 +99,11 @@ export function QuickTile({
           // The reading and its caption, each with room for a small visual at its right.
           <div className="min-w-0">
             <div className="flex items-end justify-between gap-2">
-              <div aria-hidden className="min-w-0 truncate">
+              <div aria-hidden className="min-w-0 break-words">
                 {value}
               </div>
-              {trail}
+              {/* A small chart only where the tile is wide enough to give the reading its room. */}
+              {trail && <div className="hidden shrink-0 @min-[330px]:block">{trail}</div>}
             </div>
             {line}
           </div>
@@ -109,6 +111,40 @@ export function QuickTile({
       </div>
       {corner}
     </div>
+  )
+}
+
+/** The last cell of the grid: what does not fit waits behind it, so it stays quiet. */
+export function MoreTile({
+  label,
+  hint,
+  dot,
+  ariaLabel,
+  onPress,
+}: {
+  label: string
+  hint: string
+  /** Something behind it wants attention. */
+  dot?: boolean
+  ariaLabel: string
+  onPress: () => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      onClick={onPress}
+      className="relative flex min-h-[96px] min-w-0 flex-col items-center justify-center gap-1 rounded-control border border-dashed border-line-strong px-3 py-2.5 text-center outline-none transition-colors focus-visible:ring-2 focus-visible:ring-signal/60 active:bg-ink/5"
+    >
+      <Ellipsis aria-hidden className="size-5 text-muted" />
+      <span aria-hidden className="text-[13.5px] font-semibold leading-tight text-ink-2">
+        {label}
+      </span>
+      <span aria-hidden className="text-[11.5px] leading-tight text-muted">
+        {hint}
+      </span>
+      {dot && <span aria-hidden className="absolute right-3 top-3 size-1.5 rounded-full bg-warn" />}
+    </button>
   )
 }
 
@@ -123,7 +159,12 @@ export function Readout({
   className?: string
 }) {
   return (
-    <span className={clsx('readout text-[20px] font-semibold leading-none', className)}>
+    <span
+      className={clsx(
+        'readout whitespace-nowrap text-[20px] font-semibold leading-none',
+        className,
+      )}
+    >
       {value}
       {unit && <span className="ml-1 text-[11.5px] font-medium text-muted">{unit}</span>}
     </span>
@@ -181,26 +222,6 @@ export function MiniRing({
     >
       {children}
     </ProgressRing>
-  )
-}
-
-/** The last days as small cells, oldest first, today last. */
-export function DayStrip({ marks }: { marks: readonly boolean[] }) {
-  // Keyed by how many days back each cell is: 0 is today.
-  const cells = marks.map((on, i) => ({ on, daysBack: marks.length - 1 - i }))
-  return (
-    <div aria-hidden className="flex shrink-0 items-end gap-[2.5px]">
-      {cells.map(({ on, daysBack }) => (
-        <span
-          key={daysBack}
-          className={clsx(
-            'block w-1 rounded-full',
-            on ? 'bg-signal' : 'bg-line-strong',
-            daysBack === 0 ? 'h-[13px]' : 'h-[9px]',
-          )}
-        />
-      ))}
-    </div>
   )
 }
 

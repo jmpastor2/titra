@@ -82,6 +82,34 @@ describe('CompoundPage', () => {
     expect(screen.getByText(i18n.t('wiki.blendMath'))).toBeInTheDocument()
   })
 
+  it('leads with the key facts and keeps the long text folded', async () => {
+    renderAt('/wiki/retatrutide')
+    // Evidence, half-life, template range and route, before any fold.
+    expect(await screen.findByText(i18n.t('wiki.halfLife'))).toBeVisible()
+    expect(screen.getByText(i18n.t('wiki.evidenceTiers.phase3'))).toBeVisible()
+    expect(screen.getByText(i18n.t('wiki.doseRange'))).toBeVisible()
+    expect(screen.getByText(i18n.t('wiki.watch'))).toBeVisible()
+    // The long sections sit in closed folds and open on request.
+    const folds = document.querySelectorAll('details')
+    expect(folds.length).toBeGreaterThanOrEqual(5)
+    expect([...folds].every((d) => !d.open)).toBe(true)
+    const mechanism = screen.getByText(i18n.t('wiki.mechanism')).closest('details')
+    expect(mechanism).not.toHaveAttribute('open')
+    mechanism?.querySelector('summary')?.click()
+    expect(mechanism).toHaveAttribute('open')
+  })
+
+  it('folds a long summary behind a read more', async () => {
+    renderAt('/wiki/retatrutide')
+    const more = await screen.findByRole('button', { name: i18n.t('wiki.more') })
+    expect(more).toHaveAttribute('aria-expanded', 'false')
+    more.click()
+    expect(await screen.findByRole('button', { name: i18n.t('wiki.less') })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+  })
+
   it('sends an unknown id back to the wiki list without loading anything', async () => {
     renderAt('/wiki/not-a-compound')
     await waitFor(() => expect(screen.getByText('wiki list')).toBeInTheDocument())

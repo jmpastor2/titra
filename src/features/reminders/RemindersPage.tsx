@@ -1,13 +1,17 @@
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { RemindersCard } from './RemindersCard'
+import { RemindersPanel } from './RemindersPanel'
 
 export function RemindersPage() {
   const { t } = useTranslation()
   return (
     <div className="pb-8">
-      <PageHeader eyebrow={t('more.account')} title={t('more.reminders')} back="/more" />
-      <RemindersCard />
+      <PageHeader
+        eyebrow={t('more.groups.health')}
+        title={t('more.items.reminders')}
+        back="/more"
+      />
+      <RemindersPanel />
     </div>
   )
 }

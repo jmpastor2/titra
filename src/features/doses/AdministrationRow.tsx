@@ -1,5 +1,5 @@
 import { isSameDay } from 'date-fns'
-import { CalendarCheck, Check, MoreHorizontal } from 'lucide-react'
+import { CalendarCheck, Check, ChevronRight } from 'lucide-react'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/primitives'
@@ -8,7 +8,7 @@ import type { InventoryRow } from '@/data/database.types'
 import { fmtDate, fmtDateTime, fmtDoseList, fmtNumber, toTimeInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { drawnUnits, substanceLine, type Administration } from './administrations'
-import { fitOf, fmtDeltaMin, wholeDays, type Fit } from './delta'
+import { fitOf, fmtGap, wholeDays, type Fit } from './delta'
 import { unitOf } from './doseLines'
 import type { ExtraDose } from './extras'
 import { slotDayText } from './slotText'
@@ -64,24 +64,24 @@ export const AdministrationRow = memo(function AdministrationRow({
 
   const body = (
     <>
-      <span className="w-12 shrink-0 text-center">
-        <span className="readout block text-[14px] font-semibold text-ink-2">
+      <span className="w-[3.25rem] shrink-0 pt-px text-center">
+        <span className="readout block text-[15px] font-semibold text-ink-2">
           {toTimeInputValue(a.at)}
         </span>
         {night && (
-          <span className="spec mt-0.5 block text-[8px] leading-tight">
+          <span className="spec mt-0.5 block text-[9.5px] leading-tight">
             {t('doses.nightOf', { day: fmtDate(night, locale, 'EEE') })}
           </span>
         )}
       </span>
       <span
         aria-hidden
-        className="w-1 shrink-0 self-stretch rounded-full"
+        className="w-[3px] shrink-0 self-stretch rounded-full"
         style={{ background: stripe }}
       />
       <span className="min-w-0 flex-1">
-        <span className="line-clamp-2 text-[14.5px] font-semibold leading-snug">{names}</span>
-        <span className="readout mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 text-[12.5px]">
+        <span className="block break-words text-[15px] font-semibold leading-snug">{names}</span>
+        <span className="readout mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 text-[13px]">
           <span className="text-ink-2">
             {fmtDoseList(
               a.rows.map((r) => ({ valueMg: Number(r.dose_mg), unit: unitOf(r.compound_id) })),
@@ -93,45 +93,45 @@ export const AdministrationRow = memo(function AdministrationRow({
         {(fit || site) && (
           <span className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
             {fit && <FitMark fit={fit} />}
-            {covers && (
-              <span className="text-[12px] text-muted">
-                {t('doses.fit.covers', { slot: covers })}
-              </span>
-            )}
-            {site && <span className="min-w-0 truncate text-[12px] text-muted">{site}</span>}
+            {site && <span className="text-[12px] text-muted">{site}</span>}
+          </span>
+        )}
+        {covers && fit && (
+          <span className="mt-1 block text-[12px] text-muted">
+            {t('doses.status.covers', {
+              slot: covers,
+              gap: t(fit.kind === 'ahead' ? 'doses.status.daysEarly' : 'doses.status.daysLate', {
+                days: wholeDays(fit.deltaMin ?? 0),
+              }),
+            })}
           </span>
         )}
         {first?.notes && (
-          <span className="mt-1 block truncate text-[12px] italic text-muted">{first.notes}</span>
+          <span className="mt-1 line-clamp-2 break-words text-[12px] italic text-muted">
+            {first.notes}
+          </span>
         )}
       </span>
-      {!readOnly && (
-        <span
-          className="grid size-11 shrink-0 place-items-center rounded-full border border-line text-ink-2"
-          aria-hidden
-        >
-          <MoreHorizontal className="size-5" />
-        </span>
-      )}
+      {!readOnly && <ChevronRight aria-hidden className="size-4 shrink-0 self-center text-muted" />}
     </>
   )
 
   return (
     <li>
       {readOnly ? (
-        <div className="flex items-center gap-3 py-3">{body}</div>
+        <div className="flex items-start gap-3 py-3.5">{body}</div>
       ) : (
         <button
           type="button"
           onClick={() => onActions(a.key)}
           aria-label={t('doses.rowActions', { what: names, when: fmtDateTime(a.at, locale) })}
-          className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-[14px] px-2 py-3 text-left transition active:bg-panel-2"
+          className="-mx-2 flex w-[calc(100%+1rem)] items-start gap-3 rounded-[14px] px-2 py-3.5 text-left transition active:bg-panel-2"
         >
           {body}
         </button>
       )}
       {!readOnly && extra?.suggested && (
-        <div className="pb-3 pl-[3.75rem]">
+        <div className="pb-3 pl-[4.4rem]">
           <button
             type="button"
             onClick={() => onAssign(extra)}
@@ -146,27 +146,26 @@ export const AdministrationRow = memo(function AdministrationRow({
   )
 })
 
-/** On time is the norm and reads quietly; what is off the plan stands out. */
+/** On time is the norm and reads quietly; whatever is off the plan stands out. */
 function FitMark({ fit }: { fit: Fit }) {
   const { t } = useTranslation()
   switch (fit.kind) {
     case 'onTime':
       return (
-        <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-signal">
+        <span className="inline-flex items-center gap-1 text-[12.5px] font-semibold text-signal">
           <Check className="size-3.5" strokeWidth={3} aria-hidden />
-          {t('doses.fit.onTime')}
+          {t('doses.status.onTime')}
         </span>
       )
     case 'late':
+      return <Badge tone="warn">{t('doses.status.late', { gap: fmtGap(fit.deltaMin) })}</Badge>
     case 'early':
-      return <Badge tone="warn">{fmtDeltaMin(fit.deltaMin)}</Badge>
+      return <Badge tone="warn">{t('doses.status.early', { gap: fmtGap(fit.deltaMin) })}</Badge>
     case 'makeUp':
-      return <Badge tone="warn">{t('doses.fit.lateDays', { days: wholeDays(fit.deltaMin) })}</Badge>
+      return <Badge tone="warn">{t('doses.status.makeUp')}</Badge>
     case 'ahead':
-      return (
-        <Badge tone="warn">{t('doses.fit.earlyDays', { days: wholeDays(fit.deltaMin) })}</Badge>
-      )
+      return <Badge tone="warn">{t('doses.status.ahead')}</Badge>
     case 'extra':
-      return <Badge tone="accent">{t('doses.fit.extra')}</Badge>
+      return <Badge tone="accent">{t('doses.status.extra')}</Badge>
   }
 }

@@ -75,13 +75,13 @@ function SharedProfile() {
             type="button"
             aria-label={t('common.back')}
             onClick={() => nav('/share')}
-            className="grid size-9 shrink-0 place-items-center rounded-full border border-line bg-panel text-ink-2"
+            className="-ml-1.5 grid size-11 shrink-0 place-items-center rounded-full border border-line bg-panel text-ink-2 outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
           >
-            <ChevronLeft className="size-5" />
+            <ChevronLeft className="size-5" aria-hidden />
           </button>
           <div className="min-w-0 flex-1">
             <div className="spec">{t('share.readOnly')}</div>
-            <div className="truncate font-display text-[18px] font-bold">
+            <div className="font-display text-[18px] font-bold leading-tight">
               {patient?.display_name}
             </div>
           </div>
@@ -153,12 +153,12 @@ function NotesTab() {
           <button
             type="button"
             onClick={() => setVisible((v) => !v)}
-            className="flex items-center gap-1.5 text-[13px] font-medium text-ink-2"
+            className="flex min-h-11 items-center gap-1.5 text-[13px] font-medium text-ink-2 outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
           >
             {visible ? (
-              <Eye className="size-4 text-signal" />
+              <Eye className="size-4 text-signal" aria-hidden />
             ) : (
-              <EyeOff className="size-4 text-muted" />
+              <EyeOff className="size-4 text-muted" aria-hidden />
             )}
             {visible ? t('clinic.noteVisible') : t('clinic.noteHidden')}
           </button>
@@ -198,9 +198,9 @@ function NotesTab() {
                         if (!window.confirm(t('common.deleteConfirm'))) return
                         await del.mutateAsync(n.id)
                       }}
-                      className="grid size-8 shrink-0 place-items-center rounded-full text-muted hover:bg-danger-soft hover:text-danger"
+                      className="-my-2 -mr-2 grid size-11 shrink-0 place-items-center rounded-full text-muted outline-none hover:bg-danger-soft hover:text-danger focus-visible:ring-2 focus-visible:ring-signal/60"
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 className="size-4" aria-hidden />
                     </button>
                   )}
                 </div>

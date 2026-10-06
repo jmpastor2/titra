@@ -81,11 +81,11 @@ describe('light compound registry', () => {
   it('stays small: it is on the startup path of every screen', () => {
     const bytes = JSON.stringify([...SUBSTANCE_DETAILS, ...BLEND_DETAILS].map(toMeta)).length
     const full = JSON.stringify([...SUBSTANCE_DETAILS, ...BLEND_DETAILS]).length
-    // Measured: about a fifth of the full entries (159 kB of 742 kB, half of it the summaries
+    // Measured: about a fifth of the full entries (72 kB of 360 kB, half of it the summaries
     // and the monitoring lists that TodayPage, SubstancePage and OutlookPage read synchronously).
     // A jump means a long text slipped into the projection (or a field moved there on purpose:
     // then raise the budget knowingly).
-    expect(bytes).toBeLessThan(175_000)
+    expect(bytes).toBeLessThan(90_000)
     expect(bytes / full).toBeLessThan(0.25)
   })
 })

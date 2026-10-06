@@ -65,10 +65,11 @@ export function OutlookChart({
           today: t('outlook.chart.today'),
           horizon: t('outlook.horizon.months', { n: horizon }),
           signed: (v) => fmtSigned(v, locale, 0),
+          percent: (v) => f.pct(v, 0),
           week: (n) => t('outlook.chart.weekTick', { n }),
         },
       }),
-    [model, width, horizon, t, locale],
+    [model, width, horizon, t, locale, f],
   )
 
   const indexAt = useCallback((px: number) => nearestIndex(layout.stopX, px), [layout.stopX])
@@ -144,16 +145,13 @@ export function OutlookChart({
           >
             {t('outlook.chart.band')}
           </LegendItem>
-          <LegendItem swatch={<span className="w-4 border-t border-dashed border-muted" />}>
-            {t('outlook.chart.placebo')}
-          </LegendItem>
           {model.me.length > 0 && (
-            <LegendItem swatch={<span className="size-2 rounded-full bg-ink" />}>
+            <LegendItem swatch={<span className="h-0.5 w-4 rounded-full bg-ink" />}>
               {t('outlook.chart.you')}
             </LegendItem>
           )}
           {model.projection.length === 2 && (
-            <LegendItem swatch={<span className="w-4 border-t-2 border-dotted border-ink-2" />}>
+            <LegendItem swatch={<span className="w-4 border-t-2 border-dashed border-ink-2" />}>
               {t('outlook.chart.projection')}
             </LegendItem>
           )}
@@ -227,22 +225,27 @@ const OutlookLayers = memo(function OutlookLayers({
 
       <g clipPath={`url(#${clipId})`} aria-hidden>
         <path d={paths.band} fill={color} fillOpacity={0.18} />
-        <path d={paths.lower} fill="none" stroke={color} strokeWidth={1.5} strokeDasharray="4 3" />
-        <path d={paths.upper} fill="none" stroke={color} strokeWidth={1.5} strokeDasharray="4 3" />
-        <path
-          d={paths.placebo}
-          fill="none"
-          stroke="var(--muted)"
-          strokeWidth={1}
-          strokeDasharray="2 3"
-        />
+        <path d={paths.lower} fill="none" stroke={color} strokeOpacity={0.7} strokeWidth={1.25} />
+        <path d={paths.upper} fill="none" stroke={color} strokeOpacity={0.7} strokeWidth={1.25} />
+        {paths.me && (
+          <path
+            data-part="me-line"
+            d={paths.me}
+            fill="none"
+            stroke="var(--ink)"
+            strokeWidth={2}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        )}
         {model.projection.length === 2 && (
           <path
+            data-part="projection"
             d={paths.projection}
             fill="none"
             stroke="var(--ink-2)"
-            strokeWidth={1.5}
-            strokeDasharray="1 3"
+            strokeWidth={2}
+            strokeDasharray="5 4"
             strokeLinecap="round"
           />
         )}
@@ -304,6 +307,34 @@ const OutlookLayers = memo(function OutlookLayers({
           />
         ))}
       </g>
+
+      {model.projection.length === 2 && layout.endLabel && (
+        <g aria-hidden data-part="projection-end">
+          <circle
+            cx={x(model.projection[1]?.week ?? 0)}
+            cy={y(model.projection[1]?.pct ?? 0)}
+            r={4.5}
+            fill="var(--panel)"
+            stroke="var(--ink-2)"
+            strokeWidth={2}
+          />
+          <text
+            x={layout.endLabel.x}
+            y={layout.endLabel.y}
+            textAnchor={layout.endLabel.anchor}
+            fontSize={11}
+            fontWeight={600}
+            fontFamily="var(--font-mono)"
+            fill="var(--ink)"
+            stroke="var(--panel)"
+            strokeWidth={3}
+            strokeLinejoin="round"
+            paintOrder="stroke"
+          >
+            {layout.endLabel.text}
+          </text>
+        </g>
+      )}
 
       <g aria-hidden>
         {layout.xTicks.map(({ week, text }) => {

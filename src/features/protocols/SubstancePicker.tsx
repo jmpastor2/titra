@@ -123,10 +123,10 @@ function Picker({
               >
                 <SubstanceDot color={categoryColor(c.category)} size={10} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-semibold">
+                  <span className="block break-words text-[15px] font-semibold">
                     {c.names.generic}
                   </span>
-                  <span className="block truncate text-[12.5px] text-muted">
+                  <span className="line-clamp-2 block text-[12.5px] text-muted">
                     {c.names.brands.length ? `${c.names.brands.slice(0, 3).join(' · ')} · ` : ''}
                     {pick(c.pharmClass)}
                   </span>

@@ -160,12 +160,11 @@ describe('CyclesPage', () => {
     mount(<CyclesPage />, account())
 
     expect(screen.getByRole('heading', { level: 1, name: 'Ciclos' })).toBeInTheDocument()
-    expect(
-      await screen.findByRole('group', { name: /Línea de tiempo de tus ciclos/ }),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('En curso')).toBeInTheDocument()
 
-    // Week N of M in dosing weeks, per cycle.
+    // Week N of M in dosing weeks, per cycle, and the same on the ring.
     expect(screen.getByText('Semana 3 de 12')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Semana 3 de 12' })).toBeInTheDocument()
     expect(screen.getByText('Semana 4 de 5')).toBeInTheDocument()
     expect(screen.getByText('Semana 4 de 4')).toBeInTheDocument()
     // The dose now, with the syringe reading from the vial.
@@ -191,14 +190,18 @@ describe('CyclesPage', () => {
     expect(document.body.textContent).not.toMatch(/\bundefined\b|\bNaN\b|\[object Object\]/)
   })
 
-  it('opens the step behind a block: dates, dose, syringe reading', async () => {
+  it('draws every week of a cycle, the rest included, and opens its steps from the strip', async () => {
     at(NOW)
     mount(<CyclesPage />, account())
-    const block = await screen.findByRole('button', {
-      name: 'CJC-1295 + Ipamorelina, 200 + 200 mcg, del 5 oct al 13 dic',
+    const strip = await screen.findByRole('button', {
+      name: 'Ver los escalones de CJC-1295 + Ipamorelina',
     })
-    fireEvent.click(block)
+    // 12 dosing weeks and 4 of rest: sixteen bars, each dosing week numbered.
+    expect(strip.querySelectorAll('div > span')).toHaveLength(16 + 16)
+    expect(within(strip).getByText('12')).toBeInTheDocument()
+    fireEvent.click(strip)
 
+    // It opens on the step in force: dates, dose, syringe reading.
     const sheet = await screen.findByRole('dialog')
     expect(within(sheet).getByText('Escalón 3 de 4')).toBeInTheDocument()
     expect(within(sheet).getByText('200 + 200 mcg')).toBeInTheDocument()
@@ -206,6 +209,26 @@ describe('CyclesPage', () => {
     expect(within(sheet).getByText('lun 5 oct → dom 13 dic')).toBeInTheDocument()
     expect(within(sheet).getByText('Semanas 3–12')).toBeInTheDocument()
     expect(within(sheet).getByText('En curso')).toBeInTheDocument()
+
+    // And walks along the steps from there: the rest comes next, and nothing after it.
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Escalón siguiente' }))
+    const rest = await screen.findByRole('dialog')
+    expect(within(rest).getByText('Escalón 4 de 4')).toBeInTheDocument()
+    expect(within(rest).getByRole('button', { name: 'Escalón siguiente' })).toBeDisabled()
+    fireEvent.click(within(rest).getByRole('button', { name: 'Escalón anterior' }))
+    expect(await screen.findByText('Escalón 3 de 4')).toBeInTheDocument()
+  })
+
+  it('puts the decision in the card when a step-up is close, and keeps the step another week', async () => {
+    at('2026-10-11T20:30') // Sunday: the titration steps up tomorrow
+    const db = account()
+    mount(<CyclesPage />, db)
+    const buttons = await screen.findAllByRole('button', { name: 'Mantener una semana más' })
+    expect(buttons.length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Toca decidir', { exact: false }).length).toBe(buttons.length)
+    fireEvent.click(buttons[0]!)
+    const sheet = await screen.findByRole('dialog')
+    expect(within(sheet).getAllByText(/El próximo cambio pasa/).length).toBeGreaterThan(0)
   })
 
   it('lets the rest be lengthened and shortened, saving it on the protocol', async () => {
@@ -299,7 +322,6 @@ describe('CyclesPage', () => {
     mount(<CyclesPage />, makeStore([]))
     expect(await screen.findByText('Aún no hay ciclos')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Crear una pauta' })).toBeInTheDocument()
-    expect(screen.queryByRole('group', { name: /Línea de tiempo/ })).toBeNull()
   })
 
   it('leaves out the weight when there are no readings', async () => {
@@ -343,7 +365,7 @@ describe('CyclesSummaryCard', () => {
 
 describe('with the accounts of the dev lab', () => {
   for (const [name, empty, expected] of [
-    ['a real account', false, /Línea de tiempo/],
+    ['a real account', false, /En curso/],
     ['a new account', true, /Aún no hay ciclos/],
   ] as const) {
     it(`renders ${name} without a runtime error, a stray value or a missing string`, async () => {

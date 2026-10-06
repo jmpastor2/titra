@@ -1,9 +1,9 @@
-import { BellRing, Info, Smartphone, TrendingUp } from 'lucide-react'
+import { Info, Smartphone, TrendingUp } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Segmented, SubstanceDot, Switch } from '@/components/ui/primitives'
+import { Segmented, SubstanceDot, ToggleRow } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
@@ -34,8 +34,8 @@ type DeviceState =
 const hhmm = (d: Date) =>
   `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 
-/** Settings → reminders: the switch, how early, this device and what is coming next. */
-export function RemindersCard() {
+/** Reminders: the switch, how early, this device and what is coming next. */
+export function RemindersPanel() {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { toast } = useToast()
@@ -141,58 +141,52 @@ export function RemindersCard() {
     }
   }
 
+  const blocked = busy || prefs.saving || !prefs.loaded
+  const deviceState = !serverReady && device !== 'denied' ? 'local' : device
+  const canTest =
+    device === 'on' ||
+    notificationPermission() === 'granted' ||
+    (!serverReady && device !== 'denied')
+
   return (
-    <Card
-      eyebrow={t('reminders.eyebrow')}
-      title={t('reminders.title')}
-      subtitle={t('reminders.subtitle')}
-    >
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-3 rounded-control border border-line bg-panel-2 px-3.5 py-3">
-          <span className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-full border border-signal/30 bg-signal-soft text-signal">
-              <BellRing className="size-[18px]" />
-            </span>
-            <span className="text-[14.5px] font-semibold">{t('reminders.toggle')}</span>
-          </span>
-          <Switch
-            checked={enabled}
-            disabled={busy || prefs.saving || !prefs.loaded}
-            label={t('reminders.toggle')}
-            onChange={(v) => void toggle(v)}
-          />
-        </div>
+    <div className="flex flex-col gap-3">
+      <ToggleRow
+        tone={enabled ? 'signal' : 'default'}
+        checked={enabled}
+        label={t('reminders.toggle')}
+        hint={t('reminders.toggleHint')}
+        className={blocked ? 'pointer-events-none opacity-60' : undefined}
+        onChange={(v) => void toggle(v)}
+      />
 
-        <p className="flex items-start gap-2 text-[12px] leading-snug text-muted">
-          <TrendingUp className="mt-px size-3.5 shrink-0" />
-          {t('reminders.decisionsHint')}
-        </p>
+      <p className="flex items-start gap-2 px-1 text-[12.5px] leading-snug text-muted">
+        <TrendingUp className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+        {t('reminders.decisionsHint')}
+      </p>
 
-        {enabled && (
-          <>
-            <div>
-              <div className="spec mb-2">{t('reminders.lead')}</div>
-              <Segmented<Lead>
-                size="sm"
-                value={lead}
-                onChange={(v) => void changeLead(v)}
-                options={LEADS.map((l) => ({
-                  value: l,
-                  label:
-                    l === '0'
-                      ? t('reminders.onTime')
-                      : l === '60'
-                        ? t('reminders.hourBefore')
-                        : t('reminders.minutesBefore', { n: l }),
-                }))}
-              />
-            </div>
+      {enabled && (
+        <>
+          <Card title={t('reminders.lead')}>
+            <Segmented<Lead>
+              size="sm"
+              value={lead}
+              onChange={(v) => void changeLead(v)}
+              options={LEADS.map((l) => ({
+                value: l,
+                label:
+                  l === '0'
+                    ? t('reminders.onTime')
+                    : l === '60'
+                      ? t('reminders.hourBefore')
+                      : t('reminders.minutesBefore', { n: l }),
+              }))}
+            />
+          </Card>
 
-            <DeviceRow state={!serverReady && device !== 'denied' ? 'local' : device}>
-              {(device === 'on' ||
-                notificationPermission() === 'granted' ||
-                (!serverReady && device !== 'denied')) && (
-                <div className="mt-2 flex flex-wrap gap-2">
+          <Card title={t('reminders.deviceTitle')}>
+            <DeviceRow state={deviceState}>
+              {canTest && (
+                <div className="mt-3 flex flex-wrap gap-2">
                   <Button size="sm" variant="soft" onClick={() => void test()}>
                     {t('reminders.test')}
                   </Button>
@@ -206,7 +200,7 @@ export function RemindersCard() {
               {serverReady && device === 'off' && (
                 <Button
                   size="sm"
-                  className="mt-2"
+                  className="mt-3"
                   loading={busy}
                   onClick={async () => {
                     setBusy(true)
@@ -218,9 +212,8 @@ export function RemindersCard() {
                 </Button>
               )}
             </DeviceRow>
-
-            <p className="flex items-start gap-2 text-[12px] leading-snug text-muted">
-              <Info className="mt-px size-3.5 shrink-0" />
+            <p className="mt-3 flex items-start gap-2 text-[12px] leading-snug text-muted">
+              <Info className="mt-px size-3.5 shrink-0" aria-hidden />
               {sync.kind === 'ok'
                 ? t('reminders.serverOk', { count: sync.count })
                 : sync.kind === 'missing'
@@ -229,48 +222,48 @@ export function RemindersCard() {
                     ? t('reminders.serverError', { message: sync.message })
                     : t('reminders.serverPending')}
             </p>
+          </Card>
 
-            {upcoming.length > 0 && (
-              <div>
-                <div className="spec mb-2">{t('reminders.next')}</div>
-                <ul className="flex flex-col divide-y divide-line rounded-control border border-line bg-panel-2">
-                  {upcoming.map((u) => (
-                    <li
-                      key={`${u.protocol.id}:${u.at.getTime()}`}
-                      className="flex items-center gap-3 px-3 py-2.5"
-                    >
-                      <span className="w-[70px] shrink-0">
-                        <span className="readout block text-[14px] font-semibold">
-                          {hhmm(u.fireAt)}
-                        </span>
-                        <span className="spec block text-[9.5px]">
-                          {fmtDate(u.fireAt, locale, 'EEE d')}
-                        </span>
+          {upcoming.length > 0 && (
+            <Card padded={false}>
+              <div className="spec px-4 pt-4">{t('reminders.next')}</div>
+              <ul className="mt-2 divide-y divide-line px-4 pb-1">
+                {upcoming.map((u) => (
+                  <li
+                    key={`${u.protocol.id}:${u.at.getTime()}`}
+                    className="flex items-center gap-3 py-3"
+                  >
+                    <span className="w-[56px] shrink-0">
+                      <span className="readout block text-[15px] font-semibold">
+                        {hhmm(u.fireAt)}
                       </span>
-                      <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                      <span className="spec block text-[9.5px]">
+                        {fmtDate(u.fireAt, locale, 'EEE d')}
+                      </span>
+                    </span>
+                    <span className="flex min-w-0 flex-1 items-start gap-2">
+                      <span className="mt-1.5 flex shrink-0 gap-1">
                         {u.doses.map((d) => (
                           <SubstanceDot key={d.compoundId} color={compoundColor(d.compoundId)} />
                         ))}
-                        <span className="truncate text-[13.5px] font-semibold">
-                          {u.doses
-                            .map((d) => compoundById(d.compoundId)?.names.generic)
-                            .join(' + ')}
-                        </span>
                       </span>
-                      {u.totalUnits !== null && (
-                        <span className="readout shrink-0 text-[13px] font-semibold text-signal">
-                          {fmtNumber(u.totalUnits, locale, 1)} U
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </Card>
+                      <span className="text-[13.5px] font-semibold leading-snug">
+                        {u.doses.map((d) => compoundById(d.compoundId)?.names.generic).join(' + ')}
+                      </span>
+                    </span>
+                    {u.totalUnits !== null && (
+                      <span className="readout shrink-0 text-[14px] font-semibold text-signal">
+                        {fmtNumber(u.totalUnits, locale, 1)} U
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </>
+      )}
+    </div>
   )
 }
 
@@ -283,14 +276,14 @@ function DeviceRow({ state, children }: { state: DeviceState; children?: ReactNo
         ? 'text-ink-2'
         : 'text-warn'
   return (
-    <div className="rounded-control border border-line bg-panel-2 px-3.5 py-3">
+    <div>
       <div className="flex items-start gap-2.5">
-        <Smartphone className={`mt-0.5 size-4 shrink-0 ${tone}`} />
+        <Smartphone className={`mt-0.5 size-4 shrink-0 ${tone}`} aria-hidden />
         <div className="min-w-0">
-          <div className={`text-[13.5px] font-semibold ${tone}`}>
+          <div className={`text-[14px] font-semibold leading-snug ${tone}`}>
             {t(`reminders.device.${state}`)}
           </div>
-          <div className="mt-0.5 text-[12px] leading-snug text-muted">
+          <div className="mt-0.5 text-[12.5px] leading-snug text-muted">
             {t(`reminders.deviceHint.${state}`)}
           </div>
         </div>

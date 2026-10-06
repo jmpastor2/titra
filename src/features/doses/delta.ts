@@ -24,6 +24,11 @@ export function fmtDeltaMin(min: number): string {
   return `${sign}${Math.floor(hours / 24)} d${rest ? ` ${rest} h` : ''}`
 }
 
+/** The size of a gap without its sign, for "2 h 02 tarde": 125 and −125 both read "2 h 05". */
+export function fmtGap(min: number): string {
+  return fmtDeltaMin(Math.abs(min)).slice(1)
+}
+
 /** Whole days of a gap, at least 1: "retrasada 5 d". */
 export function wholeDays(min: number): number {
   return Math.max(1, Math.round(Math.abs(min) / DAY_MIN))

@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { toProtocolLike } from '@/data/mappers'
-import { blockLabels, doseLabel } from './doseLabel'
+import { doseLabel } from './doseLabel'
 import { cjc, CJC_VIAL, reta, RETA_VIAL } from './fixtures'
-import { buildCycleViews } from './model'
-import { buildTimeline } from './timeline'
 
 const blend = toProtocolLike(cjc())
 const single = toProtocolLike(reta())
@@ -65,31 +63,5 @@ describe('doseLabel', () => {
     expect(
       doseLabel({ like: single, doseMg: 1, vials: [powder], locale: 'es', withUnits: true }).units,
     ).toBeNull()
-  })
-})
-
-describe('blockLabels', () => {
-  const now = new Date('2026-10-05T10:00') // week 3 of the blend cycle
-  const views = buildCycleViews(
-    [cjc(), cjc({ id: 'old', start_date: '2026-05-04', status: 'completed' })],
-    now,
-  )
-  const timeline = buildTimeline(views, now)!
-  const labels = blockLabels(timeline, views, [CJC_VIAL], 'es')
-
-  it('labels every dosing step and no rest', () => {
-    expect([...labels.keys()].toSorted()).toEqual(
-      ['cjc:0', 'cjc:1', 'cjc:2', 'old:0', 'old:1', 'old:2'].toSorted(),
-    )
-  })
-
-  it('gives the syringe reading to the steps still to come, not to the ones behind', () => {
-    expect(labels.get('cjc:0')!.units).toBeNull() // the 100 mcg week is over
-    expect(labels.get('cjc:2')!).toMatchObject({ full: '200 + 200 mcg', units: '12 U' })
-  })
-
-  it('never gives it to a cycle that is over', () => {
-    expect(labels.get('old:2')!.units).toBeNull()
-    expect(labels.get('old:2')!.full).toBe('200 + 200 mcg')
   })
 })

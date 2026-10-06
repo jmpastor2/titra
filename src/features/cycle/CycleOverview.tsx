@@ -9,17 +9,14 @@ import { useCycleBoard } from './useCycleBoard'
 /**
  * The cycle of every active protocol on one card, a compact row each: which week of how many,
  * the week track, the dose now and the next change; a tap opens the plan's steps. A row whose
- * dose is about to change lights its next change. `index` numbers the section like the others
- * of the screen.
+ * dose is about to change lights its next change.
  */
 export function CycleOverview({
   focusProtocolId = null,
-  index,
   className,
 }: {
   /** The notification link `#/?cycle=<id>`: that protocol's steps open. */
   focusProtocolId?: string | null
-  index?: string
   className?: string
 }) {
   const { t } = useTranslation()
@@ -47,7 +44,6 @@ export function CycleOverview({
   return (
     <section className={className}>
       <SectionTitle
-        {...(index ? { index } : {})}
         action={
           !readOnly && (
             <Link to="/cycles" className="spec text-signal">

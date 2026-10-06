@@ -61,11 +61,13 @@ export function AlertBody({ alert: a }: { alert: StockAlert }) {
     <div className="flex items-start gap-3">
       <span className="mt-0.5 shrink-0">{ICON[a.kind]}</span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5 text-[13.5px] font-semibold text-ink">
-          {a.compoundIds.map((id) => (
-            <SubstanceDot key={id} color={compoundColor(id)} />
-          ))}
-          <span className="truncate">{t(`stock.title.${a.kind}`)}</span>
+        <span className="flex items-start gap-1.5 text-[13.5px] font-semibold text-ink">
+          <span className="mt-[5px] flex shrink-0 gap-1">
+            {a.compoundIds.map((id) => (
+              <SubstanceDot key={id} color={compoundColor(id)} />
+            ))}
+          </span>
+          <span className="min-w-0">{t(`stock.title.${a.kind}`)}</span>
         </span>
         <span className="mt-0.5 block text-[12.5px] leading-snug text-ink-2">{body}</span>
         {a.estimated && (

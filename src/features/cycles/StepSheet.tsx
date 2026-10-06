@@ -1,5 +1,5 @@
 import { addDays, startOfDay } from 'date-fns'
-import { Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -37,13 +37,14 @@ function Fact({ label, children }: { label: ReactNode; children: ReactNode }) {
 }
 
 /**
- * One step of a cycle, from the timeline: its dates, the dose (with the syringe reading when a
+ * One step of a cycle, from its weeks strip: its dates, the dose (with the syringe reading when a
  * vial says how to draw it) and how the doses of that stretch went.
  */
 export function StepSheet({
   view,
   stepIndex,
   onClose,
+  onStep,
   now,
   vials,
   input,
@@ -52,6 +53,8 @@ export function StepSheet({
   view: CycleView
   stepIndex: number
   onClose: () => void
+  /** Go to another step of the same cycle. */
+  onStep: (index: number) => void
   now: Date
   vials: readonly InventoryRow[]
   input: Omit<StatsInput, 'like'>
@@ -106,7 +109,7 @@ export function StepSheet({
           {cycleCompoundIds(view).map((id) => (
             <SubstanceDot key={id} color={compoundColor(id)} size={9} />
           ))}
-          <span className="truncate">{view.row.name}</span>
+          <span className="min-w-0 break-words">{view.row.name}</span>
         </span>
       }
       description={t('cycles.step.of', { n: stepIndex + 1, count: view.info.stepCount })}
@@ -181,6 +184,29 @@ export function StepSheet({
         )}
 
         {isTrailingRest && <RestControls view={view} now={now} canEdit={canEdit} />}
+
+        {view.info.stepCount > 1 && (
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={stepIndex <= 0}
+              leading={<ChevronLeft className="size-4" />}
+              onClick={() => onStep(stepIndex - 1)}
+            >
+              {t('cycles.step.previous')}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={stepIndex >= view.info.stepCount - 1}
+              trailing={<ChevronRight className="size-4" />}
+              onClick={() => onStep(stepIndex + 1)}
+            >
+              {t('cycles.step.next')}
+            </Button>
+          </div>
+        )}
       </div>
     </Sheet>
   )

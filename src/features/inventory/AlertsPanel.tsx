@@ -9,6 +9,9 @@ import { useSession } from '@/features/auth/SessionProvider'
 import { alertKey, type StockAlert } from './alerts'
 import { AlertBody, StockAlerts } from './StockAlerts'
 
+/** More pending alerts than this fold behind "Ver N alertas más": the page stays calm. */
+const VISIBLE_ALERTS = 3
+
 const QUIET =
   'inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold text-ink-2 outline-none transition hover:bg-panel-2 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-signal/60 disabled:opacity-50'
 
@@ -30,6 +33,7 @@ export function AlertsPanel({
   const dismiss = useDismissAlert(user?.id ?? '')
   const restore = useRestoreAlert(user?.id ?? '')
   const [showRead, setShowRead] = useState(false)
+  const [showAll, setShowAll] = useState(false)
   const canAct = !readOnly && Boolean(user)
 
   const markAllRead = () =>
@@ -49,7 +53,7 @@ export function AlertsPanel({
     <section aria-label={t('inventory.alertsTitle')} className="mb-3">
       {alerts.length > 0 ? (
         <>
-          <div className="mb-1 flex items-center justify-between gap-2 px-1">
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-x-2 px-1">
             <h2 className="spec">{t('inventory.alertsCount', { count: alerts.length })}</h2>
             {canAct && alerts.length > 1 && (
               <button type="button" onClick={markAllRead} className={clsx(QUIET, '-mr-2')}>
@@ -58,7 +62,23 @@ export function AlertsPanel({
               </button>
             )}
           </div>
-          <StockAlerts alerts={alerts} />
+          <StockAlerts alerts={showAll ? alerts : alerts.slice(0, VISIBLE_ALERTS)} />
+          {alerts.length > VISIBLE_ALERTS && (
+            <button
+              type="button"
+              aria-expanded={showAll}
+              onClick={() => setShowAll((o) => !o)}
+              className={clsx(QUIET, 'mt-1 w-full justify-center')}
+            >
+              {showAll
+                ? t('inventory.alertsLess')
+                : t('stock.more', { count: alerts.length - VISIBLE_ALERTS })}
+              <ChevronDown
+                className={clsx('size-4 transition', showAll && 'rotate-180')}
+                aria-hidden
+              />
+            </button>
+          )}
         </>
       ) : (
         <div className="flex items-center gap-2.5 rounded-control border border-line bg-panel px-3.5 py-3 text-[13px] text-ink-2">

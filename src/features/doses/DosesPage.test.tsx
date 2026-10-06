@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { DosesPage } from './DosesPage'
 import { installDomShims, makeStore, renderWithStore, setSpanish } from './testHarness'
-import { blendDose, blendVial, cjcProtocol } from './testData'
+import { blendDose, blendVial, cjcProtocol, doseRow, retaProtocol } from './testData'
 
 beforeAll(async () => {
   installDomShims()
@@ -56,14 +56,14 @@ describe('DosesPage', () => {
 
     const today = await dayOf('Hoy')
     expect(await today.findByText('1 toma · 1 extra')).toBeInTheDocument()
-    expect(today.getByText('extra')).toBeInTheDocument()
+    expect(today.getByText('Extra')).toBeInTheDocument()
     expect(today.getByText('100 + 100 mcg')).toBeInTheDocument()
     expect(today.getByText('6 U')).toBeInTheDocument()
     expect(today.getByText('Toma extra')).toBeInTheDocument()
     // The night shots read as the evening they belong to.
     const yesterday = await dayOf('Ayer')
     expect(yesterday.getByText('vie noche')).toBeInTheDocument()
-    expect(yesterday.getByText('a su hora')).toBeInTheDocument()
+    expect(yesterday.getByText('A su hora')).toBeInTheDocument()
     expect(today.getByRole('button', { name: /¿Era la del lun 28\?/ })).toBeInTheDocument()
   })
 
@@ -82,14 +82,14 @@ describe('DosesPage', () => {
     )
     expect(await screen.findByText('Hecho: cuenta como la del lun 28')).toBeInTheDocument()
     // No longer an extra: it is the week's make-up, five days late.
-    expect(await today.findByText('retrasada 5 d')).toBeInTheDocument()
-    expect(today.getByText('cubre la del lun 28')).toBeInTheDocument()
-    expect(today.queryByText('extra')).not.toBeInTheDocument()
+    expect(await today.findByText('Recuperada')).toBeInTheDocument()
+    expect(today.getByText('Cubre la del lun 28 · 5 d tarde')).toBeInTheDocument()
+    expect(today.queryByText('Extra')).not.toBeInTheDocument()
     expect(today.getByText('1 toma · 1 con retraso')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Deshacer' }))
     await waitFor(() => expect(store.doses.every((r) => r.planned_at === null)).toBe(true))
-    expect(await today.findByText('extra')).toBeInTheDocument()
+    expect(await today.findByText('Extra')).toBeInTheDocument()
   })
 
   it('offers edit, assign and delete for a dose, and deletes it after asking', async () => {
@@ -145,6 +145,51 @@ describe('DosesPage', () => {
     expect(
       screen.queryByRole('button', { name: /Asignar a una toma perdida/ }),
     ).not.toBeInTheDocument()
+  })
+
+  it('opens with the week in figures, and the plan of the week opens from its foot', async () => {
+    const { store } = sundayStore()
+    renderWithStore(<DosesPage />, store)
+
+    // Monday's night was forgotten: four of five, one missed, plus the extra of Sunday.
+    expect(await screen.findByRole('img', { name: '4 de 5 tomas' })).toBeInTheDocument()
+    expect(screen.getByText('4 de 5 tomas', { selector: 'div' })).toBeInTheDocument()
+    // The week plan is folded away, so what went wrong is also flagged on its button.
+    expect(screen.getAllByText('1 perdida')).toHaveLength(2)
+    expect(screen.getByText('1 extra', { selector: 'span.font-semibold' })).toBeInTheDocument()
+    // The last dose and what is next.
+    expect(screen.getByText('4 h', { selector: 'dd' })).toBeInTheDocument()
+    expect(screen.getByText('01:00', { selector: 'dd' })).toBeInTheDocument()
+
+    expect(screen.queryByText('Plan y tomas')).not.toBeInTheDocument()
+    const toggle = screen.getByRole('button', { name: /Plan de la semana/ })
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(await screen.findByText('Plan y tomas')).toBeInTheDocument()
+  })
+
+  it('filters the log by what you inject, with one menu', async () => {
+    const { store } = sundayStore()
+    store.protocols.push(structuredClone(retaProtocol))
+    store.doses.push(
+      structuredClone(
+        doseRow('2026-10-03T09:00', { compound_id: 'retatrutide', protocol_id: 'reta' }),
+      ),
+    )
+    renderWithStore(<DosesPage />, store)
+
+    const filter = await screen.findByRole('combobox', { name: 'Mostrar' })
+    expect(
+      within(filter)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['Todas las tomas', 'CJC-1295 + Ipamorelina', 'Retatrutida'])
+    fireEvent.change(filter, { target: { value: 'retatrutide' } })
+    // Only Saturday's shot is left: the Sunday one was the blend.
+    const yesterday = await dayOf('Ayer')
+    expect(yesterday.getByText('Retatrutida')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Hoy' })).not.toBeInTheDocument()
   })
 
   it('welcomes a first dose', async () => {

@@ -142,21 +142,6 @@ export const PROTOCOL_TEMPLATES: readonly ProtocolTemplate[] = [
     ],
   },
   {
-    id: 'dulaglutide-trulicity',
-    compoundId: 'dulaglutide',
-    name: t('Dulaglutida (Trulicity)', 'Dulaglutide (Trulicity)'),
-    source: t('Ficha técnica Trulicity §2.1', 'Trulicity label §2.1'),
-    evidence: 'fda_approved',
-    route: 'sc',
-    unit: 'mg',
-    steps: [
-      { doseMg: 0.75, intervalDays: 7, durationWeeks: 4 },
-      { doseMg: 1.5, intervalDays: 7, durationWeeks: 4 },
-      { doseMg: 3.0, intervalDays: 7, durationWeeks: 4 },
-      { doseMg: 4.5, intervalDays: 7, durationWeeks: null, label: 'Máximo' },
-    ],
-  },
-  {
     id: 'retatrutide-triumph',
     compoundId: 'retatrutide',
     name: t('Retatrutida · brazo 12 mg (fase 2/3)', 'Retatrutide · 12 mg arm (phase 2/3)'),

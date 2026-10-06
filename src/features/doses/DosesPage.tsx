@@ -7,9 +7,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { FloatingAction } from '@/components/ui/FloatingAction'
-import { Chip, EmptyState, Skeleton } from '@/components/ui/primitives'
-import { compoundName } from '@/content/compounds'
-import { compoundColor } from '@/content/substanceColor'
+import { EmptyState, Skeleton } from '@/components/ui/primitives'
 import { useDoses, useInventory, useProtocols } from '@/data/hooks'
 import { fmtRelativeDay } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
@@ -20,6 +18,8 @@ import { DeleteDoseSheet } from './DeleteDoseSheet'
 import { DoseActionsSheet } from './DoseActionsSheet'
 import { EditDoseSheet } from './EditDoseSheet'
 import { LogDoseSheet } from './LogDoseSheet'
+import { LogFilter, type LogCombo } from './LogFilter'
+import { LogSummary } from './LogSummary'
 import { WeekCard } from './WeekCard'
 import {
   comboKey,
@@ -30,6 +30,7 @@ import {
 } from './administrations'
 import { fitOf, type Fit } from './delta'
 import { findExtras, type ExtraDose } from './extras'
+import { logKpis } from './logKpis'
 import { useAssignDose } from './useAssignDose'
 import { doseCells } from './week'
 
@@ -69,20 +70,26 @@ export function DosesPage() {
     [cells],
   )
 
+  const kpis = useMemo(
+    () => logKpis(protocolRows, doseRows, admins, now),
+    [protocolRows, doseRows, admins, now],
+  )
+
   const [filter, setFilter] = useState('all')
+  const [planOpen, setPlanOpen] = useState(false)
   const [shownDays, setShownDays] = useState(DAYS_PER_PAGE)
   const [logging, setLogging] = useState<{ protocolId?: string; plannedAt?: Date } | null>(null)
   const [overlay, setOverlay] = useState<Overlay | null>(null)
 
   // One filter per thing you inject: a blend or stack is one chip, not one per compound.
-  const combos = useMemo(() => {
+  const combos = useMemo<LogCombo[]>(() => {
     const seen = new Map<string, string[]>()
     for (const a of admins)
       seen.set(
         comboKey(a),
         a.rows.map((r) => r.compound_id),
       )
-    return [...seen.entries()]
+    return [...seen].map(([key, compoundIds]) => ({ key, compoundIds }))
   }, [admins])
 
   const filtered = useMemo(
@@ -111,36 +118,32 @@ export function DosesPage() {
     <div className="pb-8">
       <PageHeader eyebrow={t('doses.eyebrow')} title={t('nav.log')} large />
 
-      {protocolRows.length > 0 && doses.data && (
-        <WeekCard
-          protocols={protocolRows}
-          doses={doseRows}
-          extras={extras}
-          onLog={
-            readOnly ? undefined : (protocolId, plannedAt) => setLogging({ protocolId, plannedAt })
-          }
-          onEdit={readOnly ? undefined : (key) => setOverlay({ kind: 'actions', key })}
-          onAssign={readOnly ? undefined : (extra) => void assignExtra(extra)}
-        />
+      {doses.data && (admins.length > 0 || protocolRows.length > 0) && (
+        <>
+          <LogSummary
+            kpis={kpis}
+            now={now}
+            planOpen={planOpen}
+            onTogglePlan={() => setPlanOpen((open) => !open)}
+          />
+          {planOpen && protocolRows.length > 0 && (
+            <WeekCard
+              protocols={protocolRows}
+              doses={doseRows}
+              extras={extras}
+              onLog={
+                readOnly
+                  ? undefined
+                  : (protocolId, plannedAt) => setLogging({ protocolId, plannedAt })
+              }
+              onEdit={readOnly ? undefined : (key) => setOverlay({ kind: 'actions', key })}
+              onAssign={readOnly ? undefined : (extra) => void assignExtra(extra)}
+            />
+          )}
+        </>
       )}
 
-      {combos.length > 1 && (
-        <div className="hide-scrollbar -mx-4 -mt-1 mb-1.5 flex gap-2 overflow-x-auto px-4">
-          <Chip active={filter === 'all'} onClick={() => setFilter('all')}>
-            {t('doses.filterAll')}
-          </Chip>
-          {combos.map(([key, ids]) => (
-            <Chip
-              key={key}
-              active={filter === key}
-              color={compoundColor(ids[0] ?? '')}
-              onClick={() => setFilter(key)}
-            >
-              {ids.map(compoundName).join(' + ')}
-            </Chip>
-          ))}
-        </div>
-      )}
+      {combos.length > 1 && <LogFilter value={filter} combos={combos} onChange={setFilter} />}
 
       {doses.isPending ? (
         <LogSkeleton />
@@ -171,14 +174,16 @@ export function DosesPage() {
           />
         </Card>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
           {visibleDays.map(({ key, day, items }) => {
             const summary = summariseDay(items, fits)
             return (
               <section key={key}>
                 <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
-                  <h2 className="spec">{fmtRelativeDay(day, locale)}</h2>
-                  <span className="spec text-right">
+                  <h2 className="font-display text-[16px] font-semibold first-letter:uppercase">
+                    {fmtRelativeDay(day, locale)}
+                  </h2>
+                  <span className="text-right text-[12.5px] text-muted">
                     {[
                       t('doses.count', { count: summary.count }),
                       ...(summary.late ? [t('doses.summary.late', { count: summary.late })] : []),
@@ -272,6 +277,7 @@ export function DosesPage() {
 function LogSkeleton() {
   return (
     <div className="flex flex-col gap-4" aria-hidden>
+      <Skeleton className="h-[290px] w-full rounded-card" />
       {[0, 1].map((i) => (
         <section key={i}>
           <Skeleton className="mb-2 ml-1 h-3 w-24" />

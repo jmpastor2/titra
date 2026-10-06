@@ -13,10 +13,10 @@ from PIL import Image, ImageDraw
 OUT = Path(__file__).resolve().parent.parent / "public" / "icons"
 OUT.mkdir(parents=True, exist_ok=True)
 
-NAVY = (5, 11, 13, 255)
-TEAL = (92, 242, 196, 255)
-TEAL_DARK = (18, 169, 128, 255)
-WHITE = (230, 251, 244, 255)
+NAVY = (7, 8, 14, 255)
+TEAL = (159, 173, 255, 255)
+TEAL_DARK = (111, 125, 240, 255)
+WHITE = (238, 240, 251, 255)
 
 
 def draw_icon(size: int, maskable: bool = False, transparent_bg: bool = False) -> Image.Image:
@@ -77,19 +77,19 @@ def main() -> None:
     draw_icon(64).save(OUT / "favicon-64.png")
 
     svg = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect x="6" y="6" width="88" height="88" rx="22" fill="#050b0d"/>
-  <g fill="#5cf2c4">
+  <rect x="6" y="6" width="88" height="88" rx="22" fill="#07080e"/>
+  <g fill="#9fadff">
     <rect x="18" y="68.5" width="12.5" height="7" rx="3.5"/>
     <rect x="34" y="55.7" width="12.5" height="7" rx="3.5"/>
     <rect x="50" y="42.9" width="12.5" height="7" rx="3.5"/>
     <rect x="66" y="30.1" width="16" height="7" rx="3.5"/>
   </g>
-  <g fill="#12a980">
+  <g fill="#6f7df0">
     <rect x="28.5" y="59.2" width="4" height="12.8" rx="2"/>
     <rect x="44.5" y="46.4" width="4" height="12.8" rx="2"/>
     <rect x="60.5" y="33.6" width="4" height="12.8" rx="2"/>
   </g>
-  <circle cx="73" cy="20" r="5.5" fill="#e6fbf4"/>
+  <circle cx="73" cy="20" r="5.5" fill="#eef0fb"/>
 </svg>
 """
     (OUT / "icon.svg").write_text(svg, encoding="utf-8")

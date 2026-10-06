@@ -638,7 +638,9 @@ function ProtocolForm({
               <div className={clsx('spec', dirty && 'text-warn')}>
                 {dirty ? t('protocols.sticky.dirty') : t('protocols.sticky.clean')}
               </div>
-              {stickyLine && <div className="truncate text-[12.5px] text-ink-2">{stickyLine}</div>}
+              {stickyLine && (
+                <div className="line-clamp-2 text-[12.5px] text-ink-2">{stickyLine}</div>
+              )}
             </div>
             <Button size="md" loading={save.isPending || saveTemplate.isPending} onClick={submit}>
               {t('common.save')}

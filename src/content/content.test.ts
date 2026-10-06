@@ -65,11 +65,47 @@ describe('compound registry', () => {
     expect(searchCompounds('xyzzy')).toEqual([])
   })
 
+  it('matches every word of a query, in any order', () => {
+    expect(searchWiki('cjc ipamorelina').map((c) => c.id)).toContain('blend-cjc-ipamorelin')
+    expect(searchWiki('ipamorelina cjc').map((c) => c.id)).toContain('blend-cjc-ipamorelin')
+    expect(searchWiki('  retatrutida   ').map((c) => c.id)).toEqual(['retatrutide'])
+    expect(searchWiki('retatrutida klow')).toEqual([])
+  })
+
   it('finds the user-facing names of the GH blend components', () => {
     expect(searchCompounds('cjc-1295 sin dac').map((c) => c.id)).toContain('mod-grf-1-29')
     expect(searchCompounds('mod grf').map((c) => c.id)).toContain('mod-grf-1-29')
     expect(searchCompounds('ipamorelin').map((c) => c.id)).toContain('ipamorelin')
     expect(compoundById('mod-grf-1-29')?.names.generic).toBe('CJC-1295 (sin DAC)')
+  })
+})
+
+describe('lean catalogue', () => {
+  it('keeps what the owner runs and stays small enough to scan', () => {
+    for (const id of [
+      'retatrutide',
+      'mots-c',
+      'mod-grf-1-29',
+      'ipamorelin',
+      'blend-cjc-ipamorelin',
+    ]) {
+      expect(compoundById(id), id).toBeDefined()
+    }
+    // Every compound reachable in the wiki is one somebody actually runs: no label-only drugs.
+    expect(WIKI_ENTRIES.length).toBeLessThan(60)
+    expect(WIKI_ENTRIES.filter((c) => c.category === 'insulin')).toEqual([])
+  })
+
+  it('every template points at a compound that is still in the catalogue', () => {
+    for (const p of PROTOCOL_TEMPLATES) expect(compoundById(p.compoundId), p.id).toBeDefined()
+    for (const c of COMPOUNDS) {
+      for (const id of c.dosing.templateIds ?? []) {
+        expect(
+          PROTOCOL_TEMPLATES.some((p) => p.id === id && p.compoundId === c.id),
+          `${c.id} → ${id}`,
+        ).toBe(true)
+      }
+    }
   })
 })
 

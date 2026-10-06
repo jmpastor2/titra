@@ -1,42 +1,11 @@
 import { isSameDay } from 'date-fns'
 import { clsx } from 'clsx'
 import { useTranslation } from 'react-i18next'
-import { ProgressRing } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
 import type { ProtocolRow } from '@/data/database.types'
-import type { summariseWeek, weekPlanVsActual, WeekCell } from '@/features/doses/week'
+import type { weekPlanVsActual, WeekCell } from '@/features/doses/week'
 import { useLocale } from '@/lib/useLocale'
 import { weekdayInitial } from './agenda'
-
-export function WeekRing({
-  summary,
-  extras,
-}: {
-  summary: ReturnType<typeof summariseWeek>
-  extras: number
-}) {
-  const { t } = useTranslation()
-  return (
-    <ProgressRing
-      fraction={summary.planned ? summary.taken / summary.planned : 1}
-      size={96}
-      stroke={7}
-    >
-      <div className="text-center leading-none">
-        <div className="readout text-glow text-[24px] font-semibold">
-          {summary.taken}
-          <span className="text-[14px] text-muted">/{summary.planned}</span>
-        </div>
-        <div className="spec mt-1 text-[8.5px]">{t('today.last7')}</div>
-        {extras > 0 && (
-          <div className="readout mt-1 text-[10px] font-semibold text-accent">
-            +{extras} {t('today.extraShort')}
-          </div>
-        )}
-      </div>
-    </ProgressRing>
-  )
-}
 
 function Mark({ cell }: { cell: WeekCell }) {
   const color = compoundColor(cell.protocol.compound_id)
@@ -68,9 +37,11 @@ function Mark({ cell }: { cell: WeekCell }) {
   }
 }
 
-/** The legend entries, in reading order: which statuses of the grid each one explains. */
+/**
+ * The legend entries, in reading order: which statuses of the grid each one explains. A dose
+ * on its hour is the plain filled dot and needs no entry.
+ */
 const LEGEND = [
-  { key: 'onTime', statuses: ['onTime'] },
   { key: 'late', statuses: ['late', 'early'] },
   { key: 'missed', statuses: ['missed'] },
   { key: 'upcoming', statuses: ['upcoming', 'due'] },

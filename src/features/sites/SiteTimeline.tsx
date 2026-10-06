@@ -76,7 +76,7 @@ export function SiteTimeline({ history, now }: { history: readonly SiteUse[]; no
             <tr key={siteId} className="border-t border-line">
               <th
                 scope="row"
-                className="truncate py-1.5 pr-1 text-left text-[11px] font-medium text-ink-2"
+                className="py-1.5 pr-1 text-left text-[11px] font-medium leading-tight text-ink-2"
               >
                 {t(`sites.short.${siteId}`, { defaultValue: t(`sites.labels.${siteId}`) })}
               </th>

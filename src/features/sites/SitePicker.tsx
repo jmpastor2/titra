@@ -77,12 +77,15 @@ export function SitePicker({
                 >
                   {i + 1}
                 </span>
-                <span className="line-clamp-2 text-[12.5px] font-semibold leading-tight">
+                <span className="text-[12.5px] font-semibold leading-tight">
                   {t(`sites.labels.${s.site.labelKey}`)}
                 </span>
               </span>
               <span
-                className={clsx('truncate text-[11px]', s.resting ? 'text-warn' : 'text-muted')}
+                className={clsx(
+                  'text-[11px] leading-tight',
+                  s.resting ? 'text-warn' : 'text-muted',
+                )}
               >
                 {reasonText(t, s.reason)}
               </span>

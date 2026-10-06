@@ -208,7 +208,9 @@ function Cell({
             <SubstanceDot key={id} color={compoundColor(id)} />
           ))}
         </span>
-        <span className="min-w-0 flex-1 truncate text-[13px] font-semibold">{c.protocol.name}</span>
+        <span className="min-w-0 flex-1 break-words text-[13px] font-semibold">
+          {c.protocol.name}
+        </span>
         {fit?.kind === 'onTime' ? (
           // On time is the norm: a quiet check, so what is off the plan stands out.
           <Check

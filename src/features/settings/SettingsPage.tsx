@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/Toast'
 import type { ProfileRow } from '@/data/database.types'
 import { useUpdateProfile } from '@/data/hooks'
 import { setLocale, type AppLocale } from '@/i18n'
-import { RemindersCard } from '@/features/reminders/RemindersCard'
+import { isStandalone } from '@/features/reminders/push'
 import { fmtNumber } from '@/lib/format'
 import { getSupabase } from '@/lib/supabase'
 import { setSyringePref, useSyringePref, type SyringePref } from '@/lib/syringePref'
@@ -96,11 +96,9 @@ export function SettingsPage() {
 
   return (
     <div className="pb-8">
-      <PageHeader title={t('settings.title')} back="/more" />
+      <PageHeader eyebrow={t('more.groups.app')} title={t('settings.title')} back="/more" />
 
       <div className="flex flex-col gap-3">
-        <RemindersCard />
-
         <Card title={t('settings.profile')}>
           <div className="flex flex-col gap-4">
             <Field label={t('auth.displayName')}>
@@ -211,13 +209,26 @@ export function SettingsPage() {
 
         <UpdatesCard />
 
-        <Card title={t('settings.about')}>
-          <div className="flex items-start gap-2.5 rounded-control bg-panel-2 p-3">
-            <Share className="mt-0.5 size-4 shrink-0 text-signal" />
-            <p className="text-[13px] leading-relaxed">{t('settings.installHint')}</p>
-          </div>
-          <p className="mt-3 text-[11.5px] leading-relaxed text-muted">{t('app.disclaimer')}</p>
-        </Card>
+        {!isStandalone() && (
+          <Card>
+            <div className="flex items-start gap-3">
+              <span
+                aria-hidden
+                className="grid size-10 shrink-0 place-items-center rounded-[14px] border border-signal/20 bg-signal-soft text-signal"
+              >
+                <Share className="size-[18px]" />
+              </span>
+              <div className="min-w-0">
+                <h2 className="text-[15px] font-semibold leading-snug">
+                  {t('settings.installTitle')}
+                </h2>
+                <p className="mt-0.5 text-[13px] leading-snug text-muted">
+                  {t('settings.installHint')}
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         <Button
           variant="ghost"

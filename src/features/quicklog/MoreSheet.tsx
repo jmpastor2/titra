@@ -70,8 +70,12 @@ function Entry({
           <Icon className="size-[18px]" aria-hidden />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-medium">{title}</span>
-          {subtitle && <span className="block truncate text-[12.5px] text-muted">{subtitle}</span>}
+          <span className="block break-words text-[15px] font-medium leading-snug">{title}</span>
+          {subtitle && (
+            <span className="block break-words text-[12.5px] leading-snug text-muted">
+              {subtitle}
+            </span>
+          )}
         </span>
         <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
       </button>

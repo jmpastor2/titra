@@ -54,9 +54,14 @@ export function DriftNotice({
         </span>
         <div className="min-w-0 flex-1">
           <div className="spec text-warn">{t('cycle.drift.eyebrow')}</div>
-          <h2 id={titleId} className="mt-1 flex items-center gap-1.5 text-[14px] font-semibold">
-            <SubstanceDots protocol={protocol} />
-            <span className="truncate">{protocolTitle(protocol)}</span>
+          <h2
+            id={titleId}
+            className="mt-1 flex items-start gap-1.5 text-[14px] font-semibold leading-snug"
+          >
+            <span className="mt-[3px]">
+              <SubstanceDots protocol={protocol} />
+            </span>
+            <span className="min-w-0 break-words">{protocolTitle(protocol)}</span>
           </h2>
         </div>
       </div>

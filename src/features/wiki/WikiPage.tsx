@@ -55,6 +55,11 @@ export function WikiPage() {
   }, [protocols.data])
 
   const browsing = category === 'all' && !query
+  // A blend that is already under "yours" does not need a second row in the blends list.
+  const otherBlends = useMemo(() => {
+    const yours = new Set(mine.map((c) => c.id))
+    return results.filter((c) => c.blend && !yours.has(c.id))
+  }, [mine, results])
 
   // Most visits open an entry next: fetch its (cached, precached) chunk once the list has painted.
   useEffect(() => whenIdle(() => void preloadCompoundDetails().catch(() => {})), [])
@@ -83,9 +88,11 @@ export function WikiPage() {
             type="button"
             aria-label={t('common.close')}
             onClick={() => setQuery('')}
-            className="absolute right-3 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full bg-panel-3 text-muted"
+            className="absolute right-0.5 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full text-muted outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
           >
-            <X className="size-3.5" />
+            <span className="grid size-7 place-items-center rounded-full bg-panel-3">
+              <X className="size-3.5" aria-hidden />
+            </span>
           </button>
         )}
       </div>
@@ -118,19 +125,21 @@ export function WikiPage() {
         <div className="flex flex-col gap-5">
           {mine.length > 0 && (
             <section>
-              <SectionTitle index="◆">{t('wiki.mine')}</SectionTitle>
+              <SectionTitle>{t('wiki.mine')}</SectionTitle>
               <CompoundList items={mine} />
             </section>
           )}
-          <section>
-            <SectionTitle action={<span className="spec">{BLENDS.length}</span>}>
-              <span className="inline-flex items-center gap-2">
-                <FlaskConical className="size-3.5 text-muted" aria-hidden />
-                {t('wiki.blends')}
-              </span>
-            </SectionTitle>
-            <CompoundList items={results.filter((c) => c.blend)} />
-          </section>
+          {otherBlends.length > 0 && (
+            <section>
+              <SectionTitle action={<span className="spec">{otherBlends.length}</span>}>
+                <span className="inline-flex items-center gap-2">
+                  <FlaskConical className="size-3.5 text-muted" aria-hidden />
+                  {t('wiki.blends')}
+                </span>
+              </SectionTitle>
+              <CompoundList items={otherBlends} />
+            </section>
+          )}
           {categories.map((cat) => {
             // Blends have their own section while browsing.
             const items = results.filter((c) => c.category === cat && !c.blend)
@@ -182,12 +191,14 @@ function CompoundList({
             <button
               type="button"
               onClick={() => nav(`/wiki/${c.id}`)}
-              className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition active:bg-panel-2"
+              className="-mx-2 flex min-h-14 w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
             >
               <SubstanceDot color={categoryColor(c.category)} size={9} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-semibold">{c.names.generic}</span>
-                <span className="block truncate text-[12.5px] text-muted">
+                <span className="block text-[15px] font-semibold leading-snug">
+                  {c.names.generic}
+                </span>
+                <span className="mt-0.5 line-clamp-2 block text-[12.5px] leading-snug text-muted">
                   {c.blend ? (
                     c.blend.components.map((p) => compoundName(p.compoundId)).join(' + ')
                   ) : (
@@ -205,7 +216,7 @@ function CompoundList({
                   {t(`wiki.evidenceTiers.${c.evidence}`)}
                 </Badge>
                 {c.pk && (
-                  <span className="readout text-[10.5px] text-muted">
+                  <span className="readout text-[11px] text-muted">
                     T½ {fmtHours(c.pk.halfLifeH, locale)}
                   </span>
                 )}

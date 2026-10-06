@@ -78,10 +78,10 @@ export function SubstancesCard({
           <>
             <SubstanceDot color={compoundColor(compound.id)} size={10} />
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[15.5px] font-semibold">
+              <span className="block break-words text-[15.5px] font-semibold">
                 {compound.names.generic}
               </span>
-              <span className="block truncate text-[12px] text-muted">
+              <span className="line-clamp-2 block text-[12px] text-muted">
                 {pick(compound.pharmClass)}
               </span>
             </span>

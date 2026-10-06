@@ -1,4 +1,4 @@
-import { differenceInCalendarDays, getDayOfYear } from 'date-fns'
+import { differenceInCalendarDays } from 'date-fns'
 import { BellRing, ChevronRight } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -12,6 +12,7 @@ import type { StackComponent } from '@/domain/types'
 import { useInventory } from '@/data/hooks'
 import { CycleDecisions } from '@/features/cycle/CycleDecisions'
 import { CycleOverview } from '@/features/cycle/CycleOverview'
+import { useCycleInfos } from '@/features/cycle/useCycleInfos'
 import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
 import { StockAlerts } from '@/features/inventory/StockAlerts'
 import { useStock } from '@/features/inventory/useStock'
@@ -27,13 +28,17 @@ import { fmtDate } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
 import { AgendaRow } from './AgendaRow'
-import { LearnCard } from './LearnCard'
 import { NextDoseCard } from './NextDoseCard'
 import { SetupLab } from './SetupLab'
 import { useLastSevenDays } from './useLastSevenDays'
+import { KpiChips } from './KpiChips'
 import { WeekGrid } from './WeekPulse'
+import { adherenceOf, coverKpi, cycleKpi } from './kpis'
 import { agendaAddsToHero, buildToday, focusItem, summarise } from './agenda'
 import { LevelCard, LevelCardSkeleton } from './LevelCard'
+
+/** Tiles of the quick log on this screen, "Más" aside: two columns by three rows. */
+const QUICK_TILES = 5
 
 type SheetState = {
   kind: 'dose'
@@ -43,10 +48,10 @@ type SheetState = {
 } | null
 
 /**
- * Hoy, in the order of what needs the person: the next dose, then what the cycles ask, today's
- * agenda and the last seven days; after that the cycles, stock and levels to look at, and the
- * quick log. `embedded` renders the page inside another screen (a shared, read-only view)
- * without its header.
+ * Hoy, in the order of what needs the person: the next dose with today's ring, the figures that
+ * say whether the protocol is on track, what the cycles ask and today's agenda; after that the
+ * stock to watch, the levels, the quick log, the cycles and the last seven days. `embedded`
+ * renders the page inside another screen (a shared, read-only view) without its header.
  */
 export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation()
@@ -82,7 +87,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   )
   const summary = summarise(items.filter((i) => !i.extra))
   const week = useLastSevenDays(exposure.protocols, exposure.doses, now)
-  const weekExtras = week.days.flatMap((d) => d.cells).filter((c) => c.status === 'extra').length
+  const cycle = cycleKpi(useCycleInfos())
   const focus = focusItem(items)
   // Compounds that ride along in another protocol's syringe or blend vial are shown on that
   // protocol's card, not on their own.
@@ -93,22 +98,20 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
     .toSorted((a, b) => a.getTime() - b.getTime())[0]
   const dayN = firstStart ? differenceInCalendarDays(now, firstStart) + 1 : null
 
-  // One substance to learn about today, rotating through the ones in use.
-  const learn = tracked.length ? tracked[getDayOfYear(now) % tracked.length]?.compound : undefined
-
   const hasProtocols = exposure.protocols.some((p) => p.status === 'active')
   const vials = inventory.data ?? []
-  const focusUnits = focus ? unitsToDraw(focus.doses, vials) : null
   // Nothing left today: the next administration on any later day.
   const nextUp = focus
     ? null
     : (upcomingAdministrations(exposure.protocols, exposure.doses, vials, now, {
         horizonDays: 14,
       })[0] ?? null)
-  const nothingLeft = summary.total
-    ? t('today.allDone')
-    : items.length
-      ? t('today.onlyExtra', { count: items.length })
+  const heroUnits = focus ? unitsToDraw(focus.doses, vials) : (nextUp?.totalUnits ?? null)
+  const onlyExtra = summary.total === 0 && items.length > 0
+  const heroNote = onlyExtra
+    ? t('today.onlyExtra', { count: items.length })
+    : focus || nextUp
+      ? ''
       : t('today.nothingToday')
 
   // The next GH-secretagogue shot within the fast window asks for a fasting window (the same
@@ -122,19 +125,12 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   )
   const fastingShown = !readOnly && Boolean(fastFor)
 
-  // The quick log leaves out what this screen already says: the next dose has its card, and
-  // an open fast has its own.
+  // The quick log leaves out what this screen already says: the next dose has its card (or the
+  // first-run steps their button), and an open fast has its own.
   const omit = useMemo<TileId[]>(
-    () => [
-      ...(hasProtocols ? (['dose'] as const) : []),
-      ...(fastingShown ? (['fasting'] as const) : []),
-    ],
-    [hasProtocols, fastingShown],
+    () => (fastingShown ? ['dose', 'fasting'] : ['dose']),
+    [fastingShown],
   )
-
-  // Section numbers follow what is actually on screen.
-  let section = 0
-  const nextIndex = () => String(++section).padStart(2, '0')
 
   return (
     <div
@@ -151,7 +147,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
               {fmtDate(now, locale, 'EEE d MMM').toUpperCase()}
               {dayN && dayN > 0 ? ` · ${t('today.dayN', { n: dayN })}` : ''}
             </div>
-            <h1 className="mt-1 truncate font-display text-[32px] font-bold leading-none">
+            <h1 className="mt-1 break-words font-display text-[32px] font-bold leading-none">
               {readOnly ? patient?.display_name : t('today.title')}
             </h1>
           </div>
@@ -169,7 +165,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 
       {exposure.isPending ? (
         <Card>
-          <Skeleton className="h-[120px] w-full" />
+          <Skeleton className="h-[220px] w-full" />
         </Card>
       ) : !hasProtocols && tracked.length === 0 ? (
         <SetupLab readOnly={readOnly} onFreeDose={() => setSheet({ kind: 'dose' })} />
@@ -177,10 +173,9 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         <NextDoseCard
           focus={focus}
           nextUp={nextUp}
-          units={focusUnits}
-          message={nothingLeft}
-          week={week}
-          weekExtras={weekExtras}
+          units={heroUnits}
+          summary={summary}
+          note={heroNote}
           now={now}
           readOnly={readOnly}
           onLog={() =>
@@ -192,11 +187,23 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 
       {fastingShown && fastFor && <FastingCard name={fastFor.protocol.name} />}
 
+      {hasProtocols && !exposure.isPending && (
+        <KpiChips
+          streak={week.streak}
+          trail={week.trail}
+          adherence={adherenceOf(week.summary)}
+          week={week.summary}
+          cycle={cycle}
+          cover={readOnly ? null : coverKpi(stock.restock, now)}
+          linked={!readOnly}
+        />
+      )}
+
       {hasProtocols && <CycleDecisions focusProtocolId={cycleFocus} />}
 
       {items.length > 0 && agendaAddsToHero(items, focus) && (
         <section>
-          <SectionTitle index={nextIndex()}>{t('today.agenda')}</SectionTitle>
+          <SectionTitle>{t('today.agenda')}</SectionTitle>
           <ul className="flex flex-col gap-2">
             {items.map((i) => (
               <AgendaRow
@@ -212,10 +219,56 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         </section>
       )}
 
+      {!readOnly && stock.alerts.length > 0 && (
+        <section>
+          <SectionTitle>{t('today.stock')}</SectionTitle>
+          <StockAlerts alerts={stock.alerts} limit={1} linkTo="/inventory" />
+        </section>
+      )}
+
+      {!readOnly && <QuickLog omit={omit} max={QUICK_TILES} />}
+
+      {exposure.isPending && (
+        <section aria-hidden>
+          <SectionTitle>{t('today.levels')}</SectionTitle>
+          <div className="flex flex-col gap-2">
+            <LevelCardSkeleton />
+            <LevelCardSkeleton />
+          </div>
+        </section>
+      )}
+
+      {tracked.length > 0 && (
+        <section>
+          <SectionTitle
+            action={
+              !readOnly && (
+                <Link to="/protocols" className="spec text-signal">
+                  {t('today.manage')}
+                </Link>
+              )
+            }
+          >
+            {t('today.levels')}
+          </SectionTitle>
+          <div className="flex flex-col gap-2">
+            {tracked.map((x) => (
+              <LevelCard
+                key={x.compoundId}
+                x={x}
+                now={now}
+                vial={activeVial(vials, x.compoundId, x.next?.doseMg)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {hasProtocols && <CycleOverview focusProtocolId={cycleFocus} />}
+
       {hasProtocols && !exposure.isPending && (
         <section>
           <SectionTitle
-            index={nextIndex()}
             action={
               !readOnly && (
                 <Link to="/log" className="spec text-signal">
@@ -232,76 +285,17 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         </section>
       )}
 
-      {hasProtocols && <CycleOverview focusProtocolId={cycleFocus} index={nextIndex()} />}
-
-      {!readOnly && stock.alerts.length > 0 && (
-        <section>
-          <SectionTitle index={nextIndex()}>{t('today.stock')}</SectionTitle>
-          <StockAlerts alerts={stock.alerts} limit={2} linkTo="/inventory" />
-        </section>
-      )}
-
       {!readOnly && hasProtocols && reminders.loaded && !reminders.enabled && (
         <Link
           to="/reminders"
-          className="card flex items-center gap-3 px-4 py-3 transition active:scale-[0.99]"
+          className="card flex min-h-12 items-center gap-3 px-4 py-2.5 transition active:scale-[0.99]"
         >
-          <span className="grid size-9 shrink-0 place-items-center rounded-full border border-signal/30 bg-signal-soft text-signal">
-            <BellRing aria-hidden className="size-[18px]" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-semibold">{t('today.remindersOff')}</span>
-            <span className="block text-[12px] text-muted">{t('today.remindersOffHint')}</span>
+          <BellRing aria-hidden className="size-[18px] shrink-0 text-signal" />
+          <span className="min-w-0 flex-1 text-[14px] font-semibold">
+            {t('today.remindersOff')}
           </span>
           <ChevronRight aria-hidden className="size-4 shrink-0 text-muted" />
         </Link>
-      )}
-
-      {exposure.isPending && (
-        <section aria-hidden>
-          <SectionTitle index={nextIndex()}>{t('today.levels')}</SectionTitle>
-          <div className="hide-scrollbar -mx-4 flex gap-3 overflow-hidden px-4 pb-1">
-            <LevelCardSkeleton />
-            <LevelCardSkeleton />
-            <LevelCardSkeleton />
-          </div>
-        </section>
-      )}
-
-      {tracked.length > 0 && (
-        <section>
-          <SectionTitle
-            index={nextIndex()}
-            action={
-              !readOnly && (
-                <Link to="/protocols" className="spec text-signal">
-                  {t('today.manage')}
-                </Link>
-              )
-            }
-          >
-            {t('today.levels')}
-          </SectionTitle>
-          <div className="hide-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
-            {tracked.map((x) => (
-              <LevelCard
-                key={x.compoundId}
-                x={x}
-                now={now}
-                vial={activeVial(vials, x.compoundId, x.next?.doseMg)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {!readOnly && <QuickLog index={nextIndex()} omit={omit} />}
-
-      {learn && (
-        <section>
-          <SectionTitle index={nextIndex()}>{t('today.learn')}</SectionTitle>
-          <LearnCard compound={learn} />
-        </section>
       )}
 
       <p className="px-2 pb-2 text-center text-[11px] leading-relaxed text-muted">

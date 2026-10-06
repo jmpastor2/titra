@@ -6,7 +6,7 @@
 import { differenceInCalendarDays, isSameDay, startOfDay } from 'date-fns'
 import type { MeasurementKind, MeasurementRow } from '@/data/database.types'
 import { WELLBEING } from '@/features/checkin/wellbeing'
-import { daySet, dayStrip, daysSinceLast, streak } from '@/features/health/consistency'
+import { daySet, daysSinceLast, streak } from '@/features/health/consistency'
 
 export interface Reading {
   value: number
@@ -73,8 +73,6 @@ export interface StrengthWeek {
   count: number
   /** The latest session; minutes is null when it was logged without a duration. */
   last: { at: Date; minutes: number | null } | null
-  /** Whether each of the last 7 days has a session, oldest first. */
-  days: boolean[]
 }
 
 export function strengthWeek(rows: readonly MeasurementRow[], now: Date): StrengthWeek {
@@ -89,7 +87,6 @@ export function strengthWeek(rows: readonly MeasurementRow[], now: Date): Streng
           minutes: latest.unit === 'min' ? Number(latest.value) : null,
         }
       : null,
-    days: dayStrip(daySet(sessions.map((r) => new Date(r.measured_at))), now, 7),
   }
 }
 
@@ -99,8 +96,6 @@ export interface CheckInSummary {
   streak: number
   /** Days since the last check-in, null when there is none. */
   ageDays: number | null
-  /** The last 7 days, oldest first. */
-  strip: boolean[]
   /** The latest score of each dimension, for "igual que la última vez". */
   last: Partial<Record<MeasurementKind, number>>
   lastAt: Date | null
@@ -118,7 +113,6 @@ export function checkInSummary(rows: readonly MeasurementRow[], now: Date): Chec
     doneToday: days.has(startOfDay(now).getTime()),
     streak: streak(days, now),
     ageDays: daysSinceLast(days, now),
-    strip: dayStrip(days, now, 7),
     last,
     lastAt: latest ? new Date(latest.measured_at) : null,
   }

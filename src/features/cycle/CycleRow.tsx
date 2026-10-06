@@ -74,9 +74,11 @@ export function CycleRow({
         onClick={onToggle}
         className="-mx-1 block w-[calc(100%+0.5rem)] rounded-xl px-1 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60 active:bg-panel-2"
       >
-        <span className="flex items-center gap-2">
-          <SubstanceDots protocol={protocol} />
-          <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold text-ink-2">
+        <span className="flex items-start gap-2">
+          <span className="mt-[3px]">
+            <SubstanceDots protocol={protocol} />
+          </span>
+          <span className="min-w-0 flex-1 break-words text-[13.5px] font-semibold leading-snug text-ink-2">
             {protocolTitle(protocol)}
           </span>
           <ChevronDown
@@ -87,7 +89,7 @@ export function CycleRow({
             )}
           />
         </span>
-        <span className="mt-1 block font-display text-[19px] font-bold leading-tight">{head}</span>
+        <span className="mt-1 block font-display text-[18px] font-bold leading-tight">{head}</span>
         <WeekTrack cells={track} color={color} className="mt-2.5" />
         <span className="mt-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           {doseNow ? (

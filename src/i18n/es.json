@@ -12,12 +12,9 @@
     "edit": "Editar",
     "add": "Añadir",
     "back": "Atrás",
-    "next": "Siguiente",
     "done": "Hecho",
-    "confirm": "Confirmar",
     "search": "Buscar",
     "loading": "Cargando…",
-    "saving": "Guardando…",
     "retry": "Reintentar",
     "optional": "opcional",
     "notes": "Notas",
@@ -25,48 +22,23 @@
     "time": "Hora",
     "today": "Hoy",
     "yesterday": "Ayer",
-    "all": "Todo",
-    "none": "Ninguno",
-    "yes": "Sí",
-    "no": "No",
     "seeAll": "Ver todo",
     "showMore": "Mostrar más",
-    "showLess": "Mostrar menos",
     "offline": "Sin conexión · mostrando datos guardados",
     "updateAvailable": "Hay una nueva versión de Titra",
     "update": "Actualizar",
     "deleteConfirm": "¿Eliminar este registro? Esta acción no se puede deshacer.",
     "saved": "Guardado",
-    "deleted": "Eliminado",
     "error": "Algo ha fallado. Inténtalo de nuevo.",
     "copied": "Copiado",
-    "days_one": "{{count}} día",
-    "days_other": "{{count}} días",
     "weeks_one": "{{count}} semana",
     "weeks_other": "{{count}} semanas",
-    "hours_one": "{{count}} hora",
-    "hours_other": "{{count}} horas",
-    "week": "Semana",
-    "perWeek": "/ semana",
-    "perDay": "/ día",
-    "every": "cada",
-    "range": {
-      "7": "7 d",
-      "14": "14 d",
-      "30": "30 d",
-      "90": "90 d",
-      "180": "6 m",
-      "365": "1 a"
-    }
+    "week": "Semana"
   },
   "nav": {
-    "home": "Inicio",
     "log": "Registro",
-    "health": "Salud",
     "wiki": "Wiki",
     "more": "Más",
-    "patients": "Pacientes",
-    "clinic": "Consulta",
     "main": "Principal",
     "today": "Hoy",
     "progress": "Progreso"
@@ -88,14 +60,7 @@
     "resetSent": "Te hemos enviado un correo para restablecer la contraseña.",
     "magicLink": "Enviar enlace mágico",
     "magicSent": "Revisa tu correo: te hemos enviado un enlace para entrar.",
-    "noAccount": "¿Sin cuenta? Regístrate",
-    "haveAccount": "¿Ya tienes cuenta? Inicia sesión",
-    "signOut": "Cerrar sesión",
     "confirmEmail": "Cuenta creada. Confirma tu correo electrónico para continuar.",
-    "iAm": "Soy",
-    "rolePatient": "Paciente",
-    "roleClinician": "Médico / clínico",
-    "roleHint": "El médico ve el panel de sus pacientes vinculados; el paciente registra sus dosis y datos.",
     "errors": {
       "invalid": "Correo o contraseña incorrectos.",
       "weak": "La contraseña es demasiado corta.",
@@ -118,64 +83,18 @@
     "sexO": "Otro",
     "heightCm": "Altura",
     "goalWeight": "Peso objetivo",
-    "linkClinician": "Vincular con tu médico",
-    "linkClinicianHint": "Si tu médico usa Titra, introduce su código de consulta para compartir tus registros con él.",
     "clinicCode": "Código de consulta",
-    "skip": "Ahora no",
-    "clinicianIntro": "Como médico tendrás un código de consulta que tus pacientes introducen para compartir sus datos contigo.",
     "finish": "Empezar",
     "setup": "Configuración"
   },
   "dashboard": {
-    "greeting": "Hola, {{name}}",
-    "onBoard": "Fármaco activo",
-    "onBoardHint": "Cantidad estimada en el organismo ahora",
-    "steadyState": "Estado estacionario",
-    "steadyStateOf": "del nivel estable de {{dose}}",
-    "reached": "Alcanzado",
-    "toReach": "{{time}} para el 90 %",
-    "nextDose": "Próxima dosis",
-    "due": "Toca ahora",
-    "overdue": "Retrasada {{time}}",
-    "in": "En {{time}}",
-    "logNow": "Registrar dosis",
-    "noProtocol": "Sin pauta activa",
-    "noProtocolHint": "Crea una pauta para ver tu curva, el estado estacionario y la próxima toma.",
-    "createProtocol": "Crear pauta",
-    "curve": "Curva de exposición",
-    "curveHint": "Estimación de fármaco activo (mg) a partir de tus dosis. Línea discontinua: proyección.",
-    "history": "Histórico",
-    "projection": "Proyección",
-    "symptomsOverlay": "Síntomas",
-    "titration": "Titulación",
-    "step": "Escalón {{n}} de {{total}}",
-    "maintenance": "Mantenimiento",
-    "nextStep": "Siguiente: {{dose}} en {{days}}",
-    "adherence": "Adherencia 28 d",
-    "adherenceHint": "{{taken}} de {{expected}} dosis",
-    "weight": "Peso",
-    "weightDelta": "{{delta}} en {{days}} d",
-    "lastSymptom": "Último síntoma",
-    "quickActions": "Acciones rápidas",
-    "logSymptom": "Síntoma",
-    "logWeight": "Peso",
-    "whatIf": "Simulador",
-    "noDosesYet": "Aún no has registrado dosis",
-    "pkNotAvailable": "Este compuesto no tiene parámetros farmacocinéticos para la curva.",
-    "clinicianNotes": "Notas compartidas",
-    "steadyStateShort": "Estado estable"
+    "noProtocolHint": "Crea una pauta para ver tu curva, el estado estacionario y la próxima toma."
   },
   "doses": {
-    "title": "Registro de dosis",
     "log": "Registrar toma",
     "logTitle": "Registrar toma",
-    "compound": "Compuesto",
-    "protocol": "Pauta",
-    "noProtocolOption": "Sin pauta (toma puntual)",
     "dose": "Dosis",
     "site": "Punto de inyección",
-    "suggestedSite": "Sugerido",
-    "siteTooRecent": "Todos los puntos se han usado hace menos de 3 días",
     "inventory": "Descontar de",
     "noInventory": "No descontar",
     "when": "Cuándo",
@@ -183,12 +102,7 @@
     "logged": "Toma registrada",
     "empty": "Sin tomas registradas",
     "emptyHint": "Registra tu primera toma para empezar a ver la curva.",
-    "skipped": "Omitida",
-    "planned": "Planificada",
-    "taken": "Administrada",
-    "history": "Historial",
     "filterAll": "Todos",
-    "deleteDose": "Eliminar toma",
     "confirm": "Registrar toma",
     "otherTime": "Otra hora",
     "sameSyringe": "Misma jeringa",
@@ -228,13 +142,6 @@
       "left": "quedan {{amount}}",
       "powder": "Sin reconstituir"
     },
-    "fit": {
-      "onTime": "a su hora",
-      "extra": "extra",
-      "lateDays": "retrasada {{days}} d",
-      "earlyDays": "adelantada {{days}} d",
-      "covers": "cubre la del {{slot}}"
-    },
     "summary": {
       "late_one": "{{count}} con retraso",
       "late_other": "{{count}} con retraso",
@@ -242,19 +149,54 @@
       "extra_other": "{{count}} extras"
     },
     "emptyAction": "Registrar mi primera toma",
-    "emptyFilter": "Ninguna toma con este filtro"
+    "emptyFilter": "Ninguna toma con este filtro",
+    "kpi": {
+      "eyebrow": "Esta semana",
+      "noPlan": "Sin tomas previstas",
+      "left_one": "Queda {{count}} toma",
+      "left_other": "Quedan {{count}} tomas",
+      "doneOf": "{{taken}} de {{planned}} tomas",
+      "complete": "Semana completa",
+      "taken_one": "{{count}} hecha",
+      "taken_other": "{{count}} hechas",
+      "missed_one": "{{count}} perdida",
+      "missed_other": "{{count}} perdidas",
+      "extras_one": "{{count}} extra",
+      "extras_other": "{{count}} extras",
+      "adherence": "Adherencia",
+      "adherenceSub": "28 días · {{taken}} de {{expected}}",
+      "noData": "Aún sin datos",
+      "last": "Última toma",
+      "noneYet": "Ninguna todavía",
+      "next": "Próxima toma",
+      "now": "Ahora",
+      "today": "Hoy",
+      "tomorrow": "Mañana",
+      "nothingNext": "Nada previsto",
+      "plan": "Plan de la semana"
+    },
+    "filter": {
+      "label": "Mostrar",
+      "all": "Todas las tomas"
+    },
+    "status": {
+      "onTime": "A su hora",
+      "late": "{{gap}} tarde",
+      "early": "{{gap}} antes",
+      "makeUp": "Recuperada",
+      "ahead": "Adelantada",
+      "extra": "Extra",
+      "daysLate": "{{days}} d tarde",
+      "daysEarly": "{{days}} d antes",
+      "covers": "Cubre la del {{slot}} · {{gap}}"
+    }
   },
   "protocols": {
     "title": "Pautas",
     "new": "Nueva pauta",
     "edit": "Editar pauta",
-    "fromTemplate": "Desde plantilla",
-    "custom": "Personalizado",
-    "template": "Plantilla",
     "templateHint": "Las plantillas reproducen fichas técnicas y brazos de ensayo publicados. Son una referencia: Titra no recomienda dosis.",
     "name": "Nombre",
-    "compound": "Compuesto",
-    "route": "Vía",
     "startDate": "Fecha de inicio",
     "timeOfDay": "Hora habitual",
     "steps": "Escalones",
@@ -265,7 +207,6 @@
     "openEnded": "Mantenimiento (sin fin)",
     "addStep": "Añadir escalón",
     "removeStep": "Quitar",
-    "status": "Estado",
     "statuses": {
       "active": "Activo",
       "paused": "Pausado",
@@ -274,13 +215,8 @@
     },
     "empty": "Sin pautas",
     "emptyHint": "Una pauta define la sustancia, la dosis, los días, las horas y los escalones.",
-    "createdBy": "Creado por {{name}}",
-    "byClinician": "Propuesta compartida",
-    "activate": "Activar",
     "pause": "Pausar",
-    "complete": "Marcar completado",
     "archive": "Archivar",
-    "summary": "{{steps}} escalones · inicio {{date}}",
     "weekly": "semanal",
     "daily": "diario",
     "everyNDays": "cada {{n}} días",
@@ -291,7 +227,6 @@
     "ssAvg": "Media",
     "ssTime": "90 % en {{time}}",
     "notes": "Notas",
-    "onlyOneActive": "Solo puede haber una pauta activa por sustancia.",
     "openEndedLastOnly": "Solo el último escalón puede ser de mantenimiento sin fin. Pon una duración en los anteriores.",
     "eyebrow": "Laboratorio",
     "startFrom": "Empezar desde",
@@ -332,7 +267,6 @@
       "startsOn": "Empieza el {{date}}"
     },
     "adherence": "Adherencia 28 d",
-    "adherenceValue": "{{taken}}/{{expected}} · {{pct}} %",
     "ladderPreview": "Escalera de dosis",
     "nightShift": "La toma de noche cae después de medianoche",
     "nightShiftHint": "Las horas antes de las 06:00 cuentan para el día anterior: la 01:00 del sábado es la toma del viernes.",
@@ -346,7 +280,6 @@
       "week": "Semana {{n}}",
       "inDays_one": "mañana",
       "inDays_other": "en {{count}} días",
-      "decision": "Toca decidir: el {{date}} sube a {{dose}}. ¿Subes o mantienes una semana más?",
       "today": "hoy"
     },
     "next": {
@@ -417,6 +350,10 @@
     "sticky": {
       "dirty": "Cambios sin guardar",
       "clean": "Sin cambios"
+    },
+    "decision": {
+      "title": "Toca decidir",
+      "hint": "Si no haces nada, sube ese día."
     }
   },
   "symptoms": {
@@ -424,7 +361,6 @@
     "log": "Registrar síntoma",
     "kind": "Tipo",
     "severity": "Intensidad",
-    "severityScale": "0 = nada · 10 = insoportable",
     "when": "Cuándo",
     "empty": "Sin síntomas registrados",
     "emptyHint": "Registra náuseas, saciedad o molestias para verlas sobre la curva de exposición.",
@@ -448,8 +384,6 @@
       "palpitations": "Palpitaciones",
       "other": "Otro"
     },
-    "last7": "Últimos 7 días",
-    "severe": "Grave",
     "addNote": "Añadir nota",
     "more": "Más síntomas",
     "sameAgo": "Igual que {{when}}",
@@ -521,7 +455,6 @@
     "aboveRange": "Por encima del rango"
   },
   "lean": {
-    "title": "Guardián de masa magra",
     "intro": "Con GLP-1, hasta un 25–40 % del peso perdido puede ser músculo si no se entrena fuerza ni se cubre la proteína.",
     "proteinTarget": "Objetivo de proteína",
     "proteinHint": "{{gPerKg}} g/kg · ajustable en Ajustes",
@@ -556,9 +489,7 @@
     },
     "totalMg": "Contenido total",
     "remainingMg": "Restante",
-    "concentration": "Concentración",
     "openedAt": "Abierto el",
-    "expiresAt": "Caduca el",
     "lot": "Lote",
     "storage": "Conservación",
     "empty": "Sin inventario",
@@ -569,38 +500,26 @@
     "dosesLeft_one": "{{count}} toma",
     "dosesLeft_other": "{{count}} tomas",
     "archive": "Archivar",
-    "inUse": "En uso desde hace {{days}} d",
-    "inUseWarning": "Supera los {{days}} d recomendados tras abrir",
     "eyebrow": "Laboratorio",
-    "diluent": "Agua bacteriostática",
-    "diluentHint": "Con el contenido del vial, Titra calcula la concentración y las unidades.",
     "remainingHint": "Déjalo vacío si el vial está entero.",
-    "openedShort": "En uso",
-    "expiresShort": "Caduca",
-    "yourDose": "Dosis {{dose}}",
-    "covers": "Alcanza para",
     "nextVialBy": "Ten listo el siguiente vial para el {{date}}",
-    "openedFor_one": "abierto hace {{count}} día",
-    "openedFor_other": "abierto hace {{count}} días",
     "lyophilised": "Liofilizado",
     "expiresBeforeEmpty": "Caduca antes de acabarse: ten otro listo para el {{date}}",
     "blendPresets": "Atajos habituales",
     "blendTitle": "Blend",
     "blendHint": "Si el vial trae otras sustancias mezcladas, añádelas con sus mg. Se cargan en la misma jeringa, en una sola carga.",
     "blendAdd": "Añadir otra sustancia del vial",
-    "totalOf": "{{name}} (mg)",
+    "totalOf": "mg de {{name}} en el vial",
     "needsMigration4": "Para guardar blends falta ejecutar la migración 4 en Supabase.",
     "restockEyebrow": "Reposición",
-    "restockTitle": "Hasta cuándo te llega",
+    "restockTitle": "Lo que te dura cada sustancia",
     "vialsCount_one": "{{count}} vial",
     "vialsCount_other": "{{count}} viales",
     "reserveCount_one": "{{count}} de reserva",
     "reserveCount_other": "{{count}} de reserva",
     "until": "hasta el {{date}}",
     "orderNow": "Pide ya",
-    "plenty": "+8 meses",
-    "reconstituteHint": "cuando lo reconstituyas, toca el vial y pon el agua que le añades.",
-    "expiresInUse": "+ Caduca {{days}} días después de reconstituir",
+    "plenty": "Te llega de sobra",
     "startWith": "Empieza por uno habitual",
     "addSame": "Añadir otro igual",
     "addSameAria": "Añadir otro igual: {{label}}",
@@ -615,23 +534,14 @@
     "finished": "Terminados",
     "finishedCount": "Terminados y archivados ({{count}})",
     "statusInUse": "En uso",
-    "statusReserve": "Reserva",
     "statusFinished": "Terminado",
-    "strip": {
-      "inUse": "En uso",
-      "reserve": "Reserva",
-      "finished": "Terminados"
-    },
     "sectionInUse": "En uso",
     "sectionReserve": "Reserva",
     "fillAria": "Queda el {{pct}} % del producto",
-    "content": "Contenido",
-    "labelExpiry": "Caduca (etiqueta)",
+    "labelExpiry": "Caducidad (etiqueta)",
     "inWater": "en {{water}} mL",
     "yourDoseShort": "Tu dosis",
     "eachUnit": "Cada U",
-    "left": "Queda",
-    "dayOf": "Día {{day}} de {{of}}",
     "noAlerts": "Todo en orden: no hay alertas pendientes.",
     "alertsTitle": "Alertas del inventario",
     "alertsCount_one": "{{count}} alerta",
@@ -647,18 +557,76 @@
     "reconstitutedAt": "Reconstituido el",
     "needsWater": "Indica el agua que le añadiste.",
     "sizes": "Tamaño del vial",
-    "presetNote": "Cantidades habituales de {{name}}. Edítalas si tu vial es otro."
+    "presetNote": "Cantidades habituales de {{name}}. Edítalas si tu vial es otro.",
+    "kpi": {
+      "coverTitle": "Cobertura de tu stock",
+      "dayUnit_one": "día",
+      "dayUnit_other": "días",
+      "plentyValue": "+8",
+      "plentyUnit": "meses",
+      "coverAria_one": "Tu stock te llega para {{count}} día",
+      "coverAria_other": "Tu stock te llega para {{count}} días",
+      "coverAriaPlenty": "Tu stock te llega para más de 8 meses",
+      "coverUntil": "Te llega hasta el {{date}}",
+      "coverFirst": "Lo primero en acabarse: {{names}}",
+      "coverNow": "{{names}} ya no cubre tu próxima toma",
+      "coverNowHint": "Pide más o abre otro vial cuanto antes.",
+      "plentyHint": "Con tus pautas actuales no te quedas sin nada en los próximos 8 meses.",
+      "coverNone": "Sin pautas que usen tu stock",
+      "coverNoneHint": "Cuando una pauta use estas sustancias verás aquí hasta cuándo te llegan.",
+      "inUse": "En uso",
+      "inUseSub": "Viales abiertos",
+      "reserve": "Reserva",
+      "reserveSub": "Sin abrir",
+      "expiry": "Caduca primero",
+      "expiryNone": "Ningún vial tiene fecha de caducidad",
+      "reorder": "Próximo pedido",
+      "reorderNow": "Ya",
+      "reorderSub": "{{names}} · se acaba el {{date}}",
+      "reorderNone": "Nada que pedir por ahora"
+    },
+    "rel": {
+      "today": "hoy",
+      "tomorrow": "mañana",
+      "in_one": "en {{count}} día",
+      "in_other": "en {{count}} días",
+      "ago_one": "hace {{count}} día",
+      "ago_other": "hace {{count}} días"
+    },
+    "card": {
+      "dosesUnit_one": "toma",
+      "dosesUnit_other": "tomas",
+      "lasts_one": "Te llega {{count}} día, hasta el {{date}}",
+      "lasts_other": "Te llega {{count}} días, hasta el {{date}}",
+      "cannotCover": "No alcanza para tu próxima toma",
+      "coversAll": "Alcanza para todas tus tomas planificadas",
+      "ofTotalPct": "de {{total}} · queda el {{pct}} %",
+      "powderHint": "Liofilizado, aún sin agua",
+      "mgOfTotal": "{{left}} de {{total}}",
+      "expiryCaption": "caduca",
+      "expiryCaptionEstimated": "caduca ≈",
+      "expiredCaption": "caducado",
+      "dayShort": "d",
+      "expiryAria_one": "Caduca en {{count}} día",
+      "expiryAria_other": "Caduca en {{count}} días",
+      "expiredAria_one": "Caducó hace {{count}} día",
+      "expiredAria_other": "Caducó hace {{count}} días",
+      "estimated": "fecha estimada",
+      "lastsToday": "Te llega solo hasta hoy"
+    },
+    "noDate": "Sin fecha",
+    "alertsLess": "Ver menos",
+    "labelAuto": "Si lo dejas vacío se llamará «{{label}}»."
   },
   "calculator": {
     "title": "Calculadora de reconstitución",
     "intro": "Para viales liofilizados. Introduce el contenido del vial, el volumen de agua bacteriostática y la dosis que quieres cargar.",
-    "vialMg": "Contenido del vial",
-    "diluentMl": "Agua bacteriostática",
+    "vialMg": "Contenido",
+    "diluentMl": "Agua añadida",
     "doseMcg": "Dosis deseada",
     "concentration": "Concentración",
-    "perUnit": "por unidad (U-100)",
+    "perUnit": "Por unidad",
     "draw": "Cargar",
-    "units": "unidades",
     "unitsRounded": "Marca de jeringa",
     "actualDose": "Dosis real",
     "dosesPerVial": "Dosis por vial",
@@ -666,24 +634,14 @@
     "penClicks": "Clics de pluma",
     "mgPerClick": "mg por clic",
     "clicks": "clics",
-    "warning": "Comprueba siempre la etiqueta del vial y tu pauta antes de cargar la jeringa."
+    "warning": "Comprueba siempre la etiqueta del vial y tu pauta antes de cargar la jeringa.",
+    "eyebrow": "Reconstitución",
+    "pageTitle": "Calculadora"
   },
   "sites": {
     "title": "Puntos de inyección",
     "intro": "Rota los puntos para evitar lipodistrofia e irritación. Titra sugiere el punto que más ha descansado, nunca el que ya usaste hoy, y alterna lado y zona.",
     "suggested": "Siguiente sugerido",
-    "lastUsed": "Último uso {{when}}",
-    "neverUsed": "Sin usar",
-    "uses_one": "{{count}} uso",
-    "uses_other": "{{count}} usos",
-    "rotation": "Rotación activa",
-    "regions": {
-      "abdomen": "Abdomen",
-      "thigh": "Muslo",
-      "arm": "Brazo",
-      "glute": "Glúteo",
-      "other": "Otro"
-    },
     "labels": {
       "abd_ul": "Abdomen sup. izq.",
       "abd_ur": "Abdomen sup. der.",
@@ -755,7 +713,6 @@
     "count_one": "{{count}} compuesto",
     "count_other": "{{count}} compuestos",
     "noResults": "Sin resultados",
-    "summary": "Resumen",
     "mechanism": "Mecanismo",
     "indications": "Indicaciones y usos",
     "pk": "Farmacocinética",
@@ -771,7 +728,6 @@
     "templates": "Plantillas de pauta",
     "reconstitution": "Reconstitución",
     "storage": "Conservación",
-    "adverse": "Efectos adversos",
     "common": "Frecuentes",
     "serious": "Graves",
     "contraindications": "Contraindicaciones",
@@ -783,7 +739,6 @@
     "aliases": "También",
     "routes": "Vías",
     "evidence": "Evidencia",
-    "regulatory": "Estado regulatorio",
     "us": "EE. UU.",
     "eu": "UE",
     "lastReviewed": "Revisado {{date}}",
@@ -846,7 +801,21 @@
     "blendUnits": "Unidades cargadas",
     "blendPerDraw": "{{units}} U = {{ml}} mL. Comprueba siempre la etiqueta de tu vial.",
     "inBlends": "También en estos blends",
-    "loadFailed": "No se ha podido cargar la ficha. Comprueba la conexión e inténtalo de nuevo."
+    "loadFailed": "No se ha podido cargar la ficha. Comprueba la conexión e inténtalo de nuevo.",
+    "watch": "Precauciones",
+    "watchMore_one": "Y {{count}} más en Seguridad",
+    "watchMore_other": "Y {{count}} más en Seguridad",
+    "safety": "Seguridad",
+    "storageRecon": "Reconstitución y conservación",
+    "doseRange": "Rango de plantillas",
+    "doseRangeHint": "Ficha o ensayos. No es una recomendación.",
+    "usualFrequency": "Frecuencia habitual",
+    "peak": "Pico a las {{time}}",
+    "perVial": "Por vial",
+    "parts_one": "{{count}} componente",
+    "parts_other": "{{count}} componentes",
+    "more": "Leer más",
+    "less": "Leer menos"
   },
   "simulator": {
     "title": "Simulador",
@@ -855,14 +824,11 @@
     "planned": "Seguir la pauta",
     "skipNext": "Saltar la próxima dosis",
     "stop": "Suspender ahora",
-    "switch": "Cambiar de compuesto",
     "switchTo": "Cambiar a",
-    "switchAt": "Fecha del cambio",
     "switchTemplate": "Pauta del nuevo compuesto",
     "levelAfterSkip": "Nivel mínimo tras saltarla",
     "washout": "Lavado",
     "washoutHint": "Tiempo hasta caer al 10 % del nivel actual",
-    "atDay": "Día {{n}}",
     "needProtocol": "Necesitas una pauta activa con tomas registradas.",
     "tabSkip": "Saltar una",
     "tabStop": "Suspender",
@@ -876,14 +842,7 @@
     "onlyLongActing": "El simulador solo funciona con sustancias de acción prolongada con datos farmacocinéticos, como las semanales."
   },
   "clinic": {
-    "title": "Pacientes",
-    "clinicCode": "Tu código de consulta",
-    "clinicCodeHint": "Compártelo con tus pacientes: lo introducen en Titra para vincularse contigo.",
     "copyCode": "Copiar código",
-    "empty": "Aún no tienes pacientes vinculados",
-    "emptyHint": "Cuando un paciente introduzca tu código aparecerá aquí.",
-    "patients_one": "{{count}} paciente",
-    "patients_other": "{{count}} pacientes",
     "flags": {
       "overdue": "Dosis retrasada",
       "severe": "Síntomas graves",
@@ -892,40 +851,19 @@
       "lowAdherence": "Adherencia baja",
       "noData": "Sin datos recientes"
     },
-    "sort": {
-      "flags": "Prioridad",
-      "name": "Nombre",
-      "lastDose": "Última dosis"
-    },
-    "lastDose": "Última dosis",
-    "noDoses": "Sin dosis",
-    "overview": "Resumen",
-    "doses": "Dosis",
-    "symptoms": "Síntomas",
-    "health": "Salud",
-    "protocols": "Pautas",
     "notes": "Notas",
     "addNote": "Añadir nota",
     "noteVisible": "Visible para el paciente",
     "noteHidden": "Solo para mí",
     "notesEmpty": "Sin notas clínicas",
-    "prescribe": "Nueva pauta para este paciente",
-    "unlink": "Desvincular paciente",
-    "unlinkConfirm": "¿Desvincular? Dejarás de ver sus datos. El paciente puede volver a vincularse con tu código.",
     "linkedSince": "Vinculado desde {{date}}",
-    "readOnly": "Vista del paciente (solo lectura)",
-    "myClinician": "Tu médico",
-    "linkedWith": "Vinculado con {{name}}",
-    "notLinked": "No estás vinculado con ningún médico",
-    "link": "Vincular con código",
     "unlinkMine": "Dejar de compartir",
     "unlinkMineConfirm": "¿Dejar de compartir tus datos con este médico?",
     "linkErrors": {
       "invalid_code": "Código no válido.",
       "self_link": "No puedes vincularte contigo mismo.",
       "generic": "No se ha podido vincular."
-    },
-    "linked": "Vinculado correctamente"
+    }
   },
   "settings": {
     "title": "Ajustes",
@@ -938,28 +876,16 @@
     "language": "Idioma",
     "units": "Unidades",
     "proteinGPerKg": "Proteína",
-    "notifications": "Recordatorios",
-    "notificationsHint": "Los recordatorios requieren instalar Titra en la pantalla de inicio (iOS 16.4+).",
-    "enablePush": "Activar recordatorios",
-    "pushEnabled": "Recordatorios activos",
-    "pushUnsupported": "Este navegador no soporta notificaciones push.",
-    "data": "Datos",
-    "export": "Exportar datos",
-    "exportHint": "Descarga un CSV con dosis, síntomas y medidas para tu consulta.",
-    "exportJson": "Copia de seguridad JSON",
-    "about": "Acerca de",
-    "version": "Versión {{v}}",
-    "installHint": "Instala Titra: Safari → Compartir → Añadir a pantalla de inicio",
-    "dangerZone": "Zona de riesgo",
+    "exportHint": "CSV de dosis, síntomas, medidas y analíticas para tu consulta.",
+    "installHint": "Safari → Compartir → Añadir a pantalla de inicio. Así se abre a pantalla completa y puede avisarte.",
     "signOut": "Cerrar sesión",
-    "role": "Rol",
     "syringe": "Tu jeringa de pinchar",
-    "syringeHint": "La app dibuja esta jeringa, con sus mismas marcas. U‑100: 1 U = 0,01 mL.",
+    "syringeHint": "La app dibuja esta jeringa con sus marcas. U‑100: 1 U = 0,01 mL.",
     "syringeAuto": "Auto",
     "invalidNumber": "Revisa el número",
     "updates": {
       "title": "Versión y actualizaciones",
-      "hint": "Titra busca actualizaciones sola; aquí puedes comprobarlo ahora.",
+      "hint": "Se actualiza sola. Aquí puedes comprobarlo ya.",
       "version": "Versión",
       "build": "compilación {{build}}",
       "dev": "Desarrollo",
@@ -970,48 +896,73 @@
       "available": "Hay una versión nueva: aplícala",
       "apply": "Aplicar actualización",
       "applying": "Aplicando…",
-      "unsupported": "Aquí no hay service worker (servidor de desarrollo, modo privado o un navegador sin soporte), así que no hay actualizaciones que buscar.",
+      "unsupported": "Aquí no hay actualizaciones: pasa en modo desarrollo, en privado o en un navegador sin soporte.",
       "error": "No se ha podido comprobar. Revisa tu conexión e inténtalo de nuevo."
-    }
+    },
+    "installTitle": "Instala Titra"
   },
   "more": {
     "title": "Más",
-    "protocols": "Pautas",
-    "inventory": "Inventario",
-    "calculator": "Calculadora",
-    "sites": "Puntos de inyección",
-    "simulator": "Simulador",
-    "clinician": "Mi médico",
     "settings": "Ajustes",
-    "export": "Exportar",
     "eyebrow": "Titra",
-    "lab": "Laboratorio",
-    "tools": "Herramientas",
-    "account": "Cuenta",
-    "protocolsHint": "Sustancias, dosis, días y ciclos",
-    "inventoryHint": "Restos, concentración y caducidad",
-    "sitesHint": "Rotación y mapa de uso",
-    "calculatorHint": "Reconstitución y unidades U-100",
-    "simulatorHint": "¿Y si me salto una dosis o cambio de fármaco?",
-    "share": "Compartir",
-    "shareHint": "Enseña tu control a tu médico",
-    "exportHint": "CSV y copia de seguridad",
-    "settingsHint": "Perfil, tema e idioma",
-    "reminders": "Avisos",
-    "remindersHint": "Cuándo toca cada pauta y cuántas unidades cargar",
-    "outlook": "Futuro",
-    "outlookHint": "Qué puedes esperar en 3, 6 y 12 meses"
+    "groups": {
+      "plan": "Mi pauta",
+      "tools": "Herramientas",
+      "health": "Salud",
+      "app": "App"
+    },
+    "items": {
+      "protocols": "Pautas",
+      "cycles": "Ciclos",
+      "inventory": "Inventario",
+      "calculator": "Calculadora",
+      "simulator": "Simulador",
+      "sites": "Puntos de inyección",
+      "outlook": "Futuro",
+      "reminders": "Avisos",
+      "share": "Compartir",
+      "export": "Exportar",
+      "settings": "Ajustes"
+    },
+    "hints": {
+      "protocols": "Sustancias, dosis y días",
+      "cycles": "Semana, descanso y siguiente",
+      "inventory": "Viales, restos y caducidad",
+      "calculator": "Reconstitución y unidades U‑100",
+      "simulator": "¿Y si me salto una toma?",
+      "sites": "Rotación y mapa de uso",
+      "outlook": "Qué esperar a 3, 6 y 12 meses",
+      "reminders": "Un aviso cuando toca cada pauta",
+      "share": "Enseña tu control a tu médico",
+      "export": "CSV y copia de seguridad",
+      "settings": "Perfil, tema e idioma"
+    },
+    "badge": {
+      "active_one": "{{count}} activa",
+      "active_other": "{{count}} activas",
+      "weekOf": "Sem. {{week}} de {{total}}",
+      "week": "Semana {{week}}",
+      "decide": "Toca decidir",
+      "rest": "Descanso",
+      "finished": "Terminado",
+      "alerts_one": "{{count}} alerta",
+      "alerts_other": "{{count}} alertas",
+      "vials_one": "{{count}} vial",
+      "vials_other": "{{count}} viales",
+      "on": "Activados",
+      "off": "Desactivados"
+    }
   },
   "export": {
     "title": "Exportar",
-    "csvDoses": "Dosis (CSV)",
-    "csvSymptoms": "Síntomas (CSV)",
-    "csvMeasurements": "Medidas (CSV)",
-    "csvLabs": "Analíticas (CSV)",
-    "json": "Todo (JSON)",
-    "downloading": "Preparando…",
-    "report": "Informe para consulta",
-    "reportHint": "Resumen imprimible de los últimos 90 días: curva, adherencia, síntomas y peso."
+    "csvDoses": "Dosis",
+    "csvSymptoms": "Síntomas",
+    "csvMeasurements": "Medidas",
+    "csvLabs": "Analíticas",
+    "rows_one": "{{count}} registro",
+    "rows_other": "{{count}} registros",
+    "backup": "Copia de seguridad",
+    "backupHint": "Todo junto, en un solo archivo."
   },
   "units": {
     "kg": "kg",
@@ -1035,14 +986,11 @@
   "errors": {
     "required": "Obligatorio",
     "positive": "Debe ser mayor que 0",
-    "invalidNumber": "Número no válido",
-    "network": "Sin conexión. Los cambios se sincronizarán cuando vuelva.",
     "notFound": "No encontrado"
   },
   "today": {
     "title": "Hoy",
     "dayN": "día {{n}}",
-    "doses": "tomas",
     "next": "Siguiente",
     "dueNow": "Toca ahora",
     "inTime": "En {{time}}",
@@ -1051,26 +999,16 @@
     "takenAt": "Hecha {{time}}",
     "taken": "Hecha",
     "logNow": "Registrar ahora",
-    "allDone": "Todo hecho por hoy. Buen trabajo.",
     "nothingToday": "Hoy no toca ninguna toma.",
     "agenda": "Agenda",
     "levels": "Niveles",
     "manage": "Gestionar",
-    "quick": "Registro rápido",
-    "freeDose": "Toma suelta",
-    "checkin": "Check-in",
     "learn": "Aprende",
     "readMore": "Leer ficha",
-    "onBoard": "A bordo",
-    "lastDose": "Última toma",
-    "strip": "Tomas de hoy a lo largo del día",
     "remindersOff": "Activa los avisos",
-    "remindersOffHint": "Te decimos cuándo toca cada pauta y cuántas unidades cargar.",
     "extraAt": "Fuera de pauta · {{time}}",
     "onlyExtra_one": "Hoy no tocaba. Registraste {{count}} toma fuera de pauta.",
     "onlyExtra_other": "Hoy no tocaba. Registraste {{count}} tomas fuera de pauta.",
-    "last7": "7 días",
-    "extraShort": "extra",
     "legend": {
       "onTime": "a su hora",
       "late": "fuera de hora",
@@ -1078,10 +1016,40 @@
       "upcoming": "pendiente",
       "extra": "extra"
     },
-    "afterMidnight": "☾ madrugada",
     "stock": "Stock",
     "week": "Últimos 7 días",
-    "night": "madrugada"
+    "night": "madrugada",
+    "state": "Estado",
+    "late": "Retraso",
+    "left": "Falta",
+    "draw": "Cargar",
+    "dose": "Dosis",
+    "logOther": "Registrar otra toma",
+    "missedN_one": "{{count}} perdida",
+    "missedN_other": "{{count}} perdidas",
+    "free": "libre",
+    "done": "hecho",
+    "day": "hoy",
+    "ringAria": "{{taken}} de {{total}} tomas de hoy",
+    "kpis": "Cómo vas",
+    "streak": "Racha",
+    "streakUnit_one": "día",
+    "streakUnit_other": "días",
+    "streakHint": "con todas las tomas",
+    "streakNone": "sin racha ahora",
+    "adherence": "Adherencia",
+    "adherenceHint": "{{taken}} de {{planned}} tomas en 7 días",
+    "cycle": "Semana del ciclo",
+    "cycleRest": "Descanso del ciclo",
+    "cover": "Stock para",
+    "coverPlenty": "Todo cubierto",
+    "coverUnit": {
+      "d_one": "día",
+      "d_other": "días",
+      "mo_one": "mes",
+      "mo_other": "meses"
+    },
+    "trailAria": "Últimos 7 días: {{done}} completos"
   },
   "setupLab": {
     "title": "Monta tu laboratorio",
@@ -1091,7 +1059,7 @@
     "vial": "Registra tu vial",
     "vialHint": "Contenido y agua bacteriostática: Titra calcula las unidades de jeringa.",
     "learn": "Aprende qué te pones",
-    "learnHint": "Fichas de 99 compuestos con mecanismo, vida media y evidencia.",
+    "learnHint": "Fichas de cada compuesto con mecanismo, vida media y evidencia.",
     "freeDose": "Registrar una toma suelta"
   },
   "picker": {
@@ -1104,7 +1072,6 @@
     "nothing": "Mueve al menos un control",
     "emptyTitle": "Aún sin check-ins",
     "emptyHint": "Energía, sueño, ánimo, recuperación… Un minuto al día y verás el efecto de cada pauta.",
-    "deltaHint": "La flecha compara con tu primera semana de registros.",
     "before": "antes {{value}}",
     "doneToday": "Hoy ya lo hiciste: puedes actualizarlo.",
     "keep": "Mantener {{what}} en {{value}}",
@@ -1148,7 +1115,10 @@
       "streak_other": "días seguidos",
       "checkinNow": "Hacer check-in",
       "stripDays": "{{n}} de {{total}} días con registro",
-      "stripDoses": "{{n}} de {{total}} días con todas las tomas"
+      "stripDoses": "{{n}} de {{total}} días con todas las tomas",
+      "bodyFat": "% de grasa",
+      "noBodyFat": "Mide tu % de grasa",
+      "goalPath": "{{pct}} del camino a {{goal}}"
     },
     "trend": {
       "label": "Tendencia",
@@ -1159,16 +1129,12 @@
     },
     "week": {
       "eyebrow": "Últimos 7 días",
-      "title": "Qué ha cambiado esta semana",
+      "title": "Qué ha cambiado",
       "empty": "Registra peso, tomas o un check-in y aquí verás lo que cambia cada semana.",
       "vsLast": "vs la semana pasada",
-      "weighIns_one": "Te has pesado {{count}} día esta semana: la próxima ya podrás comparar",
-      "weighIns_other": "Te has pesado {{count}} días esta semana: la próxima ya podrás comparar",
-      "adherence": "Adherencia {{pct}} ({{taken}}/{{expected}})",
-      "offTime_one": "{{count}} toma fuera de hora (más de 1 h)",
-      "offTime_other": "{{count}} tomas fuera de hora (más de 1 h)",
-      "allOnTime_one": "La toma, en hora",
-      "allOnTime_other": "Las {{count}} tomas, en hora",
+      "weighIns_one": "{{count}} día con pesaje: la semana que viene podrás comparar",
+      "weighIns_other": "{{count}} días con pesaje: la semana que viene podrás comparar",
+      "adherence": "Adherencia {{pct}} · {{taken}}/{{expected}} tomas",
       "checkIns_one": "{{count}} check-in esta semana",
       "checkIns_other": "{{count}} check-ins esta semana",
       "symptoms_one": "{{count}} síntoma registrado",
@@ -1191,7 +1157,11 @@
         "tomorrow": "mañana",
         "yesterday": "ayer",
         "weekday": "el {{weekday}}"
-      }
+      },
+      "stepsLabel": "Dosis",
+      "adherenceOn": "Adherencia {{pct}} · {{taken}}/{{expected}} tomas, todas en hora",
+      "adherenceOff_one": "Adherencia {{pct}} · {{taken}}/{{expected}} tomas, {{count}} fuera de hora",
+      "adherenceOff_other": "Adherencia {{pct}} · {{taken}}/{{expected}} tomas, {{count}} fuera de hora"
     },
     "baseline": {
       "eyebrow": "Bienestar",
@@ -1203,12 +1173,6 @@
       "mean": "Media",
       "srCompare": "Empezaste en {{base}}, ahora {{latest}}"
     },
-    "nudge": {
-      "title_one": "Tu último check-in fue hace {{count}} día",
-      "title_other": "Tu último check-in fue hace {{count}} días",
-      "body": "Un minuto basta para ver cómo te sienta cada pauta.",
-      "action": "Check-in"
-    },
     "evolution": "Evolución",
     "bodyView": {
       "change": "Cambio",
@@ -1218,15 +1182,41 @@
       "paceWindow": "últimas 4 semanas",
       "records": "Registros",
       "showingLast": "Se muestran los {{count}} últimos."
+    },
+    "consistency": {
+      "eyebrow": "Constancia · {{n}} semanas",
+      "ring": "Últimos 28 d",
+      "streak": "Racha actual",
+      "best": "Mejor racha",
+      "days_one": "día",
+      "days_other": "días",
+      "hint": "Racha: días seguidos con todas las tomas. Toca un día para ver su detalle.",
+      "dayTaken": "{{date}} · {{taken}} de {{expected}} tomas",
+      "dayNone": "{{date}} · sin tomas previstas",
+      "dayFuture": "{{date}} · todavía no",
+      "aria": "Calendario de {{weeks}} semanas. {{full}} días con todas las tomas, {{some}} con algunas y {{missed}} sin ninguna.",
+      "legend": {
+        "full": "Todas las tomas",
+        "some": "Algunas",
+        "missed": "Ninguna",
+        "none": "Sin tomas"
+      },
+      "empty": "Con una pauta activa verás aquí cada toma, día a día."
+    },
+    "total": {
+      "eyebrow": "Total administrado",
+      "hint": "Una barra por semana, las últimas {{n}}; la última sigue en curso.",
+      "caption_one": "{{count}} toma · desde el {{date}}",
+      "caption_other": "{{count}} tomas · desde el {{date}}",
+      "barsAria": "{{name}}, por semana, de la más antigua a la actual: {{values}}"
     }
   },
   "share": {
-    "eyebrow": "Ecosistema",
     "title": "Compartir",
     "myCode": "Tu código",
-    "myCodeHint": "Dáselo a quien quiera compartir su control contigo. Tu código no da acceso a tus datos.",
+    "myCodeHint": "Quien lo tenga puede compartirte su control. No da acceso a tus datos.",
     "shareMine": "Compartir mi control",
-    "shareMineHint": "Escribe el código de quien lo va a ver, por ejemplo tu médico. Lo verá en solo lectura y puedes retirarlo cuando quieras.",
+    "shareMineHint": "Escribe el código de tu médico. Verá tu control en solo lectura y puedes retirarlo cuando quieras.",
     "share": "Compartir",
     "linked": "Control compartido",
     "viewers": "Ven mi control",
@@ -1237,7 +1227,6 @@
     "propose": "Proponer pauta"
   },
   "substance": {
-    "noCurve": "Sin datos farmacocinéticos en humanos para dibujar su curva. Titra registra tomas, zonas y restos igualmente.",
     "protocols": "Pautas",
     "noProtocol": "No está en ninguna pauta.",
     "vials": "Viales",
@@ -1268,9 +1257,6 @@
     "overflowsYours": "No cabe en tu jeringa de {{units}} U: usa una más grande o reparte en dos pinchazos."
   },
   "reminders": {
-    "eyebrow": "Avisos",
-    "title": "Recordatorios de tomas",
-    "subtitle": "Un aviso cuando toca cada pauta, con la dosis y las unidades que hay que cargar.",
     "toggle": "Avisarme cuando toca",
     "lead": "Antelación",
     "onTime": "A la hora",
@@ -1281,9 +1267,9 @@
     "enabled": "Recordatorios activados",
     "disabled": "Recordatorios desactivados",
     "next": "Próximos avisos",
-    "serverOk_one": "{{count}} aviso programado en el servidor para los próximos 14 días.",
-    "serverOk_other": "{{count}} avisos programados en el servidor para los próximos 14 días.",
-    "serverMissing": "El servidor de avisos aún no está activado (docs/notificaciones.md). Mientras tanto te avisamos con la app abierta.",
+    "serverOk_one": "{{count}} aviso programado para los próximos 14 días.",
+    "serverOk_other": "{{count}} avisos programados para los próximos 14 días.",
+    "serverMissing": "El servidor de avisos aún no está activo (docs/notificaciones.md). Mientras tanto te avisamos con la app abierta.",
     "serverError": "No se pudieron programar los avisos: {{message}}",
     "serverPending": "Programando avisos…",
     "pushTitle": "Toca {{names}}",
@@ -1300,9 +1286,9 @@
       "server": "No se pudo guardar este dispositivo en el servidor."
     },
     "device": {
-      "checking": "Comprobando este dispositivo…",
-      "on": "Este dispositivo recibe avisos",
-      "off": "Este dispositivo no está suscrito",
+      "checking": "Comprobando…",
+      "on": "Recibe avisos",
+      "off": "Sin avisos en este dispositivo",
       "denied": "Notificaciones bloqueadas",
       "no-sw": "Sin service worker en este entorno",
       "ios-install": "Instala Titra para recibir avisos",
@@ -1313,16 +1299,18 @@
       "checking": "Un momento.",
       "on": "Te llegan aunque la app esté cerrada.",
       "off": "Actívalo para recibir los avisos aquí.",
-      "denied": "En iPhone: Ajustes → Notificaciones → Titra → Permitir notificaciones. En el ordenador, en los permisos del navegador. Luego vuelve aquí.",
+      "denied": "En iPhone: Ajustes → Notificaciones → Titra → Permitir. Luego vuelve aquí.",
       "no-sw": "En el servidor de desarrollo no se instala. En la app publicada funciona.",
-      "ios-install": "En iPhone: Safari → Compartir → Añadir a pantalla de inicio. Abre Titra desde el icono y activa los avisos aquí (iOS 16.4 o posterior).",
+      "ios-install": "Safari → Compartir → Añadir a pantalla de inicio. Abre Titra desde el icono (iOS 16.4 o posterior).",
       "unsupported": "Usa Safari con la app instalada en iPhone, o Chrome o Edge.",
-      "local": "Cuando actives el servidor de avisos (migración 3) te llegarán también con la app cerrada."
+      "local": "Con el servidor de avisos activo (migración 3) también te llegarán con la app cerrada."
     },
     "hourBefore": "1 h",
     "decisionTitle": "Mañana sube la dosis",
     "decisionBody": "{{name}}: de {{from}} a {{to}}. ¿Subes o mantienes una semana más?",
-    "decisionsHint": "La víspera de cada subida de dosis, a las 20:00, también te avisamos para que decidas si subes o mantienes una semana más."
+    "decisionsHint": "La víspera de cada subida de dosis, a las 20:00, te avisamos para que decidas.",
+    "toggleHint": "Con la dosis y las unidades que cargar.",
+    "deviceTitle": "Este dispositivo"
   },
   "charts": {
     "now": "Ahora",
@@ -1343,26 +1331,17 @@
       "due": "Toca ahora",
       "planned": "Prevista"
     },
-    "level": {
-      "nextIn": "Próxima en {{time}}",
-      "daysShort": "{{n}} d",
-      "stripAria": "{{taken}} de {{planned}} tomas previstas en los últimos {{days}} días"
-    },
     "range": {
       "label": "Periodo",
-      "1m": "1 m",
-      "3m": "3 m",
-      "6m": "6 m",
-      "cycle": "Ciclo"
+      "1m": "1 mes",
+      "3m": "3 meses",
+      "6m": "6 meses",
+      "cycle": "Ciclo",
+      "span": "{{from}} – hoy"
     },
     "progress": {
       "timeline": "Pautas en el periodo",
       "noProtocols": "Sin pautas activas en este periodo.",
-      "sinceCycle": "Desde el inicio del ciclo · {{date}}",
-      "sinceDate": "Cambio desde el {{date}}",
-      "changeCycle": "Desde inicio de ciclo",
-      "changeRange": "Cambio en el periodo",
-      "needTwo": "Haz check-ins en al menos dos días distintos para ver el cambio.",
       "noneInRange": "Sin check-ins en este periodo",
       "noneInRangeShort": "Sin registros en este periodo",
       "monthly": "Media por mes",
@@ -1476,7 +1455,6 @@
       "extra": "Extra",
       "onTime": "A su hora"
     },
-    "logIt": "regístrala",
     "tapToLog": "toca para registrar",
     "tapHint": "Toca una toma para editarla o borrarla.",
     "legend": {
@@ -1520,7 +1498,9 @@
     "headline": {
       "in": "En {{n}} meses",
       "you": "Tú, si sigues así",
-      "bandNote": "de peso · referencia de ensayo a {{week}} semanas"
+      "bandNote": "de peso · ensayo a {{week}} semanas",
+      "expected": "Esperado en {{n}} meses",
+      "kg": "≈ {{range}} sobre tus {{weight}}"
     },
     "range": "{{a}} a {{b}}",
     "compounds": "Sustancias: {{names}}",
@@ -1530,24 +1510,20 @@
       "noData": "Sin datos en humanos"
     },
     "band": {
-      "label": "Referencia de ensayo",
-      "at": "Observado a {{week}} semanas",
       "noneShort": "Aún sin referencia",
       "firstAt": "El primer dato publicado es a {{week}} semanas; llegarás el {{date}}.",
-      "none": "No hay datos publicados para esta pauta.",
-      "withWeight": "Los kilos se calculan sobre tu peso inicial ({{weight}})."
+      "none": "No hay datos publicados para esta pauta."
     },
     "position": {
-      "between": "Tu dosis en esa fecha ({{dose}}) está entre los brazos de {{lower}} y {{upper}}: es la franja entre ambos, no una predicción para ti.",
-      "exact": "Tu dosis en esa fecha ({{dose}}) coincide con el brazo de {{lower}}: es la media observada en ese brazo.",
-      "below": "Tu dosis en esa fecha ({{dose}}) está por debajo del brazo más bajo ({{upper}}): la franja va de placebo a ese brazo.",
-      "above": "Tu dosis en esa fecha ({{dose}}) supera el brazo más alto ({{lower}}): se muestra ese brazo, pero tu dosis queda fuera de lo estudiado."
+      "between": "Tu dosis ({{dose}}) está entre los brazos de {{lower}} y {{upper}}: una franja, no una predicción.",
+      "exact": "Tu dosis ({{dose}}) coincide con el brazo de {{lower}}: es su media observada.",
+      "below": "Tu dosis ({{dose}}) queda bajo el brazo más bajo ({{upper}}): la franja va de placebo a ese brazo.",
+      "above": "Tu dosis ({{dose}}) supera el brazo más alto ({{lower}}): queda fuera de lo estudiado."
     },
     "personal": {
       "label": "Si sigues así",
       "badge": "Extrapolación",
       "badgeWeak": "Extrapolación larga",
-      "extrapolationNote": "Tu tendencia de peso prolongada en línea recta; el cambio real rara vez es lineal.",
       "weak": "Tienes pocos datos para llegar tan lejos: tómalo con cautela.",
       "short": {
         "no_data": "Registra tu peso",
@@ -1565,8 +1541,7 @@
       "summary": "Hoy vas por la semana {{today}}. A las {{week}} semanas, el ensayo observó {{band}} de peso.",
       "weekTick": "s{{n}}",
       "today": "hoy",
-      "band": "Ensayo (franja de tu dosis)",
-      "placebo": "Placebo",
+      "band": "Franja del ensayo",
       "you": "Tus pesajes",
       "projection": "Tu tendencia",
       "observedOnly": "Los puntos son datos publicados; las líneas solo los unen.",
@@ -1577,10 +1552,11 @@
         "placebo": "placebo {{pct}}",
         "you": "Tu pesaje · semana {{week}}",
         "projection": "Tu tendencia · semana {{week}}"
-      }
+      },
+      "title": "Tu peso frente al ensayo"
     },
     "trial": {
-      "open": "Ver el ensayo",
+      "open": "Ensayo y notas",
       "population": "Población",
       "regimen": "Pauta",
       "outcome": "Medida",
@@ -1591,19 +1567,19 @@
       "means": "Medias del grupo respecto al peso inicial; no muestran la dispersión entre personas."
     },
     "noData": {
-      "kpiLabel": "Qué esperar",
       "title": "Sin datos de resultados en humanos",
-      "titleMixed": "Sin referencia cuantitativa",
-      "body": "No hay ensayos que midan cambios de composición corporal o metabolismo a estas dosis. Tus propios registros son la mejor forma de saberlo."
+      "body": "No hay ensayos con estas dosis. Tus propios registros son la mejor forma de saberlo."
     },
     "measure": {
       "title": "Qué medir para saberlo",
       "count_one": "{{count}} registro",
       "count_other": "{{count}} registros",
-      "none": "Sin registros",
+      "none": "Pendiente",
       "lab": "Analítica",
       "note": "Notas",
-      "since": "Registros desde el {{date}}"
+      "since": "Registros desde el {{date}}",
+      "progress": "{{done}} de {{total}} con registros",
+      "log": "Registrar"
     },
     "empty": {
       "title": "Sin pautas activas",
@@ -1612,13 +1588,11 @@
     },
     "disclaimer": {
       "title": "Cómo leer esto",
-      "body": "Las cifras son medias observadas en ensayos con grupos de personas, no una predicción para ti, y tu tendencia es una extrapolación de tus propios datos. No es consejo médico."
+      "body": "Medias de ensayos con grupos de personas, no una predicción para ti. Tu línea es tu tendencia prolongada en recta. No es consejo médico."
     },
     "card": {
-      "noData": "Sin datos en humanos: {{names}}. Mira qué medir."
-    },
-    "sinceWeek": "Desde el {{date}} · semana {{n}}",
-    "startsOn": "Empieza el {{date}}"
+      "noData": "Sin referencia de ensayo: {{names}}"
+    }
   },
   "stock": {
     "title": {
@@ -1691,9 +1665,6 @@
       "eyebrow": "Decisión de la semana",
       "pending": "Decisión pendiente",
       "increase": "El {{date}} sube de {{from}} a {{to}}.",
-      "increaseDetail": "El {{date}} sube de {{from}} a {{to}} ({{detail}}).",
-      "increaseToday": "Hoy sube de {{from}} a {{to}}.",
-      "increaseTodayDetail": "Hoy sube de {{from}} a {{to}} ({{detail}}).",
       "rest": "Fin de las semanas de dosis: empieza el descanso el {{date}}.",
       "restToday": "Fin de las semanas de dosis: hoy empieza el descanso.",
       "resume": "El descanso termina el {{date}} y vuelves a {{dose}}.",
@@ -1705,7 +1676,10 @@
       "rule": "¿Sin náuseas ni vómitos esta semana?",
       "ruleHint": "Tu regla: con náuseas o vómitos, no subes la dosis.",
       "eyebrowInfo": "Ciclo",
-      "logged": "Esta semana has anotado: {{list}}."
+      "logged": "Esta semana has anotado: {{list}}.",
+      "increaseDetail": "El {{date}} sube de {{from}} a {{to}} ({{detail}}).",
+      "increaseToday": "Hoy sube de {{from}} a {{to}}.",
+      "increaseTodayDetail": "Hoy sube de {{from}} a {{to}} ({{detail}})."
     },
     "action": {
       "up": "Subir como estaba previsto",
@@ -1822,11 +1796,8 @@
   "cycles": {
     "eyebrow": "Laboratorio",
     "title": "Ciclos",
-    "menu": "Ciclos",
-    "menuHint": "En qué semana vas, el descanso y el siguiente ciclo",
     "cycleN": "Ciclo {{n}}",
     "now": "Ahora",
-    "decisionDue": "Subida próxima",
     "pausedNote": "En pausa: no se cuenta la adherencia.",
     "noChange": "Sin cambios previstos",
     "noneCurrent": "Ahora mismo no hay ningún ciclo en marcha.",
@@ -1873,24 +1844,6 @@
       "range": "Semanas {{from}}–{{to}}",
       "one": "Semana {{n}}",
       "from": "Desde la semana {{from}}"
-    },
-    "timeline": {
-      "title": "Línea de tiempo",
-      "hint": "Toca un bloque para ver el detalle de ese escalón.",
-      "goToday": "Ir a hoy",
-      "today": "Hoy",
-      "aria": "Línea de tiempo de tus ciclos. Desplázala hacia los lados.",
-      "block": "{{name}}, {{dose}}, del {{from}} al {{to}}",
-      "blockOpen": "{{name}}, {{dose}}, desde el {{from}}, sin fecha de fin",
-      "blockRest": "{{name}}, descanso, del {{from}} al {{to}}",
-      "rest": "Descanso",
-      "maintenance": "mantenimiento",
-      "legendRest": "Descanso",
-      "legendDose": "Más color, más dosis",
-      "legendPlanned": "Por llegar",
-      "older_one": "{{count}} ciclo anterior no cabe aquí: míralo en su tarjeta.",
-      "older_other": "{{count}} ciclos anteriores no caben aquí: míralos en sus tarjetas.",
-      "endedAgo": "hace {{count}} sem"
     },
     "stat": {
       "adherence": "Adherencia",
@@ -1972,7 +1925,9 @@
         "current": "En curso",
         "future": "Por venir",
         "skipped": "No llegó"
-      }
+      },
+      "previous": "Escalón anterior",
+      "next": "Escalón siguiente"
     },
     "summary": {
       "title": "Ciclos",
@@ -1985,7 +1940,10 @@
       "hint": "Crea una pauta con sus escalones y descansos, y aquí verás en qué semana vas y cuándo toca cada cambio.",
       "cta": "Crear una pauta"
     },
-    "statsError": "No se han podido cargar tus tomas."
+    "statsError": "No se han podido cargar tus tomas.",
+    "strip": {
+      "open": "Ver los escalones de {{name}}"
+    }
   },
   "protocolDetail": {
     "eyebrow": "Pauta",
@@ -2220,10 +2178,6 @@
     "overdue": "Retrasada {{time}}",
     "noPlan": "Sin pauta activa",
     "spark": {
-      "back": "{{n}} d",
-      "ahead": "+{{n}} d",
-      "real": "real",
-      "planned": "prevista",
       "aria": "Nivel de los últimos {{past}} días y previsión de los próximos {{ahead}}"
     },
     "strip": {

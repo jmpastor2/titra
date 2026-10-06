@@ -7,7 +7,6 @@ import { GH_REPAIR_IMMUNE_2 } from './gh-repair-immune-2'
 import { HORMONAL } from './hormonal'
 import { INCRETINS } from './incretins'
 import { INCRETINS_INVESTIGATIONAL } from './incretins-investigational'
-import { INSULINS } from './insulins'
 import { METABOLIC_SEXUAL_COGNITIVE_LONGEVITY } from './metabolic-sexual-cognitive-longevity'
 import { METABOLIC_SEXUAL_OTHER } from './metabolic-sexual-other'
 import { semaglutide } from './semaglutide'
@@ -27,7 +26,6 @@ export const SUBSTANCE_DETAILS: readonly CompoundDetail[] = [
   tirzepatide,
   ...INCRETINS,
   ...INCRETINS_INVESTIGATIONAL,
-  ...INSULINS,
   ...HORMONAL,
   ...GH_REPAIR_IMMUNE,
   ...GH_REPAIR_IMMUNE_2,

@@ -1,7 +1,6 @@
 import {
   BellRing,
   CalendarRange,
-  TrendingUp,
   Calculator,
   ChevronRight,
   Download,
@@ -11,142 +10,89 @@ import {
   Share2,
   Sparkles,
   Target,
+  TrendingUp,
 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
-import { SectionTitle } from '@/components/ui/primitives'
+import { Badge } from '@/components/ui/primitives'
+import { useProtocols } from '@/data/hooks'
+import { useCycleInfos } from '@/features/cycle/useCycleInfos'
+import { useStock } from '@/features/inventory/useStock'
+import { useReminderPrefs } from '@/features/reminders/useReminders'
 import { env } from '@/lib/env'
+import {
+  MENU_GROUPS,
+  MENU_ROUTES,
+  menuBadges,
+  type MenuBadge,
+  type MenuId,
+  type MenuState,
+} from './menu'
 
-interface Item {
-  icon: ReactNode
-  label: string
-  hint: string
-  to: string
+const ICON = 'size-[18px]'
+const ICONS: Record<MenuId, ReactNode> = {
+  protocols: <FlaskConical className={ICON} />,
+  cycles: <CalendarRange className={ICON} />,
+  inventory: <Package className={ICON} />,
+  calculator: <Calculator className={ICON} />,
+  simulator: <Sparkles className={ICON} />,
+  sites: <Target className={ICON} />,
+  outlook: <TrendingUp className={ICON} />,
+  reminders: <BellRing className={ICON} />,
+  share: <Share2 className={ICON} />,
+  export: <Download className={ICON} />,
+  settings: <Settings className={ICON} />,
+}
+
+/**
+ * The live state the badges read. All of it comes from queries the other screens already
+ * share (protocols, vials, doses, the profile), so opening the menu costs no new request.
+ */
+function useMenuState(): MenuState {
+  const { patientId } = usePatientScope()
+  const protocols = useProtocols(patientId)
+  const cycles = useCycleInfos()
+  const stock = useStock(patientId)
+  const reminders = useReminderPrefs()
+
+  const active = useMemo(
+    () => (protocols.data ?? []).filter((p) => p.status === 'active').length,
+    [protocols.data],
+  )
+  const vials = useMemo(
+    () => stock.list.filter((v) => !v.archived && Number(v.remaining_mg) > 0).length,
+    [stock.list],
+  )
+
+  return {
+    activeProtocols: active,
+    cycles: cycles.map((c) => c.info),
+    stock: stock.pending ? null : { alerts: stock.alerts, vials },
+    remindersOn: reminders.loaded ? reminders.enabled : null,
+  }
 }
 
 export function MorePage() {
   const { t } = useTranslation()
-
-  const groups: { title: string; index: string; items: Item[] }[] = [
-    {
-      title: t('more.lab'),
-      index: '01',
-      items: [
-        {
-          icon: <FlaskConical className="size-[18px]" />,
-          label: t('more.protocols'),
-          hint: t('more.protocolsHint'),
-          to: '/protocols',
-        },
-        {
-          icon: <CalendarRange className="size-[18px]" />,
-          label: t('cycles.menu'),
-          hint: t('cycles.menuHint'),
-          to: '/cycles',
-        },
-        {
-          icon: <Package className="size-[18px]" />,
-          label: t('more.inventory'),
-          hint: t('more.inventoryHint'),
-          to: '/inventory',
-        },
-        {
-          icon: <Target className="size-[18px]" />,
-          label: t('more.sites'),
-          hint: t('more.sitesHint'),
-          to: '/sites',
-        },
-      ],
-    },
-    {
-      title: t('more.tools'),
-      index: '02',
-      items: [
-        {
-          icon: <Calculator className="size-[18px]" />,
-          label: t('more.calculator'),
-          hint: t('more.calculatorHint'),
-          to: '/calculator',
-        },
-        {
-          icon: <TrendingUp className="size-[18px]" />,
-          label: t('more.outlook'),
-          hint: t('more.outlookHint'),
-          to: '/outlook',
-        },
-        {
-          icon: <Sparkles className="size-[18px]" />,
-          label: t('more.simulator'),
-          hint: t('more.simulatorHint'),
-          to: '/simulator',
-        },
-      ],
-    },
-    {
-      title: t('more.account'),
-      index: '03',
-      items: [
-        {
-          icon: <BellRing className="size-[18px]" />,
-          label: t('more.reminders'),
-          hint: t('more.remindersHint'),
-          to: '/reminders',
-        },
-        {
-          icon: <Share2 className="size-[18px]" />,
-          label: t('more.share'),
-          hint: t('more.shareHint'),
-          to: '/share',
-        },
-        {
-          icon: <Download className="size-[18px]" />,
-          label: t('more.export'),
-          hint: t('more.exportHint'),
-          to: '/export',
-        },
-        {
-          icon: <Settings className="size-[18px]" />,
-          label: t('more.settings'),
-          hint: t('more.settingsHint'),
-          to: '/settings',
-        },
-      ],
-    },
-  ]
+  const badges = menuBadges(useMenuState())
 
   return (
     <div>
       <PageHeader eyebrow={t('more.eyebrow')} title={t('more.title')} large />
 
-      <div className="flex flex-col gap-4">
-        {groups.map((g) => (
-          <section key={g.index}>
-            <SectionTitle index={g.index}>{g.title}</SectionTitle>
+      <div className="flex flex-col gap-5">
+        {MENU_GROUPS.map((group) => (
+          <section key={group.title} aria-label={t(group.title)}>
+            <h2 className="spec mb-2 px-1">{t(group.title)}</h2>
             <Card padded={false} className="px-4">
               <ul className="divide-y divide-line">
-                {g.items.map((item) => (
-                  <li key={item.to}>
-                    <Link
-                      to={item.to}
-                      className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
-                    >
-                      <span
-                        aria-hidden
-                        className="grid size-10 shrink-0 place-items-center rounded-[14px] border border-signal/20 bg-signal-soft text-signal"
-                      >
-                        {item.icon}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[15px] font-semibold">{item.label}</span>
-                        <span className="line-clamp-2 block text-[12.5px] leading-snug text-muted">
-                          {item.hint}
-                        </span>
-                      </span>
-                      <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
-                    </Link>
+                {group.items.map((id) => (
+                  <li key={id}>
+                    <MenuRow id={id} badge={badges[id]} />
                   </li>
                 ))}
               </ul>
@@ -160,5 +106,38 @@ export function MorePage() {
         {t('app.disclaimer')}
       </p>
     </div>
+  )
+}
+
+function MenuRow({ id, badge }: { id: MenuId; badge?: MenuBadge }) {
+  const { t } = useTranslation()
+  return (
+    <Link
+      to={MENU_ROUTES[id]}
+      className="-mx-2 flex min-h-[68px] w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left outline-none transition active:bg-panel-2 focus-visible:ring-2 focus-visible:ring-signal/60"
+    >
+      <span
+        aria-hidden
+        className="grid size-10 shrink-0 place-items-center rounded-[14px] border border-signal/20 bg-signal-soft text-signal"
+      >
+        {ICONS[id]}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-2">
+          <span className="min-w-0 text-[15px] font-semibold leading-snug">
+            {t(`more.items.${id}`)}
+          </span>
+          {badge && (
+            <Badge tone={badge.tone} className="shrink-0">
+              {t(badge.key, badge.values)}
+            </Badge>
+          )}
+        </span>
+        <span className="mt-0.5 block text-[12.5px] leading-snug text-muted">
+          {t(`more.hints.${id}`)}
+        </span>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+    </Link>
   )
 }

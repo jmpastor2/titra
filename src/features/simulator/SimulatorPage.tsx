@@ -139,7 +139,7 @@ export function SimulatorPage() {
     // The shape of the page, so nothing moves when the data arrives.
     return (
       <div className="pb-6">
-        <PageHeader title={t('simulator.title')} subtitle={t('simulator.intro')} back="/more" />
+        <PageHeader title={t('simulator.title')} back="/more" />
         <div className="flex flex-col gap-3" aria-hidden>
           <Skeleton className="h-10 w-full rounded-full" />
           <Skeleton className="h-[330px] w-full" />
@@ -180,7 +180,10 @@ export function SimulatorPage() {
 
   return (
     <div className="pb-6">
-      <PageHeader title={t('simulator.title')} subtitle={t('simulator.intro')} back="/more" />
+      <PageHeader title={t('simulator.title')} back="/more" />
+      <p className="-mt-2 mb-4 px-1 text-[13.5px] leading-snug text-muted">
+        {t('simulator.intro')}
+      </p>
 
       <div className="flex flex-col gap-3">
         {simulable.length > 1 && (
@@ -237,9 +240,37 @@ export function SimulatorPage() {
                       </option>
                     ))}
                   </Select>
+                  {switchTemplate && (
+                    <p className="-mt-1 text-[12.5px] leading-snug text-muted">
+                      {pick(switchTemplate.name)}
+                    </p>
+                  )}
                 </>
               )}
             </div>
+          </Card>
+        )}
+
+        {insight && (
+          <Card instrument>
+            {insight.kind === 'skip' && (
+              <Stat
+                size="lg"
+                label={t('simulator.levelAfterSkip')}
+                value={fmtAmount(insight.lowestMg)}
+                tone="accent"
+                hint={t('simulator.versusPlan', { value: fmtAmount(insight.planLowestMg) })}
+              />
+            )}
+            {insight.kind === 'stop' && (
+              <Stat
+                size="lg"
+                label={t('simulator.washout')}
+                value={fmtHours(insight.washoutH, locale)}
+                tone="accent"
+                hint={t('simulator.washoutHint')}
+              />
+            )}
           </Card>
         )}
 
@@ -289,34 +320,14 @@ export function SimulatorPage() {
               </li>
             )}
           </ul>
-        </Card>
-
-        <Card title={t('simulator.horizon')}>
-          <Segmented<Horizon>
-            value={horizon}
-            onChange={setHorizon}
-            options={HORIZONS.map((h) => ({ value: h, label: t('simulator.days', { n: h }) }))}
-          />
-          {insight?.kind === 'skip' && (
-            <div className="mt-4">
-              <Stat
-                label={t('simulator.levelAfterSkip')}
-                value={fmtAmount(insight.lowestMg)}
-                tone="accent"
-                hint={t('simulator.versusPlan', { value: fmtAmount(insight.planLowestMg) })}
-              />
-            </div>
-          )}
-          {insight?.kind === 'stop' && (
-            <div className="mt-4">
-              <Stat
-                label={t('simulator.washout')}
-                value={fmtHours(insight.washoutH, locale)}
-                tone="accent"
-                hint={t('simulator.washoutHint')}
-              />
-            </div>
-          )}
+          <div className="mt-3">
+            <div className="spec mb-1.5">{t('simulator.horizon')}</div>
+            <Segmented<Horizon>
+              value={horizon}
+              onChange={setHorizon}
+              options={HORIZONS.map((h) => ({ value: h, label: t('simulator.days', { n: h }) }))}
+            />
+          </div>
         </Card>
 
         <p className="px-2 text-center text-[11px] leading-relaxed text-muted">

@@ -244,7 +244,7 @@ function LogDoseForm({
                 <span className="spec block">
                   {protocol ? t('doses.chosen.protocol') : t('doses.chosen.oneOff')}
                 </span>
-                <span className="block truncate text-[15px] font-semibold">{title}</span>
+                <span className="block break-words text-[15px] font-semibold">{title}</span>
               </span>
               {free && (
                 <button

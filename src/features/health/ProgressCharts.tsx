@@ -34,35 +34,44 @@ export function RangePicker({
   value,
   onChange,
   hasCycle,
+  from,
 }: {
   value: ProgressRange
   onChange: (r: ProgressRange) => void
   hasCycle: boolean
+  /** Where the range on screen begins, said under the label. */
+  from: Date
 }) {
   const { t } = useTranslation()
+  const { locale } = useLocale()
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="spec">{t('charts.range.label')}</span>
+    <div>
+      <div className="flex items-baseline justify-between gap-3 px-1">
+        <span className="spec">{t('charts.range.label')}</span>
+        <span className="text-[11.5px] text-muted">
+          {t('charts.range.span', { from: fmtDate(from, locale, 'd MMM') })}
+        </span>
+      </div>
       <div
         role="radiogroup"
         aria-label={t('charts.range.label')}
-        className="inline-flex items-center rounded-full border border-line bg-panel-2 p-0.5"
+        className="mt-1.5 inline-flex h-[46px] w-full items-stretch rounded-full border border-line bg-panel-2"
       >
         {RANGES.filter((r) => r !== 'cycle' || hasCycle).map((r) => {
           const active = r === value
           return (
-            // The button is 44 px tall to be easy to hit; the pill inside keeps the compact look.
+            // The button fills the 46 px of the track to be easy to hit; the pill inside is smaller.
             <button
               key={r}
               type="button"
               role="radio"
               aria-checked={active}
               onClick={() => onChange(r)}
-              className="group -my-1.5 flex h-11 items-center px-px outline-none"
+              className="group flex min-w-0 flex-1 items-center justify-center px-0.5 outline-none"
             >
               <span
                 className={clsx(
-                  'flex h-8 min-w-11 items-center justify-center rounded-full px-3 font-mono text-[12px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60',
+                  'flex h-[34px] w-full min-w-0 items-center justify-center rounded-full px-2 text-[12.5px] font-semibold transition group-focus-visible:ring-2 group-focus-visible:ring-signal/60',
                   active
                     ? 'bg-panel text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'
                     : 'text-muted group-hover:text-ink-2',
@@ -122,9 +131,11 @@ export function ProtocolStrip({
         return (
           <div key={lane.id}>
             <div className="flex items-center justify-between gap-2 text-[11.5px]">
-              <span className="flex min-w-0 items-center gap-1.5">
-                <SubstanceDot color={color} />
-                <span className="truncate font-semibold text-ink-2">{lane.name}</span>
+              <span className="flex min-w-0 items-start gap-1.5">
+                <span className="mt-[4px] flex">
+                  <SubstanceDot color={color} />
+                </span>
+                <span className="font-semibold leading-snug text-ink-2">{lane.name}</span>
               </span>
               {current && (
                 <span className="readout shrink-0 text-[11px] text-muted">{label(current)}</span>

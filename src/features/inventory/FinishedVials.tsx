@@ -48,8 +48,8 @@ export function FinishedVials({
             <li key={v.id} className="flex items-center gap-3 py-3">
               <Vial {...vialLook(v)} size={38} className="opacity-60" />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[14px] font-semibold">{v.label}</span>
-                <span className="readout block truncate text-[11.5px] text-muted">
+                <span className="block text-[14px] font-semibold leading-snug">{v.label}</span>
+                <span className="readout block text-[11.5px] leading-snug text-muted">
                   {v.archived ? t('inventory.archived') : t('inventory.statusFinished')} ·{' '}
                   {fmtMg(Number(v.remaining_mg), locale)}
                 </span>

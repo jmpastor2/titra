@@ -155,6 +155,22 @@ describe('alerts panel', () => {
     )
   })
 
+  it('folds the alerts beyond the first three behind one button', () => {
+    const many = ['v1', 'v2', 'v3', 'v4', 'v5'].map((id) => stockAlert({ vialId: id }))
+    renderInApp(<AlertsPanel alerts={many} read={[]} />, makeStore())
+
+    expect(screen.getAllByText('Caduca pronto')).toHaveLength(3)
+    fireEvent.click(screen.getByRole('button', { name: 'Ver 2 alertas más' }))
+    expect(screen.getAllByText('Caduca pronto')).toHaveLength(5)
+    fireEvent.click(screen.getByRole('button', { name: 'Ver menos' }))
+    expect(screen.getAllByText('Caduca pronto')).toHaveLength(3)
+  })
+
+  it('has no fold for three alerts or fewer', () => {
+    renderInApp(<AlertsPanel alerts={[a1, a2]} read={[]} />, makeStore())
+    expect(screen.queryByRole('button', { name: /alertas más/ })).toBeNull()
+  })
+
   it('keeps what was read collapsed and brings alerts back one by one or all', async () => {
     const store = makeStore({
       alert_dismissals: [read1, read2].map((a, i) => ({

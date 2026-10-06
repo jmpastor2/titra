@@ -212,7 +212,8 @@ describe('counter tiles', () => {
     const v = view('water', { rows })
     expect(v).toMatchObject({
       value: { text: '750', unit: 'ml' },
-      caption: 'Faltan 1,75 L',
+      // The figure and its unit stay together when the caption wraps.
+      caption: 'Faltan 1,75\u00A0L',
       visual: { kind: 'ring', fraction: 0.3, done: false },
     })
     expect(v.aria).toContain('Toca para añadir 250 ml')
@@ -233,7 +234,7 @@ describe('counter tiles', () => {
   })
 
   it('follows a goal the person changed', () => {
-    expect(view('water', { goalMl: 3000 }).caption).toBe('Faltan 3 L')
+    expect(view('water', { goalMl: 3000 }).caption).toBe('Faltan 3\u00A0L')
   })
 
   it('shows protein against the target from the weight', () => {
@@ -244,12 +245,12 @@ describe('counter tiles', () => {
     ]
     expect(view('protein', { rows })).toMatchObject({
       value: { text: '55', unit: 'g' },
-      caption: 'Faltan 68 g',
+      caption: 'Faltan 68\u00A0g',
       visual: { kind: 'ring', fraction: 55 / 123 },
     })
   })
 
-  it('counts strength sessions against two a week and shows the days', () => {
+  it('counts strength sessions against two a week', () => {
     const rows = [row('resistance_session', 45, '2026-10-04T19:00', 'min')]
     const v = view('strength', { rows })
     expect(v).toMatchObject({
@@ -257,7 +258,6 @@ describe('counter tiles', () => {
       caption: 'ayer',
       tone: 'attention',
     })
-    expect(v.visual).toMatchObject({ kind: 'strip' })
     const done = view('strength', {
       rows: [...rows, row('resistance_session', 60, '2026-10-02T19:00', 'min')],
     })
@@ -359,7 +359,7 @@ describe('in English, and in one line', () => {
       caption: '2 days ago · −0.4',
       value: { text: '77.0', unit: 'kg' },
     })
-    expect(view('water', { lang: 'en' }).caption).toBe('2.5 L to go')
+    expect(view('water', { lang: 'en' }).caption).toBe('2.5\u00A0L to go')
     expect(
       view('dose', {
         lang: 'en',

@@ -17,6 +17,7 @@ import { FinishedVials } from './FinishedVials'
 import { InventorySheet } from './InventorySheet'
 import { RestockCard } from './RestockCard'
 import { StockStrip } from './StockStrip'
+import { stockKpis } from './stockKpis'
 import { useReconstituteSheet } from './useReconstituteSheet'
 import { useStock } from './useStock'
 import { VialCard } from './VialCard'
@@ -54,6 +55,8 @@ export function InventoryPage() {
       finished: [...list.filter((v) => vialState(v) === 'finished'), ...archived],
     }
   }, [list, everything.data])
+
+  const kpis = useMemo(() => stockKpis(list, restock, now), [list, restock, now])
 
   // The next dose of each compound, for the units shown on vials that are not the one in use.
   const nextDose = useMemo(
@@ -105,18 +108,24 @@ export function InventoryPage() {
         back="/more"
         action={
           !readOnly && (
-            <Button leading={<Plus className="size-4" />} onClick={() => setAdding({})}>
-              {t('common.add')}
-            </Button>
+            // Icon only: a wide "Añadir" button leaves "Inventario" no room on a 320 px phone.
+            <button
+              type="button"
+              aria-label={t('inventory.add')}
+              onClick={() => setAdding({})}
+              className="glow grid size-11 place-items-center rounded-full bg-signal text-signal-ink outline-none transition hover:brightness-110 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-signal/60 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+            >
+              <Plus className="size-5" aria-hidden />
+            </button>
           )
         }
       />
 
       {stock.pending ? (
         <div className="flex flex-col gap-3" aria-busy>
-          <Skeleton className="h-[76px] w-full rounded-card" />
-          <Skeleton className="h-[200px] w-full rounded-card" />
-          <Skeleton className="h-[200px] w-full rounded-card" />
+          <Skeleton className="h-[260px] w-full rounded-card" />
+          <Skeleton className="h-[300px] w-full rounded-card" />
+          <Skeleton className="h-[300px] w-full rounded-card" />
         </div>
       ) : nothing ? (
         <Card>
@@ -137,11 +146,13 @@ export function InventoryPage() {
                     key={p.id}
                     type="button"
                     onClick={() => setAdding({ preset: p })}
-                    className="flex min-h-11 items-center gap-1.5 rounded-full border border-line-strong bg-panel-2 px-3.5 text-[12.5px] font-semibold outline-none transition hover:border-signal/40 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-signal/60"
+                    className="flex min-h-11 items-center gap-1.5 rounded-2xl border border-line-strong bg-panel-2 px-3.5 py-1.5 text-left text-[12.5px] font-semibold leading-tight outline-none transition hover:border-signal/40 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-signal/60"
                   >
-                    {p.parts.map((x) => (
-                      <SubstanceDot key={x.compoundId} color={compoundColor(x.compoundId)} />
-                    ))}
+                    <span className="flex shrink-0 gap-1">
+                      {p.parts.map((x) => (
+                        <SubstanceDot key={x.compoundId} color={compoundColor(x.compoundId)} />
+                      ))}
+                    </span>
                     {p.name}
                   </button>
                 ))}
@@ -151,11 +162,7 @@ export function InventoryPage() {
         </Card>
       ) : (
         <>
-          <StockStrip
-            inUse={groups.inUse.length}
-            reserve={groups.reserve.length}
-            finished={groups.finished.length}
-          />
+          <StockStrip kpis={kpis} />
           <AlertsPanel alerts={stock.alerts} read={stock.dismissedAlerts} />
           {restock.length > 0 && (
             <RestockCard lines={restock} now={now} readOnly={readOnly} onAdd={restockLine} />

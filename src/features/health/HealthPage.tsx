@@ -5,11 +5,12 @@ import { useSearchParams } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
-import { SectionTitle, Segmented } from '@/components/ui/primitives'
+import { SectionTitle } from '@/components/ui/primitives'
 import { useProtocols } from '@/data/hooks'
 import { OutlookCard } from '@/features/outlook/OutlookPage'
 import { LogSymptomSheet } from '@/features/symptoms/LogSymptomSheet'
 import { AddLabSheet } from './AddLabSheet'
+import { EvolutionTabs } from './EvolutionTabs'
 import { LabsTab } from './LabsTab'
 import { LeanTab } from './LeanTab'
 import { LogMeasurementSheet } from './LogMeasurementSheet'
@@ -83,10 +84,9 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
       <ProgressSummary />
 
       <SectionTitle index="02">{t('progress.evolution')}</SectionTitle>
-      <Segmented<Tab>
+      <EvolutionTabs<Tab>
         value={tab}
         onChange={changeTab}
-        size="sm"
         className="mb-3"
         options={[
           { value: 'wellbeing', label: t('progress.wellbeing') },
@@ -98,7 +98,12 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
 
       {(tab === 'wellbeing' || tab === 'body') && (
         <div className="mb-3">
-          <RangePicker value={scope.range} onChange={setRange} hasCycle={scope.cycle !== null} />
+          <RangePicker
+            value={scope.range}
+            onChange={setRange}
+            hasCycle={scope.cycle !== null}
+            from={scope.window.from}
+          />
         </div>
       )}
 
@@ -107,7 +112,7 @@ export function HealthPage({ embedded = false }: { embedded?: boolean }) {
         {tab === 'body' && (
           <div className="flex flex-col gap-6">
             <MeasurementsTab scope={scope} />
-            <LeanTab index="03" />
+            <LeanTab />
           </div>
         )}
         {tab === 'symptoms' && <SymptomsTab onAdd={() => setSheet('symptom')} />}

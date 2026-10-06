@@ -33,6 +33,7 @@ const texts: OutlookTexts = {
   today: 'hoy',
   horizon: '6 meses',
   signed: (v) => fmtSigned(v, 'es', 0),
+  percent: (v) => `${fmtSigned(v, 'es', 0)} %`,
   week: (n) => `s${n}`,
 }
 
@@ -253,6 +254,58 @@ describe('layoutOutlook', () => {
     expect(
       layoutOutlook(buildOutlookModel(data()), { width: 315, height: 200, texts }).paths.projection,
     ).toBe('')
+  })
+
+  it('joins the weigh-ins with a line, when there are two or more', () => {
+    const l = layoutOutlook(buildOutlookModel(full), { width: 315, height: 200, texts })
+    expect(l.paths.me).toMatch(/^M[\d. -]+ L[\d. -]+$/)
+    const one = data({ me: [{ week: 1, pct: 0 }] })
+    expect(layoutOutlook(buildOutlookModel(one), { width: 315, height: 200, texts }).paths.me).toBe(
+      '',
+    )
+  })
+
+  it('writes the end of the line forward under a line that falls and over one that rises', () => {
+    const falling = layoutOutlook(buildOutlookModel(full), { width: 315, height: 200, texts })
+    const end = falling.endLabel
+    expect(end?.text).toBe('−8 %')
+    expect(end?.y).toBeGreaterThan(falling.y(-8.2))
+    const rising = layoutOutlook(
+      buildOutlookModel(
+        data({
+          projection: [
+            { week: 3.1, pct: -0.9 },
+            { week: 30.4, pct: 3 },
+          ],
+        }),
+      ),
+      { width: 315, height: 200, texts },
+    )
+    expect(rising.endLabel?.y).toBeLessThan(rising.y(3))
+    expect(
+      layoutOutlook(buildOutlookModel(data()), { width: 315, height: 200, texts }).endLabel,
+    ).toBeNull()
+  })
+
+  it('keeps the end label inside the plot: right-aligned near the right edge', () => {
+    const l = layoutOutlook(buildOutlookModel(data({ ...full, targetWeeks: 47 })), {
+      width: 315,
+      height: 200,
+      texts,
+    })
+    const edge = layoutOutlook(
+      buildOutlookModel(
+        data({
+          projection: [
+            { week: 3.1, pct: -0.9 },
+            { week: 48, pct: -9 },
+          ],
+        }),
+      ),
+      { width: 315, height: 200, texts },
+    )
+    expect(edge.endLabel?.anchor).toBe('end')
+    expect(l.endLabel?.x).toBeLessThanOrEqual(l.box.x1)
   })
 
   it('places the stops in order, left to right', () => {

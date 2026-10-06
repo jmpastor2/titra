@@ -3,7 +3,7 @@ import { BookOpen, FlaskConical, LineChart, ListChecks, MoreHorizontal } from 'l
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router-dom'
 
-/** Floating dock. The active tab is the only luminous element in it. */
+/** Floating dock. The active tab is the only filled element in it; labels stay in sentence case so they read at a glance. */
 export function TabBar() {
   const { t } = useTranslation()
   const items = [
@@ -27,7 +27,7 @@ export function TabBar() {
               end={end}
               className={({ isActive }) =>
                 clsx(
-                  'flex flex-col items-center gap-1 rounded-[20px] py-2 font-mono text-[9.5px] font-semibold uppercase tracking-[0.07em] transition-colors',
+                  'flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-[20px] py-1.5 text-[11px] font-semibold tracking-[0.01em] transition-colors active:scale-[0.97]',
                   isActive ? 'bg-signal-soft text-signal' : 'text-muted hover:text-ink-2',
                 )
               }
@@ -37,7 +37,8 @@ export function TabBar() {
                   <Icon
                     className={clsx(
                       'size-[20px]',
-                      isActive && 'drop-shadow-[0_0_6px_var(--signal)]',
+                      isActive &&
+                        'drop-shadow-[0_0_8px_color-mix(in_oklab,var(--signal)_55%,transparent)]',
                     )}
                     strokeWidth={isActive ? 2.3 : 1.9}
                   />

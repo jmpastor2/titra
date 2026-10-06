@@ -120,7 +120,7 @@ export function Choice<T extends string>({
             aria-checked={active}
             onClick={() => onChange(o.value)}
             className={clsx(
-              'h-11 min-w-0 flex-1 touch-manipulation truncate rounded-full px-3 text-[14px] font-semibold outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60',
+              'min-h-11 min-w-0 flex-1 touch-manipulation rounded-full px-3 py-1 text-[14px] font-semibold leading-tight outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60',
               active
                 ? 'bg-panel text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'
                 : 'text-muted hover:text-ink-2',

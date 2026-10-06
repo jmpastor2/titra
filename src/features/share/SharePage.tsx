@@ -69,25 +69,25 @@ export function SharePage() {
 
   return (
     <div className="pb-8">
-      <PageHeader eyebrow={t('share.eyebrow')} title={t('share.title')} large back="/more" />
+      <PageHeader eyebrow={t('more.groups.health')} title={t('share.title')} large back="/more" />
 
       <div className="flex flex-col gap-4">
         <Card instrument tone="signal" eyebrow={t('share.myCode')} subtitle={t('share.myCodeHint')}>
           <button
             type="button"
             onClick={copy}
-            className="flex w-full items-center justify-between rounded-control border border-signal/30 bg-panel px-4 py-3.5"
+            className="flex min-h-16 w-full items-center justify-between gap-3 rounded-control border border-signal/30 bg-panel px-4 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
           >
             <span className="readout text-glow text-[28px] font-bold tracking-[0.3em] text-signal">
               {patient?.clinic_code ?? '······'}
             </span>
-            <span className="flex items-center gap-1.5 text-[12.5px] font-semibold text-signal">
-              <Copy className="size-4" /> {t('clinic.copyCode')}
+            <span className="flex shrink-0 items-center gap-1.5 text-[12.5px] font-semibold text-signal">
+              <Copy className="size-4" aria-hidden /> {t('clinic.copyCode')}
             </span>
           </button>
         </Card>
 
-        <Card eyebrow="01" title={t('share.shareMine')} subtitle={t('share.shareMineHint')}>
+        <Card title={t('share.shareMine')} subtitle={t('share.shareMineHint')}>
           <div className="flex gap-2">
             <Input
               value={code}
@@ -95,9 +95,10 @@ export function SharePage() {
               placeholder="ABC234"
               maxLength={6}
               aria-label={t('onboarding.clinicCode')}
-              className="readout uppercase tracking-[0.3em]"
+              className="readout min-w-0 uppercase tracking-[0.3em]"
             />
             <Button
+              className="shrink-0"
               loading={link.isPending}
               disabled={!code.trim()}
               leading={<Share2 className="size-4" />}
@@ -109,16 +110,19 @@ export function SharePage() {
         </Card>
 
         <section>
-          <SectionTitle index="02">{t('share.viewers')}</SectionTitle>
+          <SectionTitle>{t('share.viewers')}</SectionTitle>
           <Card padded={false} className="px-4">
             {viewers.length === 0 ? (
               <p className="py-4 text-[13.5px] text-muted">{t('share.noViewers')}</p>
             ) : (
               <ul className="divide-y divide-line">
                 {viewers.map((l) => (
-                  <li key={l.id} className="flex items-center justify-between gap-3 py-3">
+                  <li
+                    key={l.id}
+                    className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-3"
+                  >
                     <div className="min-w-0">
-                      <div className="truncate text-[15px] font-semibold">
+                      <div className="text-[15px] font-semibold leading-snug">
                         {l.clinician?.display_name ?? '—'}
                       </div>
                       <div className="text-[12px] text-muted">
@@ -128,6 +132,7 @@ export function SharePage() {
                     <Button
                       size="sm"
                       variant="ghost"
+                      className="-mr-2"
                       leading={<UserMinus className="size-4" />}
                       onClick={async () => {
                         if (!window.confirm(t('clinic.unlinkMineConfirm'))) return
@@ -148,7 +153,7 @@ export function SharePage() {
         </section>
 
         <section>
-          <SectionTitle index="03">{t('share.sharedWithMe')}</SectionTitle>
+          <SectionTitle>{t('share.sharedWithMe')}</SectionTitle>
           <Card padded={false} className="px-4">
             {sharedWithMe.length === 0 ? (
               <p className="py-4 text-[13.5px] text-muted">{t('share.noneSharedWithMe')}</p>
@@ -159,13 +164,13 @@ export function SharePage() {
                     <button
                       type="button"
                       onClick={() => nav(`/shared/${s.patient.id}`)}
-                      className="flex w-full items-center gap-3 py-3 text-left"
+                      className="flex min-h-[68px] w-full items-center gap-3 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
                     >
                       <span className="grid size-10 shrink-0 place-items-center rounded-full border border-line-strong bg-panel-2 font-display text-[14px] font-bold text-signal">
                         {s.patient.display_name.charAt(0).toUpperCase()}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[15px] font-semibold">
+                        <span className="block text-[15px] font-semibold leading-snug">
                           {s.patient.display_name}
                         </span>
                         <span className="flex flex-wrap gap-1 pt-0.5">
@@ -176,7 +181,7 @@ export function SharePage() {
                           ))}
                         </span>
                       </span>
-                      <Eye className="size-4 shrink-0 text-muted" />
+                      <Eye className="size-4 shrink-0 text-muted" aria-hidden />
                     </button>
                   </li>
                 ))}

@@ -2,166 +2,32 @@
  * "Futuro": what each substance in the active protocols could mean over the next
  * 3 / 6 / 12 months, told honestly. Trial-backed compounds show the band a published
  * trial observed for the arms that bracket the user's dose; everything else says there
- * are no human outcome data and lists what to measure. The user's own weight trend is
- * drawn forward next to the trial band, always flagged as an extrapolation.
+ * are no human outcome data. The user's own weight trend is drawn forward next to the
+ * trial band, always flagged as an extrapolation, and one list says what to measure.
  */
-import { parseISO, startOfDay } from 'date-fns'
-import { ChevronRight, FlaskConical, Scale, Telescope } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { ChevronRight, Telescope } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import {
-  Badge,
-  EmptyState,
-  SectionTitle,
-  Segmented,
-  Skeleton,
-  SubstanceDot,
-} from '@/components/ui/primitives'
-import { compoundById, compoundName } from '@/content/compounds'
-import {
-  outlookFor,
-  type CompoundOutlook,
-  type MeasureItem,
-  type TrialOutlook,
-  type WeightTrialReference,
-} from '@/content/outlook'
-import { t as l10n, type L10n } from '@/content/schema'
-import { compoundColor } from '@/content/substanceColor'
-import type { MeasurementKind, MeasurementRow, ProtocolRow } from '@/data/database.types'
+import { EmptyState, SectionTitle, Skeleton } from '@/components/ui/primitives'
+import type { MeasureItem } from '@/content/outlook'
+import type { MeasurementKind } from '@/data/database.types'
 import { useMeasurements, useProtocols } from '@/data/hooks'
-import { protocolCompoundIds, toProtocolLike } from '@/data/mappers'
-import type { DoseUnit, ProtocolLike } from '@/domain/types'
 import { CheckInSheet } from '@/features/checkin/CheckInSheet'
 import { AddLabSheet } from '@/features/health/AddLabSheet'
 import { LogMeasurementSheet } from '@/features/health/LogMeasurementSheet'
-import { cycleStart } from '@/features/health/progress'
-import { fmtDate, fmtDose } from '@/lib/format'
 import { useNow } from '@/lib/useNow'
-import {
-  asCompoundProtocol,
-  bandInKg,
-  bandSeries,
-  HORIZONS,
-  horizonDate,
-  isProjection,
-  MAX_EXTRAPOLATION_RATIO,
-  MIN_TREND_POINTS,
-  MIN_TREND_SPAN_DAYS,
-  personalTrend,
-  projectTrend,
-  referenceForHorizon,
-  treatmentWeeks,
-  trendOnTreatmentAxis,
-  weightPoints,
-  type BandPoint,
-  type Horizon,
-  type HorizonReference,
-  type NoProjection,
-  type PersonalTrend,
-  type Projection,
-  type WeightPoint,
-} from './outlook'
-import { OutlookChart, type AxisPoint } from './OutlookChart'
-import { bandText, useFormat, type Fmt } from './outlookFormat'
-
-/* ------------------------------------------------------------------ model */
-
-interface TrialPart {
-  compoundId: string
-  outlook: TrialOutlook
-  like: ProtocolLike
-  ref: HorizonReference
-  series: BandPoint[]
-  todayWeeks: number
-}
-
-interface ProtocolOutlook {
-  row: ProtocolRow
-  like: ProtocolLike
-  title: string
-  compoundIds: string[]
-  since: Date
-  /** First trial-backed compound of the protocol, if any. */
-  trial: TrialPart | null
-  /** Every other compound, with its outlook entry when the app has one. */
-  others: { compoundId: string; outlook: CompoundOutlook | undefined }[]
-  measure: MeasureItem[]
-}
-
-function buildModel(protocols: readonly ProtocolRow[], now: Date, horizon: Horizon) {
-  const active = protocols
-    .filter((p) => p.status === 'active')
-    .toSorted((a, b) => a.start_date.localeCompare(b.start_date))
-
-  const items = active.flatMap((row): ProtocolOutlook[] => {
-    const like = toProtocolLike(row)
-    if (like.steps.length === 0) return []
-    const compoundIds = protocolCompoundIds(row)
-    const since = startOfDay(parseISO(row.start_date))
-    let trial: TrialPart | null = null
-    const others: ProtocolOutlook['others'] = []
-    for (const id of compoundIds) {
-      const outlook = outlookFor(id)
-      const view: ProtocolLike | null =
-        outlook?.kind === 'trial' && !trial ? asCompoundProtocol(like, id) : null
-      if (outlook?.kind === 'trial' && view) {
-        const ref = referenceForHorizon(view, outlook.reference, now, horizon)
-        trial = {
-          compoundId: id,
-          outlook,
-          like: view,
-          ref,
-          series: ref.doseMg === null ? [] : bandSeries(outlook.reference, ref.doseMg),
-          todayWeeks: treatmentWeeks(view, now),
-        }
-      } else {
-        others.push({ compoundId: id, outlook })
-      }
-    }
-    const measure = dedupe([
-      ...(trial?.outlook.measure ?? []),
-      ...others.flatMap((o) => o.outlook?.measure ?? wikiMonitoring(o.compoundId)),
-    ])
-    const names = compoundIds.map(compoundName).join(' + ')
-    const title = compoundIds.length > 1 ? row.name.trim() || names : names
-    return [{ row, like, title, compoundIds, since, trial, others, measure }]
-  })
-
-  return {
-    items,
-    trialItems: items.filter((i) => i.trial),
-    otherItems: items.filter((i) => !i.trial),
-    cycle: cycleStart(active),
-  }
-}
-
-function dedupe(items: readonly MeasureItem[]): MeasureItem[] {
-  const seen = new Set<string>()
-  return items.filter((m) => (seen.has(m.id) ? false : (seen.add(m.id), true)))
-}
-
-/** Compounds this section does not cover yet fall back to the wiki's monitoring list. */
-function wikiMonitoring(compoundId: string): MeasureItem[] {
-  return (compoundById(compoundId)?.monitoring ?? []).map((label, i) => ({
-    id: `${compoundId}-monitoring-${i}`,
-    label,
-    target: { type: 'note' },
-  }))
-}
-
-/* ------------------------------------------------------------------ formatting */
-
-const DOSE_UNITS: readonly DoseUnit[] = ['mg', 'mcg', 'iu', 'units', 'ml']
-
-function asDoseUnit(unit: string): DoseUnit {
-  return (DOSE_UNITS as readonly string[]).includes(unit) ? (unit as DoseUnit) : 'mg'
-}
-
-/* ------------------------------------------------------------------ page */
+import { personalTrend, weightPoints, type Horizon } from './outlook'
+import { buildModel, mergeMeasure, measureStatus } from './outlookModel'
+import { MeasureSection } from './MeasureSection'
+import { NoDataSection, type NoDataEntry } from './NoDataSection'
+import { Headline, HeadlineTrial } from './OutlookHero'
+import { PersonalBlock } from './PersonalBlock'
+import { TrialCard } from './TrialCard'
+import { useFormat } from './outlookFormat'
 
 type SheetState =
   { kind: 'measure'; measure: MeasurementKind } | { kind: 'checkin' } | { kind: 'lab' } | null
@@ -192,11 +58,20 @@ export function OutlookPage() {
   }
   const logWeight = () => setSheet({ kind: 'measure', measure: 'weight' })
 
-  // The personal KPI is measured from the cycle start when no trial card carries it.
+  // The personal KPI is measured from the first trial's start, or the cycle's when none has a trial.
   const cycleTrend = model.cycle ? personalTrend(weights, model.cycle, now) : null
-  const headlineTrend = model.trialItems[0]
-    ? personalTrend(weights, model.trialItems[0].since, now)
-    : cycleTrend
+  const first = model.trialItems[0]
+  const headlineTrend = first ? personalTrend(weights, first.since, now) : cycleTrend
+
+  // What no trial measured, once per compound, and the things worth measuring, once each.
+  const noData = useMemo<NoDataEntry[]>(() => {
+    const entries = model.items.flatMap((i) => i.others).filter((o) => o.outlook?.kind !== 'trial')
+    return entries.filter((o, i) => entries.findIndex((e) => e.compoundId === o.compoundId) === i)
+  }, [model.items])
+  const measure = useMemo(
+    () => (model.cycle ? measureStatus(mergeMeasure(model.items), rows, model.cycle) : []),
+    [model.items, model.cycle, rows],
+  )
 
   let section = 0
   const nextIndex = () => String(++section).padStart(2, '0')
@@ -236,7 +111,7 @@ export function OutlookPage() {
             trend={headlineTrend}
           />
 
-          {model.trialItems.length > 0 && (
+          {model.trialItems.length > 0 ? (
             <section className="flex flex-col gap-3">
               <SectionTitle index={nextIndex()}>{t('outlook.section.trial')}</SectionTitle>
               {model.trialItems.map((item) => (
@@ -247,16 +122,12 @@ export function OutlookPage() {
                   horizon={horizon}
                   now={now}
                   weights={weights}
-                  rows={rows}
                   readOnly={readOnly}
                   onLogWeight={logWeight}
-                  onPick={pick}
                 />
               ))}
             </section>
-          )}
-
-          {model.trialItems.length === 0 && (
+          ) : (
             <section>
               <SectionTitle index={nextIndex()}>{t('outlook.section.you')}</SectionTitle>
               <Card>
@@ -272,20 +143,23 @@ export function OutlookPage() {
             </section>
           )}
 
-          {model.otherItems.length > 0 && (
-            <section className="flex flex-col gap-3">
+          {noData.length > 0 && (
+            <section>
               <SectionTitle index={nextIndex()}>{t('outlook.section.noData')}</SectionTitle>
-              {model.otherItems.map((item) => (
-                <NoDataCard
-                  key={item.row.id}
-                  f={f}
-                  item={item}
-                  now={now}
-                  rows={rows}
-                  readOnly={readOnly}
-                  onPick={pick}
-                />
-              ))}
+              <NoDataSection f={f} entries={noData} />
+            </section>
+          )}
+
+          {measure.length > 0 && model.cycle && (
+            <section>
+              <SectionTitle index={nextIndex()}>{t('outlook.measure.title')}</SectionTitle>
+              <MeasureSection
+                f={f}
+                status={measure}
+                since={model.cycle}
+                readOnly={readOnly}
+                onPick={pick}
+              />
             </section>
           )}
         </>
@@ -308,731 +182,9 @@ export function OutlookPage() {
   )
 }
 
-/* ------------------------------------------------------------------ headline */
-
-function HorizonPicker({
-  f,
-  value,
-  onChange,
-}: {
-  f: Fmt
-  value: Horizon
-  onChange: (h: Horizon) => void
-}) {
-  return (
-    <Segmented<string>
-      size="sm"
-      value={String(value)}
-      onChange={(v) => onChange(Number(v) as Horizon)}
-      options={HORIZONS.map((h) => ({
-        value: String(h),
-        label: f.t('outlook.horizon.months', { n: h }),
-      }))}
-    />
-  )
-}
-
-function Headline({
-  f,
-  horizon,
-  onHorizon,
-  now,
-  trials,
-  trend,
-}: {
-  f: Fmt
-  horizon: Horizon
-  onHorizon: (h: Horizon) => void
-  now: Date
-  trials: readonly ProtocolOutlook[]
-  trend: PersonalTrend | null
-}) {
-  const { t } = f
-  const first = trials[0]?.trial
-  const target = first?.ref.targetDate ?? horizonDate(now, horizon)
-  const projection = projectTrend(trend, target)
-  return (
-    <Card instrument className="p-5">
-      <HorizonPicker f={f} value={horizon} onChange={onHorizon} />
-      <div className="spec mt-4">
-        {t('outlook.headline.in', { n: horizon })} · {f.date(target)}
-      </div>
-      <div className="mt-2 flex flex-col gap-3">
-        {trials.map((item) => (
-          <HeadlineTrial key={item.row.id} f={f} item={item} />
-        ))}
-        <div className="flex items-baseline justify-between gap-3 border-t border-line pt-3">
-          <span className="text-[13px] font-semibold text-ink-2">{t('outlook.headline.you')}</span>
-          {isProjection(projection) ? (
-            <span className="text-right">
-              <span className="readout text-[20px] font-semibold text-ink">
-                {f.weightDelta(projection.deltaKg)}
-              </span>
-              <span className="readout ml-1.5 text-[12px] text-muted">
-                {f.pct(projection.deltaPct)}
-              </span>
-            </span>
-          ) : (
-            <span className="text-right text-[12.5px] text-muted">
-              {t(`outlook.personal.short.${projection.none}`)}
-            </span>
-          )}
-        </div>
-        {isProjection(projection) && (
-          <p className="-mt-2 text-[11.5px] text-muted">
-            {t('outlook.personal.extrapolationNote')}
-            {projection.reliability === 'weak' && ` ${t('outlook.personal.weak')}`}
-          </p>
-        )}
-      </div>
-    </Card>
-  )
-}
-
-function HeadlineTrial({ f, item }: { f: Fmt; item: ProtocolOutlook }) {
-  const { t } = f
-  const trial = item.trial!
-  const { band, next, timepoint } = trial.ref
-  const color = compoundColor(trial.compoundId)
-  const name = compoundName(trial.compoundId)
-  return (
-    <div>
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="flex min-w-0 items-center gap-1.5">
-          <SubstanceDot color={color} />
-          <span className="truncate text-[15px] font-semibold">{name}</span>
-        </span>
-        {band ? (
-          <span className="readout shrink-0 text-[22px] font-semibold text-glow">
-            {bandText(f, band.lowerPct, band.upperPct, 0)}
-          </span>
-        ) : (
-          <span className="shrink-0 text-[12.5px] text-muted">{t('outlook.band.noneShort')}</span>
-        )}
-      </div>
-      <p className="mt-0.5 text-[12px] text-muted">
-        {band && timepoint
-          ? t('outlook.headline.bandNote', { week: timepoint.week })
-          : next
-            ? t('outlook.band.firstAt', {
-                week: next.timepoint.week,
-                date: next.date ? f.date(next.date) : '—',
-              })
-            : t('outlook.band.none')}
-      </p>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ trial card */
-
-function TrialCard({
-  f,
-  item,
-  horizon,
-  now,
-  weights,
-  rows,
-  readOnly,
-  onLogWeight,
-  onPick,
-}: {
-  f: Fmt
-  item: ProtocolOutlook
-  horizon: Horizon
-  now: Date
-  weights: readonly WeightPoint[]
-  rows: readonly MeasurementRow[]
-  readOnly: boolean
-  onLogWeight: () => void
-  onPick: (m: MeasureItem) => void
-}) {
-  const { t, pick } = f
-  const trial = item.trial!
-  const { ref, outlook } = trial
-  const reference = outlook.reference
-  const color = compoundColor(trial.compoundId)
-  const unit = asDoseUnit(item.row.unit)
-  const trend = useMemo(() => personalTrend(weights, item.since, now), [weights, item.since, now])
-  const projection = useMemo(() => projectTrend(trend, ref.targetDate), [trend, ref.targetDate])
-  const band = ref.band
-  const weightForBand = trend?.baseline.kg ?? null
-  // The person's weigh-ins and the line drawn on from them, as the chart wants them.
-  const chartMe = useMemo<AxisPoint[]>(
-    () =>
-      trend
-        ? trendOnTreatmentAxis(trend, trial.like).map((p, i) => ({
-            week: p.week,
-            pct: p.pct,
-            at: trend.points[i]?.at,
-            kg: trend.points[i]?.kg,
-          }))
-        : [],
-    [trend, trial.like],
-  )
-  const chartProjection = useMemo<AxisPoint[]>(
-    () =>
-      trend && isProjection(projection)
-        ? [
-            { week: treatmentWeeks(trial.like, trend.latest.at), pct: trend.changePct },
-            { week: ref.weeksAtTarget, pct: projection.deltaPct, kg: projection.kg },
-          ]
-        : [],
-    [trend, projection, trial.like, ref.weeksAtTarget],
-  )
-
-  return (
-    <Card className="p-4" style={{ borderColor: `color-mix(in oklab, ${color} 30%, var(--line))` }}>
-      <ProtocolTitle
-        f={f}
-        title={item.title}
-        compoundIds={item.compoundIds}
-        eyebrow={`${reference.trial} · ${reference.year}`}
-      />
-      <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{pick(outlook.summary)}</p>
-
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <div className="rounded-[14px] border border-line bg-panel-2 p-3">
-          <div className="spec">{t('outlook.band.label')}</div>
-          {band ? (
-            <>
-              <div className="readout mt-1.5 text-[17px] font-semibold leading-tight">
-                {bandText(f, band.lowerPct, band.upperPct, 1)}
-              </div>
-              <div className="mt-1 text-[11.5px] text-muted">
-                {t('outlook.band.at', { week: band.week })}
-              </div>
-              {weightForBand !== null && (
-                <div className="readout mt-1.5 text-[11.5px] text-ink-2">
-                  {(() => {
-                    const kg = bandInKg(weightForBand, band)
-                    return f.range(f.weightDelta(kg.lowerKg), f.weightDelta(kg.upperKg))
-                  })()}
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div className="mt-1.5 text-[13px] font-semibold">{t('outlook.band.noneShort')}</div>
-              <div className="mt-1 text-[11.5px] text-muted">
-                {ref.next
-                  ? t('outlook.band.firstAt', {
-                      week: ref.next.timepoint.week,
-                      date: ref.next.date ? f.date(ref.next.date) : '—',
-                    })
-                  : t('outlook.band.none')}
-              </div>
-            </>
-          )}
-        </div>
-        <div className="rounded-[14px] border border-line bg-panel-2 p-3">
-          <div className="spec">{t('outlook.personal.label')}</div>
-          <PersonalReadout f={f} trend={trend} projection={projection} />
-        </div>
-      </div>
-
-      {band && ref.doseMg !== null && (
-        <p className="mt-3 text-[12.5px] leading-relaxed text-ink-2">
-          {t(`outlook.position.${band.position}`, {
-            dose: fmtDose(ref.doseMg, unit, f.locale),
-            lower: fmtDose(band.lowerDoseMg, 'mg', f.locale),
-            upper: fmtDose(band.upperDoseMg, 'mg', f.locale),
-          })}
-          {weightForBand !== null && (
-            <> {t('outlook.band.withWeight', { weight: f.weight(weightForBand) })}</>
-          )}
-        </p>
-      )}
-
-      {!trend && !readOnly && (
-        <div className="mt-3 flex items-center gap-3 rounded-[14px] border border-dashed border-line-strong p-3">
-          <Scale className="size-5 shrink-0 text-signal" />
-          <p className="min-w-0 flex-1 text-[12.5px] text-ink-2">
-            {t('outlook.personal.askWeight')}
-          </p>
-          <Button size="sm" variant="soft" onClick={onLogWeight}>
-            {t('outlook.personal.logWeight')}
-          </Button>
-        </div>
-      )}
-
-      {trial.series.length > 1 && (
-        <div className="mt-4">
-          <OutlookChart
-            f={f}
-            color={color}
-            series={trial.series}
-            todayWeeks={trial.todayWeeks}
-            targetWeeks={ref.weeksAtTarget}
-            horizon={horizon}
-            me={chartMe}
-            projection={chartProjection}
-          />
-        </div>
-      )}
-
-      <TrialDetails
-        f={f}
-        reference={reference}
-        lowerMg={band?.lowerDoseMg}
-        upperMg={band?.upperDoseMg}
-        color={color}
-      />
-
-      <ul className="mt-3 flex flex-col gap-1.5">
-        {outlook.caveats.map((c) => (
-          <li key={c.en} className="flex gap-2 text-[12px] leading-relaxed text-muted">
-            <span aria-hidden className="mt-[7px] size-1 shrink-0 rounded-full bg-muted" />
-            {pick(c)}
-          </li>
-        ))}
-      </ul>
-
-      <MeasureList
-        f={f}
-        items={item.measure}
-        rows={rows}
-        since={item.since}
-        readOnly={readOnly}
-        onPick={onPick}
-      />
-    </Card>
-  )
-}
-
-function ProtocolTitle({
-  f,
-  title,
-  compoundIds,
-  eyebrow,
-}: {
-  f: Fmt
-  title: string
-  compoundIds: readonly string[]
-  eyebrow: ReactNode
-}) {
-  return (
-    <header>
-      <div className="spec">{eyebrow}</div>
-      <div className="mt-1 flex items-center gap-2">
-        <span className="flex items-center gap-1">
-          {compoundIds.map((id) => (
-            <SubstanceDot key={id} color={compoundColor(id)} />
-          ))}
-        </span>
-        <h2 className="min-w-0 truncate font-display text-[18px] font-semibold">{title}</h2>
-      </div>
-      <span className="sr-only">
-        {f.t('outlook.compounds', { names: compoundIds.map(compoundName).join(', ') })}
-      </span>
-    </header>
-  )
-}
-
-/* ------------------------------------------------------------------ personal KPI */
-
-function PersonalReadout({
-  f,
-  trend,
-  projection,
-}: {
-  f: Fmt
-  trend: PersonalTrend | null
-  projection: Projection | { none: NoProjection }
-}) {
-  const { t } = f
-  if (isProjection(projection)) {
-    return (
-      <>
-        <div className="readout mt-1.5 text-[17px] font-semibold leading-tight">
-          {f.weightDelta(projection.deltaKg)}
-        </div>
-        <div className="readout mt-1 text-[11.5px] text-muted">
-          {f.pct(projection.deltaPct)} · ≈ {f.weight(projection.kg)}
-        </div>
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          <Badge
-            tone={projection.reliability === 'weak' ? 'warn' : 'neutral'}
-            className="whitespace-normal! text-left leading-snug"
-          >
-            {projection.reliability === 'weak'
-              ? t('outlook.personal.badgeWeak')
-              : t('outlook.personal.badge')}
-          </Badge>
-        </div>
-      </>
-    )
-  }
-  return (
-    <>
-      <div className="mt-1.5 text-[13px] font-semibold">
-        {t(`outlook.personal.short.${projection.none}`)}
-      </div>
-      {trend && (
-        <div className="readout mt-1 text-[11.5px] text-muted">
-          {t('outlook.personal.soFar', {
-            kg: f.weightDelta(trend.latest.kg - trend.baseline.kg),
-            pct: f.pct(trend.changePct),
-          })}
-        </div>
-      )}
-      {projection.none === 'need_more' && (
-        <div className="mt-1 text-[11.5px] text-muted">
-          {t('outlook.personal.needMoreHint', { n: MIN_TREND_POINTS, days: MIN_TREND_SPAN_DAYS })}
-        </div>
-      )}
-      {projection.none === 'too_far' && trend && (
-        <div className="mt-1 text-[11.5px] text-muted">
-          {t('outlook.personal.until', {
-            date: f.date(
-              new Date(
-                trend.latest.at.getTime() +
-                  (trend.latest.at.getTime() - trend.baseline.at.getTime()) *
-                    MAX_EXTRAPOLATION_RATIO,
-              ),
-            ),
-          })}
-        </div>
-      )}
-    </>
-  )
-}
-
-/** Standalone personal KPI when no protocol has a trial reference. */
-function PersonalBlock({
-  f,
-  trend,
-  horizon,
-  now,
-  readOnly,
-  onLogWeight,
-}: {
-  f: Fmt
-  trend: PersonalTrend | null
-  horizon: Horizon
-  now: Date
-  readOnly: boolean
-  onLogWeight: () => void
-}) {
-  const { t } = f
-  const target = horizonDate(now, horizon)
-  const projection = projectTrend(trend, target)
-  if (!trend) {
-    return (
-      <EmptyState
-        className="py-6"
-        icon={<Scale className="size-6" />}
-        title={t('outlook.personal.emptyTitle')}
-        description={t('outlook.personal.askWeight')}
-        action={
-          !readOnly && (
-            <Button size="sm" onClick={onLogWeight}>
-              {t('outlook.personal.logWeight')}
-            </Button>
-          )
-        }
-      />
-    )
-  }
-  return (
-    <div>
-      <div className="spec">{t('outlook.personal.label')}</div>
-      <PersonalReadout f={f} trend={trend} projection={projection} />
-      <p className="mt-2 text-[11.5px] text-muted">{t('outlook.personal.extrapolationNote')}</p>
-    </div>
-  )
-}
-
-/* ------------------------------------------------------------------ trial details */
-
-function TrialDetails({
-  f,
-  reference,
-  lowerMg,
-  upperMg,
-  color,
-}: {
-  f: Fmt
-  reference: WeightTrialReference
-  lowerMg: number | undefined
-  upperMg: number | undefined
-  color: string
-}) {
-  const { t, pick, locale } = f
-  const tps = reference.timepoints.toSorted((a, b) => a.week - b.week)
-  const doses = [...new Set(tps.flatMap((tp) => tp.arms.map((a) => a.doseMg)))].toSorted(
-    (a, b) => a - b,
-  )
-  const rowsOut: { key: string; label: string; dose: number; values: (number | undefined)[] }[] = [
-    {
-      key: 'placebo',
-      label: t('outlook.trial.placebo'),
-      dose: 0,
-      values: tps.map((tp) => tp.placeboPct),
-    },
-    ...doses.map((d) => ({
-      key: String(d),
-      label: fmtDose(d, 'mg', locale),
-      dose: d,
-      values: tps.map((tp) => tp.arms.find((a) => a.doseMg === d)?.meanPct),
-    })),
-  ]
-  const noteIndex = (dose: number) => reference.armNotes.findIndex((n) => n.doseMg === dose) + 1
-  const facts: [string, L10n | string][] = [
-    [t('outlook.trial.population'), reference.population],
-    [t('outlook.trial.regimen'), reference.regimen],
-    [t('outlook.trial.outcome'), reference.outcome],
-    [t('outlook.trial.source'), reference.source],
-  ]
-  return (
-    <details className="group mt-4 rounded-[14px] border border-line bg-panel-2">
-      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 text-[13px] font-semibold text-ink-2">
-        <span className="flex items-center gap-2">
-          <FlaskConical className="size-4 text-muted" />
-          {t('outlook.trial.open')}
-        </span>
-        <ChevronRight className="size-4 text-muted transition group-open:rotate-90" />
-      </summary>
-      <div className="border-t border-line px-3 pb-3 pt-2.5">
-        <div className="text-[13px] font-semibold">
-          {reference.trial} · {reference.year}
-        </div>
-        <dl className="mt-2 flex flex-col gap-1.5 text-[12px]">
-          {facts.map(([k, v]) => (
-            <div key={k}>
-              <dt className="spec">{k}</dt>
-              <dd className="text-ink-2">{typeof v === 'string' ? v : pick(v)}</dd>
-            </div>
-          ))}
-        </dl>
-        <table className="mt-3 w-full border-separate border-spacing-0 text-[12px]">
-          <thead>
-            <tr>
-              <th className="spec pb-1 text-left font-semibold" scope="col">
-                {t('outlook.trial.arm')}
-              </th>
-              {tps.map((tp) => (
-                <th key={tp.week} className="spec pb-1 text-right font-semibold" scope="col">
-                  {t('outlook.trial.weekCol', { n: tp.week })}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rowsOut.map((r) => {
-              const bracket =
-                lowerMg !== undefined &&
-                upperMg !== undefined &&
-                (r.dose === lowerMg || r.dose === upperMg)
-              return (
-                <tr
-                  key={r.key}
-                  style={
-                    bracket
-                      ? { background: `color-mix(in oklab, ${color} 14%, transparent)` }
-                      : undefined
-                  }
-                >
-                  <th
-                    scope="row"
-                    className="rounded-l-md py-1 pl-1 text-left font-medium text-ink-2"
-                  >
-                    {r.label}
-                    {noteIndex(r.dose) > 0 && (
-                      <span className="text-muted">{'*'.repeat(noteIndex(r.dose))}</span>
-                    )}
-                  </th>
-                  {r.values.map((v, i) => (
-                    <td
-                      key={tps[i]?.week ?? i}
-                      className="readout py-1 pr-1 text-right last:rounded-r-md"
-                    >
-                      {v === undefined ? '—' : f.pct(v)}
-                    </td>
-                  ))}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        <ul className="mt-2 flex flex-col gap-0.5 text-[11px] text-muted">
-          {reference.armNotes.map((n, i) => (
-            <li key={n.doseMg}>
-              {'*'.repeat(i + 1)} {pick(n.note)}
-            </li>
-          ))}
-          <li>{t('outlook.trial.means')}</li>
-        </ul>
-      </div>
-    </details>
-  )
-}
-
-/* ------------------------------------------------------------------ no-data card */
-
-const NO_OUTLOOK_NOTE = l10n(
-  'Esta sección aún no incluye referencias de resultados para esta sustancia.',
-  'This section does not include outcome references for this substance yet.',
-)
-
-function NoDataCard({
-  f,
-  item,
-  now,
-  rows,
-  readOnly,
-  onPick,
-}: {
-  f: Fmt
-  item: ProtocolOutlook
-  now: Date
-  rows: readonly MeasurementRow[]
-  readOnly: boolean
-  onPick: (m: MeasureItem) => void
-}) {
-  const { t, pick } = f
-  const eyebrow =
-    now < item.since
-      ? t('outlook.startsOn', { date: f.date(item.since) })
-      : t('outlook.sinceWeek', {
-          date: f.date(item.since),
-          n: Math.floor(treatmentWeeks(item.like, now)) + 1,
-        })
-  const allNoData = item.others.every((o) => o.outlook?.kind === 'no_human_data')
-  const color = compoundColor(item.compoundIds[0] ?? '')
-  return (
-    <Card className="p-4" style={{ borderColor: `color-mix(in oklab, ${color} 26%, var(--line))` }}>
-      <ProtocolTitle f={f} title={item.title} compoundIds={item.compoundIds} eyebrow={eyebrow} />
-      <div className="mt-3 rounded-[14px] border border-line bg-panel-2 p-3">
-        <div className="spec">{t('outlook.noData.kpiLabel')}</div>
-        <div className="mt-1 text-[15px] font-semibold">
-          {allNoData ? t('outlook.noData.title') : t('outlook.noData.titleMixed')}
-        </div>
-        <p className="mt-0.5 text-[12px] text-muted">{t('outlook.noData.body')}</p>
-      </div>
-
-      <ul className="mt-3 flex flex-col gap-3">
-        {item.others.map(({ compoundId, outlook }) => {
-          const entry = compoundById(compoundId)
-          return (
-            <li key={compoundId}>
-              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                <span className="flex min-w-0 items-center gap-1.5">
-                  <SubstanceDot color={compoundColor(compoundId)} />
-                  <span className="text-[14px] font-semibold">{compoundName(compoundId)}</span>
-                </span>
-                {entry && (
-                  <Badge tone="neutral">
-                    {t('wiki.evidence')} · {t(`wiki.evidenceTiers.${entry.evidence}`)}
-                  </Badge>
-                )}
-              </div>
-              <p className="mt-1 text-[12.5px] leading-relaxed text-ink-2">
-                {outlook
-                  ? pick(outlook.summary)
-                  : `${entry ? pick(entry.pharmClass) : ''}. ${pick(NO_OUTLOOK_NOTE)}`}
-              </p>
-              {outlook?.kind === 'no_human_data' && (
-                <p className="mt-0.5 font-mono text-[10px] text-muted">{outlook.source}</p>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-
-      <MeasureList
-        f={f}
-        items={item.measure}
-        rows={rows}
-        since={item.since}
-        readOnly={readOnly}
-        onPick={onPick}
-      />
-    </Card>
-  )
-}
-
-/* ------------------------------------------------------------------ what to measure */
-
-function MeasureList({
-  f,
-  items,
-  rows,
-  since,
-  readOnly,
-  onPick,
-}: {
-  f: Fmt
-  items: readonly MeasureItem[]
-  rows: readonly MeasurementRow[]
-  since: Date
-  readOnly: boolean
-  onPick: (m: MeasureItem) => void
-}) {
-  const { t, pick } = f
-  if (items.length === 0) return null
-  const countOf = (kind: MeasurementKind) =>
-    rows.filter((r) => r.kind === kind && new Date(r.measured_at) >= since).length
-  return (
-    <div className="mt-4">
-      <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-        <div className="spec">{t('outlook.measure.title')}</div>
-        <div className="text-[11px] text-muted">
-          {t('outlook.measure.since', { date: fmtDate(since, f.locale, 'd MMM') })}
-        </div>
-      </div>
-      <ul className="divide-y divide-line overflow-hidden rounded-[14px] border border-line">
-        {items.map((m) => {
-          const kind =
-            m.target.type === 'measurement' || m.target.type === 'checkin' ? m.target.kind : null
-          const n = kind ? countOf(kind) : null
-          const actionable = !readOnly && m.target.type !== 'note'
-          const body = (
-            <>
-              <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-medium text-ink">{pick(m.label)}</span>
-                {m.hint && <span className="block text-[11.5px] text-muted">{pick(m.hint)}</span>}
-              </span>
-              <span className="shrink-0 text-right">
-                {n !== null ? (
-                  <span
-                    className={n > 0 ? 'readout text-[11.5px] text-ok' : 'text-[11.5px] text-muted'}
-                  >
-                    {n > 0 ? t('outlook.measure.count', { count: n }) : t('outlook.measure.none')}
-                  </span>
-                ) : (
-                  <span className="text-[11.5px] text-muted">
-                    {m.target.type === 'lab' ? t('outlook.measure.lab') : t('outlook.measure.note')}
-                  </span>
-                )}
-              </span>
-              {actionable && <ChevronRight className="size-4 shrink-0 text-muted" />}
-            </>
-          )
-          return (
-            <li key={m.id}>
-              {actionable ? (
-                <button
-                  type="button"
-                  onClick={() => onPick(m)}
-                  className="flex min-h-11 w-full items-center gap-3 bg-panel px-3 py-2.5 text-left transition active:bg-panel-2"
-                >
-                  {body}
-                </button>
-              ) : (
-                <div className="flex min-h-11 items-center gap-3 bg-panel px-3 py-2.5">{body}</div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </div>
-  )
-}
-
 /* ------------------------------------------------------------------ compact card */
 
-/** Compact summary for embedding (e.g. on Today): the headline for 6 months and a link. */
+/** Compact summary for embedding (e.g. on Progress): the headline for 6 months and a link. */
 export function OutlookCard({ horizon = 6 }: { horizon?: Horizon }) {
   const f = useFormat()
   const { t } = f
@@ -1057,7 +209,7 @@ export function OutlookCard({ horizon = 6 }: { horizon?: Horizon }) {
           <HeadlineTrial key={item.row.id} f={f} item={item} />
         ))}
         {model.otherItems.length > 0 && (
-          <p className="text-[12.5px] text-ink-2">
+          <p className="text-[12.5px] leading-snug text-ink-2">
             {t('outlook.card.noData', {
               names: model.otherItems.map((i) => i.title).join(', '),
             })}

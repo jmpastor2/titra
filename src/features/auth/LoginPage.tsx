@@ -112,19 +112,17 @@ export function LoginPage() {
           />
 
           {mode === 'signup' && (
-            <>
-              <Field label={t('auth.displayName')}>
-                {(id) => (
-                  <Input
-                    id={id}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    autoComplete="name"
-                    required
-                  />
-                )}
-              </Field>
-            </>
+            <Field label={t('auth.displayName')}>
+              {(id) => (
+                <Input
+                  id={id}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
+                  required
+                />
+              )}
+            </Field>
           )}
 
           <Field label={t('auth.email')}>
@@ -149,7 +147,7 @@ export function LoginPage() {
                 mode === 'signin' && (
                   <button
                     type="button"
-                    className="text-[12.5px] font-medium text-signal"
+                    className="tap-link text-[12.5px] font-medium text-signal outline-none focus-visible:ring-2 focus-visible:ring-signal/60"
                     onClick={() => setMode('reset')}
                   >
                     {t('auth.forgot')}
