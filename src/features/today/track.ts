@@ -74,15 +74,18 @@ export function trackItems(items: readonly TodayItem[], heroKey: string | null):
 }
 
 /**
- * The rows under the track: today's agenda (what was taken, missed or is still to come today)
- * and whatever else the track shows, without the dose the hero is about, in time order.
+ * The rows under the track: what the track shows, plus anything of today's agenda still
+ * waiting (missed, due, to come), without the dose the hero is about, in time order. A dose
+ * taken before the track starts is left out: last night's 00:23 shot listed as "01:00 · done"
+ * next to tonight's 01:00 read as if tonight's were done.
  */
 export function heroRows(
   today: readonly TodayItem[],
   window: readonly TodayItem[],
   heroKey: string | null,
 ): TodayItem[] {
-  return unique([...today, ...window])
+  const shown = new Set(window.map((i) => i.key))
+  return unique([...window, ...today.filter((i) => i.status !== 'taken' || shown.has(i.key))])
     .filter((i) => i.key !== heroKey)
     .toSorted(byTime)
 }

@@ -110,4 +110,14 @@ describe('heroRows', () => {
     const rows = heroRows(today, window, heroKey)
     expect(rows.map((i) => [i.protocol.compound_id, hm(i.at)])).toEqual([['mots-c', '5 09:00']])
   })
+
+  it("leaves out last night's shot taken before the track starts", () => {
+    // Wednesday 22:00: the shot of Tuesday night was taken at 00:23 today; tonight's is 01:00.
+    const now = new Date('2026-03-04T22:00')
+    const taken = [dose('mod-grf-1-29', '2026-03-04T00:23', 'p')]
+    const today = buildToday([NIGHT], taken, now)
+    const window = windowItems([NIGHT], taken, now)
+    const rows = heroRows(today, window, null)
+    expect(rows.map((i) => [i.status, hm(i.at)])).toEqual([['upcoming', '5 01:00']])
+  })
 })

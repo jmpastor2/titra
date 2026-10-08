@@ -11,6 +11,8 @@ export const EXPIRY_URGENT_DAYS = 1
 export function isUrgent(a: StockAlert): boolean {
   switch (a.kind) {
     case 'expired':
+      // Past the label date, yes; past the usual in-use guide is for the inventory to say.
+      return !a.estimated
     case 'runsOut':
     case 'reconstitute':
       return true

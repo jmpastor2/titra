@@ -89,7 +89,7 @@ export function vialView(item: InventoryRow, runway: VialRunway | undefined, now
             date: outlook.expiry.date,
             days,
             estimated: outlook.expiry.estimated,
-            tone: expiryTone(days),
+            tone: expiryTone(days, outlook.expiry.estimated),
           }
         : null,
     low: outlook.runningLow || (!runway && !powder && fillOf(item) <= 0.2),

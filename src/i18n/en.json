@@ -372,7 +372,12 @@
       "resume": "back to {{dose}} on {{date}}",
       "end": "ends {{date}}"
     },
-    "change": "Change"
+    "change": "Change",
+    "habit": {
+      "line": "You usually take it around {{time}} (the plan says {{planned}}).",
+      "use": "Use {{time}}",
+      "done": "Plan and reminders at {{time}}"
+    }
   },
   "symptoms": {
     "title": "Symptoms",
@@ -623,7 +628,9 @@
       "wouldLast_other": "Would last {{count}} days, until {{date}}",
       "wasteAtExpiry_one": "{{count}} dose before it expires · {{mg}} mg would be left",
       "wasteAtExpiry_other": "{{count}} doses before it expires · {{mg}} mg would be left",
-      "leftOne": "Left"
+      "leftOne": "Left",
+      "pastGuide_one": "Past the in-use guide {{count}} day ago · {{date}}",
+      "pastGuide_other": "Past the in-use guide {{count}} days ago · {{date}}"
     },
     "alertsLess": "Show fewer",
     "labelAuto": "If you leave it empty it will be called \"{{label}}\".",
@@ -1648,7 +1655,8 @@
       "runsOut": "Vial running out",
       "reconstitute": "Time to reconstitute",
       "reorder": "Order more",
-      "leftover": "Vial remainder"
+      "leftover": "Vial remainder",
+      "expiredEstimated": "Past the 28-day guide"
     },
     "expired": "{{names}}: expired on {{date}}. Do not use it; open another.",
     "expiresSoon_one": "{{names}}: expires on {{date}}, tomorrow.",
@@ -1665,7 +1673,8 @@
     "expiresSoon_zero": "{{names}}: expires today, {{date}}.",
     "leftover": "{{names}}: {{mg}} mg left in the vial, not enough for a dose. Finish it with another one or discard it.",
     "dismiss": "Got it",
-    "dismissFailed": "Could not mark it as read. Try again."
+    "dismissFailed": "Could not mark it as read. Try again.",
+    "expiredEstimated": "{{names}}: reconstituted over 28 days ago (since {{date}}). It is a guide: if it is still clear and kept cold, you decide when to open another."
   },
   "cycle": {
     "headline": {

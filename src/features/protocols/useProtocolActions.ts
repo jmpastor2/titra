@@ -6,10 +6,12 @@ import { useToast } from '@/components/ui/Toast'
 import type { InventoryRow, Json, ProtocolRow, ProtocolStatus } from '@/data/database.types'
 import { useDeleteSavedProtocol, useSaveSavedProtocol, useSetProtocolStatus } from '@/data/hooks'
 import { toProtocolLike } from '@/data/mappers'
+import { splitNightTime } from '@/domain/dosing/schedule'
 import { useSession } from '@/features/auth/SessionProvider'
 import { useLocale } from '@/lib/useLocale'
 import { useCycleText } from './cycleText'
 import { cycleSummary, doseView, fmtDoseLine } from './cycleView'
+import type { Habit } from './habit'
 import { useUpdateProtocol } from './protocolMutations'
 import { previewAction, type ActionPreview, type PlanEdit, type StepAction } from './stepChange'
 import type { UndoOffer } from './useUndoOffer'
@@ -105,6 +107,25 @@ export function useProtocolActions({ protocol: p, vials, now, offerUndo }: Actio
     return true
   }
 
+  /** Move the plan to the time the doses actually go in (reminders follow it), undoable. */
+  async function moveToHabit(habit: Habit): Promise<boolean> {
+    const before = { times: p.times, time_of_day: p.time_of_day }
+    const clock = splitNightTime(habit.time).clock
+    try {
+      await update.mutateAsync({ id: p.id, patch: { times: [habit.time], time_of_day: clock } })
+    } catch {
+      toast(t('common.error'), 'error')
+      return false
+    }
+    offerUndo({
+      message: t('protocols.habit.done', { time: clock }),
+      onUndo: async () => {
+        await update.mutateAsync({ id: p.id, patch: before })
+      },
+    })
+    return true
+  }
+
   /** Run a step action from its confirmation; closes the sheet when it went through. */
   async function runStepAction(action: StepAction, message: (p: ActionPreview) => string) {
     const pending = previewAction(pl, now, action)
@@ -136,6 +157,7 @@ export function useProtocolActions({ protocol: p, vials, now, offerUndo }: Actio
     busy: update.isPending || setStatus.isPending,
     edit: () => nav(`/protocols/${p.id}/edit`),
     duplicate: () => nav(`/protocols/new?copy=${p.id}`),
+    applyHabit: moveToHabit,
 
     holdWeek: () =>
       runStepAction({ kind: 'hold' }, (a) => {

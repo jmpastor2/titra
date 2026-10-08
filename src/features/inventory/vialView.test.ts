@@ -76,12 +76,16 @@ describe('vial view', () => {
     expect(v.expired).toBe(false)
   })
 
-  it('turns the use-by amber in the last week and rose once expired', () => {
+  it('turns the use-by amber in the last week; past the label rose, past the guide amber', () => {
     const week = vialView(vial({ opened_at: '2026-09-12' }), undefined, now)
     expect(week.expiry).toMatchObject({ days: 5, tone: 'warn' })
+    // Only the in-use guide has gone by: careful, not wrong.
     const old = vialView(vial({ opened_at: '2026-08-01' }), undefined, now)
-    expect(old.expiry).toMatchObject({ days: -37, tone: 'danger' })
+    expect(old.expiry).toMatchObject({ days: -37, tone: 'warn', estimated: true })
     expect(old.expired).toBe(true)
+    // The label date has gone by: wrong.
+    const label = vialView(vial({ opened_at: null, expires_at: '2026-10-01' }), undefined, now)
+    expect(label.expiry).toMatchObject({ estimated: false, tone: 'danger' })
   })
 
   it('uses a label date when it comes first, and does not call it an estimate', () => {

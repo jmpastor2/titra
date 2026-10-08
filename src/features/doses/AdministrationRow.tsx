@@ -146,6 +146,9 @@ export const AdministrationRow = memo(function AdministrationRow({
   )
 })
 
+/** Three hours or more off the planned time stands out; less reads as plain information. */
+const offTone = (deltaMin: number) => (Math.abs(deltaMin) >= 180 ? 'warn' : 'neutral')
+
 /** On time is the norm and reads quietly; whatever is off the plan stands out. */
 function FitMark({ fit }: { fit: Fit }) {
   const { t } = useTranslation()
@@ -157,10 +160,19 @@ function FitMark({ fit }: { fit: Fit }) {
           {t('doses.status.onTime')}
         </span>
       )
+    // An hour or two off is how life goes: said plainly, amber only when it is far off.
     case 'late':
-      return <Badge tone="warn">{t('doses.status.late', { gap: fmtGap(fit.deltaMin) })}</Badge>
+      return (
+        <Badge tone={offTone(fit.deltaMin)}>
+          {t('doses.status.late', { gap: fmtGap(fit.deltaMin) })}
+        </Badge>
+      )
     case 'early':
-      return <Badge tone="warn">{t('doses.status.early', { gap: fmtGap(fit.deltaMin) })}</Badge>
+      return (
+        <Badge tone={offTone(fit.deltaMin)}>
+          {t('doses.status.early', { gap: fmtGap(fit.deltaMin) })}
+        </Badge>
+      )
     case 'makeUp':
       return <Badge tone="warn">{t('doses.status.makeUp')}</Badge>
     case 'ahead':

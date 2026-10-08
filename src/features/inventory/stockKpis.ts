@@ -19,9 +19,12 @@ export function supplyTone(days: number | null): SupplyTone {
   return days <= 14 ? 'danger' : days <= 30 ? 'warn' : 'ok'
 }
 
-/** A use-by date: past it is wrong, the last week careful, anything later fine. */
-export function expiryTone(days: number): SupplyTone {
-  return days < 0 ? 'danger' : days <= 7 ? 'warn' : 'ok'
+/**
+ * A use-by date: past the label date is wrong, the last week careful, anything later fine.
+ * Past the usual in-use period (an estimate) is only careful: it is a guide, not a date.
+ */
+export function expiryTone(days: number, estimated = false): SupplyTone {
+  return days < 0 ? (estimated ? 'warn' : 'danger') : days <= 7 ? 'warn' : 'ok'
 }
 
 /** The order-by day: gone by means order now, within a week means soon. */

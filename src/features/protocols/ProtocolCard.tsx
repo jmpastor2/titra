@@ -11,7 +11,10 @@ import type { InventoryRow, ProtocolRow, ProtocolStatus } from '@/data/database.
 import { protocolCompoundIds } from '@/data/mappers'
 import { ladderSteps } from '@/features/cycles/ladder'
 import { phaseWeeks } from '@/features/cycles/phase'
+import { useDoses } from '@/data/hooks'
+import { splitNightTime } from '@/domain/dosing/schedule'
 import { fmtDate } from '@/lib/format'
+import { usePatientScope } from '@/app/scope'
 import { useLocale } from '@/lib/useLocale'
 import { useCycleText } from './cycleText'
 import { doseFigure } from './cycleView'
@@ -19,6 +22,7 @@ import { DecisionBadge } from './DecisionBand'
 import { CardActions } from './ProtocolButtons'
 import { ProtocolSheets } from './ProtocolSheets'
 import { useScheduleLabel } from './scheduleLabel'
+import { habitTime } from './habit'
 import { useProtocolActions } from './useProtocolActions'
 import type { UndoOffer } from './useUndoOffer'
 
@@ -55,6 +59,12 @@ export function ProtocolCard({
   const scheduleLabel = useScheduleLabel()
   const actions = useProtocolActions({ protocol: p, vials, now, offerUndo })
   const { pl, summary } = actions
+  const { patientId } = usePatientScope()
+  const doses = useDoses(patientId, 30)
+  const habit = useMemo(
+    () => (canEdit && p.status === 'active' ? habitTime(pl, doses.data ?? [], now) : null),
+    [canEdit, p.status, pl, doses.data, now],
+  )
   const ids = protocolCompoundIds(p)
   const color = compoundColor(p.compound_id)
   const current = p.status === 'active' || p.status === 'paused'
@@ -132,6 +142,25 @@ export function ProtocolCard({
         )}
       </button>
 
+      {habit && (
+        // The doses go in at another time, steadily: offer to move the plan (and its reminders).
+        <div className="-mt-1 flex items-center justify-between gap-3 px-4 pb-3.5">
+          <p className="min-w-0 text-[13px] leading-snug text-ink-2">
+            {t('protocols.habit.line', {
+              time: splitNightTime(habit.time).clock,
+              planned: splitNightTime(pl.times[0] ?? '').clock,
+            })}
+          </p>
+          <button
+            type="button"
+            disabled={actions.busy}
+            onClick={() => void actions.applyHabit(habit)}
+            className="min-h-11 shrink-0 rounded-full bg-signal-soft px-3.5 text-[13px] font-semibold text-signal disabled:opacity-50"
+          >
+            {t('protocols.habit.use', { time: splitNightTime(habit.time).clock })}
+          </button>
+        </div>
+      )}
       {deciding && summary && (
         <div className="-mt-1 px-4 pb-3.5">
           <DecisionBadge summary={summary} />

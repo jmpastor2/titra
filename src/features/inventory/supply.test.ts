@@ -32,17 +32,24 @@ const weekly = (n: number, from = 1.75) =>
   }))
 
 describe('supplyRunway', () => {
-  it('stops at the discard date of the vial, not when the mg run out', () => {
-    // Reconstituted on 7 Sep: the 28-day in-use period ends on Mon 5 Oct. The dose that day
-    // is drawn; the next week the 8,5 mg still in it are thrown away and there is nothing else.
-    const r = supplyRunway([vial({})], 'retatrutide', weekly(6))
+  it('stops at the label date of the vial, not when the mg run out', () => {
+    // The label says 5 Oct: that dose is drawn; the next week the 8,5 mg left are thrown away.
+    const r = supplyRunway([vial({ expires_at: '2026-10-05' })], 'retatrutide', weekly(6))
     expect(r.doses).toBe(1)
     expect(r.runsOutAt).toEqual(new Date(2026, 9, 12, 9))
     expect(r.limitedBy).toBe('expiry')
     expect(r.wastedMg).toBeCloseTo(8.5, 6)
   })
 
-  it('moves on to the reserve vial, whose in-use period starts on its first dose', () => {
+  it('treats the usual in-use period as a guide: a vial past it keeps counting', () => {
+    // Reconstituted on 7 Sep, no label date: past 28 days it is still used up dose by dose.
+    const r = supplyRunway([vial({})], 'retatrutide', weekly(6))
+    expect(r.limitedBy).toBe('amount')
+    expect(r.doses).toBe(4)
+    expect(r.wastedMg).toBe(0)
+  })
+
+  it('moves on to the reserve vial once the open one is past its label date', () => {
     const spare = vial({
       id: 'spare',
       remaining_mg: 15,
@@ -51,9 +58,9 @@ describe('supplyRunway', () => {
       opened_at: null,
       created_at: '2026-09-20T10:00:00Z',
     })
-    // 12 Oct: open vial expired, spare starts (until 9 Nov). 2+2.25+2.5+2.75+3 = 12.5 mg by 9 Nov,
-    // then 16 Nov is past its period: 2.5 mg wasted and the supply ends there.
-    const r = supplyRunway([vial({}), spare], 'retatrutide', weekly(8))
+    const r = supplyRunway([vial({ expires_at: '2026-10-05' }), spare], 'retatrutide', weekly(8))
+    // 5 Oct from the open vial, then from the spare: 2+2.25+2.5+2.75+3 = 12.5 mg; 3.25 more
+    // does not fit in 15, so it ends on 16 Nov.
     expect(r.doses).toBe(6)
     expect(r.runsOutAt).toEqual(new Date(2026, 10, 16, 9))
     expect(r.limitedBy).toBe('expiry')

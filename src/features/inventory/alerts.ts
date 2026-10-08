@@ -183,7 +183,8 @@ export function stockAlerts(
       if (days < 0)
         out.push({
           kind: 'expired',
-          severity: 'danger',
+          // Past the usual in-use period only (no label date): a guide, not a hard stop.
+          severity: exp.estimated ? 'warn' : 'danger',
           compoundIds: ids,
           vialId: v.id,
           label: v.label,

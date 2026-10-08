@@ -372,7 +372,12 @@
       "resume": "vuelves a {{dose}} el {{date}}",
       "end": "termina el {{date}}"
     },
-    "change": "Cambiar"
+    "change": "Cambiar",
+    "habit": {
+      "line": "Sueles ponértela hacia las {{time}} (la pauta dice {{planned}}).",
+      "use": "Usar {{time}}",
+      "done": "Pauta y avisos a las {{time}}"
+    }
   },
   "symptoms": {
     "title": "Síntomas",
@@ -623,7 +628,9 @@
       "wouldLast_other": "Daría para {{count}} días, hasta el {{date}}",
       "wasteAtExpiry_one": "{{count}} toma antes de caducar · sobrarían {{mg}} mg",
       "wasteAtExpiry_other": "{{count}} tomas antes de caducar · sobrarían {{mg}} mg",
-      "leftOne": "Queda"
+      "leftOne": "Queda",
+      "pastGuide_one": "Pasó la guía de uso hace {{count}} día · {{date}}",
+      "pastGuide_other": "Pasó la guía de uso hace {{count}} días · {{date}}"
     },
     "alertsLess": "Ver menos",
     "labelAuto": "Si lo dejas vacío se llamará «{{label}}».",
@@ -1648,7 +1655,8 @@
       "runsOut": "Se acaba el vial",
       "reconstitute": "Toca reconstituir",
       "reorder": "Pide más",
-      "leftover": "Resto de vial"
+      "leftover": "Resto de vial",
+      "expiredEstimated": "Pasó la guía de 28 días"
     },
     "expired": "{{names}}: caducó el {{date}}. No lo uses y abre otro.",
     "expiresSoon_one": "{{names}}: caduca el {{date}}, mañana.",
@@ -1665,7 +1673,8 @@
     "expiresSoon_zero": "{{names}}: caduca hoy, {{date}}.",
     "leftover": "{{names}}: quedan {{mg}} mg en el vial, no alcanzan para una toma. Termínalo con otro o descártalo.",
     "dismiss": "Entendido",
-    "dismissFailed": "No se pudo marcar como leída. Inténtalo de nuevo."
+    "dismissFailed": "No se pudo marcar como leída. Inténtalo de nuevo.",
+    "expiredEstimated": "{{names}}: lleva más de 28 días reconstituido (desde el {{date}}). Es una guía: si sigue transparente y en frío, tú decides cuándo abrir otro."
   },
   "cycle": {
     "headline": {

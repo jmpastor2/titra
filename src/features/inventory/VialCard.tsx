@@ -60,7 +60,10 @@ export function VialCard({
   const wastes = usable?.limitedBy === 'expiry' && !view.powder
   const hero =
     wastes && view.hero.kind === 'doses' ? { ...view.hero, count: usable.doses } : view.hero
-  const nextVial = wastes ? null : view.nextVial
+  // Past only the in-use guide (no label date), the vial still runs on its mg: no "it would
+  // last…" or "have the next one ready" built on a date that is an estimate.
+  const soft = Boolean(expiry?.estimated)
+  const nextVial = wastes || (soft && view.nextVial?.kind === 'beforeEmpty') ? null : view.nextVial
   const names = vialContents(item)
     .map((c) => compoundById(c.compoundId)?.names.generic ?? c.compoundId)
     .join(' + ')
@@ -79,7 +82,7 @@ export function VialCard({
       // The first dose it cannot cover can be later today: it lasts until then.
       if (view.coverDays === 0) return t('inventory.card.lastsToday')
       // It expires before then: the run-out day is only what the content would give.
-      return t(view.expiresFirst ? 'inventory.card.wouldLast' : 'inventory.card.lasts', {
+      return t(view.expiresFirst && !soft ? 'inventory.card.wouldLast' : 'inventory.card.lasts', {
         count: view.coverDays ?? 0,
         date: fmtDate(view.coverDate, locale, 'd MMM'),
       })
@@ -92,7 +95,10 @@ export function VialCard({
     ? (() => {
         const date = `${expiry.estimated ? '≈ ' : ''}${day(expiry.date)}`
         return expiry.days < 0
-          ? t('inventory.card.expiredAgo', { count: -expiry.days, date })
+          ? t(expiry.estimated ? 'inventory.card.pastGuide' : 'inventory.card.expiredAgo', {
+              count: -expiry.days,
+              date,
+            })
           : t('inventory.card.expiresIn', { count: expiry.days, date })
       })()
     : null

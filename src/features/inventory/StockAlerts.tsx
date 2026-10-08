@@ -52,7 +52,9 @@ export function AlertBody({ alert: a, muted = false }: { alert: StockAlert; mute
   const { locale } = useLocale()
   const names = a.compoundIds.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
   const date = a.date ? fmtDate(a.date, locale, 'EEE d MMM') : ''
-  const body = t(`stock.${a.kind}`, {
+  // Past the in-use guide is said as a guide, not as "do not use it".
+  const key = a.kind === 'expired' && a.estimated ? 'expiredEstimated' : a.kind
+  const body = t(`stock.${key}`, {
     names,
     date,
     days: Math.abs(a.days ?? 0),
@@ -76,7 +78,7 @@ export function AlertBody({ alert: a, muted = false }: { alert: StockAlert; mute
               <SubstanceDot key={id} color={compoundColor(id)} size={7} />
             ))}
           </span>
-          <span className="min-w-0">{t(`stock.title.${a.kind}`)}</span>
+          <span className="min-w-0">{t(`stock.title.${key}`)}</span>
         </span>
         <span
           className={clsx(
@@ -86,7 +88,7 @@ export function AlertBody({ alert: a, muted = false }: { alert: StockAlert; mute
         >
           {body}
         </span>
-        {a.estimated && (
+        {a.estimated && key !== 'expiredEstimated' && (
           <span className="mt-0.5 block text-[12px] leading-snug text-muted">
             {t('stock.estimated', { days: IN_USE_DAYS })}
           </span>

@@ -4,7 +4,9 @@ import { qk } from '@/data/hooks'
 import { requireSupabase } from '@/lib/supabase'
 
 /** The fields a card or a sheet changes without rewriting the whole protocol. */
-export type ProtocolPatch = Partial<Pick<ProtocolRow, 'steps' | 'components' | 'status'>>
+export type ProtocolPatch = Partial<
+  Pick<ProtocolRow, 'steps' | 'components' | 'status' | 'times' | 'time_of_day'>
+>
 
 /**
  * Change some fields of one protocol (its steps after "keep this week", its status…).

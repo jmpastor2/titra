@@ -1,12 +1,12 @@
 /**
  * How long the stock of one compound really lasts: the vials are used one after another in
  * the order they would be (reconstituted ones first, oldest opened first, then the reserve),
- * and a vial that reaches its discard date with product left is thrown away on that day.
+ * and a vial that reaches the date on its label with product left is thrown away on that day.
  * Pure; see supply.test.ts.
  */
-import { addDays, startOfDay } from 'date-fns'
+import { startOfDay } from 'date-fns'
 import type { InventoryRow } from '@/data/database.types'
-import { effectiveExpiry, IN_USE_DAYS } from './alerts'
+import { effectiveExpiry } from './alerts'
 import { concentrationOf, remainingOf, type VialRunway } from './vials'
 
 const EPS = 1e-9
@@ -37,15 +37,12 @@ function orderOfUse(vials: readonly InventoryRow[], compoundId: string): Invento
 }
 
 /**
- * Last day a vial can be used once it is started on `start`: its own discard date when it is
- * already reconstituted, else the label date or the in-use period from `start`, whichever
- * comes first.
+ * Last day a vial can be used: the date on its label. The usual in-use period after
+ * reconstitution is only a guide (the alerts say it); counted as a hard stop it emptied the
+ * supply of a vial still in use ("0 doses, order now" with 8 mg left).
  */
-function lastDay(v: InventoryRow, start: Date): Date | null {
-  if (concentrationOf(v)) return effectiveExpiry(v)?.date ?? null
-  const inUse = addDays(startOfDay(start), IN_USE_DAYS)
-  const label = v.expires_at ? (effectiveExpiry({ ...v, opened_at: null })?.date ?? null) : null
-  return label && label < inUse ? label : inUse
+function lastDay(v: InventoryRow): Date | null {
+  return v.expires_at ? (effectiveExpiry({ ...v, opened_at: null })?.date ?? null) : null
 }
 
 /**
@@ -65,38 +62,36 @@ export function supplyRunway(
   let wasted = 0
   let expiredSome = false
 
-  // A vial starts on the day of the first dose drawn from it (that is when a reserve vial
-  // gets its water and its in-use period begins).
-  const advance = (at: Date) => {
+  const advance = () => {
     i++
     const v = order[i]
     left = v ? remainingOf(v, compoundId) : 0
-    until = v ? lastDay(v, at) : null
+    until = v ? lastDay(v) : null
   }
   // Vials past their last day are discarded with whatever is left in them.
-  const dropExpired = (day: Date, at: Date) => {
+  const dropExpired = (day: Date) => {
     while (i < order.length && until !== null && day > until) {
       if (left > EPS) {
         wasted += left
         expiredSome = true
       }
-      advance(at)
+      advance()
     }
   }
 
   let doses = 0
   for (const u of upcoming) {
     const day = startOfDay(u.at)
-    if (i === -1) advance(u.at)
-    dropExpired(day, u.at)
+    if (i === -1) advance()
+    dropExpired(day)
     let need = u.doseMg
     while (need > EPS && i < order.length) {
       const take = Math.min(left, need)
       left -= take
       need -= take
       if (need > EPS || left <= EPS) {
-        advance(u.at)
-        dropExpired(day, u.at)
+        advance()
+        dropExpired(day)
       }
     }
     if (need > EPS)

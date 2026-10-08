@@ -77,7 +77,7 @@ export function StockStrip({ kpis }: { kpis: StockKpis }) {
       label: t('inventory.kpi.expiry'),
       value: `${nextExpiry.estimated ? '≈ ' : ''}${shortDate(nextExpiry.date)}`,
       sub: when(nextExpiry.days, t),
-      tone: expiryTone(nextExpiry.days),
+      tone: expiryTone(nextExpiry.days, nextExpiry.estimated),
     })
   if (reorder)
     facts.push({

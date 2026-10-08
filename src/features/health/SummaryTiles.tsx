@@ -108,7 +108,15 @@ export function BodyTile({
 
   const { delta, baseline } = change
   const digits = KIND_DIGITS[kind]
-  const tone = delta === null ? 'neutral' : changeTone(kind, delta, FLAT)
+  // With a goal, good news is moving toward it (a weight goal can be above the start too).
+  const tone =
+    delta === null
+      ? 'neutral'
+      : goal != null && Math.abs(delta) >= FLAT
+        ? Math.sign(goal - (change.latest.value - delta)) === Math.sign(delta)
+          ? 'good'
+          : 'bad'
+        : changeTone(kind, delta, FLAT)
   const aside =
     delta !== null && baseline ? (
       <Delta
