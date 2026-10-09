@@ -8,7 +8,7 @@ import { useSaveProtocol } from '@/data/hooks'
 import { fmtDate } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { isCurrent, type CycleView } from './model'
-import { adjustRest, MAX_REST_WEEKS, REST_GUIDE, stepsUpdate, trailingRest } from './newCycle'
+import { adjustRest, MAX_REST_WEEKS, restGuide, stepsUpdate, trailingRest } from './newCycle'
 import { remaining, weekReadout } from './readout'
 
 /**
@@ -36,6 +36,7 @@ export function RestControls({
   const rest =
     isCurrent(view.row.status) && view.info.phase !== 'finished' ? trailingRest(view.info) : null
   if (!rest) return null
+  const guide = restGuide(view.row.notes)
 
   const weeks = rest.weeks
   const readout = weekReadout(view.info, now)
@@ -90,7 +91,8 @@ export function RestControls({
             to: date(addDays(rest.endsOn, -1)),
           })}
           {canEdit &&
-            ` · ${t('cycles.rest.guideShort', { min: REST_GUIDE.minWeeks, max: REST_GUIDE.maxWeeks })}`}
+            guide &&
+            ` · ${t('cycles.rest.guideShort', { min: guide.minWeeks, max: guide.maxWeeks })}`}
         </div>
       </div>
       {canEdit && (

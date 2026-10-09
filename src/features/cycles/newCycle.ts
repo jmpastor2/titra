@@ -102,10 +102,24 @@ export const closesOnNewCycle = (status: ProtocolRow['status']): boolean =>
 /* ------------------------------------------------------------------ rest */
 
 /**
- * The rest the person usually takes between cycles, in their own words: 4–8 weeks. It is
- * shown as a reference and nothing enforces it; they decide how long each rest is.
+ * The rest the person wrote for this protocol, in its notes ("descanso de 4–8 semanas",
+ * "descanso de 4–8", "2-4 semanas de descanso", "rest 2–4 weeks"). Shown as a reference only; nothing enforces
+ * it. Null when the notes do not say: no made-up range.
  */
-export const REST_GUIDE = { minWeeks: 4, maxWeeks: 8 } as const
+export function restGuide(
+  notes: string | null | undefined,
+): { minWeeks: number; maxWeeks: number } | null {
+  if (!notes) return null
+  const pair = String.raw`(\d+)\s*[–-]\s*(\d+)`
+  const m =
+    new RegExp(String.raw`${pair}\s*(?:semanas|weeks)\s*(?:de\s+)?(?:descanso|rest|off)`, 'i').exec(
+      notes,
+    ) ?? new RegExp(String.raw`(?:descanso|rest|off)\D{0,8}${pair}`, 'i').exec(notes)
+  if (!m) return null
+  const a = Number(m[1])
+  const b = Number(m[2])
+  return a > 0 && b >= a ? { minWeeks: a, maxWeeks: b } : null
+}
 /** A sanity cap on the rest, far beyond any guide. */
 export const MAX_REST_WEEKS = 52
 

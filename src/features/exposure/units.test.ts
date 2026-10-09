@@ -65,7 +65,7 @@ describe('describeDoses', () => {
         ],
         'en',
       ),
-    ).toBe('2 mg · 100 mcg')
+    ).toBe('2 + 0.1 mg')
   })
 })
 

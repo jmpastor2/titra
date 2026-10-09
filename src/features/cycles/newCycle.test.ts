@@ -4,6 +4,7 @@ import type { ScheduleStep } from '@/domain/types'
 import { cjc, CJC_STEPS, protocolRow, reta } from './fixtures'
 import { buildCycleViews } from './model'
 import {
+  restGuide,
   adjustRest,
   buildNextCycle,
   closesOnNewCycle,
@@ -228,5 +229,28 @@ describe('stepsUpdate', () => {
     expect(Object.keys(update).toSorted()).toEqual(
       ['compound_id', 'created_by', 'id', 'name', 'patient_id', 'start_date', 'steps'].toSorted(),
     )
+  })
+})
+
+describe('restGuide', () => {
+  it('reads the rest written in the notes, either way round', () => {
+    expect(restGuide('Ciclo de 12–16 semanas y descanso de 4–8.')).toEqual({
+      minWeeks: 4,
+      maxWeeks: 8,
+    })
+    expect(restGuide('Ciclo de 12–16 semanas y descanso de 4–8 semanas.')).toEqual({
+      minWeeks: 4,
+      maxWeeks: 8,
+    })
+    expect(restGuide('luego 2–4 semanas de descanso. Ciclo total 8–12 semanas.')).toEqual({
+      minWeeks: 2,
+      maxWeeks: 4,
+    })
+    expect(restGuide('rest 2-4 weeks')).toEqual({ minWeeks: 2, maxWeeks: 4 })
+  })
+
+  it('says nothing when the notes do not', () => {
+    expect(restGuide(null)).toBeNull()
+    expect(restGuide('Por la mañana.')).toBeNull()
   })
 })

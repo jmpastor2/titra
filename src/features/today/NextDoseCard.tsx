@@ -218,7 +218,26 @@ function Load({ doses, units }: { doses: readonly StackComponent[]; units: numbe
       </div>
     )
   }
-  return <div className="readout mt-4 text-[28px] font-semibold leading-tight">{list}</div>
+  // A blend with no units yet (vial still powder): the whole mass big, each part named under it,
+  // instead of four masses in a row ("1,67 mg · 333 mcg · 0,333 mg · 333 mcg").
+  const total = doses.reduce((sum, d) => sum + d.doseMg, 0)
+  const value = fmtDoseValue(total, 'mg', locale)
+  return (
+    <div className="mt-4">
+      <div className={big}>
+        {value}
+        <span className={small}>{fmtDose(total, 'mg', locale).slice(value.length + 1)}</span>
+      </div>
+      <div className="mt-1.5 text-[13px] leading-snug text-muted">
+        {doses
+          .map(
+            (d) =>
+              `${compoundName(d.compoundId)} ${fmtDose(d.doseMg, compoundById(d.compoundId)?.defaultUnit ?? 'mg', locale)}`,
+          )
+          .join(' · ')}
+      </div>
+    </div>
+  )
 }
 
 /** "lun 5 · 09:00 · en 12 h", or "Toca ahora · 09:00" / "Retrasada 2 h · 09:00" when it is due. */

@@ -53,6 +53,10 @@ export function fmtDoseList(
     const values = doses.map((d) => fmtDoseValue(d.valueMg, d.unit, locale)).join(' + ')
     return `${values} ${DOSE_LABEL[first.unit] ?? 'mg'}`
   }
+  // Mixed units ("1,67 mg · 333 mcg · 0,333 mg") read as one list in mg.
+  if (doses.length > 1) {
+    return `${doses.map((d) => fmtDoseValue(d.valueMg, 'mg', locale)).join(' + ')} mg`
+  }
   return doses.map((d) => fmtDose(d.valueMg, d.unit, locale)).join(' · ')
 }
 

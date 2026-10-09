@@ -7,7 +7,7 @@ describe('dose formatting', () => {
     expect(fmtDose(2, 'mg', 'en')).toBe('2 mg')
   })
 
-  it('joins a same-unit stack under one unit and mixes otherwise', () => {
+  it('joins a same-unit stack under one unit, and a mixed one in mg', () => {
     const stack = [
       { valueMg: 0.1, unit: 'mcg' as const },
       { valueMg: 0.1, unit: 'mcg' as const },
@@ -21,6 +21,6 @@ describe('dose formatting', () => {
         ],
         'en',
       ),
-    ).toBe('2 mg · 100 mcg')
+    ).toBe('2 + 0.1 mg')
   })
 })

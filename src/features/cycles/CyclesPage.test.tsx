@@ -238,6 +238,8 @@ describe('CyclesPage', () => {
   it('lets the rest be lengthened and shortened, saving it on the protocol', async () => {
     at(NOW)
     const db = account()
+    // The reference comes from the protocol's own notes.
+    db.protocols.find((p) => p.id === 'cjc')!.notes = 'Ciclo de 12–16 semanas y descanso de 4–8.'
     mount(<CyclesPage />, db)
     expect(await screen.findByText('Previsto: 4 semanas')).toBeInTheDocument()
     expect(screen.getByText(/tu referencia: 4–8 semanas/)).toBeInTheDocument()
