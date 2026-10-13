@@ -170,7 +170,10 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
               // the sheet's own scroll, so it is never left under the keyboard or the footer.
               const field = e.target
               if (canAutoFocusFields() || !field.matches('input, textarea, select')) return
-              setTimeout(() => field.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350)
+              setTimeout(() => {
+                if (field.isConnected)
+                  field.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+              }, 350)
             }}
             className={clsx(
               'outline-none will-change-transform',
