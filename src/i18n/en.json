@@ -48,7 +48,7 @@
   },
   "auth": {
     "signIn": "Sign in",
-    "signUp": "Create account",
+    "signUp": "Request access",
     "email": "Email",
     "password": "Password",
     "passwordHint": "At least 8 characters",
@@ -58,7 +58,7 @@
     "resetSent": "We sent you an email to reset your password.",
     "magicLink": "Send magic link",
     "magicSent": "Check your inbox: we sent you a sign-in link.",
-    "confirmEmail": "Account created. Confirm your email to continue.",
+    "confirmEmail": "Request sent. Confirm your email to continue.",
     "errors": {
       "invalid": "Incorrect email or password.",
       "weak": "Password is too short.",
@@ -66,12 +66,40 @@
       "generic": "The operation could not be completed."
     },
     "enter": "Sign in",
-    "signupTitle": "Create your account",
+    "signupTitle": "Request access",
+    "signupHint": "Titra is private: your account stays pending until it is approved.",
     "resetTitle": "Reset your password",
     "resetHint": "We will email you a link to choose a new one.",
-    "noAccount": "No account yet?",
+    "noAccount": "No access yet?",
     "haveAccount": "Already have an account?",
     "backToSignIn": "Back to sign in"
+  },
+  "access": {
+    "pendingTitle": "Request sent",
+    "pendingBody": "Your account {{email}} is waiting for approval. You can come in as soon as it is approved.",
+    "rejectedTitle": "No access",
+    "rejectedBody": "The account {{email}} has no access to Titra.",
+    "checkAgain": "Check again",
+    "stillPending": "Your request is still pending.",
+    "title": "Access",
+    "intro": "Whoever signs up stays pending until you approve them. Until then they cannot see or save anything.",
+    "pending": "Pending",
+    "approved": "With access",
+    "rejected": "No access",
+    "noPending": "No pending requests.",
+    "requested": "Asked for access on {{date}}",
+    "since": "With access since {{date}}",
+    "rejectedOn": "No access since {{date}}",
+    "approve": "Approve",
+    "reject": "Reject",
+    "revoke": "Remove access",
+    "revokeConfirm": "Remove access for {{name}}? Their data is kept and you can approve them again whenever you like.",
+    "you": "You",
+    "admin": "Admin",
+    "done": {
+      "approved": "{{name}} now has access",
+      "rejected": "{{name}} no longer has access"
+    }
   },
   "onboarding": {
     "welcome": "Welcome",
@@ -967,7 +995,8 @@
       "reminders": "Reminders",
       "share": "Share",
       "export": "Export",
-      "settings": "Settings"
+      "settings": "Settings",
+      "access": "Access"
     },
     "hints": {
       "protocols": "Substances, doses and days",
@@ -980,7 +1009,8 @@
       "reminders": "A reminder when each dose is due",
       "share": "Show your log to your doctor",
       "export": "CSV and backup",
-      "settings": "Profile, theme and language"
+      "settings": "Profile, theme and language",
+      "access": "Who can use Titra"
     },
     "badge": {
       "active_one": "{{count}} active",
@@ -995,7 +1025,9 @@
       "vials_one": "{{count}} vial",
       "vials_other": "{{count}} vials",
       "on": "On",
-      "off": "Off"
+      "off": "Off",
+      "requests_one": "{{count}} request",
+      "requests_other": "{{count}} requests"
     }
   },
   "export": {

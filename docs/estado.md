@@ -42,6 +42,13 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   habitual en Pautas (`protocols/habit.ts`). Referencia de descanso leída de las notas de cada pauta.
   Mezclas sin reconstituir: masa total y partes nombradas.
 
+- Acceso con aprobación (migración 6, `20261013000000_access_approval.sql`, aplicada el 2026-10-13): quien se
+  registra («Solicitar acceso») queda pendiente y la base de datos no le deja leer ni escribir nada (política
+  restrictiva `approved_only` en cada tabla de `public`; una tabla nueva necesita volver a ejecutar la migración).
+  Pantalla «Solicitud enviada» con «Comprobar de nuevo»; Más → Accesos (solo admin) para aprobar, rechazar o
+  quitar el acceso. Cada solicitud avisa por ntfy.sh (secreto de Vault `access_ntfy_topic`). El enlace mágico ya
+  no crea cuentas. Los admins se marcan a mano en `public.access.is_admin`.
+
 ## Pendiente
 
 1. Probar el teclado de las hojas (viales, agua) en el iPhone real.

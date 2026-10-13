@@ -42,6 +42,16 @@ export function buildStore(now: Date = new Date(), options: LabOptions = {}): St
     created_at: stamp,
     updated_at: stamp,
   }
+  const access: Row[] = [
+    {
+      user_id: uid,
+      status: 'approved',
+      is_admin: true,
+      requested_at: stamp,
+      decided_at: stamp,
+      email: LAB_USER.email,
+    },
+  ]
   const store: Store = {
     profiles: [profile],
     protocols: [],
@@ -57,8 +67,20 @@ export function buildStore(now: Date = new Date(), options: LabOptions = {}): St
     saved_protocols: [],
     reminders: [],
     alert_dismissals: [],
+    access,
   }
   if (options.empty) return store
+
+  // Someone waiting for an answer, so the admin list and its badge have something to show.
+  access.push({
+    user_id: 'lab-request',
+    status: 'pending',
+    is_admin: false,
+    requested_at: addDays(now, -1).toISOString(),
+    decided_at: null,
+    email: 'lucia@example.com',
+    display_name: 'Lucía',
+  })
 
   const weekly = (steps: [number, number | null][], weekdays: number[]) =>
     steps.map(([doseMg, durationWeeks]) => ({ doseMg, intervalDays: 1, weekdays, durationWeeks }))

@@ -48,7 +48,7 @@
   },
   "auth": {
     "signIn": "Iniciar sesión",
-    "signUp": "Crear cuenta",
+    "signUp": "Solicitar acceso",
     "email": "Correo electrónico",
     "password": "Contraseña",
     "passwordHint": "Mínimo 8 caracteres",
@@ -58,7 +58,7 @@
     "resetSent": "Te hemos enviado un correo para restablecer la contraseña.",
     "magicLink": "Enviar enlace mágico",
     "magicSent": "Revisa tu correo: te hemos enviado un enlace para entrar.",
-    "confirmEmail": "Cuenta creada. Confirma tu correo electrónico para continuar.",
+    "confirmEmail": "Solicitud enviada. Confirma tu correo electrónico para continuar.",
     "errors": {
       "invalid": "Correo o contraseña incorrectos.",
       "weak": "La contraseña es demasiado corta.",
@@ -66,12 +66,40 @@
       "generic": "No se ha podido completar la operación."
     },
     "enter": "Entrar",
-    "signupTitle": "Crea tu cuenta",
+    "signupTitle": "Solicita acceso",
+    "signupHint": "Titra es privada: tu cuenta quedará pendiente hasta que la aprueben.",
     "resetTitle": "Recupera tu contraseña",
     "resetHint": "Te enviaremos un enlace a tu correo para elegir una nueva.",
-    "noAccount": "¿Aún no tienes cuenta?",
+    "noAccount": "¿Aún no tienes acceso?",
     "haveAccount": "¿Ya tienes cuenta?",
     "backToSignIn": "Volver a iniciar sesión"
+  },
+  "access": {
+    "pendingTitle": "Solicitud enviada",
+    "pendingBody": "Tu cuenta {{email}} está pendiente de aprobación. Podrás entrar en cuanto la aprueben.",
+    "rejectedTitle": "Sin acceso",
+    "rejectedBody": "La cuenta {{email}} no tiene acceso a Titra.",
+    "checkAgain": "Comprobar de nuevo",
+    "stillPending": "Tu solicitud sigue pendiente.",
+    "title": "Accesos",
+    "intro": "Quien se registra queda pendiente hasta que lo apruebes. Mientras tanto no puede ver ni guardar nada.",
+    "pending": "Pendientes",
+    "approved": "Con acceso",
+    "rejected": "Sin acceso",
+    "noPending": "No hay solicitudes pendientes.",
+    "requested": "Pidió acceso el {{date}}",
+    "since": "Con acceso desde el {{date}}",
+    "rejectedOn": "Sin acceso desde el {{date}}",
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "revoke": "Quitar acceso",
+    "revokeConfirm": "¿Quitar el acceso a {{name}}? Sus datos se conservan y puedes volver a aprobarlo cuando quieras.",
+    "you": "Tú",
+    "admin": "Admin",
+    "done": {
+      "approved": "{{name}} ya tiene acceso",
+      "rejected": "{{name}} se queda sin acceso"
+    }
   },
   "onboarding": {
     "welcome": "Bienvenido",
@@ -967,7 +995,8 @@
       "reminders": "Avisos",
       "share": "Compartir",
       "export": "Exportar",
-      "settings": "Ajustes"
+      "settings": "Ajustes",
+      "access": "Accesos"
     },
     "hints": {
       "protocols": "Sustancias, dosis y días",
@@ -980,7 +1009,8 @@
       "reminders": "Un aviso cuando toca cada pauta",
       "share": "Enseña tu control a tu médico",
       "export": "CSV y copia de seguridad",
-      "settings": "Perfil, tema e idioma"
+      "settings": "Perfil, tema e idioma",
+      "access": "Quién puede usar Titra"
     },
     "badge": {
       "active_one": "{{count}} activa",
@@ -995,7 +1025,9 @@
       "vials_one": "{{count}} vial",
       "vials_other": "{{count}} viales",
       "on": "Activados",
-      "off": "Desactivados"
+      "off": "Desactivados",
+      "requests_one": "{{count}} solicitud",
+      "requests_other": "{{count}} solicitudes"
     }
   },
   "export": {

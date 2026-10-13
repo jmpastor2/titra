@@ -2,6 +2,7 @@ import {
   BellRing,
   CalendarRange,
   Calculator,
+  KeyRound,
   ChevronRight,
   Download,
   FlaskConical,
@@ -20,11 +21,14 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/primitives'
 import { useProtocols } from '@/data/hooks'
+import { useAccessRequests, useIsAccessAdmin } from '@/features/access/data'
+import { useSession } from '@/features/auth/SessionProvider'
 import { useCycleInfos } from '@/features/cycle/useCycleInfos'
 import { useStock } from '@/features/inventory/useStock'
 import { useReminderPrefs } from '@/features/reminders/useReminders'
 import { env } from '@/lib/env'
 import {
+  ADMIN_ONLY,
   MENU_GROUPS,
   MENU_ROUTES,
   menuBadges,
@@ -46,18 +50,20 @@ const ICONS: Record<MenuId, ReactNode> = {
   share: <Share2 className={ICON} strokeWidth={1.75} />,
   export: <Download className={ICON} strokeWidth={1.75} />,
   settings: <Settings className={ICON} strokeWidth={1.75} />,
+  access: <KeyRound className={ICON} strokeWidth={1.75} />,
 }
 
 /**
  * The live state the badges read. All of it comes from queries the other screens already
  * share (protocols, vials, doses, the profile), so opening the menu costs no new request.
  */
-function useMenuState(): MenuState {
+function useMenuState(isAdmin: boolean): MenuState {
   const { patientId } = usePatientScope()
   const protocols = useProtocols(patientId)
   const cycles = useCycleInfos()
   const stock = useStock(patientId)
   const reminders = useReminderPrefs()
+  const requests = useAccessRequests(isAdmin)
 
   const active = useMemo(
     () => (protocols.data ?? []).filter((p) => p.status === 'active').length,
@@ -73,12 +79,16 @@ function useMenuState(): MenuState {
     cycles: cycles.map((c) => c.info),
     stock: stock.pending ? null : { alerts: stock.alerts, vials },
     remindersOn: reminders.loaded ? reminders.enabled : null,
+    accessRequests: requests.data
+      ? requests.data.filter((r) => r.status === 'pending').length
+      : null,
   }
 }
 
 export function MorePage() {
   const { t } = useTranslation()
-  const badges = menuBadges(useMenuState())
+  const isAdmin = useIsAccessAdmin(useSession().user?.id)
+  const badges = menuBadges(useMenuState(isAdmin))
 
   return (
     <div>
@@ -90,11 +100,13 @@ export function MorePage() {
             <h2 className="spec mb-2 px-1">{t(group.title)}</h2>
             <Card padded={false} className="px-4">
               <ul className="divide-y divide-line">
-                {group.items.map((id) => (
-                  <li key={id}>
-                    <MenuRow id={id} badge={badges[id]} />
-                  </li>
-                ))}
+                {group.items
+                  .filter((id) => isAdmin || !ADMIN_ONLY.has(id))
+                  .map((id) => (
+                    <li key={id}>
+                      <MenuRow id={id} badge={badges[id]} />
+                    </li>
+                  ))}
               </ul>
             </Card>
           </section>

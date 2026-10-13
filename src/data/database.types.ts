@@ -262,6 +262,23 @@ export type ReminderInput = Pick<
   | 'tolerance_minutes'
 >
 
+/** Every sign-up starts pending; an admin approves or rejects it. */
+export type AccessStatus = 'pending' | 'approved' | 'rejected'
+
+export type AccessRow = {
+  user_id: string
+  status: AccessStatus
+  is_admin: boolean
+  requested_at: string
+  decided_at: string | null
+}
+
+/** One person as the admin's access list shows them (`access_requests()`). */
+export type AccessRequest = AccessRow & {
+  email: string
+  display_name: string
+}
+
 type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
 
 type Table<Row, InsertOptional extends keyof Row> = {
@@ -351,6 +368,7 @@ export type Database = {
         ReminderRow,
         'id' | 'url' | 'tolerance_minutes' | 'sent_at' | 'skipped_at' | 'created_at'
       >
+      access: Table<AccessRow, 'status' | 'is_admin' | 'requested_at' | 'decided_at'>
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -362,6 +380,8 @@ export type Database = {
         Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent?: string }
         Returns: string
       }
+      access_requests: { Args: Record<string, never>; Returns: AccessRequest[] }
+      decide_access: { Args: { p_user: string; p_status: AccessStatus }; Returns: undefined }
     }
     Enums: {
       user_role: UserRole

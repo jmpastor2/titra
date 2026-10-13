@@ -22,6 +22,7 @@ const quiet: MenuState = {
   cycles: [],
   stock: { alerts: [], vials: 0 },
   remindersOn: false,
+  accessRequests: null,
 }
 
 describe('menu structure', () => {
@@ -34,6 +35,15 @@ describe('menu structure', () => {
 })
 
 describe('menuBadges', () => {
+  it('asks the admin to answer pending access requests', () => {
+    expect(menuBadges({ ...quiet, accessRequests: 2 }).access).toEqual({
+      tone: 'warn',
+      key: 'more.badge.requests',
+      values: { count: 2 },
+    })
+    expect(menuBadges({ ...quiet, accessRequests: 0 }).access).toBeUndefined()
+  })
+
   it('says nothing about an empty account, apart from the reminders switch', () => {
     expect(menuBadges(quiet)).toEqual({ reminders: { tone: 'warn', key: 'more.badge.off' } })
   })

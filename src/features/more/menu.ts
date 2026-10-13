@@ -13,6 +13,7 @@ export type MenuId =
   | 'share'
   | 'export'
   | 'settings'
+  | 'access'
 
 export interface MenuGroup {
   /** i18n key of the group's title. */
@@ -25,8 +26,11 @@ export const MENU_GROUPS: readonly MenuGroup[] = [
   { title: 'more.groups.plan', items: ['protocols', 'cycles', 'inventory'] },
   { title: 'more.groups.tools', items: ['calculator', 'simulator', 'sites', 'outlook'] },
   { title: 'more.groups.health', items: ['reminders', 'share', 'export'] },
-  { title: 'more.groups.app', items: ['settings'] },
+  { title: 'more.groups.app', items: ['settings', 'access'] },
 ]
+
+/** Rows only an admin sees. */
+export const ADMIN_ONLY: ReadonlySet<MenuId> = new Set<MenuId>(['access'])
 
 export const MENU_ROUTES: Readonly<Record<MenuId, string>> = {
   protocols: '/protocols',
@@ -40,6 +44,7 @@ export const MENU_ROUTES: Readonly<Record<MenuId, string>> = {
   share: '/share',
   export: '/export',
   settings: '/settings',
+  access: '/access',
 }
 
 export type BadgeTone = 'neutral' | 'brand' | 'warn' | 'danger'
@@ -67,6 +72,8 @@ export interface MenuState {
   stock: { alerts: readonly Pick<StockAlert, 'severity'>[]; vials: number } | null
   /** Null while the profile is still loading. */
   remindersOn: boolean | null
+  /** Requests waiting for my answer; null unless I approve accounts. */
+  accessRequests: number | null
 }
 
 /** The cycle that deserves the badge: one waiting for a decision, else the first dosing one. */
@@ -113,6 +120,13 @@ export function menuBadges(state: MenuState): Partial<Record<MenuId, MenuBadge>>
     out.reminders = state.remindersOn
       ? { tone: 'brand', key: 'more.badge.on' }
       : { tone: 'warn', key: 'more.badge.off' }
+  }
+  if (state.accessRequests) {
+    out.access = {
+      tone: 'warn',
+      key: 'more.badge.requests',
+      values: { count: state.accessRequests },
+    }
   }
   return out
 }

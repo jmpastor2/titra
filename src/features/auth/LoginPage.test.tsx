@@ -35,10 +35,11 @@ describe('LoginPage', () => {
     expect(screen.queryByLabelText('Tu nombre')).not.toBeInTheDocument()
   })
 
-  it('moves to creating an account from the line underneath, and back', () => {
+  it('moves to asking for access from the line underneath, and back', () => {
     visit()
-    fireEvent.click(screen.getByRole('button', { name: /¿Aún no tienes cuenta\?/ }))
-    expect(screen.getByRole('heading', { name: 'Crea tu cuenta' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /¿Aún no tienes acceso\?/ }))
+    expect(screen.getByRole('heading', { name: 'Solicita acceso' })).toBeInTheDocument()
+    expect(screen.getByText(/Titra es privada/)).toBeInTheDocument()
     expect(screen.getByLabelText('Tu nombre')).toBeInTheDocument()
     expect(screen.getByText('Mínimo 8 caracteres')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /¿Ya tienes cuenta\?/ }))
@@ -59,13 +60,13 @@ describe('LoginPage', () => {
 
   it('says a short password is too short before asking the server', async () => {
     visit()
-    fireEvent.click(screen.getByRole('button', { name: /¿Aún no tienes cuenta\?/ }))
+    fireEvent.click(screen.getByRole('button', { name: /¿Aún no tienes acceso\?/ }))
     fireEvent.change(screen.getByLabelText('Tu nombre'), { target: { value: 'Jose' } })
     fireEvent.change(screen.getByLabelText('Correo electrónico'), {
       target: { value: 'jose@example.com' },
     })
     fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'corta' } })
-    fireEvent.submit(screen.getByRole('button', { name: 'Crear cuenta' }))
+    fireEvent.submit(screen.getByRole('button', { name: 'Solicitar acceso' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(i18n.t('auth.errors.weak'))
   })
 })

@@ -38,6 +38,15 @@ export function loadRealAccount(): RealAccount | null {
     compound_notes: [],
     push_subscriptions: [],
     reminders: [],
+    access: [
+      {
+        user_id: owner,
+        status: 'approved',
+        is_admin: true,
+        requested_at: new Date().toISOString(),
+        decided_at: null,
+      },
+    ],
   }
   return { store, user: { id: owner, email: 'real@titra.test' } }
 }

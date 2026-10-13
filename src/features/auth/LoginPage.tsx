@@ -83,7 +83,8 @@ export function LoginPage() {
     try {
       const res = await requireSupabase().auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: redirectTo },
+        // Only existing accounts: a new one has to ask for access first.
+        options: { emailRedirectTo: redirectTo, shouldCreateUser: false },
       })
       if (res.error) throw res.error
       toast(t('auth.magicSent'), 'success')
@@ -106,9 +107,9 @@ export function LoginPage() {
             <h2 className="text-[20px] font-semibold tracking-[-0.015em]">
               {mode === 'signup' ? t('auth.signupTitle') : t('auth.resetTitle')}
             </h2>
-            {mode === 'reset' && (
-              <p className="mt-1 text-[13.5px] leading-snug text-muted">{t('auth.resetHint')}</p>
-            )}
+            <p className="mt-1 text-[13.5px] leading-snug text-muted">
+              {t(mode === 'signup' ? 'auth.signupHint' : 'auth.resetHint')}
+            </p>
           </div>
         )}
 

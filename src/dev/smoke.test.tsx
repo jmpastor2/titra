@@ -103,6 +103,7 @@ function routesFor(store: Store): string[] {
     '/outlook',
     '/export',
     '/share',
+    '/access',
   ]
   return protocol ? [...base, `/protocols/${protocol}`, `/protocols/${protocol}/edit`] : base
 }

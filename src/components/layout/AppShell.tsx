@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation, useNavigationType } from 'react-router-dom'
 import { PatientScopeProvider } from '@/app/scope'
 import { prefetchCore, useProfile } from '@/data/hooks'
+import { AccessPending } from '@/features/access/AccessPending'
+import { accessVerdict, useAccess } from '@/features/access/data'
 import { useSession } from '@/features/auth/SessionProvider'
 import { ReminderAgent } from '@/features/reminders/useReminders'
 import { useOnline } from '@/lib/useOnline'
@@ -12,7 +14,7 @@ import { Splash } from './Splash'
 import { TabBar } from './TabBar'
 
 /**
- * Authenticated frame: gates on session + onboarding, scopes every screen to the
+ * Authenticated frame: gates on session, approval and onboarding, scopes every screen to the
  * signed-in user's own control and renders the floating dock.
  */
 export function AppShell() {
@@ -24,12 +26,16 @@ export function AppShell() {
   useEffect(() => {
     if (userId) void prefetchCore(qc, userId)
   }, [qc, userId])
+  const access = useAccess(userId)
   const profile = useProfile(userId)
   const online = useOnline()
   const { t } = useTranslation()
 
   if (status === 'loading') return <Splash />
   if (status === 'signed_out') return <Navigate to="/auth" replace />
+  const verdict = accessVerdict(access.data, access.isError)
+  if (verdict === 'loading') return <Splash />
+  if (verdict !== 'open') return <AccessPending verdict={verdict} />
   if (profile.isPending) return <Splash />
   if (profile.isError || !profile.data) return <Splash error={profile.error?.message} />
   if (!profile.data.onboarded) return <Navigate to="/onboarding" replace />

@@ -40,6 +40,7 @@ const RemindersPage = named(() => import('@/features/reminders/RemindersPage'), 
 const OutlookPage = named(() => import('@/features/outlook/OutlookPage'), 'OutlookPage')
 const ExportPage = named(() => import('@/features/settings/ExportPage'), 'ExportPage')
 const SharePage = named(() => import('@/features/share/SharePage'), 'SharePage')
+const AccessPage = named(() => import('@/features/access/AccessPage'), 'AccessPage')
 const PatientDetailPage = named(
   () => import('@/features/clinic/PatientDetailPage'),
   'PatientDetailPage',
@@ -82,6 +83,7 @@ export const router = createHashRouter([
       { path: 'outlook', element: page(<OutlookPage />) },
       { path: 'export', element: page(<ExportPage />) },
       { path: 'share', element: page(<SharePage />) },
+      { path: 'access', element: page(<AccessPage />) },
       { path: 'shared/:patientId', element: page(<PatientDetailPage />) },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

@@ -49,10 +49,10 @@ se puede compartir en solo lectura con quien tú decidas, por ejemplo tu médico
 1. Crea un proyecto en [supabase.com](https://supabase.com).
 2. **SQL Editor → New query**: pega y ejecuta, en orden, los ficheros de `supabase/migrations/`:
    `20260919000000_init.sql`, `20260925000000_personal_tracking.sql`,
-   `20260926000000_reminders.sql`, `20260927000000_blend_vials.sql` y
-   `20261004000000_edit_doses_dismissals.sql`. Crean las tablas, los disparadores, la Row Level
-   Security, la tarea programada de avisos, los viales con mezcla, la edición de tomas con ajuste de
-   stock y las alertas marcadas como leídas. Con el CLI de Supabase ya enlazado también valen
+   `20260926000000_reminders.sql`, `20260927000000_blend_vials.sql`,
+   `20261004000000_edit_doses_dismissals.sql` y `20261013000000_access_approval.sql`. Crean las tablas,
+   los disparadores, la Row Level Security, la tarea programada de avisos, los viales con mezcla, la
+   edición de tomas con ajuste de stock, las alertas marcadas como leídas y el acceso con aprobación. Con el CLI de Supabase ya enlazado también valen
    `npx supabase db query --linked -f supabase/migrations/<archivo>.sql`.
 3. **Avisos push**: sigue [docs/notificaciones.md](docs/notificaciones.md) para subir la Edge
    Function `send-reminders` y sus secretos. Sin este paso, Titra avisa solo con la app abierta.
