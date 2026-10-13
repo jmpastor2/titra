@@ -1,4 +1,4 @@
-# Estado del proyecto (2026-10-08)
+# Estado del proyecto (2026-10-13)
 
 Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Actions al hacer push a `main`).
 
@@ -34,6 +34,13 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   pantalla con transición, nunca puede desplazarse (`overflow: clip` + reset de scroll: en iOS se iba arriba y
   desaparecía), no abre el teclado al abrirse en el móvil y solo se ajusta al viewport visual con teclado.
   Agua: cada toque cuenta una vez (`listHolds` en `quicklog/data.ts`), pastilla «+250 ml» en la tarjeta.
+
+- Uso real (octubre): un vial reconstituido vale 28 días (después no es válido; la cobertura de stock
+  lo cuenta así y la toma se saca de un vial válido, `pastUse` en `inventory/vials.ts`). Al reconstituir,
+  propuesta de agua para U enteras y lo que da el vial en sus 28 días (`inventory/inUsePlan.ts`). Una toma
+  extra puede cubrir una perdida hasta 7 días después (empezar antes de la pauta). Sugerencia de hora
+  habitual en Pautas (`protocols/habit.ts`). Referencia de descanso leída de las notas de cada pauta.
+  Mezclas sin reconstituir: masa total y partes nombradas.
 
 ## Pendiente
 
