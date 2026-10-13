@@ -40,7 +40,8 @@ export function InUsePlanRow({
         vial,
         protocols.data ?? [],
         startOfDay(new Date(`${startedOn}T00:00`)),
-        pref === 'auto' ? 100 : pref,
+        // No syringe chosen: propose for the smallest (0,3 mL, 30 U), the one most people use.
+        pref === 'auto' ? 30 : pref,
       ),
     [vial, protocols.data, startedOn, pref],
   )
@@ -53,10 +54,7 @@ export function InUsePlanRow({
     proposed !== null && Math.abs(waterToMl(parseAmount(water.text), water.unit) - proposed) < 1e-6
 
   return (
-    <section
-      aria-label={t('reconstitute.plan.title', { days: IN_USE_DAYS })}
-      className="border-t border-line pt-4"
-    >
+    <section aria-label={t('reconstitute.plan.title', { days: IN_USE_DAYS })} className="pb-1">
       <div className="spec">{t('reconstitute.plan.title', { days: IN_USE_DAYS })}</div>
       {proposed !== null && plan.units !== null && (
         <div className="mt-1.5 flex items-center justify-between gap-3">

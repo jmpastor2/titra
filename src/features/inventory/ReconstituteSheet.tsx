@@ -111,6 +111,14 @@ function ReconstituteForm({
           </div>
         </div>
 
+        {/* The proposal first: one tap fills the water, no keyboard needed. */}
+        <InUsePlanRow
+          vial={vial}
+          startedOn={openedAt}
+          water={entry.water}
+          onWater={entry.setWater}
+        />
+
         <WaterField
           value={entry.water}
           onChange={entry.setWater}
@@ -123,13 +131,6 @@ function ReconstituteForm({
           value={date}
           max={toDateInputValue(today)}
           onChange={setDate}
-        />
-
-        <InUsePlanRow
-          vial={vial}
-          startedOn={openedAt}
-          water={entry.water}
-          onWater={entry.setWater}
         />
 
         <ReconstitutionResult preview={entry.preview} waterMl={entry.waterMl} discard={discard} />

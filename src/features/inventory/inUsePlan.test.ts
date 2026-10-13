@@ -32,10 +32,10 @@ describe('proposeWater', () => {
     expect(proposeWater(1.5, 10, 30)).toEqual({ waterMl: 1, units: 15 })
   })
 
-  it('keeps the dose inside the barrel', () => {
-    // 2 mg from 10 mg: 1 mL is 20 U; in a 0,3 mL (30 U) barrel that fits, 2 mL (40 U) would not.
-    const p = proposeWater(2, 10, 30)
-    expect(p!.units).toBeLessThanOrEqual(30)
+  it('keeps every dose inside the barrel, even if that means half units', () => {
+    // Retatrutida 10 mg, 2,25 then 2,5 mg: 2 mL gives whole units (45, 50) but they do not fit
+    // a 30 U syringe; 1 mL gives 22,5 and 25 U.
+    expect(proposeWater([2.25, 2.5], 10, 30)).toEqual({ waterMl: 1, units: 22.5 })
   })
 })
 

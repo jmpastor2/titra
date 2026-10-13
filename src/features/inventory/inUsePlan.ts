@@ -47,30 +47,33 @@ function dosesOf(protocol: ProtocolRow, compoundId: string, from: Date, to: Date
 }
 
 /**
- * The water that makes `doseMg` of a vial of `contentMg` a whole number of units within the
- * barrel, nearest 10 U; half-millilitre steps first, then tenths.
+ * The water for a vial of `contentMg` whose doses (`dosesMg`, the ones of its 28 days) all
+ * fit the barrel and are at least `MIN_U`: half-millilitre steps (what is measured with a
+ * syringe of water), preferring the most doses drawn at a whole number of units, then a first
+ * dose nearest 10 U. Whole units never win over fitting: 45 U does not go in a 30 U syringe.
  */
 export function proposeWater(
-  doseMg: number,
+  dosesMg: number | readonly number[],
   contentMg: number,
   barrelU: number,
 ): { waterMl: number; units: number } | null {
-  if (!(doseMg > 0 && contentMg > 0)) return null
-  const unitsFor = (ml: number) => (100 * doseMg * ml) / contentMg
+  const doses = (typeof dosesMg === 'number' ? [dosesMg] : [...new Set(dosesMg)]).filter(
+    (d) => d > 0,
+  )
+  if (doses.length === 0 || !(contentMg > 0)) return null
+  const unitsFor = (mg: number, ml: number) => (100 * mg * ml) / contentMg
   const maxMl = contentMg >= 100 ? 10 : 5
-  const pick = (step: number, whole: boolean) => {
-    let best: { waterMl: number; units: number } | null = null
-    for (let i = 1; i * step <= maxMl + EPS; i++) {
-      const ml = Math.round(i * step * 10) / 10
-      const u = unitsFor(ml)
-      if (u < MIN_U - EPS || u > barrelU + EPS) continue
-      if (whole && Math.abs(u - Math.round(u)) > 0.05) continue
-      if (!best || Math.abs(u - TARGET_U) < Math.abs(best.units - TARGET_U))
-        best = { waterMl: ml, units: whole ? Math.round(u) : Math.round(u * 10) / 10 }
-    }
-    return best
+  let best: { waterMl: number; units: number; whole: number; gap: number } | null = null
+  for (let i = 1; i * 0.5 <= maxMl + EPS; i++) {
+    const ml = i * 0.5
+    const units = doses.map((d) => unitsFor(d, ml))
+    if (Math.min(...units) < MIN_U - EPS || Math.max(...units) > barrelU + EPS) continue
+    const whole = units.filter((u) => Math.abs(u - Math.round(u)) <= 0.05).length
+    const gap = Math.abs(units[0]! - TARGET_U)
+    if (!best || whole > best.whole || (whole === best.whole && gap < best.gap))
+      best = { waterMl: ml, units: Math.round(units[0]! * 10) / 10, whole, gap }
   }
-  return pick(0.5, true) ?? pick(0.1, true) ?? pick(0.1, false)
+  return best && { waterMl: best.waterMl, units: best.units }
 }
 
 export function inUsePlan(
@@ -98,7 +101,11 @@ export function inUsePlan(
     left -= e.mg
     doses++
   }
-  const water = proposeWater(events[0]!.mg, Number(vial.total_mg), barrelU)
+  // The syringe's capacity first; a bigger one only when no water fits it.
+  const doseList = events.map((e) => e.mg)
+  const water =
+    proposeWater(doseList, Number(vial.total_mg), barrelU) ??
+    proposeWater(doseList, Number(vial.total_mg), 100)
   return {
     doses,
     planned: events.length,

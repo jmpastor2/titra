@@ -165,6 +165,13 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
             role="document"
             tabIndex={-1}
             data-entered={entered || undefined}
+            onFocus={(e) => {
+              // A field taken on a phone: once the keyboard is up, bring it to the middle of
+              // the sheet's own scroll, so it is never left under the keyboard or the footer.
+              const field = e.target
+              if (canAutoFocusFields() || !field.matches('input, textarea, select')) return
+              setTimeout(() => field.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350)
+            }}
             className={clsx(
               'outline-none will-change-transform',
               'flex w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-line-strong bg-panel shadow-2xl sm:rounded-[28px]',
