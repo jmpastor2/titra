@@ -32,8 +32,15 @@ export function groupAdministrations(rows: readonly DoseRow[]): Administration[]
     if (a) a.rows.push(r)
     else map.set(key, { key, at: new Date(r.administered_at), rows: [r] })
   }
+  // The row that drew from the vial first, then the largest dose, then by name: a blend reads
+  // the same on every line ("GHK-Cu + BPC-157 + KPV + TB-500"), and filters group it once.
   for (const a of map.values())
-    a.rows.sort((x, y) => Number(Boolean(y.inventory_id)) - Number(Boolean(x.inventory_id)))
+    a.rows.sort(
+      (x, y) =>
+        Number(Boolean(y.inventory_id)) - Number(Boolean(x.inventory_id)) ||
+        Number(y.dose_mg) - Number(x.dose_mg) ||
+        x.compound_id.localeCompare(y.compound_id),
+    )
   return [...map.values()].toSorted((a, b) => b.at.getTime() - a.at.getTime())
 }
 

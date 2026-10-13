@@ -628,9 +628,7 @@
       "wouldLast_other": "Would last {{count}} days, until {{date}}",
       "wasteAtExpiry_one": "{{count}} dose before it expires · {{mg}} mg would be left",
       "wasteAtExpiry_other": "{{count}} doses before it expires · {{mg}} mg would be left",
-      "leftOne": "Left",
-      "pastGuide_one": "Past the in-use guide {{count}} day ago · {{date}}",
-      "pastGuide_other": "Past the in-use guide {{count}} days ago · {{date}}"
+      "leftOne": "Left"
     },
     "alertsLess": "Show fewer",
     "labelAuto": "If you leave it empty it will be called \"{{label}}\".",
@@ -1655,8 +1653,7 @@
       "runsOut": "Vial running out",
       "reconstitute": "Time to reconstitute",
       "reorder": "Order more",
-      "leftover": "Vial remainder",
-      "expiredEstimated": "Past the 28-day guide"
+      "leftover": "Vial remainder"
     },
     "expired": "{{names}}: expired on {{date}}. Do not use it; open another.",
     "expiresSoon_one": "{{names}}: expires on {{date}}, tomorrow.",
@@ -1667,14 +1664,13 @@
     "reconstitute_one": "{{names}}: {{count}} dose left. Reconstitute the reserve vial before {{date}}.",
     "reconstitute_other": "{{names}}: {{count}} doses left. Reconstitute the reserve vial before {{date}}.",
     "reorder": "{{names}}: all your stock lasts until {{date}}. Order now so you do not run out.",
-    "estimated": "Estimated: {{days}} days after reconstitution.",
+    "estimated": "{{days}} days after reconstitution: past that it is no longer valid.",
     "more_one": "See {{count}} more alert",
     "more_other": "See {{count}} more alerts",
     "expiresSoon_zero": "{{names}}: expires today, {{date}}.",
     "leftover": "{{names}}: {{mg}} mg left in the vial, not enough for a dose. Finish it with another one or discard it.",
     "dismiss": "Got it",
-    "dismissFailed": "Could not mark it as read. Try again.",
-    "expiredEstimated": "{{names}}: reconstituted over 28 days ago (since {{date}}). It is a guide: if it is still clear and kept cold, you decide when to open another."
+    "dismissFailed": "Could not mark it as read. Try again."
   },
   "cycle": {
     "headline": {
@@ -1843,7 +1839,18 @@
       "doseTooBig": "With this water your {{names}} dose would be {{units}} U: it does not fit a 1 mL syringe (100 U). Less water makes it fit.",
       "overBarrel": "{{units}} U do not fit your {{ml}} mL syringe ({{capacity}} U)."
     },
-    "unitLabel": "Water unit"
+    "unitLabel": "Water unit",
+    "plan": {
+      "title": "Plan for its {{days}} days",
+      "water": "With {{ml}} mL: {{units}} U per dose",
+      "use": "Use {{ml}} mL",
+      "left_one": "{{count}} dose in 28 days · you will use {{used}} mg and {{left}} mg will be left when it expires on {{date}}.",
+      "left_other": "{{count}} doses in 28 days · you will use {{used}} mg and {{left}} mg will be left when it expires on {{date}}.",
+      "exact_one": "{{count}} dose: you use it up just before it expires on {{date}}.",
+      "exact_other": "{{count}} doses: you use it up just before it expires on {{date}}.",
+      "runsOut_one": "It gives {{count}} dose: have the next one ready by {{date}}.",
+      "runsOut_other": "It gives {{count}} doses: have the next one ready by {{date}}."
+    }
   },
   "cycles": {
     "eyebrow": "Lab",

@@ -110,3 +110,20 @@ describe('slotChoices', () => {
     expect(choices.missed.map((m) => m.at)).toEqual([d('2026-09-29T01:00')])
   })
 })
+
+describe('a dose taken before the plan starts', () => {
+  it('can stand for the first missed administration of the plan, days later', () => {
+    // Daily at 09:00 from Monday 12; taken on Saturday 10 and Sunday 11, nothing on Monday.
+    const KLOW: ProtocolLike = {
+      compoundId: 'ghk-cu',
+      startDate: '2026-10-12',
+      times: ['09:00'],
+      steps: [{ doseMg: 1.67, intervalDays: 1, durationWeeks: 4 }],
+    }
+    const now = d('2026-10-13T12:00')
+    const sunday = { at: d('2026-10-11T16:06'), mg: 1.67 }
+    const choices = slotChoices(KLOW, [sunday], d('2026-10-10T06:22'), now)
+    expect(choices.auto).toBeNull()
+    expect(choices.missed.map((m) => m.at)).toContainEqual(d('2026-10-12T09:00'))
+  })
+})

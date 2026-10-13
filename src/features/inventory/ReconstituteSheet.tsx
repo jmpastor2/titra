@@ -12,6 +12,7 @@ import { toDateInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { effectiveExpiry } from './alerts'
 import { DateRow } from './DateRow'
+import { InUsePlanRow } from './InUsePlanRow'
 import { contentMgOf, reconstitutionPatch } from './reconstitute'
 import { ReconstitutionResult } from './ReconstitutionResult'
 import { fmtMg, namesAboveLabel } from './vialFormat'
@@ -122,6 +123,13 @@ function ReconstituteForm({
           value={date}
           max={toDateInputValue(today)}
           onChange={setDate}
+        />
+
+        <InUsePlanRow
+          vial={vial}
+          startedOn={openedAt}
+          water={entry.water}
+          onWater={entry.setWater}
         />
 
         <ReconstitutionResult preview={entry.preview} waterMl={entry.waterMl} discard={discard} />

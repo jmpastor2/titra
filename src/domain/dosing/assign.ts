@@ -21,7 +21,7 @@ const HOUR_MS = 3_600_000
 export interface SlotChoices {
   /** Where the dose lands on its own, by time. Null when it matches nothing: an extra. */
   auto: PlannedDose | null
-  /** Planned administrations of the last days that nobody covers, most recent first. */
+  /** Planned administrations of the last days (and the week after it) that nobody covers. */
   missed: PlannedDose[]
 }
 
@@ -42,9 +42,11 @@ export function slotChoices(
   doseAt: Date,
   now: Date,
   lookbackDays = 14,
+  /** A dose taken early (started before the plan, a day ahead) can stand for a later one. */
+  aheadDays = 7,
 ): SlotChoices {
   const tolH = matchToleranceH(currentStep(protocol, doseAt)?.step, normaliseTimes(protocol.times))
-  const slots = scheduledDoses(protocol, addDays(doseAt, -lookbackDays), addDays(doseAt, 2))
+  const slots = scheduledDoses(protocol, addDays(doseAt, -lookbackDays), addDays(doseAt, aheadDays))
   const probe: DoseEvent = { at: new Date(doseAt), mg: 0 }
   const { slots: matched } = matchDoses(slots, [...history, probe], tolH)
 
