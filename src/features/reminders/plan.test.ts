@@ -1,6 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DoseRow, InventoryRow, ProtocolRow } from '@/data/database.types'
 import { fingerprint, upcomingAdministrations, upcomingDecisions } from './plan'
+
+// Which vial is drawn from depends on the day (one past its 28 days is passed over): the
+// fixtures' dates are "today" here.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-03-24T12:00'))
+})
+afterEach(() => vi.useRealTimers())
 
 const protocol = (over: Partial<ProtocolRow>): ProtocolRow => ({
   id: 'cjc',

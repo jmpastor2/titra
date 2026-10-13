@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { InventoryRow } from '@/data/database.types'
 import {
   activeVial,
+  pastUse,
   concentrationFor,
   concentrationOf,
   drawPartFor,
@@ -17,6 +18,14 @@ import {
   vialState,
   waterOf,
 } from './vials'
+
+// Which vial is drawn from depends on the day (one past its 28 days is passed over): the
+// fixtures' dates are "today" here.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-09-30T12:00'))
+})
+afterEach(() => vi.useRealTimers())
 
 const at = (d: number) => new Date(2026, 8, d, 9)
 
@@ -165,7 +174,7 @@ describe('the vial a dose comes from', () => {
 
   it('looks at the share of the compound that is in a blend vial', () => {
     // CJC 5 mg + ipamorelin 5 mg: what is left of one is left of the other, in proportion.
-    const nearly = vial({ id: 'nearly', remaining_mg: 0.4, opened_at: '2026-09-01' })
+    const nearly = vial({ id: 'nearly', remaining_mg: 0.4, opened_at: '2026-09-10' })
     const full = vial({ id: 'full', remaining_mg: 5, opened_at: '2026-09-15' })
     expect(activeVial([nearly, full], 'ipamorelin', 0.5)?.id).toBe('full')
     expect(activeVial([nearly, full], 'ipamorelin', 0.3)?.id).toBe('nearly')
@@ -308,5 +317,35 @@ describe('amounts of a vial', () => {
     // Saved with a concentration but no water (older rows): 5 mg at 2.5 mg/mL is 2 mL.
     expect(waterOf(vial({ diluent_ml: null, concentration_mg_per_ml: 2.5 }))).toBe(2)
     expect(waterOf(vial({ diluent_ml: null, concentration_mg_per_ml: null }))).toBeNull()
+  })
+})
+
+describe('a vial past its use date', () => {
+  it('is passed over for a fresh one, and used only when nothing else is left', () => {
+    const old = vial({
+      id: 'old',
+      compound_id: 'retatrutide',
+      components: [],
+      total_mg: 15,
+      remaining_mg: 6.5,
+      concentration_mg_per_ml: 10,
+      diluent_ml: 1.5,
+      opened_at: '2026-09-07',
+    })
+    const fresh = vial({
+      id: 'fresh',
+      compound_id: 'retatrutide',
+      components: [],
+      total_mg: 10,
+      remaining_mg: 10,
+      concentration_mg_per_ml: 5,
+      diluent_ml: 2,
+      opened_at: '2026-10-13',
+    })
+    const now = new Date('2026-10-19T09:00')
+    expect(activeVial([old, fresh], 'retatrutide', 2, now)?.id).toBe('fresh')
+    expect(activeVial([old], 'retatrutide', 2, now)?.id).toBe('old')
+    expect(pastUse(old, now)).toBe(true)
+    expect(pastUse(fresh, now)).toBe(false)
   })
 })

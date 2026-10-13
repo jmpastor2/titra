@@ -187,6 +187,23 @@ describe('stock alerts', () => {
     expect(alerts[0]!.severity).toBe('danger')
   })
 
+  it('points an expired vial to the reserve of the same compound', () => {
+    const reserve = vial({
+      id: 'r',
+      concentration_mg_per_ml: null,
+      diluent_ml: null,
+      opened_at: null,
+      remaining_mg: 10,
+    })
+    const alerts = stockAlerts(
+      [vial({ expires_at: '2026-09-20' }), reserve],
+      [],
+      new Map(),
+      new Date('2026-09-30T08:00'),
+    )
+    expect(alerts.find((a) => a.kind === 'expired')!.reserveVialId).toBe('r')
+  })
+
   it('stops asking for a reserve once another reconstituted vial can take over', () => {
     const doses = ['2026-10-01', '2026-10-03', '2026-10-05'].map((d) => ({
       at: at(d),

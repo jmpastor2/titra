@@ -153,7 +153,10 @@ export function StockAlerts({
         >
           {shown.map((a) => {
             const vial = vialOf(a.vialId)
-            const reserve = a.kind === 'reconstitute' ? vialOf(a.reserveVialId) : undefined
+            const reserve =
+              a.kind === 'reconstitute' || a.kind === 'expired'
+                ? vialOf(a.reserveVialId)
+                : undefined
             const body = <AlertBody alert={a} />
             return (
               <li key={alertKey(a)} className={clsx('py-3', bare && 'first:pt-0 last:pb-0')}>

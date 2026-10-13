@@ -6,6 +6,7 @@ import { addDays, differenceInCalendarDays, format, parseISO, startOfDay } from 
 import type { InventoryRow } from '@/data/database.types'
 import {
   concentrationOf,
+  IN_USE_DAYS,
   needsReconstitution,
   remainingOf,
   vialContents,
@@ -14,11 +15,7 @@ import {
   type VialRunway,
 } from './vials'
 
-/**
- * In-use period commonly given for reconstituted peptides kept at 2–8 °C. Guidance, not
- * published stability data, so an expiry derived from it is always marked as estimated.
- */
-export const IN_USE_DAYS = 28
+export { IN_USE_DAYS } from './vials'
 /** Order when the total supply lasts less than this. */
 export const REORDER_DAYS = 21
 
@@ -180,7 +177,11 @@ export function stockAlerts(
     const runway = runways.get(v.id)
     if (exp) {
       const days = differenceInCalendarDays(exp.date, today)
-      if (days < 0)
+      if (days < 0) {
+        // A reserve vial of the same compound is the way out: offer to reconstitute it.
+        const reserve = live.find(
+          (r) => r.id !== v.id && r.compound_id === v.compound_id && needsReconstitution(r),
+        )
         out.push({
           kind: 'expired',
           severity: 'danger',
@@ -190,8 +191,9 @@ export function stockAlerts(
           date: exp.date,
           days,
           estimated: exp.estimated,
+          ...(reserve ? { reserveVialId: reserve.id } : {}),
         })
-      else if (days <= 7)
+      } else if (days <= 7)
         out.push({
           kind: 'expiresSoon',
           severity: 'warn',

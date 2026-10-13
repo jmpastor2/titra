@@ -19,6 +19,29 @@ export interface VialContent {
   mg: number
 }
 
+/**
+ * In-use period of a reconstituted vial kept at 2–8 °C: past it the vial is not used. An
+ * expiry derived from it is marked as estimated (it is not printed on the label).
+ */
+export const IN_USE_DAYS = 28
+
+/** Past its label date, or past the in-use period since it got its water. */
+export function pastUse(
+  v: VialFields & Pick<InventoryRow, 'expires_at' | 'opened_at'>,
+  now: Date,
+): boolean {
+  const day = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00`)
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+  if (v.expires_at && day(v.expires_at) < today) return true
+  if (v.opened_at && concentrationOf(v)) {
+    const last = day(v.opened_at)
+    last.setDate(last.getDate() + IN_USE_DAYS)
+    return last < today
+  }
+  return false
+}
+
 /** Rounding slack when comparing mg that went through divisions. */
 const EPS = 1e-9
 
@@ -100,7 +123,8 @@ export function vialState(item: InventoryRow): VialState {
 
 /**
  * The vial a dose is drawn from: one with something left, reconstituted before
- * lyophilised, and the oldest opened first so it is used up before it expires.
+ * lyophilised, and the oldest opened first so it is used up before it expires; one past its
+ * use date (label, or 28 days since it got its water) only when nothing else is left.
  *
  * With `neededMg` (the dose about to be drawn) a vial that cannot cover it is passed
  * over for another reconstituted vial that can; when none can, the preferred vial stays.
@@ -109,8 +133,10 @@ export function activeVial(
   vials: readonly InventoryRow[],
   compoundId: string,
   neededMg?: number,
+  now: Date = new Date(),
 ): InventoryRow | undefined {
-  const rank = (v: InventoryRow) => (concentrationOf(v) ? 0 : 1)
+  // Ready to draw from first; a vial past its use date only when there is nothing else.
+  const rank = (v: InventoryRow) => (pastUse(v, now) ? 2 : concentrationOf(v) ? 0 : 1)
   const candidates = vials
     .filter((v) => vialHas(v, compoundId) && !v.archived && Number(v.remaining_mg) > 0)
     .toSorted(
