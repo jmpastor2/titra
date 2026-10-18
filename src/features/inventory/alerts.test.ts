@@ -162,6 +162,8 @@ describe('stock alerts', () => {
       '2026-10-16',
       '2026-10-19',
       '2026-10-21',
+      '2026-10-23',
+      '2026-10-26',
     ].map((d) => ({ at: at(d), doseMg: 1.5 }))
     const runways = new Map([['v', vialRunway(2.5, doses)]])
     const restock = restockPlan([open, reserve], new Map([['mots-c', doses]]))
@@ -174,6 +176,19 @@ describe('stock alerts', () => {
     expect(reconstitute.doses).toBe(1)
     // The alert says which vial to reconstitute: the reserve, not the one running out.
     expect(reconstitute.reserveVialId).toBe('r')
+  })
+
+  it('does not ask to order when only the last dose or two of the plan are not covered', () => {
+    const doses = ['2026-10-01', '2026-10-03', '2026-10-05', '2026-10-07'].map((d) => ({
+      at: at(d),
+      doseMg: 1.5,
+    }))
+    // 3 mg: two doses, the plan ends two doses later. The cycle ends; nothing to buy.
+    const open = vial({ remaining_mg: 3 })
+    const restock = restockPlan([open], new Map([['mots-c', doses]]))
+    expect(restock[0]!.shortBy).toBe(2)
+    const alerts = stockAlerts([open], restock, new Map(), new Date('2026-09-30T08:00'))
+    expect(alerts.map((a) => a.kind)).not.toContain('reorder')
   })
 
   it('flags an expired vial first', () => {

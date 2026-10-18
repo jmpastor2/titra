@@ -147,7 +147,7 @@ export function upcomingDecisions(
     if (!info) continue
     // While the doses and the plan disagree, the plan's next step would only mislead.
     const drift = doseDrift(pl, protocolDoses(protocol, doses), now)
-    if (drift && !dismissed.has(driftKey(protocol.id, drift.sinceDay))) continue
+    if (drift && !dismissed.has(driftKey(protocol.id, drift.sinceDay, drift.actualMg))) continue
 
     for (const step of info.steps) {
       const prev = info.steps[step.index - 1]

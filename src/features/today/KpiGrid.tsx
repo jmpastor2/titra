@@ -6,7 +6,7 @@ import { Delta, Kpi, type KpiTone } from '@/components/kpi/Kpi'
 import { Meter } from '@/components/kpi/Meter'
 import { Steps } from '@/components/kpi/Steps'
 import { Ticks } from '@/components/kpi/Ticks'
-import { compoundById, compoundName } from '@/content/compounds'
+import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
 import { toProtocolLike } from '@/data/mappers'
@@ -29,6 +29,7 @@ import {
   type CycleKpi,
 } from './kpis'
 import type { HomeKpis } from './useHomeKpis'
+import { substanceNames } from '@/features/inventory/supplyName'
 
 type Tone = 'ok' | 'warn' | 'danger'
 
@@ -203,7 +204,7 @@ function CoverTile({ cover, now, to }: { cover: CoverKpi; now: Date; to: string 
   const { locale } = useLocale()
   const tone = coverTone(cover.days)
   const label = coverLabel(cover.days)
-  const names = cover.compoundIds.map(compoundName).join(' + ')
+  const names = cover.name ?? substanceNames(cover.compoundIds)
   const day = (d: Date) => keep(fmtDate(d, locale, 'd MMM'))
   const caption =
     cover.days === null || !cover.runsOutAt || !cover.orderBy

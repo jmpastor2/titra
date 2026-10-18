@@ -234,7 +234,7 @@ describe('upcomingDecisions', () => {
   it('waits while the doses taken disagree with the plan, and asks again once that is settled', () => {
     // 200 mcg since Wednesday against a plan of 150: announcing "up to 200" would mislead.
     expect(upcomingDecisions([CJC], [BLEND], SUNDAY_NOON, { doses: raised })).toEqual([])
-    const oneOff = new Set(['drift:cjc:2026-09-30'])
+    const oneOff = new Set(['drift:cjc:2026-09-30:200'])
     const list = upcomingDecisions([CJC], [BLEND], SUNDAY_NOON, {
       doses: raised,
       dismissed: oneOff,

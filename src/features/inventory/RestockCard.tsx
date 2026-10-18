@@ -5,13 +5,13 @@ import { useTranslation } from 'react-i18next'
 import { Meter } from '@/components/kpi/Meter'
 import { Card } from '@/components/ui/Card'
 import { SubstanceDot } from '@/components/ui/primitives'
-import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { REORDER_DAYS } from './alerts'
 import { coverGauge, supplyTone, TONE_COLOR } from './stockKpis'
-import type { RestockLine } from './vials'
+import { needsMore, type RestockLine } from './vials'
+import { substanceNames } from './supplyName'
 
 const VALUE_TONE = { ok: 'text-ink', warn: 'text-warn', danger: 'text-danger' } as const
 
@@ -41,8 +41,9 @@ export function RestockCard({
           const days = l.runway.runsOutAt
             ? Math.max(0, differenceInCalendarDays(l.runway.runsOutAt, today))
             : null
-          const tone = supplyTone(days)
-          const names = l.partners.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
+          // Running out in the last days of the plan: nothing to order, so no warning colour.
+          const tone = needsMore(l) ? supplyTone(days) : 'ok'
+          const names = l.name ?? substanceNames(l.partners)
           const stock = [
             `${fmtNumber(l.availableMg, locale, 2)} mg`,
             t('inventory.vialsCount', { count: l.vials }),

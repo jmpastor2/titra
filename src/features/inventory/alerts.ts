@@ -7,6 +7,7 @@ import type { InventoryRow } from '@/data/database.types'
 import {
   concentrationOf,
   IN_USE_DAYS,
+  needsMore,
   needsReconstitution,
   remainingOf,
   vialContents,
@@ -44,6 +45,8 @@ export interface StockAlert {
   reserveVialId?: string
   /** The date is estimated (no expiry on the label). */
   estimated?: boolean
+  /** How the substances read on screen (see supplyName). */
+  name?: string
 }
 
 /** A vial's content and dates: all the expiry maths read. */
@@ -258,7 +261,7 @@ export function stockAlerts(
   }
 
   for (const line of restock) {
-    if (!line.runway.runsOutAt) continue
+    if (!line.runway.runsOutAt || !needsMore(line)) continue
     const days = differenceInCalendarDays(line.runway.runsOutAt, today)
     if (days <= REORDER_DAYS)
       out.push({

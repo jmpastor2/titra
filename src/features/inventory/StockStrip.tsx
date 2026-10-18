@@ -17,9 +17,9 @@ import {
   type StockKpis,
   type SupplyTone,
 } from './stockKpis'
+import { substanceNames } from './supplyName'
 
 const nameOf = (id: string) => compoundById(id)?.names.generic ?? id
-const namesOf = (ids: readonly string[]) => ids.map(nameOf).join(' + ')
 
 /** "hoy", "mañana", "en 5 días", "hace 3 días". */
 function when(days: number, t: TFunction): string {
@@ -118,10 +118,12 @@ export function StockStrip({ kpis }: { kpis: StockKpis }) {
             days === null
               ? t('inventory.kpi.plentyHint')
               : days === 0
-                ? t('inventory.kpi.coverNow', { names: namesOf(cover.compoundIds) })
+                ? t('inventory.kpi.coverNow', {
+                    names: cover.name ?? substanceNames(cover.compoundIds),
+                  })
                 : cover.date
                   ? t('inventory.kpi.coverFirstOn', {
-                      names: namesOf(cover.compoundIds),
+                      names: cover.name ?? substanceNames(cover.compoundIds),
                       date: fmtDate(cover.date, locale, 'EEE d MMM'),
                     })
                   : undefined

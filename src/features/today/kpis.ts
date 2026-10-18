@@ -14,7 +14,7 @@ import type { WeekDay } from '@/features/doses/week'
 import { protocolDoses, type ProtocolCycle } from '@/features/cycle/items'
 import { headline, weekTrack, type Headline } from '@/features/cycle/view'
 import { REORDER_DAYS } from '@/features/inventory/alerts'
-import type { RestockLine } from '@/features/inventory/vials'
+import { needsMore, type RestockLine } from '@/features/inventory/vials'
 
 /** How a day went: nothing planned, everything taken, still to come, or something missed. */
 export type DayVerdict = 'rest' | 'done' | 'open' | 'broken'
@@ -184,8 +184,9 @@ export const COVER_GAUGE_DAYS = 90
 export interface CoverKpi {
   /** Days until the first supply runs out; null when everything lasts past the horizon. */
   days: number | null
-  /** The compounds that run out first. */
+  /** The compounds that run out first, and how they read. */
   compoundIds: string[]
+  name?: string
   /** The day it runs out. */
   runsOutAt: Date | null
   /** The day to order by: the run-out day less the usual delivery margin (Inventario's rule). */
@@ -197,12 +198,15 @@ export function coverKpi(lines: readonly RestockLine[], now: Date): CoverKpi | n
   if (lines.length === 0) return null
   const today = startOfDay(now)
   const first = lines
-    .flatMap((l) => (l.runway.runsOutAt ? [{ at: l.runway.runsOutAt, line: l }] : []))
+    .flatMap((l) =>
+      l.runway.runsOutAt && needsMore(l) ? [{ at: l.runway.runsOutAt, line: l }] : [],
+    )
     .toSorted((a, b) => a.at.getTime() - b.at.getTime())[0]
   if (!first) return { days: null, compoundIds: [], runsOutAt: null, orderBy: null }
   return {
     days: Math.max(0, differenceInCalendarDays(first.at, today)),
     compoundIds: first.line.partners,
+    ...(first.line.name ? { name: first.line.name } : {}),
     runsOutAt: first.at,
     orderBy: addDays(first.at, -REORDER_DAYS),
   }

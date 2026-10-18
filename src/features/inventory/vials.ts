@@ -210,6 +210,23 @@ export interface RestockLine {
   /** Vials still powder, to be reconstituted. */
   reserve: number
   runway: VialRunway
+  /** How it reads on screen: the protocol's name for its blend ("KLOW"), else the substances. */
+  name?: string
+  /** Planned administrations the stock does not reach (0 when it covers them all). */
+  shortBy?: number
+}
+
+/** Doses short this few at the very end of a plan (half a week of a daily one) are not worth an order. */
+export const END_OF_PLAN_SLACK = 3
+
+/**
+ * Whether a supply needs buying: it runs out with more than the last few doses of the plan
+ * still to come. Running out in the last days of a 4-week cycle is not "order now".
+ */
+export function needsMore(line: Pick<RestockLine, 'runway' | 'shortBy'>): boolean {
+  return (
+    line.runway.runsOutAt !== null && (line.shortBy ?? Number.POSITIVE_INFINITY) > END_OF_PLAN_SLACK
+  )
 }
 
 /**
@@ -238,13 +255,15 @@ export function restockPlan(
           .filter((c) => c !== compoundId),
       ),
     ]
+    const runway = walk ? walk(holding, compoundId, doses) : vialRunway(availableMg, doses)
     return {
       compoundId,
       partners,
       availableMg,
       vials: holding.filter((v) => Number(v.remaining_mg) > 0).length,
       reserve: holding.filter((v) => needsReconstitution(v) && Number(v.remaining_mg) > 0).length,
-      runway: walk ? walk(holding, compoundId, doses) : vialRunway(availableMg, doses),
+      runway,
+      shortBy: runway.runsOutAt ? doses.length - runway.doses : 0,
     }
   })
 }

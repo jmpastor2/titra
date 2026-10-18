@@ -68,8 +68,12 @@ describe('doseDrift', () => {
     expect(doseDrift(CJC, nights(0.15, 0.15, 0.15, 0.15, 0.2), SUNDAY)).toBeNull()
   })
 
-  it('needs the latest doses to agree with each other', () => {
-    expect(doseDrift(CJC, nights(0.15, 0.15, 0.15, 0.2, 0.25), SUNDAY)).toBeNull()
+  it('follows doses raised step by step, read at the latest one', () => {
+    // 0.2 then 0.25 over a plan of 0.15: one drift, at the dose taken now.
+    expect(doseDrift(CJC, nights(0.15, 0.15, 0.15, 0.2, 0.25), SUNDAY)).toMatchObject({
+      doses: 2,
+      actualMg: 0.25,
+    })
     // Within 3 %: 0.2 and 0.205 are the same dose; the plan is told their mean.
     const close = doseDrift(CJC, nights(0.15, 0.15, 0.2, 0.2, 0.205), SUNDAY)
     expect(close).toMatchObject({ doses: 3, actualMg: 0.201667 })
@@ -149,6 +153,14 @@ describe('doseDrift', () => {
 
 describe('driftKey', () => {
   it('is stable for the protocol and the day the drift began', () => {
-    expect(driftKey('cjc', new Date('2026-09-30T00:00'))).toBe('drift:cjc:2026-09-30')
+    expect(driftKey('cjc', new Date('2026-09-30T00:00'), 0.2)).toBe('drift:cjc:2026-09-30:200')
+  })
+})
+
+describe('a drift answered as a one-off', () => {
+  it('comes back when the doses move again', () => {
+    expect(driftKey('cjc', new Date('2026-10-13T00:00'), 0.3333)).not.toBe(
+      driftKey('cjc', new Date('2026-10-13T00:00'), 0.3667),
+    )
   })
 })

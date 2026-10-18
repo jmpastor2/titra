@@ -405,7 +405,7 @@ describe('CycleDecisions · doses that differ from the plan', () => {
     const { store } = renderCard(driftStore())
     fireEvent.click(await screen.findByRole('button', { name: 'Fue puntual' }))
 
-    await waitFor(() => expect(keys(store)).toEqual(['drift:cjc:2026-09-30']))
+    await waitFor(() => expect(keys(store)).toEqual(['drift:cjc:2026-09-30:200']))
     expect(await screen.findByText('Decisión de la semana')).toBeInTheDocument()
     expect(screen.queryByText('Tu pauta no coincide')).toBeNull()
     expect(stepDoses(store)).toEqual([0.1, 0.15, 0.2, 0])

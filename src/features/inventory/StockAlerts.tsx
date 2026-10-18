@@ -15,7 +15,6 @@ import { Link } from 'react-router-dom'
 import { usePatientScope } from '@/app/scope'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { useToast } from '@/components/ui/Toast'
-import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
 import { useArchiveInventory, useDismissAlert, useInventory } from '@/data/hooks'
@@ -24,6 +23,7 @@ import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { alertKey, IN_USE_DAYS, type StockAlert, type StockAlertKind } from './alerts'
 import { useReconstituteSheet } from './useReconstituteSheet'
+import { substanceNames } from './supplyName'
 
 const ICON: Record<StockAlertKind, ReactNode> = {
   expired: <TimerOff className="size-[18px]" />,
@@ -50,7 +50,7 @@ const ALERT_ACTION =
 export function AlertBody({ alert: a, muted = false }: { alert: StockAlert; muted?: boolean }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
-  const names = a.compoundIds.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
+  const names = a.name ?? substanceNames(a.compoundIds)
   const date = a.date ? fmtDate(a.date, locale, 'EEE d MMM') : ''
   const body = t(`stock.${a.kind}`, {
     names,

@@ -3,9 +3,9 @@ import { BellRing, ChevronRight, FlaskConical, TimerOff, TriangleAlert } from 'l
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { compoundName } from '@/content/compounds'
 import type { StockAlert } from '@/features/inventory/alerts'
 import { urgentStock } from './urgentStock'
+import { substanceNames } from '@/features/inventory/supplyName'
 
 /** A one-line row that leads somewhere: an icon, a sentence, a chevron. */
 function SlimRow({
@@ -50,7 +50,7 @@ export function StockNotice({ alerts }: { alerts: readonly StockAlert[] }) {
   const found = urgentStock(alerts)
   if (!found) return null
   const { alert: a, more } = found
-  const names = a.compoundIds.map(compoundName).join(' + ')
+  const names = a.name ?? substanceNames(a.compoundIds)
   const text =
     a.kind === 'expired'
       ? t('today.notice.expired', { names })

@@ -5,7 +5,7 @@
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
 import type { InventoryRow } from '@/data/database.types'
 import { effectiveExpiry, REORDER_DAYS } from './alerts'
-import { vialState, type RestockLine } from './vials'
+import { needsMore, vialState, type RestockLine } from './vials'
 
 /** How worried to be about a supply: days left against the usual order lead time. */
 export type SupplyTone = 'ok' | 'warn' | 'danger'
@@ -53,8 +53,9 @@ export interface StockCover {
   days: number | null
   /** The day it runs out. */
   date: Date | null
-  /** The substance(s) that run out first. */
+  /** The substance(s) that run out first, and how they read on screen. */
   compoundIds: string[]
+  name?: string
 }
 
 export interface StockExpiry {
@@ -93,7 +94,8 @@ function soonest(lines: readonly RestockLine[], today: Date) {
   let first: { line: RestockLine; runsOutAt: Date } | null = null
   for (const line of lines) {
     const runsOutAt = line.runway.runsOutAt
-    if (runsOutAt && (!first || runsOutAt < first.runsOutAt)) first = { line, runsOutAt }
+    if (runsOutAt && needsMore(line) && (!first || runsOutAt < first.runsOutAt))
+      first = { line, runsOutAt }
   }
   return first
     ? {
@@ -134,7 +136,12 @@ export function stockKpis(
       restock.length === 0
         ? null
         : first
-          ? { days: first.days, date: first.runsOutAt, compoundIds: first.line.partners }
+          ? {
+              days: first.days,
+              date: first.runsOutAt,
+              compoundIds: first.line.partners,
+              ...(first.line.name ? { name: first.line.name } : {}),
+            }
           : { days: null, date: null, compoundIds: [] },
     nextExpiry,
     reorder:

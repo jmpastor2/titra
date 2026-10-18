@@ -143,7 +143,7 @@ export function useCycleActions(patientId: string, userId: string, vials: readon
 
     /** It was a one-off: the plan stays as it is and these doses are not asked about again. */
     once(item: Item, drift: DoseDrift) {
-      dealWith(driftKey(item.protocol.id, drift.sinceDay), t('cycle.notice.once'))
+      dealWith(driftKey(item.protocol.id, drift.sinceDay, drift.actualMg), t('cycle.notice.once'))
     },
   }
 }

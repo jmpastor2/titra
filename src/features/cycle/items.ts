@@ -65,7 +65,7 @@ export function attention(
   const rows = protocolDoses(protocol, doses)
   // A drift nobody has dealt with yet.
   const open = (d: DoseDrift | null) =>
-    d && !dismissed.has(driftKey(protocol.id, d.sinceDay)) ? d : null
+    d && !dismissed.has(driftKey(protocol.id, d.sinceDay, d.actualMg)) ? d : null
 
   const drift = open(doseDrift(pl, rows, now))
   if (drift) return { drift, decision: null }

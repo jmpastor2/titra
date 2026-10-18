@@ -4,6 +4,7 @@ import { useSession } from '@/features/auth/SessionProvider'
 import { upcomingAdministrations } from '@/features/reminders/plan'
 import { alertKey, splitDismissed, stockAlerts, type StockAlert } from './alerts'
 import { supplyRunway } from './supply'
+import { supplyName } from './supplyName'
 import { activeVial, restockPlan, vialHas, vialRunway, type VialRunway } from './vials'
 
 const NONE: StockAlert[] = []
@@ -70,22 +71,28 @@ export function useStock(patientId: string | undefined, now: Date = new Date()) 
 
   const restock = useMemo(
     () =>
-      restockPlan(list, upcomingByCompound, supplyRunway).filter(
-        // A blend partner is covered by the line of the vial's own compound.
-        (l) =>
-          !list.some(
-            (v) =>
-              v.compound_id !== l.compoundId &&
-              vialHas(v, l.compoundId) &&
-              upcomingByCompound.has(v.compound_id),
-          ),
-      ),
-    [list, upcomingByCompound],
+      restockPlan(list, upcomingByCompound, supplyRunway)
+        .map((l) => ({ ...l, name: supplyName(l.partners, protocols.data ?? []) }))
+        .filter(
+          // A blend partner is covered by the line of the vial's own compound.
+          (l) =>
+            !list.some(
+              (v) =>
+                v.compound_id !== l.compoundId &&
+                vialHas(v, l.compoundId) &&
+                upcomingByCompound.has(v.compound_id),
+            ),
+        ),
+    [list, upcomingByCompound, protocols.data],
   )
 
   const all = useMemo(
-    () => stockAlerts(list, restock, runways, new Date(`${day} 12:00`)),
-    [list, restock, runways, day],
+    () =>
+      stockAlerts(list, restock, runways, new Date(`${day} 12:00`)).map((a) => ({
+        ...a,
+        name: supplyName(a.compoundIds, protocols.data ?? []),
+      })),
+    [list, restock, runways, day, protocols.data],
   )
 
   const dismissedKeys = useMemo(

@@ -107,7 +107,7 @@ describe('attention', () => {
   })
 
   it('brings the decision back once the drift was dismissed as a one-off', () => {
-    const key = driftKey('cjc', new Date('2026-09-30T00:00'))
+    const key = driftKey('cjc', new Date('2026-09-30T00:00'), 0.2)
     const a = attention(cycle(), raised, new Set([key]), SUNDAY)
     expect(a.drift).toBeNull()
     expect(a.decision).toMatchObject({ kind: 'increase' })
@@ -119,7 +119,7 @@ describe('attention', () => {
     // Raised by feel on Wednesday: on Monday the plan says what they already take.
     expect(attention(c, raised, new Set(), monday)).toEqual({ drift: null, decision: null })
     // Unless those doses were said to be a one-off.
-    const oneOff = new Set([driftKey('cjc', new Date('2026-09-30T00:00'))])
+    const oneOff = new Set([driftKey('cjc', new Date('2026-09-30T00:00'), 0.2)])
     expect(attention(c, raised, oneOff, monday).decision).toMatchObject({
       kind: 'increase',
       timing: 'today',

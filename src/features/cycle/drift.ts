@@ -44,9 +44,12 @@ export interface DoseDrift {
   matchesNextStep: boolean
 }
 
-/** Key under which "it was a one-off" is remembered (alert_dismissals). */
-export function driftKey(protocolId: string, sinceDay: Date): string {
-  return `drift:${protocolId}:${format(sinceDay, 'yyyy-MM-dd')}`
+/**
+ * Key under which "it was a one-off" is remembered (alert_dismissals). It carries the dose: if
+ * the doses keep moving after that answer (20 U, then 22 U), it is a new question.
+ */
+export function driftKey(protocolId: string, sinceDay: Date, actualMg: number): string {
+  return `drift:${protocolId}:${format(sinceDay, 'yyyy-MM-dd')}:${Math.round(actualMg * 1000)}`
 }
 
 const differs = (actual: number, planned: number) =>
@@ -96,21 +99,26 @@ export function doseDrift(
   const planned = window.step.doseMg
   const newest = latestFirst[0]
   if (!newest || !differs(newest.mg, planned)) return null
+  // The run: the latest doses that are all off the plan on the same side. They need not be
+  // equal: raising by feel goes 20 U, then 22 U, and that is still one drift, read at the
+  // dose taken now.
+  const above = newest.mg > planned
   const run = [newest]
-  let lo = newest.mg
-  let hi = newest.mg
   for (const d of latestFirst.slice(1)) {
-    const nextLo = Math.min(lo, d.mg)
-    const nextHi = Math.max(hi, d.mg)
-    if ((nextHi - nextLo) / nextHi > AGREE + EPS || !differs(d.mg, planned)) break
+    if (!differs(d.mg, planned) || d.mg > planned !== above) break
     run.push(d)
-    lo = nextLo
-    hi = nextHi
   }
   const oldest = run.at(-1)
   if (!oldest || run.length < MIN_DOSES) return null
 
-  const actualMg = Math.round((run.reduce((sum, d) => sum + d.mg, 0) / run.length) * 1e6) / 1e6
+  // Steady doses read as their mean (rounding noise); a rising or falling run as the latest.
+  const steady =
+    (Math.max(...run.map((d) => d.mg)) - Math.min(...run.map((d) => d.mg))) /
+      Math.max(...run.map((d) => d.mg)) <=
+    AGREE + EPS
+  const actualMg = steady
+    ? Math.round((run.reduce((sum, d) => sum + d.mg, 0) / run.length) * 1e6) / 1e6
+    : newest.mg
   const next = protocol.steps[window.index + 1]
   return {
     plannedMg: planned,
