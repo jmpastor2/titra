@@ -79,10 +79,10 @@ describe('stock KPIs', () => {
     const k = stockKpis(vials, restock, now)
     // 4 mg at 1 mg a day: the fifth administration (10 Oct) is the first it cannot cover.
     expect(k.cover).toEqual({ days: 5, date: new Date(2026, 9, 10, 9), compoundIds: ['mots-c'] })
-    // Order 21 days ahead of that: already late.
+    // Order 10 days ahead of that (a week's delivery and margin): already late.
     expect(k.reorder).toEqual({
-      date: new Date(2026, 8, 19, 9),
-      days: -16,
+      date: new Date(2026, 8, 30, 9),
+      days: -5,
       runsOutAt: new Date(2026, 9, 10, 9),
       compoundIds: ['mots-c'],
     })
@@ -130,12 +130,12 @@ describe('stock KPIs', () => {
 })
 
 describe('supply tone and gauge', () => {
-  it('is urgent within two weeks, careful within a month and fine beyond or without a date', () => {
+  it('is urgent within a delivery, careful within two and fine beyond or without a date', () => {
     expect(supplyTone(0)).toBe('danger')
-    expect(supplyTone(14)).toBe('danger')
-    expect(supplyTone(15)).toBe('warn')
-    expect(supplyTone(30)).toBe('warn')
-    expect(supplyTone(31)).toBe('ok')
+    expect(supplyTone(7)).toBe('danger')
+    expect(supplyTone(8)).toBe('warn')
+    expect(supplyTone(14)).toBe('warn')
+    expect(supplyTone(15)).toBe('ok')
     expect(supplyTone(null)).toBe('ok')
   })
 

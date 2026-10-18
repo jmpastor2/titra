@@ -216,8 +216,8 @@ describe('cover', () => {
       days: 15,
       compoundIds: ['b'],
       runsOutAt: new Date(2026, 9, 19),
-      // Inventario's rule: order three weeks before it runs out.
-      orderBy: new Date(2026, 8, 28),
+      // Inventario's rule: order ten days before it runs out (a week's delivery and margin).
+      orderBy: new Date(2026, 9, 9),
     })
   })
   it('is open-ended when every supply outlasts the horizon, and nothing without lines', () => {
@@ -230,9 +230,9 @@ describe('cover', () => {
     expect(coverKpi([], now)).toBeNull()
   })
   it('says "order now" once the order-by day has come', () => {
-    expect(orderNow(coverKpi([line('a', new Date(2026, 9, 19))], now)!, now)).toBe(true)
-    expect(orderNow(coverKpi([line('a', new Date(2026, 9, 25))], now)!, now)).toBe(true)
-    expect(orderNow(coverKpi([line('a', new Date(2026, 9, 26))], now)!, now)).toBe(false)
+    expect(orderNow(coverKpi([line('a', new Date(2026, 9, 10))], now)!, now)).toBe(true)
+    expect(orderNow(coverKpi([line('a', new Date(2026, 9, 14, 12))], now)!, now)).toBe(true)
+    expect(orderNow(coverKpi([line('a', new Date(2026, 9, 15, 12))], now)!, now)).toBe(false)
     expect(orderNow(coverKpi([line('a', null)], now)!, now)).toBe(false)
   })
   it('never counts below zero', () => {

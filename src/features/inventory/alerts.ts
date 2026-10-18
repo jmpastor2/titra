@@ -17,8 +17,10 @@ import {
 } from './vials'
 
 export { IN_USE_DAYS } from './vials'
-/** Order when the total supply lasts less than this. */
-export const REORDER_DAYS = 21
+/** Days a delivery takes (about a week). */
+export const DELIVERY_DAYS = 7
+/** Order when the total supply lasts less than this: the delivery plus a few days of margin. */
+export const REORDER_DAYS = DELIVERY_DAYS + 3
 
 export type StockAlertKind =
   | 'expired'
@@ -266,7 +268,8 @@ export function stockAlerts(
     if (days <= REORDER_DAYS)
       out.push({
         kind: 'reorder',
-        severity: days <= 10 ? 'danger' : 'warn',
+        // Less than a delivery left: it would arrive late.
+        severity: days <= DELIVERY_DAYS ? 'danger' : 'warn',
         compoundIds: line.partners,
         date: line.runway.runsOutAt,
         days,

@@ -15,6 +15,7 @@ import { protocolDoses, type ProtocolCycle } from '@/features/cycle/items'
 import { headline, weekTrack, type Headline } from '@/features/cycle/view'
 import { REORDER_DAYS } from '@/features/inventory/alerts'
 import { needsMore, type RestockLine } from '@/features/inventory/vials'
+import { DELIVERY_DAYS } from '@/features/inventory/alerts'
 
 /** How a day went: nothing planned, everything taken, still to come, or something missed. */
 export type DayVerdict = 'rest' | 'done' | 'open' | 'broken'
@@ -224,9 +225,15 @@ export function coverLabel(days: number | null): {
     : { value: Math.floor(days / 30), unit: 'mo', plus: false }
 }
 
-/** Days of cover that ask for a reorder: two weeks is urgent, a month is worth a look. */
+/** Days of cover that ask for a reorder: within a delivery is urgent, within two worth a look. */
 export function coverTone(days: number | null): 'ok' | 'warn' | 'danger' {
-  return days === null ? 'ok' : days <= 14 ? 'danger' : days <= 30 ? 'warn' : 'ok'
+  return days === null
+    ? 'ok'
+    : days <= DELIVERY_DAYS
+      ? 'danger'
+      : days <= 2 * DELIVERY_DAYS
+        ? 'warn'
+        : 'ok'
 }
 
 /** Whether the order-by day has come (or passed): then the tile says "order now". */

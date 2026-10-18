@@ -4,7 +4,7 @@
  */
 import { addDays, differenceInCalendarDays, startOfDay } from 'date-fns'
 import type { InventoryRow } from '@/data/database.types'
-import { effectiveExpiry, REORDER_DAYS } from './alerts'
+import { DELIVERY_DAYS, effectiveExpiry, REORDER_DAYS } from './alerts'
 import { needsMore, vialState, type RestockLine } from './vials'
 
 /** How worried to be about a supply: days left against the usual order lead time. */
@@ -16,7 +16,8 @@ export const COVER_GAUGE_DAYS = 60
 /** Two weeks or less is urgent, a month or less is worth a look; no run-out date is fine. */
 export function supplyTone(days: number | null): SupplyTone {
   if (days === null) return 'ok'
-  return days <= 14 ? 'danger' : days <= 30 ? 'warn' : 'ok'
+  // Within a delivery is late; within two, time to order.
+  return days <= DELIVERY_DAYS ? 'danger' : days <= 2 * DELIVERY_DAYS ? 'warn' : 'ok'
 }
 
 /** A use-by date: past it is wrong, the last week careful, anything later fine. */

@@ -171,7 +171,10 @@ describe('stock alerts', () => {
     const kinds = alerts.map((a) => a.kind)
     expect(kinds).toContain('reconstitute')
     expect(kinds).toContain('expiresSoon') // estimated 5 Oct
-    expect(kinds).toContain('reorder') // 12.5 mg covers 8 doses: short on 19 Oct
+    // 12.5 mg covers 8 doses: short on 19 Oct, 19 days away: no order yet (a week's delivery).
+    expect(kinds).not.toContain('reorder')
+    const later = stockAlerts([open, reserve], restock, runways, new Date('2026-10-10T08:00'))
+    expect(later.map((a) => a.kind)).toContain('reorder')
     const reconstitute = alerts.find((a) => a.kind === 'reconstitute')!
     expect(reconstitute.doses).toBe(1)
     // The alert says which vial to reconstitute: the reserve, not the one running out.
