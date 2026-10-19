@@ -264,6 +264,7 @@ function DoseSheet({ actions: a }: { actions: ProtocolActions }) {
           conc={conc}
           vialLabel={vial?.label}
           name={compoundById(compoundId)?.names.generic ?? compoundId}
+          compoundId={compoundId}
         />
       </div>
       {mg !== null && !pending && (

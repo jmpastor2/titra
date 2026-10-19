@@ -132,9 +132,15 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
   return createPortal(
     <dialog
       ref={ref}
-      onClose={onClose}
+      // A sheet opened from another one sits inside it in the React tree: its close must not
+      // reach the outer sheet's handlers and close that one too.
+      onClose={(e) => {
+        e.stopPropagation()
+        onClose()
+      }}
       onCancel={(e) => {
         e.preventDefault()
+        e.stopPropagation()
         onClose()
       }}
       // Where `overflow: clip` is not supported (iOS 15) a focus could still scroll it: undo it.
@@ -142,6 +148,7 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
         if (e.currentTarget.scrollTop) e.currentTarget.scrollTop = 0
       }}
       onClick={(e) => {
+        e.stopPropagation()
         // Click on backdrop (outside the panel) closes.
         if (e.target === ref.current) onClose()
       }}

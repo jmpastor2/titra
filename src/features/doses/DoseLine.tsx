@@ -7,7 +7,8 @@ import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
 import { mgToUnits } from '@/domain/dosing/reconstitution'
 import type { DoseUnit } from '@/domain/types'
-import { concentrationFor } from '@/features/inventory/vials'
+import { ReconstituteNudge } from '@/features/inventory/ReconstituteNudge'
+import { concentrationFor, needsReconstitution } from '@/features/inventory/vials'
 import { fmtDose, fmtNumber, type Locale } from '@/lib/format'
 import {
   entryAmount,
@@ -72,6 +73,9 @@ export function DoseLine({
   const conc = vial ? concOf(vial) : null
   const value = parseAmount(line.amount)
   const canUseUnits = vials.some((v) => concOf(v))
+  // No units because the vial is still powder: it can get its water from here.
+  const powder = canUseUnits ? undefined : (vial ?? vials[0])
+  const reconstitutable = powder && needsReconstitution(powder) ? powder : undefined
   // Peptides are dosed in mg or mcg interchangeably; other units (IU…) stay as they are.
   const doseUnits: DoseUnit[] = native === 'mg' || native === 'mcg' ? ['mg', 'mcg'] : [native]
   const picks: Entry[] = [...(canUseUnits ? (['units'] as const) : []), ...doseUnits]
@@ -211,6 +215,7 @@ export function DoseLine({
           others.length > 0 && `= ${others.join(' · ')}`
         )}
       </p>
+      {reconstitutable && <ReconstituteNudge vial={reconstitutable} />}
       {partnerDoses.length > 0 && (
         <p className="flex min-h-5 flex-wrap gap-x-3 text-[13px] text-muted">
           {partnerDoses.map((p) => (

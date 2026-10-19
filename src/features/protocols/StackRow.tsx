@@ -73,6 +73,7 @@ export function StackRow({
         conc={conc}
         vialLabel={vialLabel}
         name={name}
+        compoundId={comp.compoundId}
       />
       {blend && (
         <div className="flex flex-col items-start gap-2">

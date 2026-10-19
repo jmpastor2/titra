@@ -429,6 +429,7 @@ function ProtocolForm({
                 conc={primaryConc}
                 vialLabel={primaryVial?.label}
                 name={compound.names.generic}
+                compoundId={compound.id}
               />
             </div>
           )}

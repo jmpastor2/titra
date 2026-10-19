@@ -1,9 +1,13 @@
 import { clsx } from 'clsx'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
+import { usePatientScope } from '@/app/scope'
 import { Input } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/primitives'
+import { useInventory } from '@/data/hooks'
 import type { DoseUnit } from '@/domain/types'
+import { ReconstituteNudge } from '@/features/inventory/ReconstituteNudge'
+import { powderVial } from '@/features/inventory/vials'
 import { useLocale } from '@/lib/useLocale'
 import { blurOnEnter } from './blurOnEnter'
 import { entriesFor, fmtEquivalents, fmtPerUnit, type DoseEntry } from './doseUnits'
@@ -42,13 +46,15 @@ export function EntryToggle({
 
 /**
  * Under the toggle: which vial the units are measured against, or why there are none
- * (units need a reconstituted vial to mean anything).
+ * (units need a reconstituted vial to mean anything): a vial still powder can get its water
+ * right there.
  */
 export function EntryNote({
   native,
   conc,
   vialLabel,
   name,
+  compoundId,
   className,
 }: {
   native: DoseUnit
@@ -56,10 +62,15 @@ export function EntryNote({
   vialLabel: string | undefined
   /** Compound name, for "no vial of X". */
   name: string
+  /** The compound, to offer reconstituting its vial when it is still powder. */
+  compoundId?: string
   className?: string
 }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
+  const { patientId } = usePatientScope()
+  const vials = useInventory(compoundId && !conc ? patientId : undefined)
+  const powder = compoundId && !conc ? powderVial(vials.data ?? [], compoundId) : undefined
   if (entriesFor(native, conc).includes('units') && conc) {
     return (
       <p className={className ?? 'text-[12px] text-muted'}>
@@ -71,6 +82,7 @@ export function EntryNote({
     )
   }
   if (native !== 'mg' && native !== 'mcg') return null
+  if (powder) return <ReconstituteNudge vial={powder} />
   return (
     <p className={className ?? 'text-[12px] text-muted'}>
       {t('protocols.entry.noVial', { name })}{' '}

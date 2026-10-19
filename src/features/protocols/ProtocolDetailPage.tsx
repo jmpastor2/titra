@@ -20,7 +20,8 @@ import { ladderSteps } from '@/features/cycles/ladder'
 import { phaseWeeks } from '@/features/cycles/phase'
 import { Fact, FactRow } from '@/features/doses/Fact'
 import { weekPlanVsActual, type WeekCell, type WeekStatus } from '@/features/doses/week'
-import { activeVial, concentrationFor, vialLook } from '@/features/inventory/vials'
+import { ReconstituteNudge } from '@/features/inventory/ReconstituteNudge'
+import { activeVial, concentrationFor, powderVial, vialLook } from '@/features/inventory/vials'
 import { fmtDate, fmtNumber } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { useNow } from '@/lib/useNow'
@@ -114,6 +115,11 @@ function ProtocolDetail({
   )
   const line = summary ? text.line(summary, now) : null
   const ids = protocolCompoundIds(p)
+  // The dose has no units because its vial is still powder: offer its water right here.
+  const powder =
+    canEdit && summary?.dose && summary.dose.units === null
+      ? ids.map((id) => powderVial(vials, id)).find(Boolean)
+      : undefined
   const color = compoundColor(p.compound_id)
   const names = ids.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
   const subtitle =
@@ -167,6 +173,8 @@ function ProtocolDetail({
           ) : (
             <p className="mt-2 text-[24px] font-semibold leading-tight">{text.phase(summary)}</p>
           )}
+
+          {powder && <ReconstituteNudge vial={powder} className="mt-2" />}
 
           {ladder && (
             <div className="mt-4">

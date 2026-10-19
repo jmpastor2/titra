@@ -149,6 +149,19 @@ export function activeVial(
   return candidates.find((v) => concentrationOf(v) && covers(v)) ?? preferred
 }
 
+/**
+ * The vial a dose of `compoundId` would come from when it is still powder: until it has its
+ * water there is no concentration, so no syringe units. Undefined when there is none or the
+ * vial in use is already reconstituted.
+ */
+export function powderVial(
+  vials: readonly InventoryRow[],
+  compoundId: string,
+): InventoryRow | undefined {
+  const vial = activeVial(vials, compoundId)
+  return vial && needsReconstitution(vial) ? vial : undefined
+}
+
 export interface VialRunway {
   /** Upcoming administrations the vial still covers. */
   doses: number

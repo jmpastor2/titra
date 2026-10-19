@@ -1882,7 +1882,8 @@
       "exact_other": "{{count}} tomas: lo gastas justo antes de caducar el {{date}}.",
       "runsOut_one": "Te da para {{count}} toma: ten otro listo para el {{date}}.",
       "runsOut_other": "Te da para {{count}} tomas: ten otro listo para el {{date}}."
-    }
+    },
+    "nudge": "«{{vial}}» aún no tiene el agua registrada: reconstitúyelo y verás la dosis también en unidades."
   },
   "cycles": {
     "eyebrow": "Laboratorio",

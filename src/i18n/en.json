@@ -1882,7 +1882,8 @@
       "exact_other": "{{count}} doses: you use it up just before it expires on {{date}}.",
       "runsOut_one": "It gives {{count}} dose: have the next one ready by {{date}}.",
       "runsOut_other": "It gives {{count}} doses: have the next one ready by {{date}}."
-    }
+    },
+    "nudge": "“{{vial}}” has no water recorded yet: reconstitute it to see the dose in units too."
   },
   "cycles": {
     "eyebrow": "Lab",
