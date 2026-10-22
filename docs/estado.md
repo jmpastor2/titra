@@ -49,6 +49,13 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   quitar el acceso. Cada solicitud avisa por ntfy.sh (secreto de Vault `access_ntfy_topic`). El enlace mágico ya
   no crea cuentas. Los admins se marcan a mano en `public.access.is_admin`.
 
+- Arreglos (2026-10-22): la agenda de Orbe ya no oculta las tomas hechas ni cuenta las decisiones de subida
+  (migración `20261022010000_orbe_agenda_fix.sql`, aplicada; Orbe necesita los avisos activados porque lee
+  `reminders`, 14 días). Las tomas y medidas guardadas sin conexión se reanudan tras recargar (`mk` y
+  `registerMutationDefaults` en `data/hooks.ts`). Cerrar sesión (`features/auth/signOut.ts`) quita el push de
+  este dispositivo, la caché y la copia offline. Errores con su estado HTTP (no se reintentan los 4xx). Zoom
+  permitido, el push no vuelve a sonar sobre el aviso local, la app busca versión nueva al volver.
+
 ## Pendiente
 
 1. Probar el teclado de las hojas (viales, agua) en el iPhone real.

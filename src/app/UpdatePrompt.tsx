@@ -15,6 +15,13 @@ export function UpdatePrompt() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
+    // An installed app can stay open for days: look for a new version each time it comes back.
+    onRegisteredSW(_url, registration) {
+      if (!registration) return
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') void registration.update().catch(() => {})
+      })
+    },
     onRegisterError(error) {
       console.warn('Service worker registration failed', error)
     },

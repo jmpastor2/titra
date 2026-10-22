@@ -19,7 +19,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title || 'Titra', {
       body: data.body || '',
       tag: data.tag || 'titra',
-      renotify: true,
+      // Same tag as the reminder the app may have shown already: replace it quietly, no second alert.
+      renotify: false,
       icon: scoped('icons/icon-192.png'),
       badge: scoped('icons/badge-72.png'),
       timestamp: Number.isFinite(at) ? at : Date.now(),

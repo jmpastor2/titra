@@ -17,7 +17,8 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'prompt',
-        includeAssets: ['icons/*.png', 'icons/*.svg'],
+        // Icons are already in the precache through globPatterns: listing them again doubles them.
+        includeManifestIcons: false,
         manifest: {
           id: '/titra/',
           name: 'Titra',
