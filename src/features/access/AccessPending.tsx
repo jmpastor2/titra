@@ -5,13 +5,8 @@ import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
 import { BrandMark } from '@/features/auth/BrandMark'
 import { useSession } from '@/features/auth/SessionProvider'
-import { getSupabase } from '@/lib/supabase'
+import { signOut } from '@/features/auth/signOut'
 import { useAccess } from './data'
-
-async function signOut() {
-  await getSupabase()?.auth.signOut()
-  window.location.hash = '#/auth'
-}
 
 /**
  * What a signed-in account sees until someone approves it, or after it was turned
@@ -60,7 +55,7 @@ export function AccessPending({ verdict }: { verdict: 'pending' | 'rejected' }) 
           block
           variant="ghost"
           leading={<LogOut className="size-4" aria-hidden />}
-          onClick={signOut}
+          onClick={() => signOut(qc)}
         >
           {t('settings.signOut')}
         </Button>

@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { LogOut, Share } from 'lucide-react'
 import { useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,9 +12,9 @@ import { useToast } from '@/components/ui/Toast'
 import type { ProfileRow } from '@/data/database.types'
 import { useUpdateProfile } from '@/data/hooks'
 import { setLocale, type AppLocale } from '@/i18n'
+import { signOut } from '@/features/auth/signOut'
 import { isStandalone } from '@/features/reminders/push'
 import { fmtNumber } from '@/lib/format'
-import { getSupabase } from '@/lib/supabase'
 import { setSyringePref, useSyringePref, type SyringePref } from '@/lib/syringePref'
 import { useTheme, type ThemePref } from '@/lib/theme'
 import { useLocale } from '@/lib/useLocale'
@@ -29,6 +30,7 @@ const BARRELS = [
 
 export function SettingsPage() {
   const { t } = useTranslation()
+  const qc = useQueryClient()
   const { locale } = useLocale()
   const { patient } = usePatientScope()
   const { toast } = useToast()
@@ -230,14 +232,7 @@ export function SettingsPage() {
           </Card>
         )}
 
-        <Button
-          variant="ghost"
-          leading={<LogOut className="size-4" />}
-          onClick={async () => {
-            await getSupabase()?.auth.signOut()
-            window.location.hash = '#/auth'
-          }}
-        >
+        <Button variant="ghost" leading={<LogOut className="size-4" />} onClick={() => signOut(qc)}>
           {t('settings.signOut')}
         </Button>
       </div>
