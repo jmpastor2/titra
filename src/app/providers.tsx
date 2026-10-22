@@ -2,12 +2,18 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { useState, type ReactNode } from 'react'
 import { ToastProvider } from '@/components/ui/Toast'
+import { registerMutationDefaults } from '@/data/hooks'
 import { SessionProvider } from '@/features/auth/SessionProvider'
 import { CACHE_BUSTER, createIdbPersister, createQueryClient } from '@/lib/queryClient'
 
 export function Providers({ children }: { children: ReactNode }) {
   // One client and persister per app lifetime (useState initialisers never re-run).
-  const [client] = useState(createQueryClient)
+  // Writes paused offline resume after a reload only if their functions are known by key.
+  const [client] = useState(() => {
+    const qc = createQueryClient()
+    registerMutationDefaults(qc)
+    return qc
+  })
   const [persister] = useState(() => createIdbPersister())
   const canPersist = typeof indexedDB !== 'undefined'
 

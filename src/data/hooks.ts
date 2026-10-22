@@ -53,6 +53,28 @@ export const qk = {
 }
 
 /**
+ * Keys of the writes that can be made offline. A write made without connection is paused and
+ * persisted with the cache; after a reload it no longer has the hook's function, so the
+ * function is registered per key (`registerMutationDefaults`) and the paused write resumes.
+ */
+export const mk = {
+  addDose: ['add-dose'] as const,
+  deleteDose: ['delete-dose'] as const,
+  deleteDoses: ['delete-doses'] as const,
+  addMeasurement: ['add-measurement'] as const,
+  deleteMeasurement: ['delete-measurement'] as const,
+}
+
+/** Call once on the app's client, before paused writes are resumed. */
+export function registerMutationDefaults(qc: QueryClient) {
+  qc.setMutationDefaults(mk.addDose, { mutationFn: insertDoses })
+  qc.setMutationDefaults(mk.deleteDose, { mutationFn: deleteDose })
+  qc.setMutationDefaults(mk.deleteDoses, { mutationFn: deleteDoses })
+  qc.setMutationDefaults(mk.addMeasurement, { mutationFn: insertMeasurements })
+  qc.setMutationDefaults(mk.deleteMeasurement, { mutationFn: deleteMeasurement })
+}
+
+/**
  * Screens ask for the last 60, 120, 180 or 365 days of the same table. Rather than one
  * request per window, every window up to this many days shares ONE request and cache
  * entry, and each screen slices what it needs. Longer asks (exports) get their own.
@@ -73,9 +95,27 @@ function sliceWindow<R extends object>(column: string, days: number) {
   }
 }
 
-function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
-  if (res.error) throw new Error(res.error.message)
-  if (res.data === null) throw new Error('Empty response')
+/** A failed request that keeps the HTTP status and Postgres code, so retry rules can read them. */
+export class ApiError extends Error {
+  readonly status?: number
+  readonly code?: string
+  constructor(message: string, status?: number, code?: string) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+  }
+}
+
+type ErrorLike = { message: string; code?: string }
+
+function apiError(error: ErrorLike, status?: number): ApiError {
+  return new ApiError(error.message, status || undefined, error.code || undefined)
+}
+
+export function unwrap<T>(res: { data: T | null; error: ErrorLike | null; status?: number }): T {
+  if (res.error) throw apiError(res.error, res.status)
+  if (res.data === null) throw new ApiError('Empty response', res.status || undefined)
   return res.data
 }
 
@@ -208,18 +248,33 @@ export function useDoses(patientId: string | undefined, days = 365) {
  * Log one administration. A stack (several compounds in one syringe) is several rows
  * written in a single request, tied together by `batch_id`.
  */
+async function insertDoses(input: Insert<'doses'> | Insert<'doses'>[]) {
+  const sb = requireSupabase()
+  const rows = Array.isArray(input) ? input : [input]
+  if (rows.length > 1) {
+    const batchId = crypto.randomUUID()
+    rows.forEach((r) => (r.batch_id ??= batchId))
+  }
+  return unwrap(await sb.from('doses').insert(rows).select('*'))
+}
+
+async function deleteDose(id: string) {
+  const sb = requireSupabase()
+  const { error, status } = await sb.from('doses').delete().eq('id', id)
+  if (error) throw apiError(error, status)
+}
+
+async function deleteDoses(ids: string[]) {
+  const sb = requireSupabase()
+  const { error, status } = await sb.from('doses').delete().in('id', ids)
+  if (error) throw apiError(error, status)
+}
+
 export function useAddDose(patientId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: Insert<'doses'> | Insert<'doses'>[]) => {
-      const sb = requireSupabase()
-      const rows = Array.isArray(input) ? input : [input]
-      if (rows.length > 1) {
-        const batchId = crypto.randomUUID()
-        rows.forEach((r) => (r.batch_id ??= batchId))
-      }
-      return unwrap(await sb.from('doses').insert(rows).select('*'))
-    },
+    mutationKey: mk.addDose,
+    mutationFn: insertDoses,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['doses', patientId] })
       void qc.invalidateQueries({ queryKey: qk.inventory(patientId) })
@@ -230,11 +285,8 @@ export function useAddDose(patientId: string) {
 export function useDeleteDose(patientId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (id: string) => {
-      const sb = requireSupabase()
-      const { error } = await sb.from('doses').delete().eq('id', id)
-      if (error) throw new Error(error.message)
-    },
+    mutationKey: mk.deleteDose,
+    mutationFn: deleteDose,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['doses', patientId] })
       // Deleting a dose gives its amount back to the vial (migration 3 trigger).
@@ -270,11 +322,8 @@ export function useUpdateDoses(patientId: string) {
 export function useDeleteDoses(patientId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (ids: string[]) => {
-      const sb = requireSupabase()
-      const { error } = await sb.from('doses').delete().in('id', ids)
-      if (error) throw new Error(error.message)
-    },
+    mutationKey: mk.deleteDoses,
+    mutationFn: deleteDoses,
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['doses', patientId] })
       void qc.invalidateQueries({ queryKey: qk.inventory(patientId) })
@@ -325,8 +374,8 @@ export function useDeleteSymptom(patientId: string) {
   return useMutation({
     mutationFn: async (id: string) => {
       const sb = requireSupabase()
-      const { error } = await sb.from('symptoms').delete().eq('id', id)
-      if (error) throw new Error(error.message)
+      const { error, status } = await sb.from('symptoms').delete().eq('id', id)
+      if (error) throw apiError(error, status)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['symptoms', patientId] }),
   })
@@ -374,14 +423,23 @@ export function useMeasurements(patientId: string | undefined, days = 365, count
   return useQuery({ ...options, enabled: Boolean(patientId) })
 }
 
+async function insertMeasurements(input: Insert<'measurements'> | Insert<'measurements'>[]) {
+  const sb = requireSupabase()
+  const rows = Array.isArray(input) ? input : [input]
+  return unwrap(await sb.from('measurements').insert(rows).select('*'))
+}
+
+async function deleteMeasurement(id: string) {
+  const sb = requireSupabase()
+  const { error, status } = await sb.from('measurements').delete().eq('id', id)
+  if (error) throw apiError(error, status)
+}
+
 export function useAddMeasurement(patientId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: Insert<'measurements'> | Insert<'measurements'>[]) => {
-      const sb = requireSupabase()
-      const rows = Array.isArray(input) ? input : [input]
-      return unwrap(await sb.from('measurements').insert(rows).select('*'))
-    },
+    mutationKey: mk.addMeasurement,
+    mutationFn: insertMeasurements,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['measurements', patientId] }),
   })
 }
@@ -389,11 +447,8 @@ export function useAddMeasurement(patientId: string) {
 export function useDeleteMeasurement(patientId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (id: string) => {
-      const sb = requireSupabase()
-      const { error } = await sb.from('measurements').delete().eq('id', id)
-      if (error) throw new Error(error.message)
-    },
+    mutationKey: mk.deleteMeasurement,
+    mutationFn: deleteMeasurement,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['measurements', patientId] }),
   })
 }
@@ -437,8 +492,8 @@ export function useDeleteLab(patientId: string) {
   return useMutation({
     mutationFn: async (id: string) => {
       const sb = requireSupabase()
-      const { error } = await sb.from('lab_results').delete().eq('id', id)
-      if (error) throw new Error(error.message)
+      const { error, status } = await sb.from('lab_results').delete().eq('id', id)
+      if (error) throw apiError(error, status)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.labs(patientId) }),
   })
@@ -543,8 +598,8 @@ export function useLinkClinician(userId: string) {
   return useMutation({
     mutationFn: async (code: string) => {
       const sb = requireSupabase()
-      const { data, error } = await sb.rpc('link_clinician', { p_code: code.trim() })
-      if (error) throw new Error(error.message)
+      const { data, error, status } = await sb.rpc('link_clinician', { p_code: code.trim() })
+      if (error) throw apiError(error, status)
       return data
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.careLinks(userId) }),
@@ -556,11 +611,11 @@ export function useRevokeLink(userId: string) {
   return useMutation({
     mutationFn: async (linkId: string) => {
       const sb = requireSupabase()
-      const { error } = await sb
+      const { error, status } = await sb
         .from('care_links')
         .update({ status: 'revoked', revoked_at: new Date().toISOString() })
         .eq('id', linkId)
-      if (error) throw new Error(error.message)
+      if (error) throw apiError(error, status)
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: qk.careLinks(userId) })
@@ -661,8 +716,8 @@ export function useDeleteClinicalNote(patientId: string) {
   return useMutation({
     mutationFn: async (id: string) => {
       const sb = requireSupabase()
-      const { error } = await sb.from('clinical_notes').delete().eq('id', id)
-      if (error) throw new Error(error.message)
+      const { error, status } = await sb.from('clinical_notes').delete().eq('id', id)
+      if (error) throw apiError(error, status)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.clinicalNotes(patientId) }),
   })
@@ -686,12 +741,12 @@ export function useSaveCompoundNote(clinicianId: string, compoundId: string) {
     mutationFn: async (body: string) => {
       const sb = requireSupabase()
       if (body.trim() === '') {
-        const { error } = await sb
+        const { error, status } = await sb
           .from('compound_notes')
           .delete()
           .eq('clinician_id', clinicianId)
           .eq('compound_id', compoundId)
-        if (error) throw new Error(error.message)
+        if (error) throw apiError(error, status)
         return null
       }
       return unwrap(
@@ -748,8 +803,8 @@ export function useDeleteSavedProtocol(userId: string) {
   return useMutation({
     mutationFn: async (id: string) => {
       const sb = requireSupabase()
-      const { error } = await sb.from('saved_protocols').delete().eq('id', id)
-      if (error) throw new Error(error.message)
+      const { error, status } = await sb.from('saved_protocols').delete().eq('id', id)
+      if (error) throw apiError(error, status)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.savedProtocols(userId) }),
   })
@@ -784,10 +839,10 @@ export function useDismissAlert(userId: string) {
         user_id: userId,
         alert_key,
       }))
-      const { error } = await sb
+      const { error, status } = await sb
         .from('alert_dismissals')
         .upsert(rows, { onConflict: 'user_id,alert_key', ignoreDuplicates: true })
-      if (error) throw new Error(error.message)
+      if (error) throw apiError(error, status)
     },
     onMutate: async (keys) => {
       await qc.cancelQueries({ queryKey: key })
@@ -813,12 +868,12 @@ export function useRestoreAlert(userId: string) {
   return useMutation({
     mutationFn: async (alertKeys: string | string[]) => {
       const sb = requireSupabase()
-      const { error } = await sb
+      const { error, status } = await sb
         .from('alert_dismissals')
         .delete()
         .eq('user_id', userId)
         .in('alert_key', Array.isArray(alertKeys) ? alertKeys : [alertKeys])
-      if (error) throw new Error(error.message)
+      if (error) throw apiError(error, status)
     },
     onMutate: async (alertKeys) => {
       await qc.cancelQueries({ queryKey: key })
