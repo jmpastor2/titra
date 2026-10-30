@@ -11,6 +11,7 @@ import { Steps } from '@/components/kpi/Steps'
 import { Card } from '@/components/ui/Card'
 import { Badge, SubstanceDot, Skeleton, Vial } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
+import { shortNames } from '@/features/doses/substanceNames'
 import { compoundColor } from '@/content/substanceColor'
 import type { DoseRow, InventoryRow, ProtocolRow, ProtocolStatus } from '@/data/database.types'
 import { useDoses, useInventory, useProtocols } from '@/data/hooks'
@@ -122,8 +123,11 @@ function ProtocolDetail({
       : undefined
   const color = compoundColor(p.compound_id)
   const names = ids.map((id) => compoundById(id)?.names.generic ?? id).join(' + ')
-  const subtitle =
-    names.toLocaleLowerCase(locale) === p.name.trim().toLocaleLowerCase(locale) ? undefined : names
+  // Under the name only when it says something more: "KLOW" lists its substances, while
+  // "CJC-1295 + Ipamorelina" would only repeat itself with a qualifier.
+  const same = (a: string) =>
+    a.toLocaleLowerCase(locale) === p.name.trim().toLocaleLowerCase(locale)
+  const subtitle = same(names) || same(shortNames(ids)) ? undefined : names
 
   const mine = useMemo(
     () =>

@@ -95,7 +95,7 @@ export function DosesPage() {
     () => (filter === 'all' ? admins : admins.filter((a) => comboKey(a) === filter)),
     [admins, filter],
   )
-  const days = useMemo(() => groupByDay(filtered), [filtered])
+  const days = useMemo(() => groupByDay(filtered, cells), [filtered, cells])
   const visibleDays = days.slice(0, shownDays)
 
   const openActions = useCallback((key: string) => setOverlay({ kind: 'actions', key }), [])

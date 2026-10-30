@@ -152,7 +152,7 @@
     "quickLast": "Last",
     "pickUnits": "Units",
     "atPlanned": "On time",
-    "nightOf": "{{day}} night",
+    "night": "night",
     "undo": "Undo",
     "undone": "Change undone",
     "loggedAs": "Dose logged: it covers the {{slot}} one",

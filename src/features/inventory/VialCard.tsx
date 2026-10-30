@@ -4,7 +4,7 @@ import { Kpi } from '@/components/kpi/Kpi'
 import { Meter } from '@/components/kpi/Meter'
 import { Card } from '@/components/ui/Card'
 import { Badge, Vial } from '@/components/ui/primitives'
-import { compoundById } from '@/content/compounds'
+import { shortNames } from '@/features/doses/substanceNames'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
 import { fmtDate, fmtNumber } from '@/lib/format'
@@ -61,9 +61,7 @@ export function VialCard({
   const hero =
     wastes && view.hero.kind === 'doses' ? { ...view.hero, count: usable.doses } : view.hero
   const nextVial = wastes ? null : view.nextVial
-  const names = vialContents(item)
-    .map((c) => compoundById(c.compoundId)?.names.generic ?? c.compoundId)
-    .join(' + ')
+  const names = shortNames(vialContents(item).map((c) => c.compoundId))
   const total = fmtMg(view.totalMg, locale)
   const day = (d: Date) => fmtDate(d, locale, 'EEE d MMM')
 

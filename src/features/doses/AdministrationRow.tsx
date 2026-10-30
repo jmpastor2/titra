@@ -1,13 +1,12 @@
-import { isSameDay } from 'date-fns'
 import { CalendarCheck, Check, ChevronRight } from 'lucide-react'
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/primitives'
 import { compoundColor } from '@/content/substanceColor'
 import type { InventoryRow } from '@/data/database.types'
-import { fmtDate, fmtDateTime, fmtDoseList, fmtNumber, toTimeInputValue } from '@/lib/format'
+import { fmtDateTime, fmtDoseList, fmtNumber, toTimeInputValue } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
-import { drawnUnits, substanceLine, type Administration } from './administrations'
+import { drawnUnits, eveningOf, substanceLine, type Administration } from './administrations'
 import { fitOf, fmtGap, wholeDays, type Fit } from './delta'
 import { unitOf } from './doseLines'
 import type { ExtraDose } from './extras'
@@ -51,8 +50,8 @@ export const AdministrationRow = memo(function AdministrationRow({
     cell && fit && (fit.kind === 'makeUp' || fit.kind === 'ahead')
       ? slotDayText({ at: cell.plannedAt, day: cell.slotDay }, locale)
       : null
-  // A night shot taken after midnight reads as the evening it belongs to.
-  const night = cell?.slotDay && !covers && !isSameDay(cell.slotDay, a.at) ? cell.slotDay : null
+  // A night shot taken after midnight is listed under the evening it belongs to.
+  const night = eveningOf(a.at, cell) !== null
 
   const colors = a.rows.map((r) => compoundColor(r.compound_id))
   const stripe =
@@ -70,7 +69,7 @@ export const AdministrationRow = memo(function AdministrationRow({
         </span>
         {night && (
           <span className="mt-0.5 block text-[11px] leading-tight text-muted">
-            {t('doses.nightOf', { day: fmtDate(night, locale, 'EEE') })}
+            {t('doses.night')}
           </span>
         )}
       </span>

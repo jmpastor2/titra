@@ -152,7 +152,7 @@
     "quickLast": "Última",
     "pickUnits": "Unidades",
     "atPlanned": "A su hora",
-    "nightOf": "{{day}} noche",
+    "night": "noche",
     "undo": "Deshacer",
     "undone": "Cambio deshecho",
     "loggedAs": "Toma registrada: cuenta como la del {{slot}}",

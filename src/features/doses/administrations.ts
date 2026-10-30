@@ -2,14 +2,15 @@
  * The log is a list of administrations, not of dose rows: a same-syringe stack or a blend
  * is several rows sharing a `batch_id` and is one injection. Pure; see administrations.test.ts.
  */
-import { startOfDay } from 'date-fns'
+import { isSameDay, startOfDay } from 'date-fns'
 import type { DoseRow, InventoryRow, ProtocolRow } from '@/data/database.types'
 import { roundUnits } from '@/domain/dosing/draw'
 import { mgToUnits } from '@/domain/dosing/reconstitution'
 import type { SiteUse } from '@/domain/sites/injectionSites'
 import { concentrationFor, isBlend, vialHas } from '@/features/inventory/vials'
-import type { Fit } from './delta'
+import { fitOf, type Fit } from './delta'
 import { shortNames } from './substanceNames'
+import type { WeekCell } from './week'
 
 /** One administration: a single row, or every row of a same-syringe stack or blend. */
 export interface Administration {
@@ -79,11 +80,29 @@ export interface DayGroup {
   items: Administration[]
 }
 
-/** Administrations (already ordered) into calendar days, keeping the order. */
-export function groupByDay(admins: readonly Administration[]): DayGroup[] {
+type CellFit = Pick<WeekCell, 'slotDay' | 'status' | 'deltaMin'>
+
+/**
+ * The evening a night shot taken after midnight belongs to (Friday 01:04 is Thursday's), as
+ * the plan counts it; null for any other dose. A make-up stays on the day it was taken.
+ */
+export function eveningOf(at: Date, cell: CellFit | undefined): Date | null {
+  if (!cell?.slotDay || isSameDay(cell.slotDay, at)) return null
+  const { kind } = fitOf(cell)
+  return kind === 'makeUp' || kind === 'ahead' ? null : cell.slotDay
+}
+
+/**
+ * Administrations (already ordered) into days, keeping the order. A night shot goes under the
+ * evening it belongs to, so the log, the plan and the reminders name the same day.
+ */
+export function groupByDay(
+  admins: readonly Administration[],
+  cells?: ReadonlyMap<string, CellFit>,
+): DayGroup[] {
   const days = new Map<string, DayGroup>()
   for (const a of admins) {
-    const day = startOfDay(a.at)
+    const day = eveningOf(a.at, cells?.get(a.key)) ?? startOfDay(a.at)
     const key = String(day.getTime())
     const group = days.get(key)
     if (group) group.items.push(a)

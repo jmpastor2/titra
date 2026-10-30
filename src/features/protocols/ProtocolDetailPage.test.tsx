@@ -64,7 +64,8 @@ describe('ProtocolDetailPage', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'CJC-1295 + Ipamorelina' }),
     ).toBeInTheDocument()
-    expect(screen.getByText('CJC-1295 (sin DAC) + Ipamorelina')).toBeInTheDocument()
+    // The substances would only repeat the name.
+    expect(screen.queryByText('CJC-1295 (sin DAC) + Ipamorelina')).not.toBeInTheDocument()
     const hero = within(screen.getByText('Dosis ahora').closest('section')!)
     expect(hero.getByText('9', { selector: 'span' })).toHaveTextContent('9U')
     expect(hero.getByText('150 + 150 mcg')).toBeInTheDocument()
@@ -115,7 +116,7 @@ describe('ProtocolDetailPage', () => {
     expect(within(week).getByText('Adherencia 28 d')).toBeInTheDocument()
   })
 
-  it('shows the vial in use, the notes and the big actions', async () => {
+  it('shows the vial in use, the notes, edit and the rest of the actions under ⋯', async () => {
     const { router } = open()
     await screen.findByText('Semana 2 de 12 · sube el lun 5 a 12 U')
     const vial = screen.getByRole('heading', { name: 'Vial en uso' }).closest('section')!
@@ -124,14 +125,11 @@ describe('ProtocolDetailPage', () => {
     expect(within(vial).getByText('1 U = 16,7 mcg')).toBeInTheDocument()
     expect(screen.getByText('En ayunas.')).toBeInTheDocument()
 
-    for (const name of [
-      'Mantener una semana más',
-      'Pausar',
-      'Duplicar',
-      'Archivar',
-      'Más acciones',
-    ]) {
-      expect(screen.getAllByRole('button', { name: new RegExp(name) }).length).toBeGreaterThan(0)
+    // Edit and "⋯" only: every other change lives in the menu.
+    expect(screen.queryByRole('button', { name: /Duplicar/ })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Más acciones' }))
+    for (const name of ['Mantener una semana más', 'Pausar', 'Duplicar', 'Archivar']) {
+      expect(await screen.findByRole('button', { name: new RegExp(name) })).toBeInTheDocument()
     }
     fireEvent.click(screen.getByRole('button', { name: 'Editar pauta' }))
     expect(router.state.location.pathname).toBe('/protocols/cjc/edit')

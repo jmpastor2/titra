@@ -109,7 +109,7 @@ describe('inventory page', () => {
     renderInApp(<InventoryPage />, makeStore({ inventory: [blend] }))
     const vialCard = await card(blend.label)
     const label = vialCard.getByText(blend.label)
-    const eyebrow = vialCard.getByText('CJC-1295 (sin DAC) + Ipamorelina')
+    const eyebrow = vialCard.getByText('CJC-1295 + Ipamorelina')
     for (const el of [label, eyebrow]) {
       // Nothing between the text and the card may cut it off with an ellipsis.
       for (let n: HTMLElement | null = el; n && n.tagName !== 'SECTION'; n = n.parentElement)

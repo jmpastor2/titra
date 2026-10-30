@@ -60,10 +60,11 @@ describe('DosesPage', () => {
     expect(today.getByText('100 + 100 mcg')).toBeInTheDocument()
     expect(today.getByText('6 U')).toBeInTheDocument()
     expect(today.getByText('Toma extra')).toBeInTheDocument()
-    // The night shots read as the evening they belong to.
-    const yesterday = await dayOf('Ayer')
-    expect(yesterday.getByText('vie noche')).toBeInTheDocument()
-    expect(yesterday.getByText('A su hora')).toBeInTheDocument()
+    // Saturday 01:00 is Friday night's shot: filed under Friday, as the plan counts it.
+    expect(screen.queryByRole('heading', { name: 'Ayer' })).not.toBeInTheDocument()
+    const friday = await dayOf('vie 2 oct')
+    expect(friday.getByText('noche')).toBeInTheDocument()
+    expect(friday.getByText('A su hora')).toBeInTheDocument()
     expect(today.getByRole('button', { name: /¿Era la del lun 28\?/ })).toBeInTheDocument()
   })
 
@@ -139,8 +140,8 @@ describe('DosesPage', () => {
     const { store } = sundayStore()
     renderWithStore(<DosesPage />, store)
 
-    const yesterday = await dayOf('Ayer')
-    fireEvent.click(await yesterday.findByRole('button', { name: /Acciones de la toma de/ }))
+    const friday = await dayOf('vie 2 oct')
+    fireEvent.click((await friday.findAllByRole('button', { name: /Acciones de la toma de/ }))[0]!)
     expect(await screen.findByRole('button', { name: /Editar toma/ })).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /Asignar a una toma perdida/ }),

@@ -3,15 +3,13 @@
  * protocol's name ("KLOW"), not as four substances in a row; anything else lists its
  * substances. Pure; see supplyName.test.ts.
  */
-import { compoundById } from '@/content/compounds'
 import type { ProtocolRow } from '@/data/database.types'
 import { protocolCompoundIds } from '@/data/mappers'
+import { shortName } from '@/features/doses/substanceNames'
 
-const nameOf = (id: string) => compoundById(id)?.names.generic ?? id
-
-/** "GHK-Cu + BPC-157 + TB-500 + KPV": the substances themselves. */
+/** "GHK-Cu + BPC-157 + TB-500 + KPV": the substances themselves, by the short names used everywhere. */
 export const substanceNames = (compoundIds: readonly string[]): string =>
-  compoundIds.map(nameOf).join(' + ')
+  compoundIds.map(shortName).join(' + ')
 
 export function supplyName(
   compoundIds: readonly string[],

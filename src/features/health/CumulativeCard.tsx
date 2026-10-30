@@ -5,8 +5,8 @@
  */
 import { useTranslation } from 'react-i18next'
 import { SubstanceDot } from '@/components/ui/primitives'
-import { compoundName } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
+import { shortName } from '@/features/doses/substanceNames'
 import { fmtDate, fmtDose } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { barHeights, type CompoundTotal } from './cumulative'
@@ -37,7 +37,7 @@ export function CumulativeCard({ totals }: { totals: readonly CompoundTotal[] })
 function TotalRow({ total }: { total: CompoundTotal }) {
   const { t } = useTranslation()
   const { locale } = useLocale()
-  const name = compoundName(total.compoundId)
+  const name = shortName(total.compoundId)
   const color = compoundColor(total.compoundId)
   const heights = barHeights(total.weekly)
   const values = total.weekly.map((mg) => fmtDose(mg, total.unit, locale)).join(', ')

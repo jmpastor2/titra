@@ -61,6 +61,30 @@ describe('groupByDay', () => {
     expect(days.map((g) => g.items.length)).toEqual([2, 1])
     expect(days[0]!.day).toEqual(new Date('2026-10-03T00:00'))
   })
+
+  it('files a night shot under its evening, and a make-up on the day it was taken', () => {
+    const admins = groupAdministrations([
+      doseRow('2026-10-03T09:00'),
+      doseRow('2026-10-03T01:04'),
+      doseRow('2026-10-02T09:00'),
+    ])
+    const [morning, night] = admins
+    const thursday = new Date('2026-10-01T00:00')
+    const nightCell = {
+      slotDay: new Date('2026-10-02T00:00'),
+      status: 'onTime',
+      deltaMin: 4,
+    } as const
+    const days = groupByDay(admins, new Map([[night!.key, nightCell]]))
+    expect(days.map((g) => [g.day, g.items.length])).toEqual([
+      [new Date('2026-10-03T00:00'), 1],
+      [new Date('2026-10-02T00:00'), 2],
+    ])
+
+    const makeUp = { slotDay: thursday, status: 'late', deltaMin: 2 * 1440 } as const
+    const filed = groupByDay(admins, new Map([[morning!.key, makeUp]]))
+    expect(filed[0]!.day).toEqual(new Date('2026-10-03T00:00'))
+  })
 })
 
 describe('summariseDay', () => {

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { Kpi } from '@/components/kpi/Kpi'
 import { Meter } from '@/components/kpi/Meter'
 import { Card } from '@/components/ui/Card'
-import { compoundById } from '@/content/compounds'
 import { fmtDate } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { REORDER_DAYS } from './alerts'
@@ -17,9 +16,8 @@ import {
   type StockKpis,
   type SupplyTone,
 } from './stockKpis'
+import { shortName } from '@/features/doses/substanceNames'
 import { substanceNames } from './supplyName'
-
-const nameOf = (id: string) => compoundById(id)?.names.generic ?? id
 
 /** "hoy", "mañana", "en 5 días", "hace 3 días". */
 function when(days: number, t: TFunction): string {
@@ -85,7 +83,7 @@ export function StockStrip({ kpis }: { kpis: StockKpis }) {
       label: t('inventory.kpi.reorder'),
       value: reorder.days <= 0 ? t('inventory.kpi.reorderNow') : shortDate(reorder.date),
       // Late: what to order (the first name of it, so it fits the column). Ahead: how soon.
-      sub: reorder.days <= 0 ? nameOf(reorder.compoundIds[0] ?? '') : when(reorder.days, t),
+      sub: reorder.days <= 0 ? shortName(reorder.compoundIds[0] ?? '') : when(reorder.days, t),
       tone: reorderTone(reorder.days),
     })
 
