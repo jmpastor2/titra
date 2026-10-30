@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_ROTATION } from './catalog'
+import { DEFAULT_ROTATION, INJECTION_SITES, rotationFor } from './catalog'
 import {
   ageShort,
   byRest,
   heatFor,
   rankSites,
+  restOutlook,
   siteStatuses,
   siteTimeline,
   toInjections,
@@ -152,7 +153,7 @@ describe('siteStatuses', () => {
       ],
       at(0),
     )
-    expect(s).toHaveLength(11)
+    expect(s).toHaveLength(INJECTION_SITES.length + 1)
     const arm = s.find((x) => x.siteId === 'arm_l')!
     expect(arm.lastCompoundIds).toEqual(['bpc-157'])
     expect(arm.heat).toBe('warm')
@@ -219,5 +220,49 @@ describe('byRest', () => {
         .slice(0, 5)
         .map((x) => x.siteId),
     ).toEqual(['thigh_l', 'thigh_r', 'abd_ur', 'abd_ul', 'abd_ll'])
+  })
+})
+
+describe('rotationFor', () => {
+  it('lists the points of the zones switched on, spread across sides and zones', () => {
+    expect(rotationFor(['abdomen', 'thigh'])).toEqual(DEFAULT_ROTATION)
+    expect(DEFAULT_ROTATION.slice(0, 4)).toEqual(['abd_ul', 'abd_ur', 'thigh_l', 'thigh_r'])
+    expect(rotationFor(['flank'])).toEqual(['flank_l', 'flank_r'])
+    expect(rotationFor(['abdomen', 'thigh', 'flank', 'glute', 'arm'])).toHaveLength(
+      INJECTION_SITES.length,
+    )
+  })
+})
+
+describe('restOutlook', () => {
+  /** `n` injections spread over the last 14 days, at different points. */
+  const shots = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({ siteId: `p${i % 7}`, at: at(0, 9 - (i * 336) / n) }))
+
+  it('divides the points by the injections a day', () => {
+    // 28 shots in 14 days: 2 a day over the 10 points of abdomen and thighs.
+    const o = restOutlook(shots(28), at(0, 10), ['abdomen', 'thigh'])
+    expect(o.perDay).toBe(2)
+    expect(o.points).toBe(10)
+    expect(o.restDays).toBe(5)
+    // Flanks bring it to 12 points, 6 days; glutes to 14, a week.
+    expect(o.addZones).toEqual(['flank', 'glute'])
+    expect(o.restWithAdded).toBe(7)
+  })
+
+  it('suggests nothing when every point already rests a week', () => {
+    const o = restOutlook(shots(14), at(0, 10), ['abdomen', 'thigh'])
+    expect(o.restDays).toBe(10)
+    expect(o.addZones).toEqual([])
+    expect(o.restWithAdded).toBeNull()
+  })
+
+  it('has no figure without recent injections, and counts a blend as one', () => {
+    expect(restOutlook([], at(0), ['abdomen']).restDays).toBeNull()
+    const blend = [
+      { siteId: 'abd_ul', at: at(-1), compoundId: 'a' },
+      { siteId: 'abd_ul', at: at(-1), compoundId: 'b' },
+    ]
+    expect(restOutlook(blend, at(0), ['abdomen']).perDay).toBe(1 / 14)
   })
 })

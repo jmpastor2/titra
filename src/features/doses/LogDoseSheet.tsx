@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/Toast'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import { useAddDose, useDeleteDoses, useDoses, useInventory, useProtocols } from '@/data/hooks'
+import { rotationFor } from '@/domain/sites/catalog'
 import { suggestNextSite } from '@/domain/sites/injectionSites'
 import { concentrationFor, vialHas } from '@/features/inventory/vials'
 import { SubstancePicker } from '@/features/protocols/SubstancePicker'
@@ -20,6 +21,7 @@ import {
   toDateInputValue,
   toTimeInputValue,
 } from '@/lib/format'
+import { useSiteZones } from '@/lib/siteZones'
 import { useLocale } from '@/lib/useLocale'
 import { FastingCard } from '@/features/fasting/FastingCard'
 import { needsFasting } from '@/features/fasting/fasting'
@@ -121,7 +123,10 @@ function LogDoseForm({
   const [date, setDate] = useState(() => toDateInputValue(new Date()))
   const [time, setTime] = useState(() => toTimeInputValue(new Date()))
   const sites = useMemo(() => siteHistory(doseRows), [doseRows])
-  const [siteId, setSiteId] = useState(() => suggestNextSite(sites)?.siteId ?? '')
+  const zones = useSiteZones()
+  const [siteId, setSiteId] = useState(
+    () => suggestNextSite(sites, rotationFor(zones))?.siteId ?? '',
+  )
   const [notes, setNotes] = useState('')
 
   const protocol = active.find((p) => p.id === protocolId)

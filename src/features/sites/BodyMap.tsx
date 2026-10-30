@@ -1,34 +1,27 @@
 import { clsx } from 'clsx'
 import { useState, type KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ageShort, type SiteHeat, type SiteStatus } from '@/domain/sites/rotation'
-import { BACK, COMPACT_CAPTION_X, FRONT, SPOTS, VIEWBOX } from './bodyMapGeometry'
+import { ageShort, type SiteStatus } from '@/domain/sites/rotation'
+import { Segmented } from '@/components/ui/primitives'
+import { C, MIN_WIDTH_PX, SPOTS, VIEWBOX, viewOf, type BodyView } from './bodyMapGeometry'
 import { SiteDetail } from './SiteDetail'
+import { HEAT, LEGEND } from './siteHeat'
 
-/** Fresh sites burn warm; rested ones cool down to the action colour. */
-const HEAT: Record<SiteHeat, { fill: string; ink: string }> = {
-  hot: { fill: 'var(--danger)', ink: 'var(--panel)' },
-  warm: { fill: 'var(--warn)', ink: 'var(--panel)' },
-  cool: { fill: 'color-mix(in oklab, var(--signal) 45%, var(--panel))', ink: 'var(--ink)' },
-  rested: { fill: 'var(--signal)', ink: 'var(--panel)' },
-  never: { fill: 'var(--panel)', ink: 'var(--muted)' },
-}
-const LEGEND: readonly SiteHeat[] = ['hot', 'warm', 'cool', 'rested', 'never']
-
+/** A plain figure, drawn wide enough for three points a side across the belly. */
 function Figure({ cx, back }: { cx: number; back?: boolean }) {
   return (
     <g fill="var(--panel-2)" stroke="var(--line-strong)" strokeWidth={1.2}>
       <circle cx={cx} cy={27} r={15} />
-      <rect x={cx - 6} y={40} width={12} height={12} rx={3} />
-      {/* arms, behind the torso */}
-      <rect x={cx - 48} y={58} width={13} height={94} rx={6.5} />
-      <rect x={cx + 35} y={58} width={13} height={94} rx={6.5} />
+      <rect x={cx - 7} y={40} width={14} height={12} rx={3} />
+      {/* arms, beside the torso */}
+      <rect x={cx - 58} y={56} width={13} height={96} rx={6.5} />
+      <rect x={cx + 45} y={56} width={13} height={96} rx={6.5} />
       {/* legs */}
-      <rect x={cx - 27} y={150} width={24} height={136} rx={11} />
-      <rect x={cx + 3} y={150} width={24} height={136} rx={11} />
+      <rect x={cx - 33} y={150} width={28} height={136} rx={12} />
+      <rect x={cx + 5} y={150} width={28} height={136} rx={12} />
       {/* torso: shoulders, waist, hips */}
       <path
-        d={`M${cx - 28} 52 Q${cx - 35} 52 ${cx - 35} 61 L${cx - 24} 128 Q${cx - 30} 146 ${cx - 28} 166 L${cx + 28} 166 Q${cx + 30} 146 ${cx + 24} 128 L${cx + 35} 61 Q${cx + 35} 52 ${cx + 28} 52 Z`}
+        d={`M${cx - 36} 52 Q${cx - 44} 52 ${cx - 44} 61 L${cx - 33} 128 Q${cx - 39} 146 ${cx - 36} 166 L${cx + 36} 166 Q${cx + 39} 146 ${cx + 33} 128 L${cx + 44} 61 Q${cx + 44} 52 ${cx + 36} 52 Z`}
       />
       {back ? (
         // spine and the line between the glutes
@@ -48,107 +41,90 @@ export interface BodyMapProps {
   statuses: readonly SiteStatus[]
   now: Date
   suggestedId?: string
-  /** Controlled selection (the picker). */
-  selectedId?: string
-  /** Makes the map a radio group: tapping a spot selects it. */
-  onSelect?: (siteId: string) => void
-  /** ~200 px tall crop for bottom sheets; hides the legend and the detail line. */
-  compact?: boolean
+  /** Points outside the person's rotation: drawn faint, still tappable. */
+  inRotation?: ReadonlySet<string>
   className?: string
 }
 
 /**
- * Body map of the injection sites, coloured by how recently each was used. Every spot is
- * tappable: with `onSelect` it selects, and the full map shows the tapped site's last
+ * Body map of the injection sites, one side of the body at a time, coloured by how recently
+ * each was used. It opens on the side of the suggested point; a tap shows that point's last
  * use underneath.
  */
-export function BodyMap({
-  statuses,
-  now,
-  suggestedId,
-  selectedId,
-  onSelect,
-  compact = false,
-  className,
-}: BodyMapProps) {
+export function BodyMap({ statuses, now, suggestedId, inRotation, className }: BodyMapProps) {
   const { t } = useTranslation()
+  const [view, setView] = useState<BodyView>(() => (suggestedId && viewOf(suggestedId)) || 'front')
   const [inspected, setInspected] = useState<string | undefined>(undefined)
   const byId = new Map(statuses.map((s) => [s.siteId, s]))
-  const focusId = selectedId || inspected
-  const detail = focusId ? byId.get(focusId) : undefined
-  const selectable = Boolean(onSelect)
+  const detail = inspected ? byId.get(inspected) : undefined
+  const spots = SPOTS.filter((s) => s.view === view)
 
-  function pick(id: string) {
-    setInspected(id)
-    onSelect?.(id)
-  }
   function onKey(e: KeyboardEvent, id: string) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      pick(id)
+      setInspected(id)
     }
   }
 
   return (
     <figure className={clsx('m-0', className)}>
+      <Segmented<BodyView>
+        value={view}
+        onChange={(v) => {
+          setView(v)
+          setInspected(undefined)
+        }}
+        size="sm"
+        options={[
+          { value: 'front', label: t('sites.front') },
+          { value: 'back', label: t('sites.back') },
+        ]}
+      />
       {/*
-        The tap targets are 44 units of a 300-wide map: on a 320 px phone the map would be
-        narrower than that and they would shrink under 44 px. It keeps its 300 and, being
-        centred, spills into the empty margin of the card on both sides.
+        The tap targets are 26 units of a 160-wide map: below 280 px they would shrink under
+        44 px, so on a 320 px phone the map keeps its 280 and spills into the card's margin.
       */}
-      <div className="flex justify-center">
-        <div
-          className="relative w-full shrink-0"
-          style={{ maxWidth: compact ? 288 : 360, minWidth: compact ? undefined : 300 }}
-        >
+      <div className="mt-2 flex justify-center">
+        <div className="w-full shrink-0" style={{ maxWidth: 320, minWidth: MIN_WIDTH_PX }}>
           <svg
-            viewBox={compact ? VIEWBOX.compact : VIEWBOX.full}
+            viewBox={VIEWBOX}
             className="block w-full select-none"
-            role={selectable ? 'radiogroup' : 'group'}
-            aria-label={t('sites.title')}
+            role="group"
+            aria-label={view === 'front' ? t('sites.front') : t('sites.back')}
           >
-            <Figure cx={FRONT} />
-            <Figure cx={BACK} back />
+            <Figure cx={C} back={view === 'back'} />
+            <g
+              fontSize={8}
+              fontWeight={500}
+              fill="var(--muted)"
+              style={{ fontFamily: 'var(--font-sans)' }}
+            >
+              <text x={C - 52} y={260} textAnchor="middle">
+                {t('sites.leftShort')}
+              </text>
+              <text x={C + 52} y={260} textAnchor="middle">
+                {t('sites.rightShort')}
+              </text>
+            </g>
 
-            {!compact &&
-              [FRONT, BACK].map((cx) => (
-                <g
-                  key={cx}
-                  fontSize={11}
-                  fontWeight={500}
-                  fill="var(--muted)"
-                  style={{ fontFamily: 'var(--font-sans)' }}
-                >
-                  <text x={cx - 44} y={302} textAnchor="middle">
-                    {t('sites.leftShort')}
-                  </text>
-                  <text x={cx} y={302} textAnchor="middle" fill="var(--ink-2)" fontWeight={600}>
-                    {cx === FRONT ? t('sites.front') : t('sites.back')}
-                  </text>
-                  <text x={cx + 44} y={302} textAnchor="middle">
-                    {t('sites.rightShort')}
-                  </text>
-                </g>
-              ))}
-
-            {SPOTS.map((s) => {
+            {spots.map((s) => {
               const status = byId.get(s.id)
               const heat = status?.heat ?? 'never'
               const colors = HEAT[heat]
               const suggested = s.id === suggestedId
-              const focused = s.id === focusId
-              const label = t(`sites.labels.${s.id}`)
+              const focused = s.id === inspected
+              const off = inRotation !== undefined && !inRotation.has(s.id)
               return (
                 <g
                   key={s.id}
-                  role={selectable ? 'radio' : 'button'}
-                  aria-checked={selectable ? s.id === selectedId : undefined}
-                  aria-pressed={selectable ? undefined : focused}
-                  aria-label={label}
+                  role="button"
+                  aria-pressed={focused}
+                  aria-label={t(`sites.labels.${s.id}`)}
                   tabIndex={0}
-                  onClick={() => pick(s.id)}
+                  onClick={() => setInspected(s.id)}
                   onKeyDown={(e) => onKey(e, s.id)}
                   className="group cursor-pointer outline-none"
+                  opacity={off && !focused ? 0.4 : 1}
                 >
                   <rect
                     x={s.hit.x}
@@ -160,48 +136,47 @@ export function BodyMap({
                   <circle
                     cx={s.cx}
                     cy={s.cy}
-                    r={15.5}
+                    r={12.5}
                     fill="none"
                     stroke="var(--signal)"
-                    strokeWidth={2}
+                    strokeWidth={1.5}
                     className="opacity-0 group-focus-visible:opacity-100"
                   />
                   {suggested && (
                     <circle
                       cx={s.cx}
                       cy={s.cy}
-                      r={12.5}
+                      r={10.5}
                       fill="none"
                       stroke="var(--signal)"
-                      strokeWidth={1.8}
-                      strokeDasharray="3 2.5"
-                      className={clsx(compact && !focused && 'motion-safe:animate-pulse')}
+                      strokeWidth={1.4}
+                      strokeDasharray="2.5 2"
                     />
                   )}
                   {focused && (
                     <circle
                       cx={s.cx}
                       cy={s.cy}
-                      r={suggested ? 10 : 11}
+                      r={suggested ? 8.5 : 9}
                       fill="none"
                       stroke="var(--ink)"
-                      strokeWidth={2}
+                      strokeWidth={1.6}
                     />
                   )}
                   <circle
                     cx={s.cx}
                     cy={s.cy}
-                    r={8}
+                    r={6.5}
                     style={{ fill: colors.fill }}
                     stroke={heat === 'never' ? 'var(--line-strong)' : 'none'}
-                    strokeWidth={1.2}
+                    strokeWidth={1}
                     className="transition-[fill] duration-300 group-active:opacity-75"
                   />
                   <text
                     x={s.cx}
-                    y={s.cy + 2.5}
+                    y={s.cy + 2}
                     textAnchor="middle"
-                    fontSize={7}
+                    fontSize={5.6}
                     fontWeight={700}
                     fill={colors.ink}
                     style={{ fontFamily: 'var(--font-num)' }}
@@ -214,51 +189,33 @@ export function BodyMap({
               )
             })}
           </svg>
-
-          {compact && (
-            <div aria-hidden className="relative h-3.5">
-              {COMPACT_CAPTION_X.map((x, i) => (
-                <div
-                  key={x}
-                  className="absolute top-0 flex -translate-x-1/2 gap-2 whitespace-nowrap text-[10px] font-medium leading-none text-muted"
-                  style={{ left: `${x * 100}%` }}
-                >
-                  <span>{t('sites.leftShort')}</span>
-                  <span className="text-ink-2">{i === 0 ? t('sites.front') : t('sites.back')}</span>
-                  <span>{t('sites.rightShort')}</span>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
-      {!compact && (
-        <figcaption className="mt-3 space-y-3">
-          <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11.5px] text-muted">
-            {LEGEND.map((h) => (
-              <li key={h} className="inline-flex items-center gap-1.5">
-                <span
-                  aria-hidden
-                  className={clsx(
-                    'inline-block size-2.5 rounded-full',
-                    h === 'never' && 'border border-line-strong',
-                  )}
-                  style={{ background: HEAT[h].fill }}
-                />
-                {t(`sites.heat.${h}`)}
-              </li>
-            ))}
-          </ul>
-          <div aria-live="polite" className="min-h-[52px] border-t border-line pt-3">
-            {detail ? (
-              <SiteDetail status={detail} now={now} />
-            ) : (
-              <p className="text-[12.5px] text-muted">{t('sites.tapHint')}</p>
-            )}
-          </div>
-        </figcaption>
-      )}
+      <figcaption className="mt-3 space-y-3">
+        <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11.5px] text-muted">
+          {LEGEND.map((h) => (
+            <li key={h} className="inline-flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className={clsx(
+                  'inline-block size-2.5 rounded-full',
+                  h === 'never' && 'border border-line-strong',
+                )}
+                style={{ background: HEAT[h].fill }}
+              />
+              {t(`sites.heat.${h}`)}
+            </li>
+          ))}
+        </ul>
+        <div aria-live="polite" className="min-h-[52px] border-t border-line pt-3">
+          {detail ? (
+            <SiteDetail status={detail} now={now} />
+          ) : (
+            <p className="text-[12.5px] text-muted">{t('sites.tapHint')}</p>
+          )}
+        </div>
+      </figcaption>
     </figure>
   )
 }

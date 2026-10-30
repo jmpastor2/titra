@@ -699,17 +699,23 @@
   },
   "sites": {
     "title": "Injection sites",
-    "intro": "Rotate sites to avoid lipodystrophy and irritation. Titra suggests the most rested site, never one you already used today, and alternates side and region.",
+    "intro": "Rotate sites to avoid lipodystrophy and irritation. Within your zones, Titra suggests the most rested point, never one you already used today, and alternates side and zone.",
     "suggested": "Next suggested",
     "labels": {
       "abd_ul": "Upper left abdomen",
       "abd_ur": "Upper right abdomen",
       "abd_ll": "Lower left abdomen",
       "abd_lr": "Lower right abdomen",
+      "abd_sl": "Abdomen side L",
+      "abd_sr": "Abdomen side R",
       "thigh_l": "Left thigh",
       "thigh_r": "Right thigh",
+      "thigh_ol": "Outer thigh L",
+      "thigh_or": "Outer thigh R",
       "arm_l": "Left arm",
       "arm_r": "Right arm",
+      "flank_l": "Flank L",
+      "flank_r": "Flank R",
       "glute_l": "Left glute",
       "glute_r": "Right glute"
     },
@@ -757,15 +763,42 @@
       "abd_ur": "Abd UR",
       "abd_ll": "Abd LL",
       "abd_lr": "Abd LR",
+      "abd_sl": "Abd. SL",
+      "abd_sr": "Abd. SR",
       "thigh_l": "Thigh L",
       "thigh_r": "Thigh R",
+      "thigh_ol": "Thigh OL",
+      "thigh_or": "Thigh OR",
       "arm_l": "Arm L",
       "arm_r": "Arm R",
+      "flank_l": "Flank L",
+      "flank_r": "Flank R",
       "glute_l": "Glute L",
       "glute_r": "Glute R"
     },
     "nextOne": "Next site",
-    "then": "Alternatives"
+    "then": "Alternatives",
+    "allPoints": "All points",
+    "zones": {
+      "abdomen": "Abdomen",
+      "thigh": "Thighs",
+      "flank": "Flanks",
+      "glute": "Glutes",
+      "arm": "Arms"
+    },
+    "rotation": {
+      "rest": "Each point rests",
+      "days_one": "day",
+      "days_other": "days",
+      "caption_one": "{{count}} point in your rotation · {{perDay}} shots a day over the last 2 weeks",
+      "caption_other": "{{count}} points in your rotation · {{perDay}} shots a day over the last 2 weeks",
+      "noRecent": "No shots with a site in the last 2 weeks: record the site when you log each dose.",
+      "ok": "A week or more between shots at the same point: the skin has time to recover.",
+      "add": "Under a week. Switch on {{zones}} and each point will rest {{days}} days.",
+      "short": "Under the recommended {{days}} days: the same point is pricked again before it recovers.",
+      "zones": "Zones you use",
+      "zonesHint": "Suggestions only come from these zones. The other points stay on the map and under “All points”."
+    }
   },
   "wiki": {
     "title": "Peptide wiki",

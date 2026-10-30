@@ -56,6 +56,12 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   este dispositivo, la caché y la copia offline. Errores con su estado HTTP (no se reintentan los 4xx). Zoom
   permitido, el push no vuelve a sonar sobre el aviso local, la app busca versión nueva al volver.
 
+- Puntos de inyección (2026-10-30): 16 puntos (abdomen lateral, muslo exterior y flancos nuevos; los ids viejos no cambian),
+  zonas activables por dispositivo (`lib/siteZones.ts`, por defecto abdomen y muslos) de las que salen las sugerencias,
+  «Cada punto descansa N días» = puntos ÷ pinchazos al día de los últimos 14 días frente a 7 días, con las zonas que
+  faltan para llegar (`restOutlook` en `domain/sites/rotation.ts`). Mapa de una figura con Delante/Detrás (dianas
+  ≥ 44 px); en las hojas de toma, 3 sugerencias y «Todos los puntos» por zona en lugar del mapa pequeño.
+
 ## Pendiente
 
 1. Probar el teclado de las hojas (viales, agua) en el iPhone real.

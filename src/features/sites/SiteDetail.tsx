@@ -2,9 +2,9 @@ import { clsx } from 'clsx'
 import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { SubstanceDot } from '@/components/ui/primitives'
-import { compoundName } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import { DEFAULT_MIN_REST_HOURS, type SiteStatus } from '@/domain/sites/rotation'
+import { shortName } from '@/features/doses/substanceNames'
 import { useLocale } from '@/lib/useLocale'
 import { fmtAgo, fmtUntil } from './siteText'
 
@@ -18,7 +18,7 @@ export function CompoundNames({ ids, className }: { ids: readonly string[]; clas
       {ids.map((id) => (
         <span key={id} className="inline-flex min-w-0 items-center gap-1">
           <SubstanceDot color={compoundColor(id)} size={6} />
-          <span>{compoundName(id)}</span>
+          <span>{shortName(id)}</span>
         </span>
       ))}
     </span>

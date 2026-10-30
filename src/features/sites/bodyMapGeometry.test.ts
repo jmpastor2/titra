@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { INJECTION_SITES } from '@/domain/sites/injectionSites'
-import { BACK, COMPACT_BOX, FRONT, FULL_BOX, SPOTS, type Rect } from './bodyMapGeometry'
+import { BOX, C, MIN_WIDTH_PX, SPOTS, type Rect } from './bodyMapGeometry'
 
 const inside = (r: Rect, x: number, y: number) =>
   x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h
@@ -14,25 +14,30 @@ describe('body map geometry', () => {
     expect(SPOTS.map((s) => s.id).toSorted()).toEqual(INJECTION_SITES.map((s) => s.id).toSorted())
   })
 
-  it('keeps every spot on its figure and inside both crops', () => {
+  it('keeps every spot on the figure, inside the crop and inside its own target', () => {
     for (const s of SPOTS) {
-      // Figures span centre ± 48 horizontally; the arms' centre line is at ± 41.5.
-      const centre = Math.abs(s.cx - FRONT) < Math.abs(s.cx - BACK) ? FRONT : BACK
-      expect(Math.abs(s.cx - centre)).toBeLessThanOrEqual(41.5)
-      expect(s.cy).toBeGreaterThan(58)
-      expect(s.cy).toBeLessThan(286)
-      expect(contains(FULL_BOX, s.hit)).toBe(true)
-      expect(contains(COMPACT_BOX, s.hit)).toBe(true)
+      // The figure spans the centre ± 58 (the arms' centre line is at ± 51.5).
+      expect(Math.abs(s.cx - C)).toBeLessThanOrEqual(51.5)
+      expect(contains(BOX, s.hit)).toBe(true)
       expect(inside(s.hit, s.cx, s.cy)).toBe(true)
     }
   })
 
-  it('gives every spot a ≥ 44 px target that no other spot overlaps', () => {
-    // Narrowest render: compact at 288 px wide showing 276 units → 1.04 px per unit.
+  it('mirrors every left spot on the right', () => {
+    for (const s of SPOTS.filter((x) => x.cx < C)) {
+      const twin = SPOTS.find((o) => o.view === s.view && o.cx === 2 * C - s.cx && o.cy === s.cy)
+      expect(twin, s.id).toBeDefined()
+    }
+  })
+
+  it('gives every spot a ≥ 44 px target that no other spot of its view overlaps', () => {
+    const pxPerUnit = MIN_WIDTH_PX / BOX.w
     for (const s of SPOTS) {
-      expect(s.hit.w).toBeGreaterThanOrEqual(44)
-      expect(s.hit.h).toBeGreaterThanOrEqual(44)
-      for (const o of SPOTS) if (o !== s) expect(overlap(s.hit, o.hit)).toBe(false)
+      expect(s.hit.w * pxPerUnit).toBeGreaterThanOrEqual(44)
+      expect(s.hit.h * pxPerUnit).toBeGreaterThanOrEqual(44)
+      for (const o of SPOTS)
+        if (o !== s && o.view === s.view)
+          expect(overlap(s.hit, o.hit), `${s.id} ${o.id}`).toBe(false)
     }
   })
 })

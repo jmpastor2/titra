@@ -7,14 +7,26 @@ import { Card } from '@/components/ui/Card'
 import { SectionTitle, Skeleton } from '@/components/ui/primitives'
 import { useDoses } from '@/data/hooks'
 import type { SiteUse } from '@/domain/sites/injectionSites'
-import { byRest, rankSites, siteStatuses, type RankedSite } from '@/domain/sites/rotation'
+import { rotationFor } from '@/domain/sites/catalog'
+import {
+  byRest,
+  rankSites,
+  restOutlook,
+  siteStatuses,
+  type RankedSite,
+} from '@/domain/sites/rotation'
+import { useSiteZones } from '@/lib/siteZones'
 import { useNow } from '@/lib/useNow'
 import { BodyMap } from './BodyMap'
 import { RestList } from './RestList'
+import { RotationCard } from './RotationCard'
 import { SiteTimeline } from './SiteTimeline'
 import { reasonText } from './siteText'
 
-/** Rotation dashboard: what to use next, how rested each site is, and the last two weeks. */
+/**
+ * Rotation dashboard: what to use next among the zones switched on, how long each point rests
+ * at the current pace, the map, how rested each point is, and the last two weeks.
+ */
 export function SitesPage() {
   const { t } = useTranslation()
   const { patientId } = usePatientScope()
@@ -30,9 +42,19 @@ export function SitesPage() {
       ),
     [doses.data],
   )
+  const zones = useSiteZones()
+  const rotation = useMemo(() => new Set(rotationFor(zones)), [zones])
   const statuses = useMemo(() => siteStatuses(history, now), [history, now])
-  const next = useMemo(() => rankSites(history, now).slice(0, 3), [history, now])
-  const ordered = useMemo(() => byRest(statuses), [statuses])
+  const next = useMemo(
+    () => rankSites(history, now, { candidates: [...rotation] }).slice(0, 3),
+    [history, now, rotation],
+  )
+  const outlook = useMemo(() => restOutlook(history, now, zones), [history, now, zones])
+  // The points in rotation, and any other one used lately: a list of sixteen would bury them.
+  const ordered = useMemo(
+    () => byRest(statuses).filter((s) => rotation.has(s.siteId) || s.recentUses > 0),
+    [statuses, rotation],
+  )
   const [best, ...then] = next
 
   /** "Sin usar 9 días · Alterna lado": why this site, in one line. */
@@ -100,8 +122,17 @@ export function SitesPage() {
         <p className="mt-4 text-[12.5px] leading-snug text-muted">{t('sites.intro')}</p>
       </Card>
 
+      {!doses.isLoading && <RotationCard outlook={outlook} zones={zones} />}
+
       <Card className="mb-3">
-        <BodyMap statuses={statuses} now={now} suggestedId={best?.siteId} />
+        <BodyMap
+          // Opens on the side of the suggestion once the history has loaded.
+          key={best?.siteId ?? ''}
+          statuses={statuses}
+          now={now}
+          suggestedId={best?.siteId}
+          inRotation={rotation}
+        />
       </Card>
 
       <SectionTitle>{t('sites.byRest')}</SectionTitle>

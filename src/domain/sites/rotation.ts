@@ -17,7 +17,15 @@
  */
 import { addDays, isSameDay, startOfDay } from 'date-fns'
 import type { InjectionSite } from '../types'
-import { DEFAULT_ROTATION, INJECTION_SITES, siteById, type SiteUse } from './catalog'
+import {
+  DEFAULT_ROTATION,
+  INJECTION_SITES,
+  rotationFor,
+  siteById,
+  ZONES,
+  type SiteUse,
+  type SiteZone,
+} from './catalog'
 
 const HOUR = 3_600_000
 
@@ -316,3 +324,54 @@ export function byRest(statuses: readonly SiteStatus[]): SiteStatus[] {
 }
 
 const restGroup = (s: SiteStatus) => (s.lastUsedAt === null ? 2 : s.resting ? 1 : 0)
+
+/** How long each point should rest before it is used again: a week, so it heals fully. */
+export const TARGET_REST_DAYS = 7
+
+export interface RestOutlook {
+  /** Injections a day, over the last 14 days (a blend in one syringe is one). */
+  perDay: number
+  /** Points in rotation. */
+  points: number
+  /** Days each point rests on average at this pace; null with no recent injections. */
+  restDays: number | null
+  /** Zones to switch on, easiest first, until the rest reaches a week (or every zone is on). */
+  addZones: SiteZone[]
+  /** Days each point would rest with `addZones` on too; null when there is nothing to add. */
+  restWithAdded: number | null
+}
+
+/**
+ * The arithmetic of the rotation: injecting `perDay` times a day over `points` points, each
+ * one comes round every `points / perDay` days. Fewer than a week means the same skin is
+ * pricked again before it has settled, so it says which zones would bring it to a week.
+ */
+export function restOutlook(
+  history: readonly SiteUse[],
+  now: Date,
+  zones: readonly SiteZone[],
+): RestOutlook {
+  const from = now.getTime() - RECENT_DAYS * 24 * HOUR
+  const recent = toInjections(history).filter(
+    (i) => i.at.getTime() >= from && i.at.getTime() <= now.getTime(),
+  )
+  const perDay = recent.length / RECENT_DAYS
+  const points = rotationFor(zones).length
+  if (perDay === 0) return { perDay, points, restDays: null, addZones: [], restWithAdded: null }
+
+  const on = [...zones]
+  const addZones: SiteZone[] = []
+  for (const { zone } of ZONES) {
+    if (rotationFor(on).length / perDay >= TARGET_REST_DAYS) break
+    if (on.includes(zone)) continue
+    on.push(zone)
+    addZones.push(zone)
+  }
+  return {
+    perDay,
+    points,
+    restDays: points / perDay,
+    addZones,
+    restWithAdded: addZones.length > 0 ? rotationFor(on).length / perDay : null,
+  }
+}

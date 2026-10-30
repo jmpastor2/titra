@@ -699,17 +699,23 @@
   },
   "sites": {
     "title": "Puntos de inyección",
-    "intro": "Rota los puntos para evitar lipodistrofia e irritación. Titra sugiere el punto que más ha descansado, nunca el que ya usaste hoy, y alterna lado y zona.",
+    "intro": "Rota los puntos para evitar lipodistrofia e irritación. Titra sugiere, dentro de tus zonas, el punto que más ha descansado, nunca el que ya usaste hoy, y alterna lado y zona.",
     "suggested": "Siguiente sugerido",
     "labels": {
       "abd_ul": "Abdomen sup. izq.",
       "abd_ur": "Abdomen sup. der.",
       "abd_ll": "Abdomen inf. izq.",
       "abd_lr": "Abdomen inf. der.",
+      "abd_sl": "Abdomen lat. izq.",
+      "abd_sr": "Abdomen lat. der.",
       "thigh_l": "Muslo izq.",
       "thigh_r": "Muslo der.",
+      "thigh_ol": "Muslo ext. izq.",
+      "thigh_or": "Muslo ext. der.",
       "arm_l": "Brazo izq.",
       "arm_r": "Brazo der.",
+      "flank_l": "Flanco izq.",
+      "flank_r": "Flanco der.",
       "glute_l": "Glúteo izq.",
       "glute_r": "Glúteo der."
     },
@@ -757,15 +763,42 @@
       "abd_ur": "Abd. SD",
       "abd_ll": "Abd. II",
       "abd_lr": "Abd. ID",
+      "abd_sl": "Abd. LI",
+      "abd_sr": "Abd. LD",
       "thigh_l": "Muslo I",
       "thigh_r": "Muslo D",
+      "thigh_ol": "Muslo EI",
+      "thigh_or": "Muslo ED",
       "arm_l": "Brazo I",
       "arm_r": "Brazo D",
+      "flank_l": "Flanco I",
+      "flank_r": "Flanco D",
       "glute_l": "Glúteo I",
       "glute_r": "Glúteo D"
     },
     "nextOne": "Siguiente punto",
-    "then": "Alternativas"
+    "then": "Alternativas",
+    "allPoints": "Todos los puntos",
+    "zones": {
+      "abdomen": "Abdomen",
+      "thigh": "Muslos",
+      "flank": "Flancos",
+      "glute": "Glúteos",
+      "arm": "Brazos"
+    },
+    "rotation": {
+      "rest": "Cada punto descansa",
+      "days_one": "día",
+      "days_other": "días",
+      "caption_one": "{{count}} punto en tu rotación · {{perDay}} pinchazos al día en las últimas 2 semanas",
+      "caption_other": "{{count}} puntos en tu rotación · {{perDay}} pinchazos al día en las últimas 2 semanas",
+      "noRecent": "Sin pinchazos con punto en las últimas 2 semanas: registra el punto al anotar cada toma.",
+      "ok": "Una semana o más entre pinchazos en el mismo punto: la piel tiene tiempo de recuperarse.",
+      "add": "Menos de una semana. Activa {{zones}} y cada punto descansará {{days}} días.",
+      "short": "Menos de los {{days}} días recomendados: el mismo punto se vuelve a pinchar antes de recuperarse.",
+      "zones": "Zonas que usas",
+      "zonesHint": "Las sugerencias salen solo de estas zonas. Los demás puntos siguen en el mapa y en «Todos los puntos»."
+    }
   },
   "wiki": {
     "title": "Wiki de péptidos",
