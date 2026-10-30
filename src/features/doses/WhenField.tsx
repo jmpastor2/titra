@@ -1,15 +1,16 @@
 import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/Field'
 import { Segmented } from '@/components/ui/primitives'
-import { fmtDate, toTimeInputValue } from '@/lib/format'
-import { useLocale } from '@/lib/useLocale'
+import { toDateInputValue, toTimeInputValue } from '@/lib/format'
 import { SheetSection } from './SheetSection'
 
 export type WhenMode = 'now' | 'planned' | 'custom'
 
 /**
  * When the dose was taken: now, at the planned time of the administration it was opened for
- * (only when that is already past), or another date and time.
+ * (only when that is already past), or another date and time. The date and time it will be
+ * saved with are always on show, so switching never reshapes the form; touching them, or
+ * "Otra hora", starts from what is shown (its planned time, to fix a few minutes).
  */
 export function WhenField({
   mode,
@@ -33,55 +34,45 @@ export function WhenField({
   onTime: (time: string) => void
 }) {
   const { t } = useTranslation()
-  const { locale } = useLocale()
+  const canPlan = plannedAt !== undefined && plannedAt.getTime() < openedAt
 
-  const atPlanned =
-    plannedAt && plannedAt.getTime() < openedAt
-      ? [
-          {
-            value: 'planned' as const,
-            label: t('doses.atPlanned', {
-              // A 01:00 night shot reads as the evening it belongs to.
-              time: `${
-                plannedAt.getHours() < 6
-                  ? t('doses.nightOf', {
-                      day: fmtDate(new Date(plannedAt.getTime() - 86_400_000), locale, 'EEE'),
-                    })
-                  : fmtDate(plannedAt, locale, 'EEE')
-              } ${toTimeInputValue(plannedAt)}`,
-            }),
-          },
-        ]
-      : []
+  const fixed =
+    mode === 'now' ? new Date(openedAt) : mode === 'planned' && plannedAt ? plannedAt : null
+  const shownDate = fixed ? toDateInputValue(fixed) : date
+  const shownTime = fixed ? toTimeInputValue(fixed) : time
+
+  function custom(next: { date?: string; time?: string }) {
+    onDate(next.date ?? shownDate)
+    onTime(next.time ?? shownTime)
+    onMode('custom')
+  }
 
   return (
     <SheetSection label={t('doses.when')}>
       <Segmented<WhenMode>
         value={mode}
-        onChange={onMode}
+        onChange={(m) => (m === 'custom' ? custom({}) : onMode(m))}
         size="sm"
         options={[
           { value: 'now', label: t('doses.now') },
-          ...atPlanned,
+          ...(canPlan ? [{ value: 'planned' as const, label: t('doses.atPlanned') }] : []),
           { value: 'custom', label: t('doses.otherTime') },
         ]}
       />
-      {mode === 'custom' && (
-        <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-2">
-          <Input
-            type="date"
-            aria-label={t('common.date')}
-            value={date}
-            onChange={(e) => onDate(e.target.value)}
-          />
-          <Input
-            type="time"
-            aria-label={t('common.time')}
-            value={time}
-            onChange={(e) => onTime(e.target.value)}
-          />
-        </div>
-      )}
+      <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-2">
+        <Input
+          type="date"
+          aria-label={t('common.date')}
+          value={shownDate}
+          onChange={(e) => custom({ date: e.target.value })}
+        />
+        <Input
+          type="time"
+          aria-label={t('common.time')}
+          value={shownTime}
+          onChange={(e) => custom({ time: e.target.value })}
+        />
+      </div>
     </SheetSection>
   )
 }

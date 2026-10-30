@@ -151,7 +151,7 @@
     "quickPlan": "Protocol",
     "quickLast": "Last",
     "pickUnits": "Units",
-    "atPlanned": "On time · {{time}}",
+    "atPlanned": "On time",
     "nightOf": "{{day}} night",
     "undo": "Undo",
     "undone": "Change undone",
@@ -2096,6 +2096,8 @@
       "extra": "None: an extra dose",
       "extraWhy": "It matches no planned dose: it will count as an extra",
       "recommended": "Suggested",
+      "change": "Change",
+      "changeAria": "Change which dose it counts for",
       "then": {
         "extra": "It will count as an extra and does not change your adherence.",
         "auto": "Covers {{slot}} · {{delay}}.",

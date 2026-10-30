@@ -139,14 +139,16 @@ describe('EditDoseSheet', () => {
     )
 
     // It lands on no administration: an extra, with the missed night on offer.
-    expect(await screen.findByText('Ninguna: toma extra')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Contará como extra y no cambia tu adherencia.'),
+    ).toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar para qué toma cuenta' }))
     expect(screen.getByText('No coincide con ninguna toma: contará como extra')).toBeInTheDocument()
     const monday = screen.getByRole('radio', { name: /lun 28 noche · 01:00 · perdida/ })
     expect(monday).toHaveTextContent('Sugerida')
     expect(monday).toHaveAttribute('aria-checked', 'false')
 
     fireEvent.click(monday)
-    expect(monday).toHaveAttribute('aria-checked', 'true')
     expect(
       screen.getByText('Tu adherencia sube: la del lunes pasa de perdida a hecha tarde.'),
     ).toBeInTheDocument()
@@ -171,6 +173,7 @@ describe('EditDoseSheet', () => {
       store,
     )
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar para qué toma cuenta' }))
     const current = await screen.findByRole('radio', { name: /la que cubre ahora/ })
     expect(current).toHaveAttribute('aria-checked', 'true')
   })

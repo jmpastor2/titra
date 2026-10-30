@@ -8,7 +8,7 @@ import { useDoses, useProtocols } from '@/data/hooks'
 import { fmtDateTime } from '@/lib/format'
 import { useLocale } from '@/lib/useLocale'
 import { protocolOf, substanceLine, type Administration } from './administrations'
-import { SlotPicker } from './SlotPicker'
+import { SlotOptions } from './SlotPicker'
 import { useAssignDose } from './useAssignDose'
 import { useSlotAssignment } from './useSlotAssignment'
 
@@ -101,7 +101,7 @@ function AssignSlotForm({ administration, onClose, suggested }: FormProps) {
         </Button>
       }
     >
-      <div className="pb-2 pt-1">{slot && <SlotPicker assignment={slot} hideLabel />}</div>
+      <div className="pb-2 pt-1">{slot && <SlotOptions assignment={slot} />}</div>
     </Sheet>
   )
 }

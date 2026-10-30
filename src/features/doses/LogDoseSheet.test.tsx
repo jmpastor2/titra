@@ -213,11 +213,13 @@ describe('LogDoseSheet, a make-up dose', () => {
     )
 
     // Sunday morning matches no night: it would be an extra, so the missed night is selected.
+    expect(
+      await screen.findByText('Tu adherencia sube: la del lunes pasa de perdida a hecha tarde.'),
+    ).toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar para qué toma cuenta' }))
     const monday = await screen.findByRole('radio', { name: /lun 28 noche · 01:00 · perdida/ })
     expect(monday).toHaveAttribute('aria-checked', 'true')
-    expect(
-      screen.getByText('Tu adherencia sube: la del lunes pasa de perdida a hecha tarde.'),
-    ).toBeInTheDocument()
+    fireEvent.click(monday)
 
     fireEvent.click(screen.getByRole('button', { name: LOG }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
@@ -244,6 +246,7 @@ describe('LogDoseSheet, a make-up dose', () => {
     fireEvent.click(
       (await sectionFor('Tus pautas')).getByRole('button', { name: /CJC-1295 \+ Ipamorelina/ }),
     )
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar para qué toma cuenta' }))
     fireEvent.click(await screen.findByRole('radio', { name: /Ninguna: toma extra/ }))
     expect(screen.getByText('Contará como extra y no cambia tu adherencia.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: LOG }))
@@ -268,6 +271,7 @@ describe('LogDoseSheet, a make-up dose', () => {
       store,
     )
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar para qué toma cuenta' }))
     const monday = await screen.findByRole('radio', { name: /lun 28 noche · 01:00 · perdida/ })
     expect(monday).toHaveAttribute('aria-checked', 'true')
     // Taken now, honestly, rather than at the planned time.
@@ -293,6 +297,7 @@ describe('LogDoseSheet, a make-up dose', () => {
     unmount()
 
     renderWithStore(<LogDoseSheet open onClose={() => {}} protocolId="cjc" />, store)
+    fireEvent.click(await screen.findByRole('button', { name: 'Cambiar para qué toma cuenta' }))
     const monday = await screen.findByRole('radio', { name: /lun 28 noche · 01:00 · perdida/ })
     expect(monday).toHaveAttribute('aria-checked', 'true')
   })
@@ -308,7 +313,9 @@ describe('LogDoseSheet, a make-up dose', () => {
 
     // It has its own night, so there is nothing to choose: no older night is offered.
     expect(await screen.findByText(/Cubre la de vie 2 noche · 01:00/)).toBeInTheDocument()
-    expect(screen.queryByRole('radiogroup', { name: 'Cuenta para' })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Cambiar para qué toma cuenta' }),
+    ).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: LOG }))
     await waitFor(() => expect(onClose).toHaveBeenCalled())
 

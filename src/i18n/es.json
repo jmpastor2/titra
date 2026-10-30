@@ -151,7 +151,7 @@
     "quickPlan": "Pauta",
     "quickLast": "Última",
     "pickUnits": "Unidades",
-    "atPlanned": "A su hora · {{time}}",
+    "atPlanned": "A su hora",
     "nightOf": "{{day}} noche",
     "undo": "Deshacer",
     "undone": "Cambio deshecho",
@@ -2096,6 +2096,8 @@
       "extra": "Ninguna: toma extra",
       "extraWhy": "No coincide con ninguna toma: contará como extra",
       "recommended": "Sugerida",
+      "change": "Cambiar",
+      "changeAria": "Cambiar para qué toma cuenta",
       "then": {
         "extra": "Contará como extra y no cambia tu adherencia.",
         "auto": "Cubre la de {{slot}} · {{delay}}.",
