@@ -5,7 +5,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { compoundName } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import { DEFAULT_ROTATION, INJECTION_SITES, type SiteUse } from '@/domain/sites/injectionSites'
+import { INJECTION_SITES, type SiteUse } from '@/domain/sites/injectionSites'
 import { siteTimeline } from '@/domain/sites/rotation'
 import { useLocale } from '@/lib/useLocale'
 import { CompoundNames } from './SiteDetail'
@@ -23,9 +23,8 @@ export function SiteTimeline({ history, now }: { history: readonly SiteUse[]; no
   const { rows, compounds } = useMemo(() => {
     const used = new Set(days.flatMap((d) => d.injections.map((i) => i.siteId)))
     const ids = [
-      ...INJECTION_SITES.map((s) => s.id).filter(
-        (id) => DEFAULT_ROTATION.includes(id) || used.has(id),
-      ),
+      // Only the points used in the window: the whole catalogue is too long a table.
+      ...INJECTION_SITES.map((s) => s.id).filter((id) => used.has(id)),
       ...[...used].filter((id) => !INJECTION_SITES.some((s) => s.id === id)),
     ]
     const seen = new Set(days.flatMap((d) => d.injections.flatMap((i) => i.compoundIds)))

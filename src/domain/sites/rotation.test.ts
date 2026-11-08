@@ -225,12 +225,19 @@ describe('byRest', () => {
 
 describe('rotationFor', () => {
   it('lists the points of the zones switched on, spread across sides and zones', () => {
-    expect(rotationFor(['abdomen', 'thigh'])).toEqual(DEFAULT_ROTATION)
-    expect(DEFAULT_ROTATION.slice(0, 4)).toEqual(['abd_ul', 'abd_ur', 'thigh_l', 'thigh_r'])
-    expect(rotationFor(['flank'])).toEqual(['flank_l', 'flank_r'])
-    expect(rotationFor(['abdomen', 'thigh', 'flank', 'glute', 'arm'])).toHaveLength(
-      INJECTION_SITES.length,
-    )
+    expect(DEFAULT_ROTATION).toHaveLength(INJECTION_SITES.length)
+    expect(DEFAULT_ROTATION.slice(0, 8)).toEqual([
+      'abd_ul',
+      'abd_ur',
+      'thigh_l',
+      'thigh_r',
+      'flank_l',
+      'flank_r',
+      'arm_l',
+      'arm_r',
+    ])
+    expect(rotationFor(['abdomen', 'thigh'])).toHaveLength(10)
+    expect(rotationFor(['flank'])).toEqual(['flank_l', 'flank_r', 'hip_l', 'hip_r'])
   })
 })
 
@@ -245,8 +252,8 @@ describe('restOutlook', () => {
     expect(o.perDay).toBe(2)
     expect(o.points).toBe(10)
     expect(o.restDays).toBe(5)
-    // Flanks bring it to 12 points, 6 days; glutes to 14, a week.
-    expect(o.addZones).toEqual(['flank', 'glute'])
+    // The love handles and hips bring it to 14 points: a week.
+    expect(o.addZones).toEqual(['flank'])
     expect(o.restWithAdded).toBe(7)
   })
 

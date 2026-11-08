@@ -16,8 +16,8 @@ describe('body map geometry', () => {
 
   it('keeps every spot on the figure, inside the crop and inside its own target', () => {
     for (const s of SPOTS) {
-      // The figure spans the centre ± 58 (the arms' centre line is at ± 51.5).
-      expect(Math.abs(s.cx - C)).toBeLessThanOrEqual(51.5)
+      // The figure spans the centre ± 64; the lower triceps point is the farthest out.
+      expect(Math.abs(s.cx - C)).toBeLessThanOrEqual(53)
       expect(contains(BOX, s.hit)).toBe(true)
       expect(inside(s.hit, s.cx, s.cy)).toBe(true)
     }

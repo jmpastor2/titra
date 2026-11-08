@@ -108,6 +108,6 @@ export interface InjectionSite {
   id: string
   /** i18n key suffix */
   labelKey: string
-  region: 'abdomen' | 'thigh' | 'arm' | 'flank' | 'glute' | 'other'
+  region: 'abdomen' | 'thigh' | 'arm' | 'flank' | 'back' | 'glute' | 'other'
   side: 'left' | 'right' | 'center'
 }

@@ -7,31 +7,102 @@ import { C, MIN_WIDTH_PX, SPOTS, VIEWBOX, viewOf, type BodyView } from './bodyMa
 import { SiteDetail } from './SiteDetail'
 import { HEAT, LEGEND } from './siteHeat'
 
-/** A plain figure, drawn wide enough for three points a side across the belly. */
-function Figure({ cx, back }: { cx: number; back?: boolean }) {
+type Pt = readonly [number, number]
+
+const r = (v: number) => Math.round(v * 10) / 10
+
+/** A closed curve through the points (Catmull-Rom as cubic Béziers), so the outline has no corners. */
+function smooth(points: readonly Pt[]): string {
+  const n = points.length
+  const at = (i: number) => points[(i + n) % n]!
+  let d = `M${at(0)[0]} ${at(0)[1]}`
+  for (let i = 0; i < n; i++) {
+    const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)]
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6] as const
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6] as const
+    d += ` C${r(c1[0])} ${r(c1[1])} ${r(c2[0])} ${r(c2[1])} ${p2[0]} ${p2[1]}`
+  }
+  return `${d} Z`
+}
+
+/** Left half of the body, as offsets from the centre line: neck to knee, then up the inner leg. */
+const BODY_LEFT: readonly Pt[] = [
+  [-6.5, 34],
+  [-7, 44],
+  [-13, 50],
+  [-30, 54],
+  [-42, 61],
+  [-41, 75],
+  [-37, 84],
+  [-35, 100],
+  [-33, 118],
+  [-36, 134],
+  [-40, 152],
+  [-38, 176],
+  [-35, 204],
+  [-31, 236],
+  [-28, 258],
+  [-28, 290],
+  [-7, 290],
+  [-7, 258],
+  [-6, 230],
+  [-5, 200],
+  [-2.5, 176],
+]
+/** The left arm, hanging slightly away from the body: down the outside, up the inside. */
+const ARM_LEFT: readonly Pt[] = [
+  [-42, 63],
+  [-50, 67],
+  [-55, 82],
+  [-60, 110],
+  [-63, 134],
+  [-65, 160],
+  [-66, 184],
+  [-63, 204],
+  [-55, 204],
+  [-54, 184],
+  [-52, 160],
+  [-49, 134],
+  [-45, 112],
+  [-40, 94],
+  [-37, 84],
+]
+
+const mirror = (pts: readonly Pt[]): Pt[] => pts.map(([x, y]) => [-x, y] as const)
+const place = (pts: readonly Pt[]): Pt[] => pts.map(([x, y]) => [C + x, y] as const)
+
+const BODY = smooth(place([...BODY_LEFT, [0, 172], ...mirror(BODY_LEFT).toReversed()]))
+const ARMS = [smooth(place(ARM_LEFT)), smooth(place(mirror(ARM_LEFT)))]
+
+/** The figure, front or back: one outline, the navel in front; spine, shoulder blades and glutes behind. */
+function Figure({ back }: { back?: boolean }) {
   return (
-    <g fill="var(--panel-2)" stroke="var(--line-strong)" strokeWidth={1.2}>
-      <circle cx={cx} cy={27} r={15} />
-      <rect x={cx - 7} y={40} width={14} height={12} rx={3} />
-      {/* arms, beside the torso */}
-      <rect x={cx - 58} y={56} width={13} height={96} rx={6.5} />
-      <rect x={cx + 45} y={56} width={13} height={96} rx={6.5} />
-      {/* legs */}
-      <rect x={cx - 33} y={150} width={28} height={136} rx={12} />
-      <rect x={cx + 5} y={150} width={28} height={136} rx={12} />
-      {/* torso: shoulders, waist, hips */}
-      <path
-        d={`M${cx - 36} 52 Q${cx - 44} 52 ${cx - 44} 61 L${cx - 33} 128 Q${cx - 39} 146 ${cx - 36} 166 L${cx + 36} 166 Q${cx + 39} 146 ${cx + 33} 128 L${cx + 44} 61 Q${cx + 44} 52 ${cx + 36} 52 Z`}
-      />
-      {back ? (
-        // spine and the line between the glutes
-        <g fill="none" stroke="var(--line)" strokeWidth={1}>
-          <path d={`M${cx} 56 V148`} />
-          <path d={`M${cx} 152 V178`} />
-        </g>
-      ) : (
-        <circle cx={cx} cy={118.5} r={1.8} fill="var(--line-strong)" stroke="none" />
-      )}
+    <g fill="var(--panel-2)" stroke="var(--line-strong)" strokeWidth={1.1} strokeLinejoin="round">
+      {ARMS.map((d) => (
+        <path key={d} d={d} />
+      ))}
+      <path d={BODY} />
+      <ellipse cx={C} cy={21} rx={12.5} ry={15} />
+      <g fill="none" stroke="var(--line)" strokeWidth={1} strokeLinecap="round">
+        {back ? (
+          <>
+            <path d={`M${C} 52 V150`} />
+            <path d={`M${C - 9} 66 Q${C - 21} 64 ${C - 26} 76 Q${C - 22} 88 ${C - 11} 86`} />
+            <path d={`M${C + 9} 66 Q${C + 21} 64 ${C + 26} 76 Q${C + 22} 88 ${C + 11} 86`} />
+            <path d={`M${C} 156 V186`} />
+            <path d={`M${C - 33} 190 Q${C - 18} 197 ${C - 3} 190`} />
+            <path d={`M${C + 33} 190 Q${C + 18} 197 ${C + 3} 190`} />
+          </>
+        ) : (
+          <>
+            <path d={`M${C - 6} 55 Q${C - 18} 52 ${C - 30} 57`} />
+            <path d={`M${C + 6} 55 Q${C + 18} 52 ${C + 30} 57`} />
+            <path d={`M${C - 28} 160 Q${C - 14} 168 ${C - 3} 174`} />
+            <path d={`M${C + 28} 160 Q${C + 14} 168 ${C + 3} 174`} />
+          </>
+        )}
+      </g>
+      {!back && <circle cx={C} cy={118.5} r={1.8} fill="var(--line-strong)" stroke="none" />}
     </g>
   )
 }
@@ -92,17 +163,17 @@ export function BodyMap({ statuses, now, suggestedId, inRotation, className }: B
             role="group"
             aria-label={view === 'front' ? t('sites.front') : t('sites.back')}
           >
-            <Figure cx={C} back={view === 'back'} />
+            <Figure back={view === 'back'} />
             <g
               fontSize={8}
               fontWeight={500}
               fill="var(--muted)"
               style={{ fontFamily: 'var(--font-sans)' }}
             >
-              <text x={C - 52} y={260} textAnchor="middle">
+              <text x={C - 52} y={252} textAnchor="middle">
                 {t('sites.leftShort')}
               </text>
-              <text x={C + 52} y={260} textAnchor="middle">
+              <text x={C + 52} y={252} textAnchor="middle">
                 {t('sites.rightShort')}
               </text>
             </g>

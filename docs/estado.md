@@ -62,6 +62,11 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   faltan para llegar (`restOutlook` en `domain/sites/rotation.ts`). Mapa de una figura con Delante/Detrás (dianas
   ≥ 44 px); en las hojas de toma, 3 sugerencias y «Todos los puntos» por zona en lugar del mapa pequeño.
 
+- Más zonas (2026-11-08): 22 puntos. Tríceps alto y bajo (`arm_*`, `arm_ll/lr`), michelines (`flank_*`) y cadera
+  (`hip_*`), lumbar (`back_*`, zona nueva `back`). Por defecto todas las zonas activas (clave `titra.siteZones.v2`:
+  abdomen y muslos solos daban la vuelta en menos de una semana). Muñeco nuevo: silueta suave (Catmull-Rom) con
+  cabeza y brazos separados. La tabla de los 14 días solo lista los puntos usados.
+
 ## Pendiente
 
 1. Probar el teclado de las hojas (viales, agua) en el iPhone real.

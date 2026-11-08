@@ -17,11 +17,20 @@ export const INJECTION_SITES: readonly InjectionSite[] = [
   { id: 'thigh_r', labelKey: 'thigh_r', region: 'thigh', side: 'right' },
   { id: 'thigh_ol', labelKey: 'thigh_ol', region: 'thigh', side: 'left' },
   { id: 'thigh_or', labelKey: 'thigh_or', region: 'thigh', side: 'right' },
+  // The back of the upper arm, where the triceps carries a pad of fat: upper and lower half.
   { id: 'arm_l', labelKey: 'arm_l', region: 'arm', side: 'left' },
   { id: 'arm_r', labelKey: 'arm_r', region: 'arm', side: 'right' },
-  // The love handles, at the back of the waist above the glutes.
+  { id: 'arm_ll', labelKey: 'arm_ll', region: 'arm', side: 'left' },
+  { id: 'arm_lr', labelKey: 'arm_lr', region: 'arm', side: 'right' },
+  // The love handles: the back of the waist, then the upper hip below it.
   { id: 'flank_l', labelKey: 'flank_l', region: 'flank', side: 'left' },
   { id: 'flank_r', labelKey: 'flank_r', region: 'flank', side: 'right' },
+  { id: 'hip_l', labelKey: 'hip_l', region: 'flank', side: 'left' },
+  { id: 'hip_r', labelKey: 'hip_r', region: 'flank', side: 'right' },
+  // The lower back, two fingers either side of the spine, above the glutes.
+  { id: 'back_l', labelKey: 'back_l', region: 'back', side: 'left' },
+  { id: 'back_r', labelKey: 'back_r', region: 'back', side: 'right' },
+  // The upper outer quarter of the glute, away from the sciatic nerve.
   { id: 'glute_l', labelKey: 'glute_l', region: 'glute', side: 'left' },
   { id: 'glute_r', labelKey: 'glute_r', region: 'glute', side: 'right' },
 ]
@@ -33,34 +42,45 @@ export const ZONES: readonly { zone: SiteZone; view: 'front' | 'back' }[] = [
   { zone: 'abdomen', view: 'front' },
   { zone: 'thigh', view: 'front' },
   { zone: 'flank', view: 'back' },
-  { zone: 'glute', view: 'back' },
   { zone: 'arm', view: 'back' },
+  { zone: 'glute', view: 'back' },
+  { zone: 'back', view: 'back' },
 ]
 
-/** Abdomen and thighs: what anyone reaches alone, and where the labels of most peptides point. */
-export const DEFAULT_ZONES: readonly SiteZone[] = ['abdomen', 'thigh']
+/**
+ * Every zone: abdomen and thighs alone come round in under a week at two or three shots a day,
+ * so the same skin was pricked again before it had settled. A zone that is hard to reach is
+ * switched off in the rotation card.
+ */
+export const DEFAULT_ZONES: readonly SiteZone[] = ZONES.map((z) => z.zone)
 
 /**
  * Tie-break order of the whole catalogue: it alternates sides and zones, so with no history
- * the rotation already spreads (abdomen, thigh, abdomen…).
+ * the rotation already spreads (abdomen, thigh, love handles, triceps…).
  */
 const ROTATION_ORDER: readonly string[] = [
   'abd_ul',
   'abd_ur',
   'thigh_l',
   'thigh_r',
-  'abd_ll',
-  'abd_lr',
   'flank_l',
   'flank_r',
-  'abd_sl',
-  'abd_sr',
-  'thigh_ol',
-  'thigh_or',
-  'glute_l',
-  'glute_r',
   'arm_l',
   'arm_r',
+  'abd_ll',
+  'abd_lr',
+  'glute_l',
+  'glute_r',
+  'thigh_ol',
+  'thigh_or',
+  'hip_l',
+  'hip_r',
+  'abd_sl',
+  'abd_sr',
+  'back_l',
+  'back_r',
+  'arm_ll',
+  'arm_lr',
 ]
 
 const byId = new Map(INJECTION_SITES.map((s) => [s.id, s]))
@@ -75,7 +95,7 @@ export function zoneSites(zone: SiteZone): InjectionSite[] {
   return INJECTION_SITES.filter((s) => s.region === zone)
 }
 
-/** Sites a person can comfortably reach alone: the default zones' points. */
+/** The default zones' points: the whole catalogue. */
 export const DEFAULT_ROTATION: readonly string[] = rotationFor(DEFAULT_ZONES)
 
 /** Catalogue entry for an id; unknown ids (legacy or custom) get a neutral stand-in. */

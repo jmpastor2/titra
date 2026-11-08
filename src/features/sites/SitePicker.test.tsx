@@ -9,8 +9,11 @@ const history = [
   { siteId: 'abd_ul', at: new Date(2026, 8, 28, 8, 0), compoundId: 'retatrutide' },
   { siteId: 'thigh_l', at: new Date(2026, 8, 20, 22, 0), compoundId: 'ipamorelin' },
 ]
-const point = (id: string) =>
-  screen.getByRole('button', { name: new RegExp(t(`sites.labels.${id}`)) })
+/** A point in the "Todos los puntos" list (it may also be one of the suggestions above). */
+const point = (zone: string, id: string) =>
+  within(screen.getByRole('group', { name: t(`sites.zones.${zone}`) })).getByRole('button', {
+    name: new RegExp(t(`sites.labels.${id}`)),
+  })
 
 describe('SitePicker', () => {
   it('lists every point by zone a tap away, and clears when tapping the chosen one again', () => {
@@ -21,14 +24,14 @@ describe('SitePicker', () => {
     const all = screen.getByRole('button', { name: t('sites.allPoints') })
     expect(all).toHaveAttribute('aria-expanded', 'false')
     fireEvent.click(all)
-    for (const zone of ['abdomen', 'thigh', 'flank', 'glute', 'arm'])
+    for (const zone of ['abdomen', 'thigh', 'flank', 'arm', 'glute', 'back'])
       expect(screen.getByRole('group', { name: t(`sites.zones.${zone}`) })).toBeInTheDocument()
-    fireEvent.click(point('flank_r'))
-    expect(onChange).toHaveBeenLastCalledWith('flank_r')
+    fireEvent.click(point('back', 'back_r'))
+    expect(onChange).toHaveBeenLastCalledWith('back_r')
 
-    rerender(<SitePicker value="flank_r" onChange={onChange} history={history} now={now} />)
-    expect(point('flank_r')).toHaveAttribute('aria-pressed', 'true')
-    fireEvent.click(point('flank_r'))
+    rerender(<SitePicker value="back_r" onChange={onChange} history={history} now={now} />)
+    expect(point('back', 'back_r')).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(point('back', 'back_r'))
     expect(onChange).toHaveBeenLastCalledWith('')
   })
 

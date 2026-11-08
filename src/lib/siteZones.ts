@@ -1,8 +1,11 @@
 import { useSyncExternalStore } from 'react'
 import { DEFAULT_ZONES, ZONES, type SiteZone } from '@/domain/sites/catalog'
 
-/** The zones this device's user injects into; the rotation only suggests their points. */
-const KEY = 'titra.siteZones'
+/**
+ * The zones this device's user injects into; the rotation only suggests their points. v2: the
+ * choice saved before every zone was on by default is dropped, so the new zones reach it.
+ */
+const KEY = 'titra.siteZones.v2'
 const listeners = new Set<() => void>()
 const KNOWN = new Set<string>(ZONES.map((z) => z.zone))
 
