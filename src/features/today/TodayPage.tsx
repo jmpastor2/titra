@@ -24,6 +24,7 @@ import { buildToday, focusItem, longDate } from './agenda'
 import { FastingLine } from './FastingLine'
 import { KpiGrid } from './KpiGrid'
 import { LevelsCard, LevelsCardSkeleton } from './LevelsCard'
+import { isTracked } from './levels'
 import { NextDoseCard, type HeroDose } from './NextDoseCard'
 import { RemindersNotice, StockNotice } from './Notices'
 import { SetupLab } from './SetupLab'
@@ -77,7 +78,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
   const hasProtocols = protocols.some((p) => p.status === 'active')
   // Compounds that ride along in another protocol's syringe or blend vial are shown on that
   // protocol's row, not on their own.
-  const tracked = exposure.items.filter((x) => (x.protocol || x.lastDose) && !x.partnerOf)
+  const tracked = exposure.items.filter(isTracked)
 
   const day = useMemo(() => {
     const today = buildToday(protocols, doses, now)
@@ -92,6 +93,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
     return {
       dose,
       units: focus ? unitsToDraw(focus.doses, vials) : (next?.totalUnits ?? null),
+      plan: dose ? drawPlan(dose.doses, vials) : null,
       track: trackItems(window, heroKey),
       rows: heroRows(today, window, heroKey),
     }
@@ -151,6 +153,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
         <NextDoseCard
           dose={day.dose}
           units={day.units}
+          plan={day.plan}
           track={day.track}
           rows={day.rows}
           unitsOf={(item) => unitsToDraw(item.doses, vials)}
@@ -228,8 +231,11 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
 
 const NO_VIALS: readonly InventoryRow[] = []
 
-/** Units to draw for an administration, when every compound has a reconstituted vial. */
-function unitsToDraw(doses: readonly StackComponent[], vials: readonly InventoryRow[]) {
+/** How an administration is drawn up, when every compound has a reconstituted vial. */
+function drawPlan(doses: readonly StackComponent[], vials: readonly InventoryRow[]) {
   const plan = planDraw(doses.map((d) => drawPartFor(vials, d.compoundId, d.doseMg)))
-  return plan && plan.unknown.length === 0 ? plan.totalUnits : null
+  return plan && plan.unknown.length === 0 ? plan : null
 }
+
+const unitsToDraw = (doses: readonly StackComponent[], vials: readonly InventoryRow[]) =>
+  drawPlan(doses, vials)?.totalUnits ?? null

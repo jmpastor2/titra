@@ -141,9 +141,10 @@ export const METABOLIC_SEXUAL_OTHER: CompoundDetail[] = [
   {
     id: 'elamipretide',
     names: {
-      generic: 'Elamipretida',
+      // Sold and known as SS-31: the bracket is dropped wherever names are shortened.
+      generic: 'SS-31 (elamipretida)',
       brands: ['Forzinity'],
-      aliases: ['SS-31', 'MTP-131', 'Bendavia', 'D-Arg-Dmt-Lys-Phe-NH2'],
+      aliases: ['Elamipretida', 'Elamipretide', 'MTP-131', 'Bendavia', 'D-Arg-Dmt-Lys-Phe-NH2'],
     },
     category: 'metabolic',
     pharmClass: t(

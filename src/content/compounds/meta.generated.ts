@@ -1302,9 +1302,9 @@ export const SUBSTANCE_META: readonly CompoundMeta[] = [
   {
     id: 'elamipretide',
     names: {
-      generic: 'Elamipretida',
+      generic: 'SS-31 (elamipretida)',
       brands: ['Forzinity'],
-      aliases: ['SS-31', 'MTP-131', 'Bendavia', 'D-Arg-Dmt-Lys-Phe-NH2'],
+      aliases: ['Elamipretida', 'Elamipretide', 'MTP-131', 'Bendavia', 'D-Arg-Dmt-Lys-Phe-NH2'],
     },
     category: 'metabolic',
     pharmClass: {

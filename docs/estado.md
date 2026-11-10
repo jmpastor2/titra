@@ -67,6 +67,11 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   abdomen y muslos solos daban la vuelta en menos de una semana). Muñeco nuevo: silueta suave (Catmull-Rom) con
   cabeza y brazos separados. La tabla de los 14 días solo lista los puntos usados.
 
+- Jeringa a la vista (2026-11-10): la próxima toma de Hoy dibuja la jeringa cargándose (`doses/PlanSyringe.tsx`, un toque
+  la repite) y en la hoja de toma va la primera de «Dosis». Niveles solo lista lo que está en una pauta activa o aún a
+  bordo (`isTracked` en `today/levels.ts`); una pauta recién empezada dice su primera toma. Pautas activas antes que las
+  pausadas. SS-31 se llama así (`SS-31 (elamipretida)`) y lleva color propio (`OWN_HUE` en `content/substanceColor.ts`).
+
 ## Pendiente
 
 1. Probar el teclado de las hojas (viales, agua) en el iPhone real.

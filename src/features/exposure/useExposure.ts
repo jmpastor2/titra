@@ -26,6 +26,7 @@ import {
   type SteadyStateProgress,
 } from '@/domain/pk/engine'
 import type { DoseEvent, PkParams, ProtocolLike } from '@/domain/types'
+import { shortName } from '@/features/doses/substanceNames'
 import { hasMeaningfulCurve } from './levelSummary'
 
 /** A compound that goes in the same syringe or blend vial as the series' primary one. */
@@ -182,10 +183,7 @@ export function deriveExposure(
       titration: protocolLike ? titrationStatus(protocolLike, now) : null,
       adherence: protocolLike ? adherence(protocolLike, history, now) : null,
       asOf: now,
-      title:
-        lead && components.length > 0 && lead.name.trim()
-          ? lead.name
-          : (compound?.names.generic ?? compoundId),
+      title: lead && components.length > 0 && lead.name.trim() ? lead.name : shortName(compoundId),
       partners: components.map((c) => {
         const t = takenOf(byCompound.get(c.compoundId))
         return {

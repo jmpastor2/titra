@@ -2315,7 +2315,8 @@
     "steadyNow": "at steady level",
     "ago": "{{time}} ago",
     "daysDone": "{{taken}} of {{expected}} planned days done",
-    "noPlanDays": "No doses planned in {{n}} days"
+    "noPlanDays": "No doses planned in {{n}} days",
+    "firstDose": "First dose: {{when}}"
   },
   "trend": {
     "title": "Readings over time",

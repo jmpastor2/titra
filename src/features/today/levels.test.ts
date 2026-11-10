@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { labAccount } from '@/features/exposure/testData'
-import { dayTick, levelRow, sinceShort } from './levels'
+import { dayTick, isTracked, levelRow, sinceShort } from './levels'
 
 // Sunday evening of the lab account.
 const SUNDAY = new Date(2026, 9, 4, 20, 30)
@@ -55,5 +55,36 @@ describe('sinceShort', () => {
     expect(sinceShort(at(36.5), SUNDAY)).toBe('36 h')
     expect(sinceShort(at(47.9), SUNDAY)).toBe('47 h')
     expect(sinceShort(at(59.2), SUNDAY)).toBe('2 d')
+  })
+})
+
+describe('isTracked', () => {
+  const now = new Date(2026, 10, 10, 9)
+  const ago = (hours: number) => ({ at: new Date(now.getTime() - hours * 3_600_000) })
+  const entry = (over: object) =>
+    ({
+      partnerOf: null,
+      protocol: null,
+      lastDose: null,
+      pk: undefined,
+      asOf: now,
+      ...over,
+    }) as never
+
+  it('keeps what is on an active plan, and never a part shown on its blend', () => {
+    expect(isTracked(entry({ protocol: {} }))).toBe(true)
+    expect(isTracked(entry({ protocol: {}, partnerOf: {} }))).toBe(false)
+  })
+
+  it('drops a substance without a plan three days after its last dose', () => {
+    expect(isTracked(entry({}))).toBe(false)
+    expect(isTracked(entry({ lastDose: ago(70) }))).toBe(true)
+    expect(isTracked(entry({ lastDose: ago(80) }))).toBe(false)
+  })
+
+  it('keeps a long-acting one while it washes out (five half-lives)', () => {
+    const pk = { halfLifeH: 144 }
+    expect(isTracked(entry({ lastDose: ago(24 * 20), pk }))).toBe(true)
+    expect(isTracked(entry({ lastDose: ago(24 * 31), pk }))).toBe(false)
   })
 })

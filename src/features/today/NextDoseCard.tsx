@@ -9,8 +9,10 @@ import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundById, compoundName } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
 import type { ProtocolRow } from '@/data/database.types'
+import type { DrawPlan } from '@/domain/dosing/draw'
 import type { AgendaStatus } from '@/domain/dosing/schedule'
 import type { StackComponent } from '@/domain/types'
+import { PlanSyringe } from '@/features/doses/PlanSyringe'
 import { DOSE_SOON_H } from '@/features/quicklog/tiles'
 import {
   fmtDate,
@@ -57,6 +59,7 @@ const doseList = (doses: readonly StackComponent[], locale: Locale) =>
 export function NextDoseCard({
   dose,
   units,
+  plan,
   track,
   rows,
   unitsOf,
@@ -70,6 +73,8 @@ export function NextDoseCard({
   dose: HeroDose | null
   /** Syringe units for the dose, when every vial involved is known. */
   units: number | null
+  /** The same dose on the syringe, drawn under the units. */
+  plan: DrawPlan | null
   /** Markers of the day track: every administration from 4 h ago to 20 h ahead. */
   track: readonly TrackItem[]
   /** The other doses of the day, in time order. */
@@ -120,6 +125,7 @@ export function NextDoseCard({
             </span>
           </div>
           <Load doses={dose.doses} units={units} />
+          {units !== null && plan && <PlanSyringe plan={plan} className="-mx-1 mt-1" />}
           <p
             className={clsx(
               'readout mt-2.5 text-[14px] leading-snug',

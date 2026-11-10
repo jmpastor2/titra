@@ -2315,7 +2315,8 @@
     "steadyNow": "en nivel estable",
     "ago": "hace {{time}}",
     "daysDone": "{{taken}} de {{expected}} días cumplidos",
-    "noPlanDays": "Sin tomas previstas en {{n}} días"
+    "noPlanDays": "Sin tomas previstas en {{n}} días",
+    "firstDose": "Primera toma: {{when}}"
   },
   "trend": {
     "title": "Evolución",

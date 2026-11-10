@@ -34,6 +34,7 @@ function props(now: Date, { fresh = false } = {}): Props {
   return {
     dose,
     units: focus ? 15 : (next?.totalUnits ?? null),
+    plan: null,
     track: trackItems(window, heroKey),
     rows: heroRows(today, window, heroKey),
     unitsOf: () => null,

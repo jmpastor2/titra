@@ -163,7 +163,7 @@ describe('deriveExposure edge states', () => {
       components: [{ compoundId: 'ipamorelin', doseMg: 0.1 }],
     })
     const items = deriveExposure([blend], [], now)
-    expect(items.find((x) => x.compoundId === 'mod-grf-1-29')?.title).toBe('CJC-1295 (sin DAC)')
+    expect(items.find((x) => x.compoundId === 'mod-grf-1-29')?.title).toBe('CJC-1295')
   })
 
   it('keeps a compound that was dosed but has no active protocol, after the planned ones', () => {

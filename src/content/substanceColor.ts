@@ -23,6 +23,15 @@ export function categoryColor(category: CompoundCategory | undefined): string {
   return category ? CATEGORY_HUE[category] : 'var(--sub-gray)'
 }
 
+/**
+ * The exception to "colour follows the family": two substances of one family that are taken on
+ * the same days would be told apart by nothing on the day track or in a shared syringe.
+ */
+const OWN_HUE: Record<string, string> = {
+  // With MOTS-c (metabolic, sky): both mitochondrial peptides, usually run together.
+  elamipretide: 'var(--sub-pink)',
+}
+
 export function compoundColor(compoundId: string): string {
-  return categoryColor(compoundById(compoundId)?.category)
+  return OWN_HUE[compoundId] ?? categoryColor(compoundById(compoundId)?.category)
 }

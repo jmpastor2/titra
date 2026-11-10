@@ -1,17 +1,15 @@
 import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Syringe, type SyringeLoad } from '@/components/dosing/Syringe'
 import { SubstanceDot } from '@/components/ui/primitives'
 import { compoundById } from '@/content/compounds'
 import { compoundColor } from '@/content/substanceColor'
-import { syringeFor, type DrawPlan } from '@/domain/dosing/draw'
+import type { DrawPlan } from '@/domain/dosing/draw'
 import { fmtDose, fmtNumber } from '@/lib/format'
-import { barrelFor, useSyringePref } from '@/lib/syringePref'
+import { useSyringePref } from '@/lib/syringePref'
 import { useLocale } from '@/lib/useLocale'
+import { PlanSyringe, useBarrel } from './PlanSyringe'
 
 const nameOf = (id: string) => compoundById(id)?.names.generic ?? id
-
-const NO_LOADS: readonly SyringeLoad[] = []
 
 /**
  * What to draw, drawn: total units, the syringe at that mark and the order of the loads. The
@@ -25,9 +23,7 @@ export function DrawGuide({ plan }: { plan: DrawPlan | null }) {
   const u = (n: number) => fmtNumber(n, locale, 1)
   const stacked = plan !== null && plan.loads.length > 1
   const pref = useSyringePref()
-  const { capacity, overflows } = plan
-    ? barrelFor(pref, plan.totalUnits, plan.capacity)
-    : { capacity: pref === 'auto' ? syringeFor(0) : pref, overflows: false }
+  const { capacity, overflows } = useBarrel(plan)
   const blend = plan?.loads.find((l) => l.compoundIds.length > 1)
 
   return (
@@ -52,20 +48,7 @@ export function DrawGuide({ plan }: { plan: DrawPlan | null }) {
         )}
       </div>
 
-      <Syringe
-        capacity={capacity}
-        loads={
-          plan
-            ? plan.loads.map((l) => ({
-                from: l.from,
-                to: l.to,
-                color: compoundColor(l.compoundId),
-              }))
-            : NO_LOADS
-        }
-        label={t('draw.aria', { capacity, units: u(plan?.totalUnits ?? 0) })}
-        className="mt-1 w-full"
-      />
+      <PlanSyringe plan={plan} className="mt-1" />
 
       {plan && stacked && (
         <ol className="mt-1 flex flex-col gap-1.5">

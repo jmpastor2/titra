@@ -34,7 +34,11 @@ export function ProtocolsPage() {
   const vials = useMemo(() => inventory.data ?? [], [inventory.data])
 
   const list = protocols.data ?? []
-  const current = list.filter((p) => p.status === 'active' || p.status === 'paused')
+  // What is being taken now first; the paused ones wait below it.
+  const current = [
+    ...list.filter((p) => p.status === 'active'),
+    ...list.filter((p) => p.status === 'paused'),
+  ]
   const past = list.filter((p) => p.status === 'completed' || p.status === 'archived')
 
   return (

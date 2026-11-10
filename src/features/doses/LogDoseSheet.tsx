@@ -330,6 +330,8 @@ function LogDoseForm({
                 )
               }
             >
+              {/* The syringe first: it stays in sight above the keyboard while the amount is typed. */}
+              {drawable && <DrawGuide plan={plan} />}
               <div className="flex flex-col divide-y divide-line">
                 {lines.map((l) => (
                   <div key={l.key} className="py-3 first:pt-0 last:pb-0">
@@ -350,7 +352,6 @@ function LogDoseForm({
                   </div>
                 ))}
               </div>
-              {drawable && <DrawGuide plan={plan} />}
               {needsFasting(everyCompound) && <FastingCard name={title} />}
             </SheetSection>
 

@@ -5,7 +5,8 @@
  */
 import { Card } from '@/components/ui/Card'
 import { Badge, SubstanceDot } from '@/components/ui/primitives'
-import { compoundById, compoundName } from '@/content/compounds'
+import { compoundById } from '@/content/compounds'
+import { shortName } from '@/features/doses/substanceNames'
 import type { CompoundOutlook } from '@/content/outlook'
 import { t as l10n } from '@/content/schema'
 import { compoundColor } from '@/content/substanceColor'
@@ -38,7 +39,7 @@ export function NoDataSection({ f, entries }: { f: Fmt; entries: readonly NoData
                     <SubstanceDot color={compoundColor(compoundId)} />
                   </span>
                   <span className="min-w-0 text-[14px] font-semibold leading-snug">
-                    {compoundName(compoundId)}
+                    {shortName(compoundId)}
                   </span>
                 </span>
                 {entry && (

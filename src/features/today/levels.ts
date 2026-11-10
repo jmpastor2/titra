@@ -72,6 +72,23 @@ export function levelRow(x: CompoundExposure, days = LEVEL_DAYS): LevelRow {
   }
 }
 
+/** Without a plan, a substance stays in Niveles this long after its last dose, at least. */
+const LINGER_H = 72
+/** …and while it is still measurably on board: five half-lives leave 3 % of the dose. */
+const WASHOUT_HALF_LIVES = 5
+
+/**
+ * Whether a substance belongs in Niveles: it is on an active plan, or its last dose is recent
+ * enough to matter. A paused blend would otherwise leave a row per part for ever.
+ */
+export function isTracked(x: CompoundExposure): boolean {
+  if (x.partnerOf) return false
+  if (x.protocol) return true
+  if (!x.lastDose) return false
+  const hours = (x.asOf.getTime() - x.lastDose.at.getTime()) / 3_600_000
+  return hours <= Math.max(LINGER_H, WASHOUT_HALF_LIVES * (x.pk?.halfLifeH ?? 0))
+}
+
 /** How long ago, short: "25 min", "36 h", "3 d". Hours up to two days, so "yesterday" is not "2 days". */
 export function sinceShort(from: Date, now: Date): string {
   const min = Math.max(1, Math.round((now.getTime() - from.getTime()) / 60_000))

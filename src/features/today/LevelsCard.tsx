@@ -91,7 +91,10 @@ function LevelRowView({ row }: { row: LevelRow }) {
     caption =
       row.expected > 0
         ? t('levels.daysDone', { taken: row.taken, expected: row.expected })
-        : t('levels.noPlanDays', { n: LEVEL_DAYS })
+        : x.next
+          ? // A plan that has just started: nothing was due yet, the first dose is ahead.
+            t('levels.firstDose', { when: fmtDate(x.next.at, locale, 'EEE d · HH:mm') })
+          : t('levels.noPlanDays', { n: LEVEL_DAYS })
     graphic = (
       <Ticks
         cells={row.ticks}

@@ -4,7 +4,8 @@
  * and the list of things worth measuring. Pure; callers pass `now`.
  */
 import { parseISO, startOfDay } from 'date-fns'
-import { compoundById, compoundName } from '@/content/compounds'
+import { compoundById } from '@/content/compounds'
+import { shortNames } from '@/features/doses/substanceNames'
 import {
   outlookFor,
   type CompoundOutlook,
@@ -93,7 +94,7 @@ export function buildModel(
       ...(trial?.outlook.measure ?? []),
       ...others.flatMap((o) => o.outlook?.measure ?? wikiMonitoring(o.compoundId)),
     ])
-    const names = compoundIds.map(compoundName).join(' + ')
+    const names = shortNames(compoundIds)
     const title = compoundIds.length > 1 ? row.name.trim() || names : names
     return [{ row, like, title, compoundIds, since, trial, others, measure }]
   })
