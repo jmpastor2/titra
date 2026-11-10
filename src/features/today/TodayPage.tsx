@@ -12,7 +12,7 @@ import { LogDoseSheet } from '@/features/doses/LogDoseSheet'
 import { useExposure } from '@/features/exposure/useExposure'
 import { needsFasting } from '@/features/fasting/fasting'
 import { useStock } from '@/features/inventory/useStock'
-import { drawPartFor } from '@/features/inventory/vials'
+import { activeVial, concentrationFor, drawPartFor, remainingOf } from '@/features/inventory/vials'
 import { FastingSheet } from '@/features/quicklog/FastingSheet'
 import { QuickLog } from '@/features/quicklog/QuickLog'
 import { FAST_WINDOW_H, type TileId } from '@/features/quicklog/tiles'
@@ -94,6 +94,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
       dose,
       units: focus ? unitsToDraw(focus.doses, vials) : (next?.totalUnits ?? null),
       plan: dose ? drawPlan(dose.doses, vials) : null,
+      vialLeft: dose ? dosesLeftInVial(dose.doses, vials) : null,
       track: trackItems(window, heroKey),
       rows: heroRows(today, window, heroKey),
     }
@@ -154,6 +155,7 @@ export function TodayPage({ embedded = false }: { embedded?: boolean }) {
           dose={day.dose}
           units={day.units}
           plan={day.plan}
+          vialLeft={day.vialLeft}
           track={day.track}
           rows={day.rows}
           unitsOf={(item) => unitsToDraw(item.doses, vials)}
@@ -235,6 +237,15 @@ const NO_VIALS: readonly InventoryRow[] = []
 function drawPlan(doses: readonly StackComponent[], vials: readonly InventoryRow[]) {
   const plan = planDraw(doses.map((d) => drawPartFor(vials, d.compoundId, d.doseMg)))
   return plan && plan.unknown.length === 0 ? plan : null
+}
+
+/** Doses like this one left in the reconstituted vial it comes from (the lead compound's). */
+function dosesLeftInVial(doses: readonly StackComponent[], vials: readonly InventoryRow[]) {
+  const lead = doses[0]
+  if (!lead || !(lead.doseMg > 0)) return null
+  const vial = activeVial(vials, lead.compoundId, lead.doseMg)
+  if (!vial || !concentrationFor(vial, lead.compoundId)) return null
+  return Math.floor(remainingOf(vial, lead.compoundId) / lead.doseMg + 1e-6)
 }
 
 const unitsToDraw = (doses: readonly StackComponent[], vials: readonly InventoryRow[]) =>

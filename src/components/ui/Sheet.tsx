@@ -11,6 +11,8 @@ export interface SheetProps {
   description?: ReactNode
   children: ReactNode
   footer?: ReactNode
+  /** Drawn over the whole sheet, header and footer included (a closing moment). */
+  cover?: ReactNode
   /** Full-height sheet for long forms. */
   tall?: boolean
 }
@@ -68,7 +70,16 @@ function useKeyboardViewport(active: boolean): Viewport | null {
  * iOS-style bottom sheet. Uses a native <dialog> for focus trapping and Escape
  * handling, portalled to body so it escapes any transformed ancestor.
  */
-export function Sheet({ open, onClose, title, description, children, footer, tall }: SheetProps) {
+export function Sheet({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  footer,
+  tall,
+  cover,
+}: SheetProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const { t } = useTranslation()
   const vp = useKeyboardViewport(open)
@@ -183,7 +194,7 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
               }, 350)
             }}
             className={clsx(
-              'outline-none will-change-transform',
+              'relative outline-none will-change-transform',
               'flex w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-line-strong bg-panel shadow-2xl sm:rounded-[28px]',
               'transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none',
               entered ? 'translate-y-0' : 'translate-y-full',
@@ -221,6 +232,7 @@ export function Sheet({ open, onClose, title, description, children, footer, tal
                 {footer}
               </footer>
             )}
+            {cover}
           </div>
         </div>
       )}

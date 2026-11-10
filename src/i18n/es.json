@@ -1145,7 +1145,9 @@
       "trackAria_other": "Próximas 24 horas: {{count}} tomas",
       "in": "en {{time}}",
       "log": "Registrar",
-      "loadAria": "Cargar {{units}} U ({{dose}})"
+      "loadAria": "Cargar {{units}} U ({{dose}})",
+      "vialLeft_one": "Queda {{count}} toma en el vial",
+      "vialLeft_other": "Quedan {{count}} tomas en el vial"
     },
     "fast": {
       "ask": "Ayuno: ¿cuándo comiste?"

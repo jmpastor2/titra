@@ -1145,7 +1145,9 @@
       "trackAria_other": "Next 24 hours: {{count}} doses",
       "in": "in {{time}}",
       "log": "Log dose",
-      "loadAria": "Draw {{units}} U ({{dose}})"
+      "loadAria": "Draw {{units}} U ({{dose}})",
+      "vialLeft_one": "{{count}} dose left in the vial",
+      "vialLeft_other": "{{count}} doses left in the vial"
     },
     "fast": {
       "ask": "Fasting: when did you last eat?"

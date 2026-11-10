@@ -72,6 +72,11 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   bordo (`isTracked` en `today/levels.ts`); una pauta recién empezada dice su primera toma. Pautas activas antes que las
   pausadas. SS-31 se llama así (`SS-31 (elamipretida)`) y lleva color propio (`OWN_HUE` en `content/substanceColor.ts`).
 
+- Momento de la toma (2026-11-11): al registrar, la jeringa se vacía sobre la hoja y dice «Toma registrada» antes de
+  cerrarse (`doses/InjectedCover.tsx`, `cover` de `Sheet`, `pushed` de `Syringe`; un toque lo salta, nada con movimiento
+  reducido). En Hoy la cifra de unidades sube con el émbolo (`lib/useCountUp.ts`) y dice las tomas que quedan en el vial.
+  Tests con movimiento reducido: `withReducedMotion()` de `src/test/motion.ts`.
+
 ## Pendiente
 
 1. Probar el teclado de las hojas (viales, agua) en el iPhone real.

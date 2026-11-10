@@ -309,6 +309,9 @@
   .fade-up {
     animation: fade-up 0.22s ease-out both;
   }
+  .fade-in {
+    animation: fade-in 0.18s ease-out both;
+  }
   .pulse-ring {
     animation: pulse-ring 1.8s ease-out infinite;
   }
@@ -321,6 +324,12 @@
 
 /* Cards fade in where they stand: rising a few pixels made every screen seem to jump as
    its data arrived. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
 @keyframes fade-up {
   from {
     opacity: 0;

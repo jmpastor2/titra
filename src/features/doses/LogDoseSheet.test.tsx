@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { LogDoseSheet } from './LogDoseSheet'
 import { installDomShims, makeStore, renderWithStore, setSpanish } from './testHarness'
 import { blendDose, blendVial, cjcProtocol, retaProtocol, retaVial } from './testData'
+import { withReducedMotion } from '@/test/motion'
 
 beforeAll(async () => {
   installDomShims()
@@ -49,6 +50,8 @@ const NIGHTS = [
 
 /** The log button, named after what it logs: "Registrar 9 U". */
 const LOG = /^Registrar \d/
+
+withReducedMotion()
 
 describe('LogDoseSheet, a free dose', () => {
   it('offers what you inject as tiles, and logs the CJC + ipamorelin vial as ONE draw', async () => {

@@ -6,6 +6,7 @@ import i18n from '@/i18n'
 import { buildToday, focusItem } from './agenda'
 import { NextDoseCard, type HeroDose } from './NextDoseCard'
 import { heroRows, slotKey, trackItems, windowItems } from './track'
+import { withReducedMotion } from '@/test/motion'
 
 // Sunday evening: nothing is planned today, retatrutide goes up tomorrow at 09:00.
 const SUNDAY = new Date(2026, 9, 4, 20, 30)
@@ -35,6 +36,7 @@ function props(now: Date, { fresh = false } = {}): Props {
     dose,
     units: focus ? 15 : (next?.totalUnits ?? null),
     plan: null,
+    vialLeft: null,
     track: trackItems(window, heroKey),
     rows: heroRows(today, window, heroKey),
     unitsOf: () => null,
@@ -50,6 +52,8 @@ function show(p: Props) {
   render(<NextDoseCard {...p} />)
   return p
 }
+
+withReducedMotion()
 
 describe('NextDoseCard', () => {
   it('says what to load for the next dose, with the mass under it, and when', () => {

@@ -28,7 +28,10 @@ import { needsFasting } from '@/features/fasting/fasting'
 import { SitePicker } from '@/features/sites/SitePicker'
 import { siteHistory } from './administrations'
 import { DoseLine } from './DoseLine'
+import { prefersReducedMotion } from '@/components/dosing/syringeFill'
+import type { DrawPlan } from '@/domain/dosing/draw'
 import { DrawGuide } from './DrawGuide'
+import { InjectedCover } from './InjectedCover'
 import {
   amountToLog,
   buildInsertRows,
@@ -128,6 +131,8 @@ function LogDoseForm({
     () => suggestNextSite(sites, rotationFor(zones))?.siteId ?? '',
   )
   const [notes, setNotes] = useState('')
+  // Set once the dose is saved: the plan to show emptying while the sheet says goodbye.
+  const [injected, setInjected] = useState<DrawPlan | null>(null)
 
   const protocol = active.find((p) => p.id === protocolId)
   const injectable = lines.some((l) =>
@@ -202,7 +207,10 @@ function LogDoseForm({
     try {
       const created = await addDose.mutateAsync(rows)
       const ids = created.map((r) => r.id)
-      onClose()
+      navigator.vibrate?.(12)
+      // The prepared syringe empties before the sheet goes, unless motion is unwelcome.
+      if (drawable && plan && !prefersReducedMotion()) setInjected(plan)
+      else onClose()
       toast(
         slot?.selected.kind === 'missed'
           ? t('doses.loggedAs', { slot: slotDayText(slot.selected.slot, locale) })
@@ -240,6 +248,7 @@ function LogDoseForm({
         open
         onClose={onClose}
         title={choosing ? t('doses.choose.title') : t('doses.logTitle')}
+        cover={injected && <InjectedCover plan={injected} onDone={onClose} />}
         description={choosing ? t('doses.choose.hint') : undefined}
         footer={
           !choosing && (

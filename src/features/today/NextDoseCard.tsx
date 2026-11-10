@@ -24,11 +24,15 @@ import {
   toTimeInputValue as hhmm,
   type Locale,
 } from '@/lib/format'
+import { useCountUp } from '@/lib/useCountUp'
 import { useLocale } from '@/lib/useLocale'
 import { fmtWait, slotWhen, type TodayItem } from './agenda'
 
 /** The ink button takes over from this long before the dose: earlier it is a quiet link. */
 const SOON_MS = DOSE_SOON_H * 3_600_000
+
+/** From this few doses left in the vial, the hero says so in the warning colour. */
+const LOW_VIAL_DOSES = 2
 
 /** The administration the hero is about: today's that needs the person first, or the next one. */
 export interface HeroDose {
@@ -60,6 +64,7 @@ export function NextDoseCard({
   dose,
   units,
   plan,
+  vialLeft,
   track,
   rows,
   unitsOf,
@@ -75,6 +80,8 @@ export function NextDoseCard({
   units: number | null
   /** The same dose on the syringe, drawn under the units. */
   plan: DrawPlan | null
+  /** Doses of this size left in the vial it is drawn from; null when no vial is known. */
+  vialLeft: number | null
   /** Markers of the day track: every administration from 4 h ago to 20 h ahead. */
   track: readonly TrackItem[]
   /** The other doses of the day, in time order. */
@@ -126,6 +133,16 @@ export function NextDoseCard({
           </div>
           <Load doses={dose.doses} units={units} />
           {units !== null && plan && <PlanSyringe plan={plan} className="-mx-1 mt-1" />}
+          {vialLeft !== null && (
+            <p
+              className={clsx(
+                'readout text-[12.5px] leading-snug',
+                vialLeft <= LOW_VIAL_DOSES ? 'font-semibold text-warn' : 'text-muted',
+              )}
+            >
+              {t('today.hero.vialLeft', { count: vialLeft })}
+            </p>
+          )}
           <p
             className={clsx(
               'readout mt-2.5 text-[14px] leading-snug',
@@ -197,7 +214,10 @@ function Load({ doses, units }: { doses: readonly StackComponent[]; units: numbe
   const big = 'readout text-[44px] font-semibold leading-none'
   const small = 'ml-1 font-sans text-[17px] font-medium tracking-normal text-muted'
 
+  // The figure runs up with the plunger; a half unit keeps its decimal, a whole one never shows one.
+  const running = useCountUp(units ?? 0)
   if (units !== null) {
+    const step = Number.isInteger(units) ? 1 : 2
     return (
       <div
         role="group"
@@ -205,7 +225,7 @@ function Load({ doses, units }: { doses: readonly StackComponent[]; units: numbe
         aria-label={t('today.hero.loadAria', { units: fmtNumber(units, locale, 1), dose: list })}
       >
         <div aria-hidden className={big}>
-          {fmtNumber(units, locale, 1)}
+          {fmtNumber(Math.round(running * step) / step, locale, 1)}
           <span className={small}>U</span>
         </div>
         <div aria-hidden className="readout mt-1.5 text-[13px] text-muted">

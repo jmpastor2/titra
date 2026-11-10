@@ -80,6 +80,7 @@ export function Syringe({
   label,
   className,
   animate = true,
+  pushed = false,
 }: {
   capacity: SyringeCapacity
   loads: readonly SyringeLoad[]
@@ -87,10 +88,12 @@ export function Syringe({
   className?: string
   /** Draw-up animation; always off with prefers-reduced-motion. */
   animate?: boolean
+  /** The plunger pressed home: the loads leave through the needle, last one in first. */
+  pushed?: boolean
 }) {
   const uid = useId().replace(/[^\w-]/g, '')
   const total = loads.at(-1)?.to ?? 0
-  const target = Math.max(0, Math.min(capacity, total))
+  const target = pushed ? 0 : Math.max(0, Math.min(capacity, total))
   const units = useFillTween(target, spansKey(loads), animate && !prefersReducedMotion())
   const moving = units !== target
   const height = BY + BH + (loads.length > 1 ? FOOT_STACKED : FOOT)

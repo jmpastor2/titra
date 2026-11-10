@@ -22,7 +22,18 @@ export function useBarrel(plan: DrawPlan | null): {
  * A draw plan on the syringe: each load in its substance's colour, drawn up in turn. Empty
  * without a plan. A tap draws it up again.
  */
-export function PlanSyringe({ plan, className }: { plan: DrawPlan | null; className?: string }) {
+export function PlanSyringe({
+  plan,
+  className,
+  animate,
+  pushed,
+}: {
+  plan: DrawPlan | null
+  className?: string
+  /** See `Syringe`. */
+  animate?: boolean
+  pushed?: boolean
+}) {
   const { t } = useTranslation()
   const { locale } = useLocale()
   const { capacity } = useBarrel(plan)
@@ -40,6 +51,8 @@ export function PlanSyringe({ plan, className }: { plan: DrawPlan | null; classN
         key={replay}
         capacity={capacity}
         loads={loads}
+        animate={animate}
+        pushed={pushed}
         label={t('draw.aria', { capacity, units: fmtNumber(plan?.totalUnits ?? 0, locale, 1) })}
         className="block w-full"
       />
