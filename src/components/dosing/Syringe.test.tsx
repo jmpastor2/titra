@@ -7,8 +7,8 @@ const loads = [
   { from: 0, to: 10, color: 'var(--sub-violet)' },
   { from: 10, to: 15, color: 'var(--sub-mint)' },
 ]
-// 30 U barrel: x = 54 + u / 30 * 232
-const xAt = (u: number) => 54 + (u / 30) * 232
+// 30 U barrel: x = 46 + u / 30 * 252
+const xAt = (u: number) => 46 + (u / 30) * 252
 
 const stopperX = (container: HTMLElement) =>
   Number(container.querySelector('rect[fill="#1b2527"]')?.getAttribute('x'))

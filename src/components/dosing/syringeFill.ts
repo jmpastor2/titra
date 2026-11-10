@@ -23,7 +23,8 @@ export interface FillTimeline {
   duration: number
 }
 
-export const MS_PER_LOAD = 450
+/** Slow enough to watch the plunger travel, short enough not to wait for it. */
+export const MS_PER_LOAD = 800
 /** A sliver of a load (topping up 9.5 to 10 U) still gets a readable share of time. */
 const MIN_SHARE = 0.35
 

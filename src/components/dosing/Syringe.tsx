@@ -16,17 +16,19 @@ export interface SyringeLoad {
 }
 
 const W = 360
-const H = 104
-const NEEDLE_X = 6
-const HUB_X = 40
-const BX = 54 // barrel start = the 0 mark, right next to the needle
-const BW = 232
-const BY = 38
-const BH = 30
+const NEEDLE_X = 2
+const HUB_X = 34
+const BX = 46 // barrel start = the 0 mark, right next to the needle
+const BW = 252
+const BY = 28
+const BH = 34
+/** Room under the barrel: the load mark, and the numbered loads of a mixed syringe. */
+const FOOT = 14
+const FOOT_STACKED = 32
 const STOPPER_W = 10
 /** Thumb rest travel: just past the finger flange when empty, at the edge when full. */
 const THUMB_EMPTY = BX + BW + 10
-const THUMB_FULL = W - 10
+const THUMB_FULL = W - 6
 /** Rubber is black whatever the theme, like on the real thing. */
 const RUBBER = '#1b2527'
 const RUBBER_RIB = '#3a4a4d'
@@ -91,6 +93,7 @@ export function Syringe({
   const target = Math.max(0, Math.min(capacity, total))
   const units = useFillTween(target, spansKey(loads), animate && !prefersReducedMotion())
   const moving = units !== target
+  const height = BY + BH + (loads.length > 1 ? FOOT_STACKED : FOOT)
 
   const x = (u: number) => xOf(u, capacity)
   const fillX = x(units)
@@ -140,7 +143,7 @@ export function Syringe({
   }, [capacity])
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className={className} role="img" aria-label={label}>
+    <svg viewBox={`0 0 ${W} ${height}`} className={className} role="img" aria-label={label}>
       <defs>
         <linearGradient id={`glass-${uid}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="var(--panel-3)" />
@@ -286,6 +289,16 @@ export function Syringe({
           </>
         )}
         <rect x={BX} y={BY} width={BW} height={BH} fill={`url(#sheen-${uid})`} />
+        {/* the light along the top of the glass */}
+        <rect
+          x={BX + 7}
+          y={BY + 4}
+          width={BW - 14}
+          height={2.4}
+          rx={1.2}
+          fill="#fff"
+          opacity={0.2}
+        />
       </g>
 
       {/* rubber stopper at the fill mark */}
