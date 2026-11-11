@@ -77,6 +77,13 @@ Publicado en https://jmpastor2.github.io/titra/ (GitHub Pages, despliegue por Ac
   reducido). En Hoy la cifra de unidades sube con el émbolo (`lib/useCountUp.ts`) y dice las tomas que quedan en el vial.
   Tests con movimiento reducido: `withReducedMotion()` de `src/test/motion.ts`.
 
+- 2026-11-11 (pulsera): Forja manda tras cada sincronización con Google Health (a diario a las 08:00)
+  los días leídos a `public.health_ingest` (migración `20261111000000_health_ingest.sql`, aplicada;
+  clave en Vault `health_ingest_key_sha256`, paciente en `health_ingest_patient_id`). Quedan como
+  mediciones con `source = 'google_health'`: peso, % grasa, FC en reposo, pasos, horas de sueño,
+  proteína (cuando se apunta comida en Google Health) y sesiones de fuerza. Cada envío reescribe
+  esos días; las mediciones a mano no se tocan. Sueño y pasos tienen gráfica en Mediciones.
+
 ## Pendiente
 
 1. Probar el teclado de las hojas (viales, agua) en el iPhone real.

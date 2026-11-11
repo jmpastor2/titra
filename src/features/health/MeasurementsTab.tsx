@@ -49,6 +49,9 @@ const CHARTABLE: MeasurementKind[] = [
   'hba1c',
   'bp_systolic',
   'heart_rate',
+  // From the band, through Forja (`health_ingest`): one reading a day.
+  'sleep_hours',
+  'steps',
 ]
 
 /** Body kinds drawn as a smoothed trend over the raw readings, with a weekly rate. */
